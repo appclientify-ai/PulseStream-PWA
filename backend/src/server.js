@@ -3,17 +3,40 @@ import 'dotenv/config';
 import http from 'http';
 import { app } from './app.js';
 import { initSocket } from './sockets/socket.js';
-import { connectDB } from './db/mongo.js';
+import { connectDB, client } from './db/mongo.js';
 
 const PORT = process.env.PORT || 3001;
 const server = http.createServer(app);
 
-initSocket(server);
+// Initialize Socket.IO
+const io = initSocket(server);
+app.set('io', io);
 
-connectDB().then(() => {
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+const startServer = async () => {
+  try {
+    await connectDB();
+    
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📡 Health check at http://localhost:${PORT}/health`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+// Graceful shutdown
+const shutdown = async () => {
+  console.log('Stopping server...');
+  server.close(async () => {
+    await client.close();
+    console.log('Database connection closed. Exit.');
+    process.exit(0);
   });
-}).catch(err => {
-  console.error('Failed to connect to DB', err);
-});
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+startServer();

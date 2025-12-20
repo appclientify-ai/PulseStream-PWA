@@ -1,12 +1,24 @@
 
 import jwt from 'jsonwebtoken';
 
-const SECRET = process.env.JWT_SECRET || 'pulse-secret-key';
+const SECRET = process.env.JWT_SECRET || 'pulse-production-secret-change-me';
 
-export const generateToken = (payload) => {
-  return jwt.sign(payload, SECRET, { expiresIn: '24h' });
+export const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      id: user._id, 
+      email: user.email, 
+      username: user.username 
+    }, 
+    SECRET, 
+    { expiresIn: '7d' }
+  );
 };
 
 export const verifyToken = (token) => {
-  return jwt.verify(token, SECRET);
+  try {
+    return jwt.verify(token, SECRET);
+  } catch (err) {
+    return null;
+  }
 };
