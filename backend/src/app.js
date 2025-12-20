@@ -1,8 +1,13 @@
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './auth/auth.routes.js';
 import itemRoutes from './routes/items.routes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const app = express();
 
@@ -14,7 +19,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 
@@ -25,6 +30,17 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
+});
+
+// Serve Static Files in Production
+// Assuming the root 'dist' folder exists after 'npm run build'
+const distPath = path.resolve(__dirname, '../../..', 'dist');
+app.use(express.static(distPath));
+
+// SPA Catch-all: Route all non-API requests to index.html
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) return res.status(404).json({ error: 'Not Found' });
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Global Error Handler

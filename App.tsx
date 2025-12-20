@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Login from './auth/Login';
 import Signup from './auth/Signup';
+import Loader from './components/Loader';
 import OfflineBanner from './components/OfflineBanner';
 import { api } from './services/api';
 import { useOffline } from './hooks/useOffline';
@@ -14,7 +15,7 @@ import { useOffline } from './hooks/useOffline';
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   
   const handleReconnect = useCallback(() => {
@@ -25,23 +26,25 @@ const AppContent: React.FC = () => {
 
   const isOnline = useOffline(handleReconnect);
 
+  // Sync current page with Auth state
   useEffect(() => {
-    api.setToken(token);
-  }, [token]);
+    if (!hasCheckedAuth) return;
 
-  // Handle Redirects based on Auth Status
-  useEffect(() => {
     if (isAuthenticated) {
-      if (currentPage === 'login' || currentPage === 'signup' || currentPage === 'home') {
+      if (currentPage !== 'dashboard') {
         setCurrentPage('dashboard');
       }
     } else {
-      // If user logs out or session is lost, go to home or login
       if (currentPage === 'dashboard') {
         setCurrentPage('home');
       }
     }
-  }, [isAuthenticated, currentPage]);
+  }, [isAuthenticated, hasCheckedAuth]);
+
+  // Wait for initial auth check to complete to avoid "round and round" issues
+  if (!hasCheckedAuth) {
+    return <Loader />;
+  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -74,6 +77,8 @@ const AppContent: React.FC = () => {
     <>
       <OfflineBanner isOnline={isOnline} />
       {renderPage()}
+      {/* Global overlay loader for auth transitions */}
+      {isLoading && <div className="fixed inset-0 z-[9999]"><Loader /></div>}
     </>
   );
 };

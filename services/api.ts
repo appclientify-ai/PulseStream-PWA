@@ -10,9 +10,17 @@ class ApiService {
 
   /**
    * Constructs the full URL for an API call.
-   * All routes in the backend app.js are prefixed with /api (e.g., /api/auth, /api/items).
+   * If in production on Render (same domain), we use relative paths.
    */
   private getFullUrl(endpoint: string): string {
+    const isProduction = window.location.hostname !== 'localhost';
+    
+    // In production, we assume the backend is on the same host serving the frontend
+    if (isProduction && !API_BASE_URL.includes('localhost')) {
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        return `/api${cleanEndpoint}`;
+    }
+
     const cleanBase = API_BASE_URL.replace(/\/$/, '');
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     return `${cleanBase}/api${cleanEndpoint}`;

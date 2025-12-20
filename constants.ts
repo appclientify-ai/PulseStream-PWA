@@ -1,15 +1,18 @@
 
+// Detect current environment
+const isProd = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+
 // Use separate variables for HTTP and WebSocket to avoid protocol mismatch
-const BASE_HOST = (import.meta as any).env?.VITE_BACKEND_URL || 'localhost:3001';
+const BASE_HOST = (import.meta as any).env?.VITE_BACKEND_URL || (isProd ? window.location.host : 'localhost:3001');
 
 // Ensure the protocol is correct for the transport type
 export const API_BASE_URL = BASE_HOST.startsWith('http') 
   ? BASE_HOST 
-  : `http://${BASE_HOST}`;
+  : `${window.location.protocol}//${BASE_HOST}`;
 
 export const SOCKET_URL = BASE_HOST.startsWith('ws') 
   ? BASE_HOST 
-  : `ws://${BASE_HOST.replace(/^https?:\/\//, '')}`;
+  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${BASE_HOST.replace(/^https?:\/\//, '')}`;
 
 export const INITIAL_METRICS = [
   { label: 'Active Clients', value: 42, trend: 'up' },
