@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -6,13 +7,25 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Login from './auth/Login';
 import Signup from './auth/Signup';
+import OfflineBanner from './components/OfflineBanner';
 import { api } from './services/api';
+import { useOffline } from './hooks/useOffline';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, user } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  
+  const handleReconnect = useCallback(() => {
+    console.log('App back online - re-syncing...');
+    // Without persistent storage, we simply attempt to verify session if possible
+    if (token) {
+      api.get('/auth/me').catch(console.error);
+    }
+  }, [token]);
+
+  const isOnline = useOffline(handleReconnect);
 
   // Sync token to ApiService whenever it changes
   useEffect(() => {
@@ -53,7 +66,12 @@ const AppContent: React.FC = () => {
     }
   };
 
-  return renderPage();
+  return (
+    <>
+      <OfflineBanner isOnline={isOnline} />
+      {renderPage()}
+    </>
+  );
 };
 
 const App: React.FC = () => {

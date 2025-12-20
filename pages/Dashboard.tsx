@@ -5,6 +5,7 @@ import { INITIAL_METRICS, MOCK_USERS } from '../constants';
 import { AppState, Message, MetricData } from '../types';
 import { usePWA } from '../hooks/usePWA';
 import { useAuth } from '../auth/AuthContext';
+import { useOffline } from '../hooks/useOffline';
 
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
@@ -14,6 +15,7 @@ import InstallBanner from '../components/InstallBanner';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const isOnline = useOffline();
   const [state, setState] = useState<AppState>({
     messages: [],
     metrics: INITIAL_METRICS as MetricData[],
@@ -27,6 +29,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      if (!isOnline) return; // Pause random updates if offline
       setState(prev => ({
         ...prev,
         metrics: prev.metrics.map(m => ({
@@ -37,13 +40,18 @@ const Dashboard: React.FC = () => {
       }));
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isOnline]);
 
   useEffect(() => {
-    socketService.connect();
-    setTimeout(() => setState(prev => ({ ...prev, isConnected: true })), 1000);
+    if (isOnline) {
+      socketService.connect();
+      setState(prev => ({ ...prev, isConnected: true }));
+    } else {
+      socketService.disconnect();
+      setState(prev => ({ ...prev, isConnected: false }));
+    }
     return () => { socketService.disconnect(); };
-  }, []);
+  }, [isOnline]);
 
   const handleSendMessage = useCallback((content: string) => {
     const newMessage: Message = {
@@ -52,14 +60,21 @@ const Dashboard: React.FC = () => {
       content,
       timestamp: Date.now(),
     };
+    
     setState(prev => ({ ...prev, messages: [...prev.messages, newMessage] }));
-  }, [user]);
+    
+    // In an offline-first app without persistent storage, we simply try to emit.
+    // If offline, the UI shows the message, but it won't persist on refresh if the server didn't get it.
+    if (isOnline) {
+      socketService.emit('message', newMessage);
+    }
+  }, [user, isOnline]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-slate-100">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex flex-1 flex-col overflow-hidden">
-        <Header isConnected={state.isConnected} currentUser={user} />
+        <Header isConnected={state.isConnected && isOnline} currentUser={user} />
         <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
           {installPrompt && <InstallBanner onInstall={triggerInstall} />}
           {activeTab === 'dashboard' ? (
@@ -69,7 +84,14 @@ const Dashboard: React.FC = () => {
                 <h3 className="mb-4 text-lg font-semibold text-slate-300">Live Pulse Activity</h3>
                 <div className="h-64 w-full flex items-end justify-between gap-2 px-4">
                    {[...Array(20)].map((_, i) => (
-                     <div key={i} className="w-full bg-blue-500/30 rounded-t-md animate-pulse" style={{ height: `${Math.random() * 100}%`, animationDelay: `${i * 0.1}s` }} />
+                     <div 
+                      key={i} 
+                      className={`w-full ${isOnline ? 'bg-blue-500/30 animate-pulse' : 'bg-slate-700/20'} rounded-t-md transition-all duration-500`} 
+                      style={{ 
+                        height: `${Math.random() * 80 + 20}%`, 
+                        animationDelay: `${i * 0.1}s` 
+                      }} 
+                    />
                    ))}
                 </div>
               </div>

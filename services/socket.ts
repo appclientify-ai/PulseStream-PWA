@@ -1,19 +1,24 @@
 
 import { io, Socket } from 'socket.io-client';
-import { BACKEND_URL } from '../constants';
+import { SOCKET_URL } from '../constants';
 
 class SocketService {
   private socket: Socket | null = null;
 
   connect() {
-    if (BACKEND_URL.includes('example.com')) {
+    if (SOCKET_URL.includes('example.com')) {
         console.warn('SocketService: Using simulated real-time events.');
         return;
     }
-    this.socket = io(BACKEND_URL, {
-      transports: ['websocket'],
-      reconnectionAttempts: 5,
-    });
+    
+    try {
+      this.socket = io(SOCKET_URL, {
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+      });
+    } catch (e) {
+      console.error('Socket connection error', e);
+    }
   }
 
   on(event: string, callback: (data: any) => void) {

@@ -1,23 +1,30 @@
 
 import { io, Socket } from 'socket.io-client';
-import { BACKEND_URL } from '../constants';
+import { SOCKET_URL } from '../constants';
 import { SocketEvent } from '../types';
 
 class SocketService {
   private socket: Socket | null = null;
 
   connect() {
-    // In a real environment, this connects to BACKEND_URL.
-    // Since we don't have a real backend, we'll simulate the socket behavior if the URL is mock.
-    if (BACKEND_URL.includes('example.com')) {
+    // If it's a mock or example URL, we just log it for the demo
+    if (SOCKET_URL.includes('example.com')) {
         console.warn('SocketService: Using simulated real-time events.');
         return;
     }
 
-    this.socket = io(BACKEND_URL, {
-      transports: ['websocket'],
-      reconnectionAttempts: 5,
-    });
+    try {
+      this.socket = io(SOCKET_URL, {
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+      });
+      
+      this.socket.on('connect_error', (err) => {
+        console.warn('Socket connection failed, likely backend is offline. Using simulation mode.');
+      });
+    } catch (e) {
+      console.error('Socket init failed', e);
+    }
   }
 
   on(event: string, callback: (data: any) => void) {

@@ -1,6 +1,15 @@
 
-// Fallback to a mock websocket server for demo if no ENV is provided
-export const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'wss://mock-socket-server.example.com';
+// Use separate variables for HTTP and WebSocket to avoid protocol mismatch
+const BASE_HOST = (import.meta as any).env?.VITE_BACKEND_URL || 'localhost:3001';
+
+// Ensure the protocol is correct for the transport type
+export const API_BASE_URL = BASE_HOST.startsWith('http') 
+  ? BASE_HOST 
+  : `http://${BASE_HOST}`;
+
+export const SOCKET_URL = BASE_HOST.startsWith('ws') 
+  ? BASE_HOST 
+  : `ws://${BASE_HOST.replace(/^https?:\/\//, '')}`;
 
 export const INITIAL_METRICS = [
   { label: 'Network Latency', value: 24, trend: 'stable' },
