@@ -14,33 +14,40 @@ const io = initSocket(server);
 app.set('io', io);
 
 const startServer = async () => {
-  console.log('🔄 Starting Clientify Server...');
+  console.log('-------------------------------------------');
+  console.log('🔄 STARTING CLIENTIFY BACKEND...');
+  console.log('-------------------------------------------');
+  
   try {
     // Attempt to connect to the database
+    // This will throw and exit if MONGODB_URI is invalid
     await connectDB();
     
     // Start watching database changes for real-time reactivity
     initChangeStreams(io);
     
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📡 Health check at http://localhost:${PORT}/health`);
+      console.log(`🚀 SERVER IS LIVE: http://localhost:${PORT}`);
+      console.log(`🏥 HEALTH CHECK: http://localhost:${PORT}/health`);
+      console.log('-------------------------------------------');
     });
   } catch (err) {
-    console.error('❌ FATAL: Failed to connect to database. Server cannot start.');
+    console.error('❌ FATAL ERROR DURING STARTUP:');
     console.error(err.message);
+    console.log('-------------------------------------------');
     process.exit(1);
   }
 };
 
 // Graceful shutdown
 const shutdown = async () => {
-  console.log('Stopping server...');
+  console.log('\n🛑 SIGTERM received. Shutting down gracefully...');
   server.close(async () => {
     try {
       await client.close();
+      console.log('🔌 MongoDB connection closed.');
     } catch(e) {}
-    console.log('Database connection closed. Exit.');
+    console.log('👋 Backend process terminated.');
     process.exit(0);
   });
 };

@@ -13,10 +13,12 @@ import Header from '../components/Header';
 import MetricCard from '../components/MetricCard';
 import ChatPanel from '../components/ChatPanel';
 import InstallBanner from '../components/InstallBanner';
+import Loader from '../components/Loader';
 
 const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
   const isOnline = useOffline();
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [state, setState] = useState<AppState>({
     messages: [],
     metrics: INITIAL_METRICS as MetricData[],
@@ -31,33 +33,30 @@ const Dashboard: React.FC = () => {
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
+      setIsDataLoading(true);
       try {
         const items = await api.get('/items');
-        // If we had a real metrics collection, we'd fetch it here.
-        // For now, we'll use the items count to influence a metric.
         setState(prev => ({
           ...prev,
           metrics: prev.metrics.map(m => 
-            m.label === 'Active Clients' ? { ...m, value: items.length || prev.metrics[0].value } : m
+            m.label === 'Active Clients' ? { ...m, value: items.length || 0, trend: items.length > 0 ? 'up' : 'stable' } : m
           )
         }));
       } catch (err) {
         console.error('Failed to load dashboard data', err);
+      } finally {
+        setIsDataLoading(false);
       }
     };
     if (isOnline && token) loadData();
   }, [isOnline, token]);
 
-  // Real-time Socket Listeners for MongoDB Change Streams
+  // Real-time Socket Listeners
   useEffect(() => {
     if (isOnline) {
       socketService.connect();
       
-      // Listen for global DB changes (Synced across all devices)
       socketService.on('db_item_change', (change: any) => {
-        console.log('🔔 Real-time DB Update:', change);
-        
-        // Example: Update metrics when a new item/client is added via another device
         if (change.type === 'insert') {
           setState(prev => ({
             ...prev,
@@ -68,10 +67,8 @@ const Dashboard: React.FC = () => {
         }
       });
 
-      // Listen for chat messages
       socketService.on('message', (msg: Message) => {
         setState(prev => {
-          // Prevent duplicate messages if emitted by same client
           if (prev.messages.find(m => m.id === msg.id)) return prev;
           return { ...prev, messages: [...prev.messages, msg] };
         });
@@ -96,19 +93,19 @@ const Dashboard: React.FC = () => {
       timestamp: Date.now(),
     };
     
-    // 1. Update local UI immediately
     setState(prev => ({ ...prev, messages: [...prev.messages, newMessage] }));
-    
-    // 2. Broadcast via Socket for other devices
     socketService.emit('message', newMessage);
 
-    // 3. Persist to DB if needed (Optional: You could have an /api/messages)
     try {
       await api.post('/items', { name: `Chat Log: ${content.substring(0, 10)}...`, data: { content } });
     } catch (e) {
       console.warn('Persistance failed, but message sent via socket.');
     }
   }, [user]);
+
+  if (isDataLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-slate-100">

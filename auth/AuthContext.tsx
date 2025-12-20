@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Cookie Helpers
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`;
 };
 
 const getCookie = (name: string) => {
@@ -50,13 +50,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           api.setToken(savedToken);
           const response = await api.get('/auth/me');
-          if (response.user) {
+          if (response && response.user) {
             setToken(savedToken);
             setUser(response.user);
           } else {
-            deleteCookie('clientify_token');
+            throw new Error('Invalid user session');
           }
         } catch (err) {
+          console.warn('Auth init failed:', err);
           deleteCookie('clientify_token');
           api.setToken(null);
         } finally {
