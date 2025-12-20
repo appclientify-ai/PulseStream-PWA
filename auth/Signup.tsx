@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import Loader from '../components/Loader';
 
 interface SignupProps {
   onSwitch: () => void;
@@ -8,14 +8,22 @@ interface SignupProps {
 
 const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
   const [username, setUsername] = useState('');
-  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { signup, isLoading, error } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      login(username);
+    if (username.trim() && email.trim() && password.trim()) {
+      try {
+        await signup(username, email, password);
+      } catch (err) {
+        // Error is handled in context
+      }
     }
   };
+
+  if (isLoading) return <Loader />;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-slate-950">
@@ -25,15 +33,13 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
           <p className="mt-2 text-slate-400">Join the real-time data revolution</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-300">Full Name</label>
-            <input
-              type="text"
-              className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="John Doe"
-            />
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20 text-center">
+            {error}
           </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-300">Username</label>
             <input
@@ -43,6 +49,28 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               onChange={(e) => setUsername(e.target.value)}
               className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="johndoe123"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="name@company.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300">Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="••••••••"
             />
           </div>
           <button
