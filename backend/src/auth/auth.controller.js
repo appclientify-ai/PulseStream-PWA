@@ -2,69 +2,88 @@
 import { getCollection } from '../db/mongo.js';
 import { generateToken } from './jwt.js';
 
-// In production, use bcrypt for hashing. Using simple string check for this demo.
 export const signup = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, mobile_no, email_id, firm_name, gstn, user_id, password } = req.body;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required' });
+  if (!username || !mobile_no || !email_id || !user_id || !password) {
+    return res.status(400).json({ error: 'Required fields are missing' });
   }
 
   try {
     const users = getCollection('users');
-    const existing = await users.findOne({ email });
-
-    if (existing) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    const result = await users.insertOne({
-      username,
-      email,
-      password, // Hash this with bcrypt.hash(password, 10) in production
-      createdAt: new Date(),
-      status: 'online'
+    
+    // Check if any of the unique fields are already taken
+    const existing = await users.findOne({ 
+      $or: [
+        { email_id: email_id },
+        { mobile_no: mobile_no },
+        { user_id: user_id }
+      ]
     });
 
-    const newUser = { _id: result.insertedId, username, email };
+    if (existing) {
+      if (existing.email_id === email_id) return res.status(400).json({ error: 'Email already registered' });
+      if (existing.mobile_no === mobile_no) return res.status(400).json({ error: 'Mobile number already registered' });
+      if (existing.user_id === user_id) return res.status(400).json({ error: 'User ID already taken' });
+    }
+
+    const newUser = {
+      username,
+      mobile_no,
+      email_id,
+      firm_name: firm_name || null,
+      gstn: gstn || null,
+      user_id,
+      password, // In production, hash this with bcrypt
+      createdAt: new Date(),
+      status: 'online'
+    };
+
+    const result = await users.insertOne(newUser);
+    const userResponse = { id: result.insertedId, username, user_id, email_id };
     const token = generateToken(newUser);
 
     res.status(201).json({
       token,
-      user: { id: newUser._id, username: newUser.username, email: newUser.email }
+      user: userResponse
     });
   } catch (err) {
-    res.status(500).json({ error: 'Signup failed' });
+    console.error('Signup Error:', err);
+    res.status(500).json({ error: 'Registration failed' });
   }
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { user_id, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
+  if (!user_id || !password) {
+    return res.status(400).json({ error: 'User ID and password required' });
   }
 
   try {
     const users = getCollection('users');
-    const user = await users.findOne({ email });
+    const user = await users.findOne({ user_id });
 
-    // In production: await bcrypt.compare(password, user.password)
     if (!user || user.password !== password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid user ID or password' });
     }
 
     const token = generateToken(user);
     res.json({
       token,
-      user: { id: user._id, username: user.username, email: user.email }
+      user: { 
+        id: user._id, 
+        username: user.username, 
+        user_id: user.user_id, 
+        email_id: user.email_id 
+      }
     });
   } catch (err) {
+    console.error('Login Error:', err);
     res.status(500).json({ error: 'Login failed' });
   }
 };
 
 export const me = async (req, res) => {
-  // req.user is already populated by authenticate middleware
   res.json({ user: req.user });
 };

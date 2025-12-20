@@ -15,6 +15,11 @@ export interface MetricData {
 export interface User {
   id: string;
   username: string;
+  user_id: string;
+  email_id: string;
+  mobile_no?: string;
+  firm_name?: string | null;
+  gstn?: string | null;
   status: 'online' | 'away' | 'offline';
 }
 

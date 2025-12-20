@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User } from '../types';
 import { api } from '../services/api';
@@ -6,8 +7,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (username: string, email: string, password: string) => Promise<void>;
+  login: (user_id: string, password: string) => Promise<void>;
+  signup: (data: any) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;
@@ -21,12 +22,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = async (email: string, password: string) => {
+  const login = async (user_id: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post('/auth/login', { email, password });
-      // Expecting { token: string, user: User }
+      const response = await api.post('/auth/login', { user_id, password });
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
@@ -37,12 +37,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signup = async (username: string, email: string, password: string) => {
+  const signup = async (data: any) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.post('/auth/signup', { username, email, password });
-      // Expecting { token: string, user: User }
+      const response = await api.post('/auth/signup', data);
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
