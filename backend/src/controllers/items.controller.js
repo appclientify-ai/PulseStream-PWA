@@ -19,16 +19,17 @@ export const createItem = async (req, res) => {
     };
 
     const result = await items.insertOne(newItem);
-    const itemWithId = { ...newItem, _id: result.insertedId };
-
-    // Emit real-time event via Socket.IO
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('item_created', itemWithId);
-    }
-
-    res.status(201).json(itemWithId);
+    
+    /**
+     * Note: Manual socket emission is removed here. 
+     * The initChangeStreams logic in server.js detects this insert 
+     * and broadcasts it to all clients, ensuring consistency even if 
+     * the item was created by another process or manual DB edit.
+     */
+    
+    res.status(201).json({ ...newItem, _id: result.insertedId });
   } catch (err) {
+    console.error('Create Item Error:', err);
     res.status(500).json({ error: 'Failed to create item' });
   }
 };
@@ -42,6 +43,7 @@ export const getItems = async (req, res) => {
       .toArray();
     res.json(items);
   } catch (err) {
+    console.error('Get Items Error:', err);
     res.status(500).json({ error: 'Failed to fetch items' });
   }
 };

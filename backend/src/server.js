@@ -4,6 +4,7 @@ import http from 'http';
 import { app } from './app.js';
 import { initSocket } from './sockets/socket.js';
 import { connectDB, client } from './db/mongo.js';
+import { initChangeStreams } from './db/streams.js';
 
 const PORT = process.env.PORT || 3001;
 const server = http.createServer(app);
@@ -15,6 +16,9 @@ app.set('io', io);
 const startServer = async () => {
   try {
     await connectDB();
+    
+    // Start watching database changes for real-time reactivity
+    initChangeStreams(io);
     
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
