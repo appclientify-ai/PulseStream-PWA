@@ -30,8 +30,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
-      throw err;
+      const msg = err.message || 'Login failed';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -45,8 +46,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
-      setError(err.message || 'Signup failed');
-      throw err;
+      const msg = err.message || 'Signup failed';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +58,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     setError(null);
-    // Force a redirect back to home by letting App state react to isAuthenticated changing
+    api.setToken(null);
   };
 
   return (

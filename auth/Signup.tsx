@@ -26,10 +26,12 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent double submission
+    
     try {
       await signup(formData);
     } catch (err) {
-      // Handled in context
+      // Error handled in AuthContext
     }
   };
 
@@ -49,7 +51,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20 text-center">
+          <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20 text-center animate-pulse">
             {error}
           </div>
         )}
@@ -62,9 +64,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 type="text"
                 name="username"
                 required
+                disabled={isLoading}
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="Full Name"
               />
             </div>
@@ -74,9 +77,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 type="tel"
                 name="mobile_no"
                 required
+                disabled={isLoading}
                 value={formData.mobile_no}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="10 digit number"
               />
             </div>
@@ -88,9 +92,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               type="email"
               name="email_id"
               required
+              disabled={isLoading}
               value={formData.email_id}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
               placeholder="email@example.com"
             />
           </div>
@@ -101,9 +106,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               <input
                 type="text"
                 name="firm_name"
+                disabled={isLoading}
                 value={formData.firm_name}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="Your Firm"
               />
             </div>
@@ -112,9 +118,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               <input
                 type="text"
                 name="gstn"
+                disabled={isLoading}
                 value={formData.gstn}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="GST Number"
               />
             </div>
@@ -126,9 +133,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               type="text"
               name="user_id"
               required
+              disabled={isLoading}
               value={formData.user_id}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
               placeholder="unique_username"
             />
           </div>
@@ -140,9 +148,10 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 required
+                disabled={isLoading}
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="••••••••"
               />
               <button
@@ -167,15 +176,16 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
 
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20"
+            disabled={isLoading}
+            className="mt-4 w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20 disabled:bg-slate-700 disabled:shadow-none"
           >
-            Create Account
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
         <p className="mt-8 text-center text-sm text-slate-500">
           Already registered?{' '}
-          <button onClick={onSwitch} className="font-semibold text-indigo-400 hover:text-indigo-300">
+          <button onClick={onSwitch} disabled={isLoading} className="font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-50">
             Sign In
           </button>
         </p>

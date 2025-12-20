@@ -9,7 +9,12 @@ if (!uri) {
 const dbName = process.env.DB_NAME || 'clientify';
 const connectionString = uri || 'mongodb://localhost:27017';
 
-export const client = new MongoClient(connectionString);
+// Set strict timeouts to prevent the server from hanging indefinitely if DB is down
+export const client = new MongoClient(connectionString, {
+  connectTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 10000,
+});
 
 export async function connectDB() {
   try {
@@ -18,6 +23,7 @@ export async function connectDB() {
     
     const db = client.db(dbName);
     // Create unique indexes for critical user identifiers
+    // This ensures "one id for one user" as requested
     await db.collection('users').createIndex({ email_id: 1 }, { unique: true });
     await db.collection('users').createIndex({ mobile_no: 1 }, { unique: true });
     await db.collection('users').createIndex({ user_id: 1 }, { unique: true });
@@ -25,7 +31,7 @@ export async function connectDB() {
     await db.collection('items').createIndex({ createdAt: -1 });
     
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error);
+    console.error('❌ MongoDB Connection Error:', error.message);
     throw error;
   }
 }
