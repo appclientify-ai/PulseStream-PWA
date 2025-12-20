@@ -13,20 +13,12 @@ export const createItem = async (req, res) => {
     const newItem = {
       name,
       data: data || {},
-      createdBy: req.user._id,
+      createdBy: req.user._id, // Tied to the logged-in user
       creatorName: req.user.username,
       createdAt: new Date()
     };
 
     const result = await items.insertOne(newItem);
-    
-    /**
-     * Note: Manual socket emission is removed here. 
-     * The initChangeStreams logic in server.js detects this insert 
-     * and broadcasts it to all clients, ensuring consistency even if 
-     * the item was created by another process or manual DB edit.
-     */
-    
     res.status(201).json({ ...newItem, _id: result.insertedId });
   } catch (err) {
     console.error('Create Item Error:', err);
@@ -36,14 +28,15 @@ export const createItem = async (req, res) => {
 
 export const getItems = async (req, res) => {
   try {
+    // SECURITY: Only return items created by this specific user
     const items = await getCollection('items')
-      .find({})
+      .find({ createdBy: req.user._id })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(100)
       .toArray();
     res.json(items);
   } catch (err) {
     console.error('Get Items Error:', err);
-    res.status(500).json({ error: 'Failed to fetch items' });
+    res.status(500).json({ error: 'Failed to fetch your items' });
   }
 };

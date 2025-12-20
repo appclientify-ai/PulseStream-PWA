@@ -19,6 +19,7 @@ const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
   const isOnline = useOffline();
   const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [state, setState] = useState<AppState>({
     messages: [],
     metrics: INITIAL_METRICS as MetricData[],
@@ -57,13 +58,17 @@ const Dashboard: React.FC = () => {
       socketService.connect();
       
       socketService.on('db_item_change', (change: any) => {
-        if (change.type === 'insert') {
-          setState(prev => ({
-            ...prev,
-            metrics: prev.metrics.map(m => 
-              m.label === 'Active Clients' ? { ...m, value: m.value + 1, trend: 'up' } : m
-            )
-          }));
+        // Ensure user only updates metrics for their own items
+        // On server-side we filter but client-side check is safer
+        if (change.data?.createdBy === user?.id || change.data?.createdBy === (user as any)?._id) {
+          if (change.type === 'insert') {
+            setState(prev => ({
+              ...prev,
+              metrics: prev.metrics.map(m => 
+                m.label === 'Active Clients' ? { ...m, value: m.value + 1, trend: 'up' } : m
+              )
+            }));
+          }
         }
       });
 
@@ -83,7 +88,7 @@ const Dashboard: React.FC = () => {
     return () => {
       socketService.disconnect();
     };
-  }, [isOnline]);
+  }, [isOnline, user]);
 
   const handleSendMessage = useCallback(async (content: string) => {
     const newMessage: Message = {
@@ -109,9 +114,18 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-950 text-slate-100">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <Header isConnected={state.isConnected && isOnline} currentUser={user} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)}
+      />
+      <main className="flex flex-1 flex-col overflow-hidden relative">
+        <Header 
+          isConnected={state.isConnected && isOnline} 
+          currentUser={user} 
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
         <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
           {installPrompt && <InstallBanner onInstall={triggerInstall} />}
           {activeTab === 'dashboard' ? (
@@ -121,50 +135,58 @@ const Dashboard: React.FC = () => {
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm">
+                <div className="lg:col-span-2 rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-slate-300">Live Client Activity</h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-300">Your Client Activity</h3>
+                      <p className="text-xs text-slate-500">Real-time stats for your consulting firm</p>
+                    </div>
                     <div className="flex items-center gap-2">
                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                       <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Cross-Device Sync Active</span>
+                       <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Live Sync</span>
                     </div>
                   </div>
-                  <div className="h-64 w-full flex items-end justify-between gap-3 px-4">
-                     {[...Array(12)].map((_, i) => (
+                  <div className="h-64 w-full flex items-end justify-between gap-2 px-2">
+                     {[...Array(15)].map((_, i) => (
                        <div key={i} className="flex flex-col items-center flex-1">
                           <div 
-                            className={`w-full ${isOnline ? 'bg-indigo-500/30' : 'bg-slate-700/20'} rounded-t-lg transition-all duration-700 ease-in-out`} 
+                            className={`w-full ${isOnline ? 'bg-indigo-500/30 hover:bg-indigo-500/50' : 'bg-slate-700/20'} rounded-t-lg transition-all duration-700 ease-in-out cursor-help`} 
+                            title={`${Math.floor(Math.random() * 50)} items`}
                             style={{ 
-                              height: `${Math.max(10, Math.sin((i + Date.now()/5000)) * 40 + 50)}%`,
+                              height: `${Math.max(10, Math.sin((i + Date.now()/10000)) * 30 + 50)}%`,
                             }} 
                           />
-                          <span className="mt-2 text-[10px] text-slate-500 font-medium">Oct {i+1}</span>
                        </div>
                      ))}
                   </div>
+                  <div className="mt-4 border-t border-slate-800 pt-4 flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                    <span>Oct 01</span>
+                    <span>Current Sync Window</span>
+                    <span>Oct 15</span>
+                  </div>
                 </div>
 
-                <div className="rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-slate-300">Recent Sync Events</h3>
+                <div className="rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm shadow-xl">
+                  <h3 className="mb-4 text-lg font-semibold text-slate-300">Recent Firm Events</h3>
                   <div className="space-y-4">
                     {state.messages.slice(-3).reverse().map((msg, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 transition-transform hover:scale-[1.02]">
                         <div className="flex-1 truncate pr-2">
                           <p className="text-sm font-bold text-slate-200 truncate">{msg.content}</p>
-                          <p className="text-[10px] text-slate-500 font-medium">By {msg.sender}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">Synced by {msg.sender}</p>
                         </div>
-                        <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                        <div className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
                       </div>
                     ))}
                     {state.messages.length === 0 && (
-                      <p className="text-xs text-slate-500 italic text-center py-4">Waiting for real-time events...</p>
+                      <p className="text-xs text-slate-500 italic text-center py-4">Waiting for real-time firm activity...</p>
                     )}
                   </div>
                   <button 
                     onClick={() => setActiveTab('chat')}
-                    className="mt-6 w-full py-2.5 rounded-xl border border-indigo-500/30 text-xs font-bold text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                    className="mt-6 w-full py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs font-bold text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all shadow-lg"
                   >
-                    Open Messenger
+                    Open Firm Chat
                   </button>
                 </div>
               </div>
