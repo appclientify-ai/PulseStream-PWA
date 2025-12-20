@@ -1,7 +1,7 @@
 
 {
-  "short_name": "PulseStream",
-  "name": "PulseStream Real-time PWA",
+  "short_name": "Clientify",
+  "name": "Clientify Tax & GST Management",
   "icons": [
     {
       "src": "https://picsum.photos/192/192",
@@ -21,5 +21,5 @@
   "display": "standalone",
   "scope": "/",
   "theme_color": "#0f172a",
-  "description": "Real-time streaming dashboard for collaborative workflows."
+  "description": "Professional client management for GST and Income Tax consultants."
 }

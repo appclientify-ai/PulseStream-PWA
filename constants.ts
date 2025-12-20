@@ -12,14 +12,14 @@ export const SOCKET_URL = BASE_HOST.startsWith('ws')
   : `ws://${BASE_HOST.replace(/^https?:\/\//, '')}`;
 
 export const INITIAL_METRICS = [
-  { label: 'Network Latency', value: 24, trend: 'stable' },
-  { label: 'Active Sessions', value: 120, trend: 'up' },
-  { label: 'Throughput', value: 850, trend: 'up' },
-  { label: 'Error Rate', value: 0.02, trend: 'down' },
+  { label: 'Active Clients', value: 42, trend: 'up' },
+  { label: 'GST Filings Due', value: 12, trend: 'down' },
+  { label: 'ITR Progress', value: 78, trend: 'up' },
+  { label: 'Pending Documents', value: 24, trend: 'stable' },
 ];
 
 export const MOCK_USERS = [
-  { id: '1', username: 'alex_dev', status: 'online' },
-  { id: '2', username: 'sarah_ops', status: 'away' },
-  { id: '3', username: 'mike_qa', status: 'online' },
+  { id: '1', username: 'ca_sharma', status: 'online' },
+  { id: '2', username: 'tax_expert_anil', status: 'away' },
+  { id: '3', username: 'gst_pro_neha', status: 'online' },
 ];

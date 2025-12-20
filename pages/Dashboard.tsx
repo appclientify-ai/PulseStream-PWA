@@ -29,16 +29,20 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isOnline) return; // Pause random updates if offline
+      if (!isOnline) return;
       setState(prev => ({
         ...prev,
-        metrics: prev.metrics.map(m => ({
-          ...m,
-          value: m.value + (Math.random() - 0.5) * 5,
-          trend: Math.random() > 0.5 ? 'up' : 'down'
-        }))
+        metrics: prev.metrics.map(m => {
+          // Simulate some small shifts in workload/progress
+          const change = (Math.random() - 0.5) * 1.5;
+          return {
+            ...m,
+            value: Math.max(0, m.value + change),
+            trend: change > 0 ? 'up' : 'down'
+          };
+        })
       }));
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isOnline]);
 
@@ -63,8 +67,6 @@ const Dashboard: React.FC = () => {
     
     setState(prev => ({ ...prev, messages: [...prev.messages, newMessage] }));
     
-    // In an offline-first app without persistent storage, we simply try to emit.
-    // If offline, the UI shows the message, but it won't persist on refresh if the server didn't get it.
     if (isOnline) {
       socketService.emit('message', newMessage);
     }
@@ -78,21 +80,52 @@ const Dashboard: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
           {installPrompt && <InstallBanner onInstall={triggerInstall} />}
           {activeTab === 'dashboard' ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {state.metrics.map((metric, idx) => <MetricCard key={idx} metric={metric} />)}
-              <div className="col-span-full mt-6 rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm">
-                <h3 className="mb-4 text-lg font-semibold text-slate-300">Live Pulse Activity</h3>
-                <div className="h-64 w-full flex items-end justify-between gap-2 px-4">
-                   {[...Array(20)].map((_, i) => (
-                     <div 
-                      key={i} 
-                      className={`w-full ${isOnline ? 'bg-blue-500/30 animate-pulse' : 'bg-slate-700/20'} rounded-t-md transition-all duration-500`} 
-                      style={{ 
-                        height: `${Math.random() * 80 + 20}%`, 
-                        animationDelay: `${i * 0.1}s` 
-                      }} 
-                    />
-                   ))}
+            <div className="max-w-7xl mx-auto space-y-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {state.metrics.map((metric, idx) => <MetricCard key={idx} metric={metric} />)}
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-slate-300">Client Compliance Pipeline</h3>
+                    <span className="text-xs text-indigo-400 font-bold uppercase tracking-widest">Live Updates</span>
+                  </div>
+                  <div className="h-64 w-full flex items-end justify-between gap-3 px-4">
+                     {[...Array(12)].map((_, i) => (
+                       <div key={i} className="flex flex-col items-center flex-1">
+                          <div 
+                            className={`w-full ${isOnline ? 'bg-indigo-500/30' : 'bg-slate-700/20'} rounded-t-lg transition-all duration-1000 ease-in-out`} 
+                            style={{ 
+                              height: `${Math.random() * 70 + 20}%`,
+                            }} 
+                          />
+                          <span className="mt-2 text-[10px] text-slate-500 font-medium">M{i+1}</span>
+                       </div>
+                     ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-slate-900/50 p-6 border border-slate-800 backdrop-blur-sm">
+                  <h3 className="mb-4 text-lg font-semibold text-slate-300">Upcoming Deadlines</h3>
+                  <div className="space-y-4">
+                    {[
+                      { title: 'GST GSTR-3B Filing', date: 'Oct 20, 2024', status: 'critical' },
+                      { title: 'TDS Payment Q3', date: 'Oct 07, 2024', status: 'upcoming' },
+                      { title: 'ITR-3 Audit Subm.', date: 'Oct 31, 2024', status: 'pending' },
+                    ].map((d, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                        <div>
+                          <p className="text-sm font-bold text-slate-200">{d.title}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">{d.date}</p>
+                        </div>
+                        <div className={`h-2 w-2 rounded-full ${d.status === 'critical' ? 'bg-red-500' : 'bg-indigo-500'}`} />
+                      </div>
+                    ))}
+                  </div>
+                  <button className="mt-6 w-full py-2.5 rounded-xl border border-indigo-500/30 text-xs font-bold text-indigo-400 hover:bg-indigo-500/10 transition-colors">
+                    View Filing Calendar
+                  </button>
                 </div>
               </div>
             </div>

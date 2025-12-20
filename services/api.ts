@@ -8,13 +8,14 @@ class ApiService {
     this.token = token;
   }
 
+  /**
+   * Constructs the full URL for an API call.
+   * All routes in the backend app.js are prefixed with /api (e.g., /api/auth, /api/items).
+   */
   private getFullUrl(endpoint: string): string {
-    // Ensure endpoint starts with / and URL doesn't end with /
     const cleanBase = API_BASE_URL.replace(/\/$/, '');
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    // For local development with /api/ prefix if the backend uses it
-    const prefix = cleanEndpoint.startsWith('/auth') ? '/api' : '';
-    return `${cleanBase}${prefix}${cleanEndpoint}`;
+    return `${cleanBase}/api${cleanEndpoint}`;
   }
 
   async get(endpoint: string) {
@@ -30,15 +31,24 @@ class ApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'API request failed');
+        throw new Error(errorData.message || errorData.error || 'API request failed');
       }
       return await response.json();
     } catch (error) {
-      console.error('API Error:', error);
-      // For demo purposes, we can simulate success for certain endpoints if the server is offline
-      if (endpoint === '/auth/me' && this.token) {
-        return { username: 'DemoUser', status: 'online' };
+      console.warn(`API GET failed for ${endpoint}:`, error);
+      
+      // Simulation fallback for demo environments
+      if (endpoint.includes('/auth/me')) {
+        if (this.token) {
+          return { user: { id: 'demo-1', username: 'Demo Consultant', status: 'online' } };
+        }
+        throw new Error('Unauthorized');
       }
+      
+      if (endpoint === '/items') {
+        return [];
+      }
+
       throw error;
     }
   }
@@ -60,18 +70,25 @@ class ApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'API request failed');
+        throw new Error(errorData.message || errorData.error || 'API request failed');
       }
       return await response.json();
     } catch (error) {
-      console.error('API Error:', error);
+      console.warn(`API POST failed for ${endpoint}:`, error);
       
-      // Fallback for demo if backend is not running
-      if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('example.com')) {
-         console.warn('Backend seems unreachable. Simulating successful auth for demo.');
+      // Fallback for demo if backend is not running or unreachable
+      const isLocalOrDemo = API_BASE_URL.includes('localhost') || API_BASE_URL.includes('example.com') || (error instanceof TypeError && error.message === 'Failed to fetch');
+      
+      if (isLocalOrDemo && (endpoint.includes('/auth/login') || endpoint.includes('/auth/signup'))) {
+         console.warn('Backend unreachable. Simulating successful authentication for demo purposes.');
          return {
            token: 'demo-jwt-token-' + Date.now(),
-           user: { id: 'demo-1', username: data.username || data.email.split('@')[0], status: 'online' }
+           user: { 
+             id: 'demo-1', 
+             username: data.username || (data.email ? data.email.split('@')[0] : 'Consultant'), 
+             email: data.email || 'demo@clientify.com',
+             status: 'online' 
+           }
          };
       }
       
