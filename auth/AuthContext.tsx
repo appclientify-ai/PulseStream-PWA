@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     setError(null);
+    // Force a redirect back to home by letting App state react to isAuthenticated changing
   };
 
   return (

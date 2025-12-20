@@ -14,12 +14,10 @@ import { useOffline } from './hooks/useOffline';
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, token, user } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   
   const handleReconnect = useCallback(() => {
-    console.log('App back online - re-syncing...');
-    // Without persistent storage, we simply attempt to verify session if possible
     if (token) {
       api.get('/auth/me').catch(console.error);
     }
@@ -27,15 +25,21 @@ const AppContent: React.FC = () => {
 
   const isOnline = useOffline(handleReconnect);
 
-  // Sync token to ApiService whenever it changes
   useEffect(() => {
     api.setToken(token);
   }, [token]);
 
-  // If authenticated and on an auth page, redirect to dashboard
+  // Handle Redirects based on Auth Status
   useEffect(() => {
-    if (isAuthenticated && (currentPage === 'login' || currentPage === 'signup' || currentPage === 'home')) {
-      setCurrentPage('dashboard');
+    if (isAuthenticated) {
+      if (currentPage === 'login' || currentPage === 'signup' || currentPage === 'home') {
+        setCurrentPage('dashboard');
+      }
+    } else {
+      // If user logs out or session is lost, go to home or login
+      if (currentPage === 'dashboard') {
+        setCurrentPage('home');
+      }
     }
   }, [isAuthenticated, currentPage]);
 
