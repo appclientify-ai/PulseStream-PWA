@@ -1,0 +1,8 @@
+{
+  "name": "PulseStream PWA",
+  "description": "A high-performance, real-time data streaming dashboard built as a Progressive Web App.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
