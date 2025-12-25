@@ -41,7 +41,7 @@ const AppContent: React.FC = () => {
     }
   }, [isAuthenticated, hasCheckedAuth]);
 
-  // Wait for initial auth check to complete to avoid "round and round" issues
+  // Wait for initial auth check to complete
   if (!hasCheckedAuth) {
     return <Loader />;
   }
@@ -59,12 +59,22 @@ const AppContent: React.FC = () => {
           </>
         );
       case 'login':
-        return <Login onSwitch={() => setCurrentPage('signup')} />;
+        return (
+          <Login 
+            onSwitch={() => setCurrentPage('signup')} 
+            onBackToHome={() => setCurrentPage('home')} 
+          />
+        );
       case 'signup':
-        return <Signup onSwitch={() => setCurrentPage('login')} />;
+        return (
+          <Signup 
+            onSwitch={() => setCurrentPage('login')} 
+            onBackToHome={() => setCurrentPage('home')} 
+          />
+        );
       case 'dashboard':
         return (
-          <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} />}>
+          <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
             <Dashboard />
           </ProtectedRoute>
         );
@@ -78,7 +88,7 @@ const AppContent: React.FC = () => {
       <OfflineBanner isOnline={isOnline} />
       {renderPage()}
       {/* Global overlay loader for auth transitions */}
-      {isLoading && <div className="fixed inset-0 z-[9999]"><Loader /></div>}
+      {isLoading && <div className="fixed inset-0 z-[9999] bg-slate-950/50 backdrop-blur-sm"><Loader /></div>}
     </>
   );
 };

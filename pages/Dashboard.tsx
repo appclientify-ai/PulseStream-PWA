@@ -58,9 +58,11 @@ const Dashboard: React.FC = () => {
       socketService.connect();
       
       socketService.on('db_item_change', (change: any) => {
-        // Ensure user only updates metrics for their own items
-        // On server-side we filter but client-side check is safer
-        if (change.data?.createdBy === user?.id || change.data?.createdBy === (user as any)?._id) {
+        // Enforce client-side filtering for extra security layer
+        const itemCreator = change.data?.createdBy;
+        const currentUserId = user?.id || (user as any)?._id;
+
+        if (itemCreator === currentUserId) {
           if (change.type === 'insert') {
             setState(prev => ({
               ...prev,
@@ -104,7 +106,7 @@ const Dashboard: React.FC = () => {
     try {
       await api.post('/items', { name: `Chat Log: ${content.substring(0, 10)}...`, data: { content } });
     } catch (e) {
-      console.warn('Persistance failed, but message sent via socket.');
+      console.warn('Persistence failed, but message sent via socket.');
     }
   }, [user]);
 
@@ -124,7 +126,7 @@ const Dashboard: React.FC = () => {
         <Header 
           isConnected={state.isConnected && isOnline} 
           currentUser={user} 
-          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
         <div className="flex-1 overflow-y-auto p-4 md:p-8 no-scrollbar">
           {installPrompt && <InstallBanner onInstall={triggerInstall} />}
@@ -151,7 +153,6 @@ const Dashboard: React.FC = () => {
                        <div key={i} className="flex flex-col items-center flex-1">
                           <div 
                             className={`w-full ${isOnline ? 'bg-indigo-500/30 hover:bg-indigo-500/50' : 'bg-slate-700/20'} rounded-t-lg transition-all duration-700 ease-in-out cursor-help`} 
-                            title={`${Math.floor(Math.random() * 50)} items`}
                             style={{ 
                               height: `${Math.max(10, Math.sin((i + Date.now()/10000)) * 30 + 50)}%`,
                             }} 

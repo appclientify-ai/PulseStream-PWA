@@ -5,9 +5,10 @@ import Loader from '../components/Loader';
 
 interface LoginProps {
   onSwitch: () => void;
+  onBackToHome: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onSwitch }) => {
+const Login: React.FC<LoginProps> = ({ onSwitch, onBackToHome }) => {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,50 +29,63 @@ const Login: React.FC<LoginProps> = ({ onSwitch }) => {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-slate-950">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/50 p-8 backdrop-blur-sm shadow-2xl">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/50 p-8 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl"></div>
+        
+        <button 
+          onClick={onBackToHome}
+          className="absolute left-6 top-6 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Home
+        </button>
+
+        <div className="mb-8 text-center pt-4">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-500/20">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-white">Clientify Login</h2>
-          <p className="mt-2 text-slate-400">Enter your credentials to manage clients</p>
+          <h2 className="text-3xl font-black text-white tracking-tight">Welcome Back</h2>
+          <p className="mt-2 text-slate-400">Manage your tax clients with ease</p>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20 text-center">
+          <div className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center animate-in fade-in slide-in-from-top-2 duration-300">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">User ID</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">User ID</label>
             <input
               type="text"
               required
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="Your Unique ID"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3.5 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+              placeholder="a"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Password</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                placeholder="••••••••"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3.5 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="a"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors"
               >
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -89,18 +103,20 @@ const Login: React.FC<LoginProps> = ({ onSwitch }) => {
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-indigo-600 py-3 font-bold text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20"
+            className="w-full rounded-xl bg-indigo-600 py-4 font-black text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20"
           >
-            Enter Dashboard
+            Sign In
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
-          New to Clientify?{' '}
-          <button onClick={onSwitch} className="font-semibold text-indigo-400 hover:text-indigo-300">
-            Register Firm
-          </button>
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-slate-500">
+            Don't have an account?{' '}
+            <button onClick={onSwitch} className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+              Register Firm
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

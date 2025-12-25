@@ -5,9 +5,10 @@ import Loader from '../components/Loader';
 
 interface SignupProps {
   onSwitch: () => void;
+  onBackToHome: () => void;
 }
 
-const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
+const Signup: React.FC<SignupProps> = ({ onSwitch, onBackToHome }) => {
   const [formData, setFormData] = useState({
     username: '',
     mobile_no: '',
@@ -26,7 +27,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent double submission
+    if (isLoading) return; 
     
     try {
       await signup(formData);
@@ -39,19 +40,32 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-slate-950 py-12">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900/50 p-8 backdrop-blur-sm shadow-2xl">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-500/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-900/50 p-8 backdrop-blur-sm shadow-2xl relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl"></div>
+
+        <button 
+          onClick={onBackToHome}
+          className="absolute left-6 top-6 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Home
+        </button>
+
+        <div className="mb-8 text-center pt-4">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-500/20">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-white">Register Firm</h2>
-          <p className="mt-2 text-slate-400">Join Clientify management portal</p>
+          <h2 className="text-3xl font-black text-white tracking-tight">Register Firm</h2>
+          <p className="mt-2 text-slate-400">Join the next generation of tax management</p>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400 border border-red-500/20 text-center animate-pulse">
+          <div className="mb-6 rounded-xl bg-red-500/10 p-4 text-sm text-red-400 border border-red-500/20 text-center animate-pulse">
             {error}
           </div>
         )}
@@ -59,7 +73,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">User Name</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">User Name</label>
               <input
                 type="text"
                 name="username"
@@ -67,12 +81,12 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 disabled={isLoading}
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="Full Name"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Mobile No</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mobile No</label>
               <input
                 type="tel"
                 name="mobile_no"
@@ -80,14 +94,14 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 disabled={isLoading}
                 value={formData.mobile_no}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="10 digit number"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Email ID</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email ID</label>
             <input
               type="email"
               name="email_id"
@@ -95,40 +109,40 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               disabled={isLoading}
               value={formData.email_id}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
               placeholder="email@example.com"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Firm Name (Optional)</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Firm Name (Optional)</label>
               <input
                 type="text"
                 name="firm_name"
                 disabled={isLoading}
                 value={formData.firm_name}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="Your Firm"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">GSTN (Optional)</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">GSTN (Optional)</label>
               <input
                 type="text"
                 name="gstn"
                 disabled={isLoading}
                 value={formData.gstn}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="GST Number"
               />
             </div>
           </div>
 
           <div className="pt-2 border-t border-slate-800">
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">User ID</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Unique User ID</label>
             <input
               type="text"
               name="user_id"
@@ -136,13 +150,13 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
               disabled={isLoading}
               value={formData.user_id}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-              placeholder="unique_username"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+              placeholder="choose_a_username"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Password</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -151,13 +165,13 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
                 disabled={isLoading}
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors"
               >
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -177,18 +191,20 @@ const Signup: React.FC<SignupProps> = ({ onSwitch }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="mt-4 w-full rounded-xl bg-indigo-600 py-4 font-bold text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20 disabled:bg-slate-700 disabled:shadow-none"
+            className="mt-6 w-full rounded-2xl bg-indigo-600 py-4 font-black text-white transition-all hover:bg-indigo-500 active:scale-[0.98] shadow-lg shadow-indigo-500/20 disabled:bg-slate-700 disabled:shadow-none"
           >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+            {isLoading ? 'Processing...' : 'Register Firm'}
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Already registered?{' '}
-          <button onClick={onSwitch} disabled={isLoading} className="font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-50">
-            Sign In
-          </button>
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-slate-500">
+            Already have an account?{' '}
+            <button onClick={onSwitch} disabled={isLoading} className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50">
+              Sign In
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
