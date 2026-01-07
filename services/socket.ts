@@ -1,16 +1,14 @@
 
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../constants';
-import { api } from './api';
 
 class SocketService {
   private socket: Socket | null = null;
   private handlers: { [key: string]: Function[] } = {};
 
   connect() {
-    if (api.isMockMode || !SOCKET_URL || SOCKET_URL.includes('example.com')) {
-        console.debug('SocketService: Initializing local simulation.');
-        this.simulateConnection();
+    if (!SOCKET_URL || SOCKET_URL.includes('localhost') && !window.location.hostname.includes('localhost')) {
+        console.debug('SocketService: Connection deferred (waiting for valid backend URL)');
         return;
     }
     
@@ -18,10 +16,11 @@ class SocketService {
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
+        timeout: 10000
       });
 
       this.socket.on('connect', () => {
-        console.debug('Socket Connected to Server');
+        console.debug('Socket Connected to Cloud Vault');
         this.trigger('connect', {});
       });
 
@@ -30,13 +29,8 @@ class SocketService {
       });
 
     } catch (e) {
-      console.warn('Socket connection error, falling back to simulation.');
-      this.simulateConnection();
+      console.error('Socket connection fatal error:', e);
     }
-  }
-
-  private simulateConnection() {
-    setTimeout(() => this.trigger('connect', {}), 500);
   }
 
   on(event: string, callback: (data: any) => void) {
@@ -52,23 +46,10 @@ class SocketService {
   }
 
   emit(event: string, data: any) {
-    if (this.socket) {
+    if (this.socket?.connected) {
       this.socket.emit(event, data);
     } else {
-      console.debug(`[Mock Socket] Emit ${event}`, data);
-      
-      // Simulation Logic
-      if (event === 'message') {
-        // Echo back for UI feedback
-        setTimeout(() => {
-          this.trigger('message', {
-            id: `mock_reply_${Date.now()}`,
-            sender: 'VaultBot',
-            content: `I received: "${data.content}". This is a real-time simulation.`,
-            timestamp: Date.now()
-          });
-        }, 1000);
-      }
+      console.warn(`Socket not connected. Cannot emit ${event}`);
     }
   }
 

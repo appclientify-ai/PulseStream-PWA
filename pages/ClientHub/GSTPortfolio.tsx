@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import GstMasterPortfolio from './GstMasterPortfolio';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal';
-import { mockBackend } from '../../services/mockBackend';
+import { api } from '../../services/api';
 import { Client, JurisdictionType, ClientStatus, GstStatus, GstRegType, GstFilingFreq, ConstitutionType } from '../../types';
 
 const CSV_HEADERS = [
@@ -28,8 +29,12 @@ const GSTPortfolio: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const data = await mockBackend.getClients();
-      setClients(data.filter(c => !!c.gstProfile));
+      try {
+        const data = await api.get('/clients');
+        setClients(data.filter((c: any) => !!c.gstProfile));
+      } catch (err) {
+        console.error("Failed to load clients from API", err);
+      }
     };
     load();
   }, [refreshTrigger]);
@@ -121,10 +126,8 @@ const GSTPortfolio: React.FC = () => {
     reader.onload = async (e) => {
       const text = e.target?.result as string;
       const rows = text.split('\n').slice(1);
-      const allClients = await mockBackend.getClients();
       
-      let newCount = 0;
-      let updatedCount = 0;
+      let successCount = 0;
       let failedCount = 0;
       
       for (const row of rows) {
@@ -132,22 +135,15 @@ const GSTPortfolio: React.FC = () => {
         const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
         if (cols.length < 6) continue;
         
-        const gstin = cols[5];
-        if (!gstin) continue;
-
-        // Find existing client to update if possible
-        const existing = allClients.find(c => c.gstProfile?.gstin === gstin);
-
         try {
-          await mockBackend.saveClient({
-            id: existing?.id,
+          await api.post('/clients', {
             legalName: cols[0],
             tradeName: cols[1],
             mobile: cols[2],
             email: cols[3],
             status: (cols[4] as ClientStatus) || 'Active Filing',
             gstProfile: {
-              gstin,
+              gstin: cols[5],
               username: cols[6] || '',
               password: cols[7] || '',
               gstStatus: (cols[8] as GstStatus) || 'Active',
@@ -160,7 +156,7 @@ const GSTPortfolio: React.FC = () => {
               sector: cols[15],
               range: cols[16],
               address: cols[17],
-              stakeholders: existing?.gstProfile?.stakeholders || []
+              stakeholders: []
             },
             bankDetails: {
               bankName: cols[18] || '',
@@ -169,20 +165,13 @@ const GSTPortfolio: React.FC = () => {
             },
             remarks: cols[21]
           });
-          
-          if (existing) {
-            updatedCount++;
-          } else {
-            newCount++;
-          }
+          successCount++;
         } catch (err) {
           failedCount++;
         }
       }
       
-      const summary = `Import Result Summary:\n\n• New Clients Added: ${newCount}\n• Existing Records Updated: ${updatedCount}${failedCount > 0 ? `\n• Rows Failed: ${failedCount}` : ''}`;
-      alert(summary);
-      
+      alert(`Import Summary:\n• Processed: ${successCount}\n• Failed: ${failedCount}`);
       handleRefresh();
       setShowDataOptions(false);
     };
@@ -195,7 +184,6 @@ const GSTPortfolio: React.FC = () => {
       {/* Consolidated Toolbar */}
       <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
-        {/* Status Indicators */}
         <div className="flex items-center gap-4 px-2 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="flex flex-col items-center min-w-[32px]">
             <span className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Total</span>
@@ -205,24 +193,14 @@ const GSTPortfolio: React.FC = () => {
             <span className="text-[9px] font-black text-green-500 uppercase leading-none mb-1">Active</span>
             <span className="text-lg font-black text-green-600 leading-none">{stats.active}</span>
           </div>
-          <div className="flex flex-col items-center min-w-[32px]">
-            <span className="text-[9px] font-black text-amber-500 uppercase leading-none mb-1">Case</span>
-            <span className="text-lg font-black text-amber-600 leading-none">{stats.caseStudy}</span>
-          </div>
-          <div className="flex flex-col items-center min-w-[32px]">
-            <span className="text-[9px] font-black text-red-400 uppercase leading-none mb-1">Inact</span>
-            <span className="text-lg font-black text-red-500 leading-none">{stats.inactive}</span>
-          </div>
         </div>
 
-        {/* Unified Search */}
         <div className="relative flex-1 group min-w-[180px] w-full">
           <input type="text" placeholder="Search legal name or GSTIN..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-2.5 pl-10 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 transition-all outline-none" />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
-        {/* Filters Group */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full lg:w-auto pb-1 lg:pb-0">
           <select value={jurisdictionFilter} onChange={e => handleJurisdictionChange(e.target.value)}
             className="bg-slate-50 border-none rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-600 focus:ring-2 focus:ring-indigo-600/10 outline-none shrink-0">
@@ -230,25 +208,8 @@ const GSTPortfolio: React.FC = () => {
             <option value="State">State</option>
             <option value="Center">Center</option>
           </select>
-
-          {jurisdictionFilter === 'State' && (
-            <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)}
-              className="bg-slate-50 border-none rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-600 focus:ring-2 focus:ring-indigo-600/10 outline-none animate-in fade-in slide-in-from-left-2 duration-300 shrink-0">
-              <option value="All">All Sectors</option>
-              {sectors.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          )}
-
-          {jurisdictionFilter === 'Center' && (
-            <select value={rangeFilter} onChange={e => setRangeFilter(e.target.value)}
-              className="bg-slate-50 border-none rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-600 focus:ring-2 focus:ring-indigo-600/10 outline-none animate-in fade-in slide-in-from-left-2 duration-300 shrink-0">
-              <option value="All">All Ranges</option>
-              {ranges.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          )}
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0 ml-auto lg:ml-0">
           <div className="relative">
             <button onClick={() => setShowDataOptions(!showDataOptions)} className="h-10 w-10 flex items-center justify-center bg-slate-100 rounded-xl text-slate-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
@@ -267,8 +228,7 @@ const GSTPortfolio: React.FC = () => {
 
           <button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 text-white font-black uppercase tracking-tight px-4 h-10 rounded-xl shadow-lg hover:bg-slate-900 transition-all flex items-center gap-2 text-sm whitespace-nowrap">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            <span className="hidden sm:inline">Add Client</span>
-            <span className="sm:hidden">+</span>
+            Add Client
           </button>
         </div>
       </div>
