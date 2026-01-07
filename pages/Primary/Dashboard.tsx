@@ -1,60 +1,60 @@
 
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
-import { socketService } from '../../services/socket';
-import { api } from '../../services/api';
-import { AppState, Message, MetricData, ActiveView, Client } from '../../types';
-import { useAuth } from '../../auth/AuthContext';
-import { useOffline } from '../../hooks/useOffline';
-import { usePWA } from '../../hooks/usePWA';
+import { socketService } from '../../services/socket.ts';
+import { INITIAL_METRICS } from '../../constants.ts';
+import { AppState, Message, MetricData, ActiveView } from '../../types.ts';
+import { useAuth } from '../../auth/AuthContext.tsx';
+import { useOffline } from '../../hooks/useOffline.ts';
+import { usePWA } from '../../hooks/usePWA.ts';
+import { api } from '../../services/api.ts';
 
-import Sidebar from '../../components/Sidebar';
-import Header from '../../components/Header';
-import MetricCard from '../../components/MetricCard';
-import ChatPanel from '../../components/ChatPanel';
-import Loader from '../../components/Loader';
-import InstallBanner from '../../components/InstallBanner';
-import ErrorBoundary from '../../components/ErrorBoundary';
-import { YEARS, MONTHS, QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
+import Sidebar from '../../components/Sidebar.tsx';
+import Header from '../../components/Header.tsx';
+import MetricCard from '../../components/MetricCard.tsx';
+import ChatPanel from '../../components/ChatPanel.tsx';
+import Loader from '../../components/Loader.tsx';
+import InstallBanner from '../../components/InstallBanner.tsx';
 
-// LAZY IMPORTS
-const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio'));
-const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio'));
-const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling'));
-const QuarterlyFiling = lazy(() => import('../Compliance/GSTReturn/QuarterlyFiling'));
-const CompositionFiling = lazy(() => import('../Compliance/GSTReturn/CompositionFiling'));
-const GSTR4 = lazy(() => import('../Compliance/AnnualReturns/GSTR4'));
-const GSTR9_9C = lazy(() => import('../Compliance/AnnualReturns/GSTR9_9C'));
-const ITRReturn = lazy(() => import('../Compliance/ITAudit/ITRReturn'));
-const TAXAudit = lazy(() => import('../Compliance/ITAudit/TAXAudit'));
-const NoticePending = lazy(() => import('../LitigationSuite/GSTNotices/NoticePending'));
-const NoticeFiled = lazy(() => import('../LitigationSuite/GSTNotices/NoticeFiled'));
-const NoticeDrop = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDrop'));
-const NoticeDemand = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDemand'));
-const AppealPending = lazy(() => import('../LitigationSuite/GSTAppeals/AppealPending'));
-const AppealFiled = lazy(() => import('../LitigationSuite/GSTAppeals/AppealFiled'));
-const AppealDrop = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDrop'));
-const AppealDemand = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDemand'));
-const TribunalPending = lazy(() => import('../LitigationSuite/Tribunal/TribunalPending'));
-const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFiled'));
-const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop'));
-const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand'));
-const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending'));
-const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled'));
-const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop'));
-const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand'));
-const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration'));
-const FoodLicenses = lazy(() => import('../Miscellaneous/FoodLicenses'));
-const MSMERegistration = lazy(() => import('../Miscellaneous/MSMERegistration'));
-const Miscellaneouswork = lazy(() => import('../Miscellaneous/Miscellaneouswork'));
-const Reminders = lazy(() => import('../Administration/Reminders'));
-const Messenger = lazy(() => import('../Administration/Messenger'));
-const Invoices = lazy(() => import('../Administration/invoice/Invoices'));
-const AddInvoice = lazy(() => import('../Administration/invoice/addinvoice'));
-const InvoiceSetting = lazy(() => import('../Administration/invoice/invoicesetting'));
-const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentReceived'));
-const DueDateSetting = lazy(() => import('../Administration/DueDateSetting'));
-const Setting = lazy(() => import('../Administration/Setting'));
-const Trash = lazy(() => import('../Administration/Trash'));
+// LAZY IMPORTS - Note: ESM requires extensions here too if the bundler isn't handling it,
+// but usually Vite handles .tsx in dynamic imports. Standardizing with .tsx for consistency.
+const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
+const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio.tsx'));
+const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling.tsx'));
+const QuarterlyFiling = lazy(() => import('../Compliance/GSTReturn/QuarterlyFiling.tsx'));
+const CompositionFiling = lazy(() => import('../Compliance/GSTReturn/CompositionFiling.tsx'));
+const GSTR4 = lazy(() => import('../Compliance/AnnualReturns/GSTR4.tsx'));
+const GSTR9_9C = lazy(() => import('../Compliance/AnnualReturns/GSTR9_9C.tsx'));
+const ITRReturn = lazy(() => import('../Compliance/ITAudit/ITRReturn.tsx'));
+const TAXAudit = lazy(() => import('../Compliance/ITAudit/TAXAudit.tsx'));
+const NoticePending = lazy(() => import('../LitigationSuite/GSTNotices/NoticePending.tsx'));
+const NoticeFiled = lazy(() => import('../LitigationSuite/GSTNotices/NoticeFiled.tsx'));
+const NoticeDrop = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDrop.tsx'));
+const NoticeDemand = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDemand.tsx'));
+const AppealPending = lazy(() => import('../LitigationSuite/GSTAppeals/AppealPending.tsx'));
+const AppealFiled = lazy(() => import('../LitigationSuite/GSTAppeals/AppealFiled.tsx'));
+const AppealDrop = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDrop.tsx'));
+const AppealDemand = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDemand.tsx'));
+const TribunalPending = lazy(() => import('../LitigationSuite/Tribunal/TribunalPending.tsx'));
+const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFiled.tsx'));
+const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop.tsx'));
+const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand.tsx'));
+const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending.tsx'));
+const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled.tsx'));
+const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop.tsx'));
+const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand.tsx'));
+const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration.tsx'));
+const FoodLicenses = lazy(() => import('../Miscellaneous/FoodLicenses.tsx'));
+const MSMERegistration = lazy(() => import('../Miscellaneous/MSMERegistration.tsx'));
+const Miscellaneouswork = lazy(() => import('../Miscellaneous/Miscellaneouswork.tsx'));
+const Reminders = lazy(() => import('../Administration/Reminders.tsx'));
+const Messenger = lazy(() => import('../Administration/Messenger.tsx'));
+const Invoices = lazy(() => import('../Administration/invoice/Invoices.tsx'));
+const AddInvoice = lazy(() => import('../Administration/invoice/addinvoice.tsx'));
+const InvoiceSetting = lazy(() => import('../Administration/invoice/invoicesetting.tsx'));
+const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentReceived.tsx'));
+const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
+const Setting = lazy(() => import('../Administration/Setting.tsx'));
+const Trash = lazy(() => import('../Administration/Trash.tsx'));
 
 const VIEW_CONFIG: Record<string, { label: string; description: string }> = {
   'dashboard': { label: 'Dashboard', description: 'Real-time overview of your professional firm performance.' },
@@ -99,26 +99,17 @@ const VIEW_CONFIG: Record<string, { label: string; description: string }> = {
 };
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const isOnline = useOffline();
   const { installPrompt, triggerInstall } = usePWA();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [viewExtra, setViewExtra] = useState<any>(null);
 
-  // Stats State
-  const [metrics, setMetrics] = useState<MetricData[]>([]);
-  const [isStatsLoading, setIsStatsLoading] = useState(true);
-
-  // Period Filters for Stats
-  const defaults = getDefaultPeriod();
-  const [statYear, setStatYear] = useState(defaults.year);
-  const [statMonth, setStatMonth] = useState(defaults.month);
-  const [statQuarter, setStatQuarter] = useState(defaults.quarter);
-
   const [state, setState] = useState<AppState>({
     messages: [],
-    metrics: [],
+    metrics: INITIAL_METRICS as MetricData[],
     users: [],
     isConnected: false,
     currentUser: user,
@@ -131,36 +122,25 @@ const Dashboard: React.FC = () => {
     setViewExtra(extra || null);
   };
 
-  const fetchDashboardStats = useCallback(async () => {
-    setIsStatsLoading(true);
-    try {
-      // In production, we fetch a single optimized endpoint for the dashboard
-      const stats = await api.get(`/dashboard/stats?year=${statYear}&month=${statMonth}&quarter=${statQuarter}`);
-      setMetrics(stats.metrics || []);
-    } catch (err) {
-      console.warn("Real-time stats currently unavailable, fetching base metrics.");
-      // Fallback: Fetch counts directly if aggregate endpoint doesn't exist yet
-      const [clients, invoices, litigation] = await Promise.all([
-        api.get('/clients'),
-        api.get('/invoices'),
-        api.get('/litigation')
-      ]);
-      setMetrics([
-        { label: 'Total Clients', value: clients?.length || 0, trend: 'stable' },
-        { label: 'Active Invoices', value: invoices?.filter((i:any) => i.status !== 'Paid').length || 0, trend: 'stable' },
-        { label: 'Open Notices', value: litigation?.filter((l:any) => l.status === 'Pending').length || 0, trend: 'down' },
-        { label: 'Sync Status', value: 100, trend: 'up' }
-      ]);
-    } finally {
-      setIsStatsLoading(false);
-    }
-  }, [statYear, statMonth, statQuarter]);
-
   useEffect(() => {
-    if (activeView === 'dashboard') {
-      fetchDashboardStats();
-    }
-  }, [activeView, fetchDashboardStats]);
+    const loadData = async () => {
+      setIsDataLoading(true);
+      try {
+        const items = await api.get('/items');
+        setState(prev => ({
+          ...prev,
+          metrics: prev.metrics.map(m => 
+            m.label === 'Active Clients' ? { ...m, value: items.length || 0, trend: items.length > 0 ? 'up' : 'stable' } : m
+          )
+        }));
+      } catch (err) {
+        console.error('Failed to load dashboard data', err);
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+    if (isOnline && token) loadData();
+  }, [isOnline, token, activeView]); // Added activeView as dependency to refresh metric count when coming back from other pages
 
   useEffect(() => {
     if (isOnline) {
@@ -182,73 +162,25 @@ const Dashboard: React.FC = () => {
     socketService.emit('message', newMessage);
   }, [user]);
 
+  if (isDataLoading) return <Loader />;
+
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 overflow-y-auto h-full pr-1 no-scrollbar pb-20">
+          <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 overflow-y-auto h-full pr-1 no-scrollbar">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            
-            {/* Real-time Period Controllers */}
-            <div className="flex flex-wrap items-center gap-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm shrink-0">
-               <div className="flex items-center gap-3 pr-6 border-r border-slate-100">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none">Live Monitor</h3>
-                    <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mt-1">Cloud Sync Engine</p>
-                  </div>
-               </div>
-               
-               <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center bg-slate-50 rounded-xl px-4 py-2 gap-2 border border-slate-100">
-                     <span className="text-[10px] font-black text-slate-400 uppercase">FY/AY:</span>
-                     <select value={statYear} onChange={e => setStatYear(e.target.value)} 
-                       className="bg-transparent border-none text-xs font-black uppercase text-slate-700 outline-none cursor-pointer">
-                       {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                     </select>
-                  </div>
-                  <div className="flex items-center bg-slate-50 rounded-xl px-4 py-2 gap-2 border border-slate-100">
-                     <span className="text-[10px] font-black text-slate-400 uppercase">Month:</span>
-                     <select value={statMonth} onChange={e => setStatMonth(e.target.value)} 
-                       className="bg-transparent border-none text-xs font-black uppercase text-slate-700 outline-none cursor-pointer">
-                       {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-                     </select>
-                  </div>
-                  <div className="flex items-center bg-slate-50 rounded-xl px-4 py-2 gap-2 border border-slate-100">
-                     <span className="text-[10px] font-black text-slate-400 uppercase">Quarter:</span>
-                     <select value={statQuarter} onChange={e => setStatQuarter(e.target.value)} 
-                       className="bg-transparent border-none text-xs font-black uppercase text-slate-700 outline-none cursor-pointer">
-                       {QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}
-                     </select>
-                  </div>
-               </div>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {state.metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
             </div>
-
-            {isStatsLoading ? <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"><Loader /></div> : (
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                {metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-50/50 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-                <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Compliance Heatmap</h3>
-                <p className="text-slate-500 mb-10 text-sm font-medium">Visualization of workflow intensity across practice staff.</p>
-                <div className="h-64 flex items-end justify-between gap-4 relative z-10">
-                  {[45, 75, 55, 95, 80, 88, 40, 100, 60, 82, 50, 70].map((h, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                      <div className="w-full bg-slate-50 rounded-xl group relative hover:bg-slate-100 cursor-pointer transition-all duration-300 h-full flex flex-col justify-end">
-                        <div className={`w-full rounded-xl transition-all duration-1000 ${h > 80 ? 'bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.3)]' : 'bg-indigo-300'}`} 
-                          style={{ height: `${h}%` }}>
-                           <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded shadow-xl transition-opacity pointer-events-none uppercase">
-                             {h}% DONE
-                           </div>
-                        </div>
-                      </div>
-                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">{MONTHS[i].substring(0,3)}</span>
+              <div className="lg:col-span-2 rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm">
+                <h3 className="text-2xl font-black text-slate-900 mb-2">Firm Performance</h3>
+                <p className="text-slate-500 mb-10">Weekly compliance tracking summary</p>
+                <div className="h-64 flex items-end justify-between gap-6">
+                  {[40, 70, 45, 90, 65, 85, 30, 95, 50, 75].map((h, i) => (
+                    <div key={i} className="flex-1 bg-indigo-50 rounded-2xl group relative hover:bg-indigo-100 cursor-pointer transition-colors">
+                      <div className="absolute inset-x-0 bottom-0 bg-indigo-600 rounded-2xl transition-all duration-700" style={{ height: `${h}%` }} />
                     </div>
                   ))}
                 </div>
@@ -315,10 +247,8 @@ const Dashboard: React.FC = () => {
           activeViewLabel={activeViewConfig.label}
           activeViewDescription={activeViewConfig.description}
         />
-        <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-3 pb-6 lg:pb-12 overflow-hidden">
-          <ErrorBoundary>
-            <Suspense fallback={<Loader />}>{renderView()}</Suspense>
-          </ErrorBoundary>
+        <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-3 pb-6 lg:pb-12">
+          <Suspense fallback={<Loader />}>{renderView()}</Suspense>
         </div>
       </main>
     </div>

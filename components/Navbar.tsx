@@ -8,8 +8,8 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
   return (
-    <nav className="fixed top-0 z-50 w-full bg-white/80 px-6 py-5 backdrop-blur-xl border-b border-slate-100">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 w-full bg-white/80 px-6 md:px-12 py-5 backdrop-blur-xl border-b border-slate-100">
+      <div className="flex w-full items-center justify-between">
         <button onClick={onHomeClick} className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/30">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -22,7 +22,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
         <div className="flex items-center gap-6">
           <button 
             onClick={onLoginClick} 
-            className="rounded-full bg-slate-900 px-8 py-3 text-sm font-black text-white transition-all hover:bg-indigo-600 shadow-lg hover:shadow-indigo-500/20 active:scale-95"
+            className="rounded-full bg-slate-900 px-8 py-3 text-sm font-black text-white transition-all hover:bg-indigo-600 shadow-lg hover:shadow-indigo-500/20 active:scale-95 whitespace-nowrap"
           >
             Consultant Login
           </button>

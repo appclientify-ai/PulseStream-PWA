@@ -1,63 +1,72 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { AuthProvider, useAuth } from './auth/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Dashboard from './pages/Primary/Dashboard';
-import Login from './auth/Login';
-import Signup from './auth/Signup';
-import Loader from './components/Loader';
-import OfflineBanner from './components/OfflineBanner';
-import ErrorBoundary from './components/ErrorBoundary';
-import { useOffline } from './hooks/useOffline';
+import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import Navbar from './components/Navbar.tsx';
+import Home from './pages/Home.tsx';
+import Dashboard from './pages/Primary/Dashboard.tsx';
+import Login from './auth/Login.tsx';
+import Signup from './auth/Signup.tsx';
+import Loader from './components/Loader.tsx';
+import OfflineBanner from './components/OfflineBanner.tsx';
+import { api } from './services/api.ts';
+import { useOffline } from './hooks/useOffline.ts';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, hasCheckedAuth, isLoading } = useAuth();
+  const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const isOnline = useOffline();
+  
+  const handleReconnect = useCallback(() => {
+    if (token) {
+      api.get('/auth/me').catch(console.error);
+    }
+  }, [token]);
+
+  const isOnline = useOffline(handleReconnect);
 
   useEffect(() => {
     if (!hasCheckedAuth) return;
     if (isAuthenticated) {
       setCurrentPage('dashboard');
-    } else {
-      // Allow user to stay on login/signup/home if not authenticated
-      if (currentPage === 'dashboard') {
-        setCurrentPage('home');
-      }
+    } else if (currentPage === 'dashboard') {
+      setCurrentPage('home');
     }
   }, [isAuthenticated, hasCheckedAuth]);
 
   if (!hasCheckedAuth) return <Loader />;
 
   const renderPage = () => {
-    if (isAuthenticated) return <Dashboard />;
-
     switch (currentPage) {
-      case 'login':
-        return <Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />;
-      case 'signup':
-        return <Signup onSwitch={() => setCurrentPage('login')} onBackToHome={() => setCurrentPage('home')} />;
       case 'home':
-      default:
         return (
           <>
             <Navbar onLoginClick={() => setCurrentPage('login')} onHomeClick={() => setCurrentPage('home')} />
             <Home onGetStarted={() => setCurrentPage('signup')} />
           </>
         );
+      case 'login':
+        return <Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />;
+      case 'signup':
+        return <Signup onSwitch={() => setCurrentPage('login')} onBackToHome={() => setCurrentPage('home')} />;
+      case 'dashboard':
+        return (
+          <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
+            <Dashboard />
+          </ProtectedRoute>
+        );
+      default:
+        return <Home onGetStarted={() => setCurrentPage('signup')} />;
     }
   };
 
   return (
-    <ErrorBoundary>
+    <>
       <OfflineBanner isOnline={isOnline} />
       {renderPage()}
-      {isLoading && !hasCheckedAuth && <div className="fixed inset-0 z-[9999] bg-white/50 backdrop-blur-sm"><Loader /></div>}
-    </ErrorBoundary>
+      {isLoading && <div className="fixed inset-0 z-[9999] bg-slate-950/20 backdrop-blur-sm"><Loader /></div>}
+    </>
   );
 };
 

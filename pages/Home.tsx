@@ -8,30 +8,26 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
   return (
     <div className="flex min-h-screen flex-col items-center bg-slate-50 px-6 pb-24 pt-32">
-      {/* Attractive background elements */}
       <div className="fixed top-0 -z-10 h-screen w-full overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-100/50 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-blue-100/50 blur-[120px]" />
       </div>
       
       <div className="max-w-5xl text-center">
-        {/* 'Clientify' as the main brand name, same size as the previous primary heading (8xl) */}
         <h1 className="mb-4 text-7xl font-black tracking-tighter text-indigo-600 md:text-9xl animate-in fade-in slide-in-from-top-8 duration-700">
           Clientify
         </h1>
         
-        {/* 'Secure Your Client Vault' as a secondary heading, half the size of the brand name (4xl) */}
         <h2 className="mb-6 text-3xl font-black tracking-tight text-slate-900 md:text-5xl animate-in fade-in slide-in-from-top-6 duration-700 delay-100">
           Secure Your <span className="text-indigo-600">Client Vault.</span>
         </h2>
         
-        {/* Professional quotation of Clientify */}
         <p className="mb-12 text-lg font-bold italic text-slate-400 md:text-xl uppercase tracking-[0.2em] animate-in fade-in duration-1000 delay-300">
           "Precision in Compliance, Excellence in Consulting."
         </p>
 
-        <p className="mb-12 text-xl font-medium leading-relaxed text-slate-500 md:text-2xl max-w-2xl mx-auto">
-          The high-performance management tool for CA firms. Centralize IDs, documents, and compliance tracking with absolute precision.
+        <p className="mb-12 text-xl font-medium leading-relaxed text-slate-500 md:text-2xl max-w-3xl mx-auto">
+          The high-performance management tool for CA firms & Tax Consultants. Centralize IDs, documents, and compliance tracking with absolute precision.
         </p>
         
         <div className="flex flex-col gap-6 sm:flex-row sm:justify-center">
@@ -72,16 +68,13 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
         ))}
       </div>
 
-      {/* Trust Section */}
-      <div className="mt-40 text-center">
-         <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-400 mb-8">Trusted by Elite Consulting Firms</p>
-         <div className="flex flex-wrap justify-center gap-12 opacity-40 grayscale">
-            <div className="text-3xl font-black text-slate-900">TAXCORE</div>
-            <div className="text-3xl font-black text-slate-900">GSTPRO</div>
-            <div className="text-3xl font-black text-slate-900">AUDITIFY</div>
-            <div className="text-3xl font-black text-slate-900">FINVAULT</div>
+      <footer className="mt-40 text-center pb-10">
+         <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400 mb-2">Designed & Developed By</p>
+         <div className="text-2xl font-black text-indigo-600 tracking-tighter">
+            Advocate Prakhar Gupta
          </div>
-      </div>
+         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Innovation in Legal Tech Since 2026</p>
+      </footer>
     </div>
   );
 };

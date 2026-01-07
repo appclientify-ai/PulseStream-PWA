@@ -1,0 +1,25 @@
+
+{
+  "short_name": "Clientify",
+  "name": "Clientify Tax & GST Management",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%234f46e5;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='192' height='192' rx='40' fill='white' /%3E%3Cpath d='M130 70C120 50 100 40 80 50C55 60 55 130 80 142C100 152 120 142 130 122' fill='none' stroke='url(%23grad)' stroke-width='22' stroke-linecap='round' /%3E%3C/svg%3E",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%234f46e5;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='100' fill='white' /%3E%3Cpath d='M350 180C320 130 260 110 210 135C150 165 150 345 210 375C260 400 320 380 350 330' fill='none' stroke='url(%23grad)' stroke-width='50' stroke-linecap='round' /%3E%3C/svg%3E",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#f8fafc",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#4f46e5",
+  "description": "Secure vault for client management, GST filings, and Income Tax documents."
+}

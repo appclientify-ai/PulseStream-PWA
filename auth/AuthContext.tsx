@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User } from '../types';
-import { api } from '../services/api';
+import { User } from '../types.ts';
+import { api } from '../services/api.ts';
 
 interface AuthContextType {
   user: User | null;
@@ -24,14 +24,12 @@ const setCookie = (name: string, value: string, days: number) => {
 };
 
 const getCookie = (name: string) => {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+  const cookies = document.cookie.split('; ');
+  for (let i = 0; i < cookies.length; i++) {
+    const parts = cookies[i].split('=');
+    if (parts[0] === name) return decodeURIComponent(parts[1]);
   }
-  return null;
+  return '';
 };
 
 const deleteCookie = (name: string) => {
@@ -45,35 +43,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Initialize: Check for existing session on reload
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = getCookie('clientify_token') || localStorage.getItem('clientify_token');
-      
-      if (savedToken) {
-        setIsLoading(true);
-        try {
+      try {
+        const savedToken = getCookie('clientify_token');
+        if (savedToken) {
+          setIsLoading(true);
           api.setToken(savedToken);
-          // Set a 5-second timeout for the auth check to prevent hang
-          const response = await Promise.race([
-            api.get('/auth/me'),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
-          ]) as any;
-
+          const response = await api.get('/auth/me');
           if (response && response.user) {
             setToken(savedToken);
             setUser(response.user);
           } else {
-            throw new Error('Invalid Session');
+            throw new Error('Invalid user session');
           }
-        } catch (err) {
-          console.warn('Authentication sync bypassed:', err);
-          // If the server is just down, we don't necessarily want to wipe the token
-          // but we do want to stop loading.
-        } finally {
-          setIsLoading(false);
         }
+      } catch (err) {
+        console.warn('Auth check skipped or failed:', err);
+        deleteCookie('clientify_token');
+        api.setToken(null);
+      } finally {
+        setIsLoading(false);
+        setHasCheckedAuth(true);
       }
-      setHasCheckedAuth(true);
     };
     initAuth();
   }, []);
@@ -119,7 +112,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     setError(null);
     deleteCookie('clientify_token');
-    localStorage.removeItem('clientify_token');
     api.setToken(null);
   };
 

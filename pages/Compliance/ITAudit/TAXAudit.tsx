@@ -55,7 +55,9 @@ const TAXAudit: React.FC = () => {
     const selectedStartYear = parseInt(selectedYear.split('-')[0]);
     const activeIds = new Set<string>();
 
-    Object.entries(watchlist).forEach(([fy, ids]) => {
+    // Fix: Using Object.keys for better TS type inference of ids as string[]
+    Object.keys(watchlist).forEach(fy => {
+      const ids = watchlist[fy] as string[];
       const fyStart = parseInt(fy.split('-')[0]);
       // If the FY the client was added to is less than or equal to current selected FY, include them
       if (fyStart <= selectedStartYear) {
@@ -91,7 +93,9 @@ const TAXAudit: React.FC = () => {
     
     // Determine which IDs are ALREADY tracked for this year or previous years
     const alreadyTrackedIds = new Set<string>();
-    Object.entries(watchlist).forEach(([fy, ids]) => {
+    // Fix: Using Object.keys for better TS type inference of ids as string[] and corrected activeIds to alreadyTrackedIds
+    Object.keys(watchlist).forEach(fy => {
+      const ids = watchlist[fy] as string[];
       const fyStart = parseInt(fy.split('-')[0]);
       if (fyStart <= selectedStartYear) {
         ids.forEach(id => alreadyTrackedIds.add(id));
@@ -392,7 +396,7 @@ const TAXAudit: React.FC = () => {
                                <p className="text-sm font-black text-slate-900 uppercase group-hover:text-indigo-600 truncate">{c.legalName}</p>
                                <p className="text-[10px] text-slate-400 font-mono tracking-tight mt-1">{c.gstProfile?.gstin || c.itProfile?.pan || 'NO IDENTIFIER'}</p>
                             </div>
-                            <svg className="h-5 w-5 text-slate-300 group-hover:text-indigo-600 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                            <svg className="h-5 w-5 text-slate-300 group-hover:text-indigo-600 shrink-0 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" /></svg>
                          </button>
                        ))
                      )}

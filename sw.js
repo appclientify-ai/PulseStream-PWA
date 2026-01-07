@@ -1,25 +1,19 @@
 
-const CACHE_NAME = 'pulse-stream-v2';
-const APP_SHELL = [
+const CACHE_NAME = 'clientify-v1';
+const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/index.tsx',
   '/App.tsx',
-  '/constants.ts',
   '/types.ts',
-  '/auth/AuthContext.tsx',
-  '/services/api.ts'
+  '/constants.ts'
 ];
-
-const STATIC_ASSETS_REGEX = /\.(png|jpg|jpeg|svg|gif|woff2|css)$/;
-const API_REGEX = /\/api\/|\/auth\//;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching App Shell');
-      return cache.addAll(APP_SHELL);
+      return cache.addAll(ASSETS);
     })
   );
   self.skipWaiting();
@@ -39,8 +33,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. API Strategy: Network-first, fallback to cache
-  if (API_REGEX.test(url.pathname)) {
+  // API calls: Network-first
+  if (url.pathname.includes('/api/') || url.pathname.includes('/auth/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -53,21 +47,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Assets: Cache-first
-  if (STATIC_ASSETS_REGEX.test(url.pathname) || url.origin.includes('esm.sh')) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // 3. Navigation / Default Strategy: Stale-while-revalidate
+  // Assets and esm.sh modules: Stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const networked = fetch(event.request)

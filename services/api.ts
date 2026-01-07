@@ -1,18 +1,13 @@
 
-import { API_BASE_URL } from '../constants';
+import { API_BASE_URL } from '../constants.ts';
+import { Client, LitigationRecord, InvoiceRecord, PaymentRecord, InvoiceSettings, GSTRegistrationRecord, FoodLicenseRecord, MSMERegistrationRecord, MiscWorkRecord } from '../types.ts';
 
 class ApiService {
   private token: string | null = null;
-  public isMockMode: boolean = false;
+  public isMockMode = false; // Always false for production
 
   setToken(token: string | null) {
     this.token = token;
-    // Persist token in cookie or localStorage for PWA reliability
-    if (token) {
-      localStorage.setItem('clientify_token', token);
-    } else {
-      localStorage.removeItem('clientify_token');
-    }
   }
 
   private getFullUrl(endpoint: string): string {
@@ -22,33 +17,25 @@ class ApiService {
 
   private async handleResponse(response: Response) {
     if (response.status === 401) {
-      this.setToken(null);
-      return null;
+      // Handle unauthorized (token expired)
+      document.cookie = 'clientify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      window.location.reload();
     }
-    
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      // If we get HTML back (likely a Netlify 404 redirect), treat as error
-      throw new Error(`Server returned non-JSON response (${response.status}). Check VITE_BACKEND_URL.`);
+    const responseText = await response.text();
+    let result;
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      throw new Error(`Invalid server response (${response.status})`);
     }
-
-    const result = await response.json();
     if (!response.ok) throw new Error(result.message || result.error || 'Request failed');
     return result;
   }
 
   async get(endpoint: string) {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
-    };
-    try {
-      const res = await fetch(this.getFullUrl(endpoint), { method: 'GET', headers });
-      return await this.handleResponse(res);
-    } catch (err) {
-      console.error(`API GET ${endpoint} failed:`, err);
-      throw err;
-    }
+    const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    const res = await fetch(this.getFullUrl(endpoint), { method: 'GET', headers });
+    return this.handleResponse(res);
   }
 
   async post(endpoint: string, data: any) {
@@ -56,39 +43,150 @@ class ApiService {
       'Content-Type': 'application/json',
       ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
     };
-    try {
-      const res = await fetch(this.getFullUrl(endpoint), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(data),
-      });
-      return await this.handleResponse(res);
-    } catch (err) {
-      console.error(`API POST ${endpoint} failed:`, err);
-      throw err;
-    }
-  }
-
-  async put(endpoint: string, data: any) {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
-    };
     const res = await fetch(this.getFullUrl(endpoint), {
-      method: 'PUT',
+      method: 'POST',
       headers,
       body: JSON.stringify(data),
     });
     return this.handleResponse(res);
   }
 
-  async delete(endpoint: string) {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+  // --- Domain Logic Mapped to /api/items ---
+
+  private transformItem(item: any) {
+    return {
+      ...item.data,
+      id: item._id, // Map MongoDB _id to frontend id
+      createdAt: item.createdAt
     };
-    const res = await fetch(this.getFullUrl(endpoint), { method: 'DELETE', headers });
-    return this.handleResponse(res);
+  }
+
+  async getClients(): Promise<Client[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'client').map(this.transformItem);
+  }
+
+  async saveClient(client: Partial<Client>): Promise<Client> {
+    const payload = {
+      name: 'client',
+      data: { ...client }
+    };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getLitigationRecords(): Promise<LitigationRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'litigation').map(this.transformItem);
+  }
+
+  async saveLitigationRecord(record: Partial<LitigationRecord>): Promise<LitigationRecord> {
+    const payload = {
+      name: 'litigation',
+      data: { ...record }
+    };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getInvoices(): Promise<InvoiceRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'invoice').map(this.transformItem);
+  }
+
+  async saveInvoice(invoice: Partial<InvoiceRecord>): Promise<InvoiceRecord> {
+    const payload = {
+      name: 'invoice',
+      data: { ...invoice }
+    };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getPayments(): Promise<PaymentRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'payment').map(this.transformItem);
+  }
+
+  async savePayment(payment: Partial<PaymentRecord>): Promise<PaymentRecord> {
+    const payload = {
+      name: 'payment',
+      data: { ...payment }
+    };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getInvoiceSettings(): Promise<InvoiceSettings> {
+    const items = await this.get('/items');
+    const set = items.find((i: any) => i.name === 'invoice_settings');
+    if (set) return this.transformItem(set);
+    return {
+      firmName: 'Your Firm Name',
+      firmAddress: '',
+      firmMobile: '',
+      firmEmail: '',
+      firmGstin: '',
+      invoicePrefix: 'INV/',
+      bankName: '',
+      accountNo: '',
+      ifsc: '',
+      upiId: '',
+      terms: '',
+      isGstEnabled: true
+    };
+  }
+
+  async saveInvoiceSettings(settings: InvoiceSettings): Promise<void> {
+    const payload = {
+      name: 'invoice_settings',
+      data: settings
+    };
+    await this.post('/items', payload);
+  }
+
+  async getGSTRegistrations(): Promise<GSTRegistrationRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'gst_reg').map(this.transformItem);
+  }
+
+  async saveGSTRegistration(reg: Partial<GSTRegistrationRecord>): Promise<GSTRegistrationRecord> {
+    const payload = { name: 'gst_reg', data: reg };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getFoodLicenses(): Promise<FoodLicenseRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'food_lic').map(this.transformItem);
+  }
+
+  async saveFoodLicense(lic: Partial<FoodLicenseRecord>): Promise<FoodLicenseRecord> {
+    const payload = { name: 'food_lic', data: lic };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getMSMERegistrations(): Promise<MSMERegistrationRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'msme').map(this.transformItem);
+  }
+
+  async saveMSMERegistration(reg: Partial<MSMERegistrationRecord>): Promise<MSMERegistrationRecord> {
+    const payload = { name: 'msme', data: reg };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
+  }
+
+  async getMiscWork(): Promise<MiscWorkRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'misc_work').map(this.transformItem);
+  }
+
+  async saveMiscWork(work: Partial<MiscWorkRecord>): Promise<MiscWorkRecord> {
+    const payload = { name: 'misc_work', data: work };
+    const res = await this.post('/items', payload);
+    return this.transformItem(res);
   }
 }
 
