@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
 import { socketService } from '../../services/socket.ts';
 import { INITIAL_METRICS } from '../../constants.ts';
@@ -15,8 +14,6 @@ import ChatPanel from '../../components/ChatPanel.tsx';
 import Loader from '../../components/Loader.tsx';
 import InstallBanner from '../../components/InstallBanner.tsx';
 
-// LAZY IMPORTS - Note: ESM requires extensions here too if the bundler isn't handling it,
-// but usually Vite handles .tsx in dynamic imports. Standardizing with .tsx for consistency.
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
 const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio.tsx'));
 const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling.tsx'));
@@ -107,13 +104,9 @@ const Dashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [viewExtra, setViewExtra] = useState<any>(null);
 
-  const [state, setState] = useState<AppState>({
-    messages: [],
-    metrics: INITIAL_METRICS as MetricData[],
-    users: [],
-    isConnected: false,
-    currentUser: user,
-  });
+  const [metrics, setMetrics] = useState<MetricData[]>(INITIAL_METRICS);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
   const activeViewConfig = useMemo(() => VIEW_CONFIG[activeView] || { label: 'Clientify Suite', description: 'Professional Consultant Solution' }, [activeView]);
 
@@ -122,47 +115,60 @@ const Dashboard: React.FC = () => {
     setViewExtra(extra || null);
   };
 
+  const loadMetrics = useCallback(async () => {
+    if (!token) return;
+    setIsDataLoading(true);
+    try {
+      const [clients, litigation, invoices, miscWork] = await Promise.all([
+        api.getClients(),
+        api.getLitigationRecords(),
+        api.getInvoices(),
+        api.getMiscWork()
+      ]);
+
+      const pendingLitigation = litigation.filter(r => r.status === 'Pending').length;
+      const pendingWork = miscWork.filter(r => r.status !== 'Completed').length;
+      const unpaidInvoices = invoices.filter(i => i.status !== 'Paid').length;
+
+      // Fix: cast as MetricData[] to ensure trend string literals match literal types defined in types.ts
+      setMetrics([
+        { label: 'Active Clients', value: clients.length, trend: clients.length > 0 ? 'up' : 'stable' },
+        { label: 'Pending Litigation', value: pendingLitigation, trend: pendingLitigation > 0 ? 'up' : 'stable' },
+        { label: 'Pending Misc Work', value: pendingWork, trend: 'stable' },
+        { label: 'Unpaid Invoices', value: unpaidInvoices, trend: unpaidInvoices > 5 ? 'up' : 'stable' },
+      ] as MetricData[]);
+    } catch (err) {
+      console.error('Master Sync Failed:', err);
+    } finally {
+      setIsDataLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
-    const loadData = async () => {
-      setIsDataLoading(true);
-      try {
-        const items = await api.get('/items');
-        setState(prev => ({
-          ...prev,
-          metrics: prev.metrics.map(m => 
-            m.label === 'Active Clients' ? { ...m, value: items.length || 0, trend: items.length > 0 ? 'up' : 'stable' } : m
-          )
-        }));
-      } catch (err) {
-        console.error('Failed to load dashboard data', err);
-      } finally {
-        setIsDataLoading(false);
-      }
-    };
-    if (isOnline && token) loadData();
-  }, [isOnline, token, activeView]); // Added activeView as dependency to refresh metric count when coming back from other pages
+    if (isOnline && token) loadMetrics();
+  }, [isOnline, token, activeView, loadMetrics]);
 
   useEffect(() => {
     if (isOnline) {
       socketService.connect();
       socketService.on('message', (msg: Message) => {
-        setState(prev => ({ ...prev, messages: [...prev.messages, msg] }));
+        setMessages(prev => [...prev, msg]);
       });
-      setState(prev => ({ ...prev, isConnected: true }));
+      setIsConnected(true);
     } else {
       socketService.disconnect();
-      setState(prev => ({ ...prev, isConnected: false }));
+      setIsConnected(false);
     }
     return () => { socketService.disconnect(); };
   }, [isOnline]);
 
   const handleSendMessage = useCallback((content: string) => {
     const newMessage: Message = { id: `msg_${Date.now()}`, sender: user?.username || 'Consultant', content, timestamp: Date.now() };
-    setState(prev => ({ ...prev, messages: [...prev.messages, newMessage] }));
+    setMessages(prev => [...prev, newMessage]);
     socketService.emit('message', newMessage);
   }, [user]);
 
-  if (isDataLoading) return <Loader />;
+  if (isDataLoading && activeView === 'dashboard') return <Loader />;
 
   const renderView = () => {
     switch (activeView) {
@@ -171,7 +177,7 @@ const Dashboard: React.FC = () => {
           <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 overflow-y-auto h-full pr-1 no-scrollbar">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {state.metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
+              {metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm">
@@ -185,7 +191,7 @@ const Dashboard: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <ChatPanel messages={state.messages} onSend={handleSendMessage} currentUser={user} />
+              <ChatPanel messages={messages} onSend={handleSendMessage} currentUser={user} />
             </div>
           </div>
         );
@@ -241,7 +247,7 @@ const Dashboard: React.FC = () => {
       />
       <main className="flex flex-1 flex-col overflow-hidden relative">
         <Header 
-          isConnected={state.isConnected} 
+          isConnected={isConnected} 
           currentUser={user} 
           onMenuClick={() => setIsSidebarOpen(true)} 
           activeViewLabel={activeViewConfig.label}

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client, JurisdictionType } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader.tsx';
+import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -19,21 +20,34 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
 }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setIsLoading(true);
-      try {
-        const data = await api.getClients();
-        setClients(data);
-      } catch (err) {
-        console.error("Fetch failed", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetch = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      setClients(data.filter(c => !!c.gstProfile));
+    } catch (err) {
+      console.error("Fetch failed", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetch(); }, []);
+
+  const handleDataChange = () => {
     fetch();
-  }, []);
+    if (onDataChange) onDataChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Permanently delete this client from master records?')) {
+      await api.deleteClient(id);
+      handleDataChange();
+    }
+  };
 
   const filteredClients = useMemo(() => {
     let list = clients;
@@ -43,40 +57,58 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     const s = externalSearch.toLowerCase();
     return list.filter(c => 
       c.legalName.toLowerCase().includes(s) || 
+      c.tradeName?.toLowerCase().includes(s) ||
       (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
     );
   }, [clients, externalSearch, jurisdictionFilter]);
 
-  if (isLoading) return <div className="p-10 text-center text-slate-400 font-bold">Syncing Records...</div>;
+  if (isLoading) return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-[0.2em] animate-pulse">Syncing Records...</div>;
 
   return (
     <div className="overflow-x-auto no-scrollbar flex-1">
-      <table className="w-full text-left border-collapse table-auto">
+      <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
         <thead className="sticky top-0 z-20">
           <tr className="bg-slate-50 border-b border-slate-100">
-            <th className="px-4 py-5 text-[14px] font-black uppercase tracking-widest text-slate-400">Legal Name</th>
-            <th className="px-4 py-5 text-[14px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
-            <th className="px-4 py-5 text-[14px] font-black uppercase tracking-widest text-slate-400">Status</th>
-            <th className="px-4 py-5 text-[14px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Legal Name</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Reg Type</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Freq</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Username</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] text-center">Status</th>
+            <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[140px]">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {filteredClients.map((client) => (
-            <tr key={client.id} className="hover:bg-indigo-50/30 transition-all">
-              <td className="px-4 py-5 font-black text-slate-900 uppercase">{client.legalName}</td>
-              <td className="px-4 py-5 font-black text-indigo-600 font-mono tracking-widest">{client.gstProfile?.gstin}</td>
-              <td className="px-4 py-5">
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-green-100 text-green-700">{client.status}</span>
+          {filteredClients.map((client, idx) => (
+            <tr key={client.id} className="hover:bg-indigo-50/30 transition-all group">
+              <td className="px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
+              <td className="px-6 py-5">
+                 <p className="font-black text-slate-900 uppercase truncate" title={client.legalName}>{client.legalName}</p>
+                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{client.tradeName || '---'}</p>
               </td>
-              <td className="px-4 py-5 text-right">
-                <button className="h-8 w-8 rounded-lg bg-slate-50 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center">
-                  <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                </button>
+              <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</td>
+              <td className="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">{client.gstProfile?.regType}</td>
+              <td className="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">{client.gstProfile?.filingFreq}</td>
+              <td className="px-6 py-5 text-[11px] font-black text-slate-700">{client.gstProfile?.username}</td>
+              <td className="px-6 py-5 text-center">
+                <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">{client.status}</span>
+              </td>
+              <td className="px-6 py-5 text-right whitespace-nowrap">
+                <div className="flex items-center justify-end gap-2">
+                   <button onClick={() => { setSelectedClient(client); setIsEditModalOpen(true); }} className="h-9 w-9 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
+                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                   </button>
+                   <button onClick={() => handleDelete(client.id)} className="h-9 w-9 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
+                      <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                   </button>
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <GSTClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
     </div>
   );
 };
