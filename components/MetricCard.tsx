@@ -8,31 +8,34 @@ interface MetricCardProps {
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric }) => {
   const isPositive = metric.trend === 'up';
-  const isNegative = metric.trend === 'down';
-
+  const isDown = metric.trend === 'down';
+  
   return (
-    <div className="group overflow-hidden rounded-2xl bg-slate-900/40 p-6 border border-slate-800 transition-all hover:border-indigo-500/40 hover:bg-slate-900/60 shadow-lg">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{metric.label}</span>
-        <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-          isPositive ? 'bg-green-500/10 text-green-400' : 
-          isNegative ? 'bg-red-500/10 text-red-400' : 'bg-slate-500/10 text-slate-400'
+    <div className="group rounded-[2.5rem] bg-white p-8 border border-slate-200 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600/10 group-hover:bg-indigo-600 transition-colors" />
+      
+      <div className="flex items-center justify-between mb-6">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-indigo-600 transition-colors">{metric.label}</span>
+        <div className={`rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+          isPositive ? 'bg-emerald-50 text-emerald-600' : 
+          isDown ? 'bg-rose-50 text-rose-600' : 
+          'bg-indigo-50 text-indigo-600'
         }`}>
-          {isPositive ? '↑' : isNegative ? '↓' : '→'} 
-          {isPositive ? 'NEW' : isNegative ? 'DUE' : ''}
+          {isPositive ? '↑ Active' : isDown ? '↓ Critical' : '→ Stable'}
         </div>
       </div>
       
-      <div className="mt-4 flex items-baseline gap-2">
-        <h2 className="text-4xl font-black text-white tabular-nums tracking-tight">
-          {metric.label.includes('Progress') ? `${Math.round(metric.value)}%` : Math.round(metric.value)}
+      <div className="flex items-baseline gap-1">
+        <h2 className="text-5xl font-black text-slate-900 tracking-tighter">
+          {metric.label.includes('Progress') ? `${metric.value}%` : metric.value}
         </h2>
+        {metric.label.includes('Filed') && <span className="text-xs font-black text-slate-300 uppercase">Vault</span>}
       </div>
 
-      <div className="mt-6 h-1.5 w-full rounded-full bg-slate-800/50">
+      <div className="mt-8 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
         <div 
-          className="h-full rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-1000" 
-          style={{ width: `${Math.min(100, (metric.value / 100) * 100)}%` }} 
+          className={`h-full rounded-full transition-all duration-1000 ease-out ${isPositive ? 'bg-emerald-500' : 'bg-indigo-600'}`} 
+          style={{ width: `${Math.min(100, metric.label.includes('%') || metric.label.includes('Progress') ? metric.value : (metric.value > 0 ? 100 : 0))}%` }} 
         />
       </div>
     </div>

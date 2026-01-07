@@ -3,93 +3,92 @@ import { API_BASE_URL } from '../constants';
 
 class ApiService {
   private token: string | null = null;
-  // Increased delay to 1200ms to ensure a "calm" UI transition as requested
-  private minDelay = 1200; 
+  public isMockMode: boolean = false;
 
   setToken(token: string | null) {
     this.token = token;
+    // Persist token in cookie or localStorage for PWA reliability
+    if (token) {
+      localStorage.setItem('clientify_token', token);
+    } else {
+      localStorage.removeItem('clientify_token');
+    }
   }
 
   private getFullUrl(endpoint: string): string {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    
-    // Safety check for production environments
-    if (!API_BASE_URL && window.location.hostname !== 'localhost') {
-        // We log it as a warning instead of a fatal error because some setups 
-        // might use redirects or proxies at the host level.
-        console.warn('VITE_BACKEND_URL is not set. API calls will be relative to the current host.');
-    }
-    
     return `${API_BASE_URL}/api${cleanEndpoint}`;
   }
 
-  /**
-   * Helper to ensure a minimum execution time for any async task
-   */
-  private async withMinDelay<T>(task: Promise<T>): Promise<T> {
-    const start = Date.now();
-    try {
-      const result = await task;
-      const elapsed = Date.now() - start;
-      if (elapsed < this.minDelay) {
-        await new Promise(resolve => setTimeout(resolve, this.minDelay - elapsed));
-      }
-      return result;
-    } catch (error) {
-      // Even on error, we wait a bit so the error doesn't "pop" in too aggressively
-      const elapsed = Date.now() - start;
-      if (elapsed < this.minDelay) {
-        await new Promise(resolve => setTimeout(resolve, this.minDelay - elapsed));
-      }
-      throw error;
+  private async handleResponse(response: Response) {
+    if (response.status === 401) {
+      this.setToken(null);
+      return null;
     }
+    
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      // If we get HTML back (likely a Netlify 404 redirect), treat as error
+      throw new Error(`Server returned non-JSON response (${response.status}). Check VITE_BACKEND_URL.`);
+    }
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || result.error || 'Request failed');
+    return result;
   }
 
   async get(endpoint: string) {
-    const headers: HeadersInit = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+    };
+    try {
+      const res = await fetch(this.getFullUrl(endpoint), { method: 'GET', headers });
+      return await this.handleResponse(res);
+    } catch (err) {
+      console.error(`API GET ${endpoint} failed:`, err);
+      throw err;
     }
-
-    return this.withMinDelay(
-      fetch(this.getFullUrl(endpoint), { method: 'GET', headers })
-        .then(res => this.handleResponse(res))
-    );
   }
 
   async post(endpoint: string, data: any) {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
     };
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    return this.withMinDelay(
-      fetch(this.getFullUrl(endpoint), {
+    try {
+      const res = await fetch(this.getFullUrl(endpoint), {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
-      }).then(res => this.handleResponse(res))
-    );
+      });
+      return await this.handleResponse(res);
+    } catch (err) {
+      console.error(`API POST ${endpoint} failed:`, err);
+      throw err;
+    }
   }
 
-  private async handleResponse(response: Response) {
-    const responseText = await response.text();
-    let result;
-    
-    try {
-      result = responseText ? JSON.parse(responseText) : {};
-    } catch (e) {
-      console.error('Server response was not JSON:', responseText.substring(0, 100));
-      throw new Error(`Invalid server response (${response.status}). The server might be down or misconfigured.`);
-    }
-    
-    if (!response.ok) {
-      throw new Error(result.message || result.error || `Request failed with status ${response.status}`);
-    }
-    
-    return result;
+  async put(endpoint: string, data: any) {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+    };
+    const res = await fetch(this.getFullUrl(endpoint), {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse(res);
+  }
+
+  async delete(endpoint: string) {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+    };
+    const res = await fetch(this.getFullUrl(endpoint), { method: 'DELETE', headers });
+    return this.handleResponse(res);
   }
 }
 

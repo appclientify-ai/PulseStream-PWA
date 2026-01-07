@@ -1,7 +1,7 @@
 
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../constants';
-import { SocketEvent } from '../types';
+// Removed SocketEvent import as it is not exported from types.ts and not used here
 
 class SocketService {
   private socket: Socket | null = null;

@@ -7,46 +7,80 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 pt-20">
-      <div className="absolute top-0 -z-10 h-screen w-full bg-[radial-gradient(circle_at_50%_120%,rgba(99,102,241,0.15),rgba(15,23,42,0))]"></div>
+    <div className="flex min-h-screen flex-col items-center bg-slate-50 px-6 pb-24 pt-32">
+      {/* Attractive background elements */}
+      <div className="fixed top-0 -z-10 h-screen w-full overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-100/50 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-blue-100/50 blur-[120px]" />
+      </div>
       
-      <div className="max-w-4xl text-center">
-        <div className="mb-4 inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-indigo-400">
-          Professional Consultant Vault
-        </div>
-        <h1 className="mb-6 text-5xl font-black tracking-tight text-white md:text-7xl">
-          Secure Your <span className="bg-gradient-to-r from-indigo-400 to-blue-500 bg-clip-text text-transparent">Client Data.</span>
+      <div className="max-w-5xl text-center">
+        {/* 'Clientify' as the main brand name, same size as the previous primary heading (8xl) */}
+        <h1 className="mb-4 text-7xl font-black tracking-tighter text-indigo-600 md:text-9xl animate-in fade-in slide-in-from-top-8 duration-700">
+          Clientify
         </h1>
-        <p className="mb-10 text-lg leading-relaxed text-slate-400 md:text-xl">
-          The ultimate consultant toolkit for CA firms. Manage IDs, passwords, and track critical deadlines for GST, Audits, and ITR in one secure, internal-only dashboard.
+        
+        {/* 'Secure Your Client Vault' as a secondary heading, half the size of the brand name (4xl) */}
+        <h2 className="mb-6 text-3xl font-black tracking-tight text-slate-900 md:text-5xl animate-in fade-in slide-in-from-top-6 duration-700 delay-100">
+          Secure Your <span className="text-indigo-600">Client Vault.</span>
+        </h2>
+        
+        {/* Professional quotation of Clientify */}
+        <p className="mb-12 text-lg font-bold italic text-slate-400 md:text-xl uppercase tracking-[0.2em] animate-in fade-in duration-1000 delay-300">
+          "Precision in Compliance, Excellence in Consulting."
+        </p>
+
+        <p className="mb-12 text-xl font-medium leading-relaxed text-slate-500 md:text-2xl max-w-2xl mx-auto">
+          The high-performance management tool for CA firms. Centralize IDs, documents, and compliance tracking with absolute precision.
         </p>
         
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+        <div className="flex flex-col gap-6 sm:flex-row sm:justify-center">
           <button 
             onClick={onGetStarted}
-            className="rounded-2xl bg-indigo-600 px-10 py-4 text-lg font-bold text-white transition-all hover:bg-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/40 active:scale-95"
+            className="rounded-3xl bg-indigo-600 px-12 py-6 text-xl font-black text-white transition-all hover:bg-slate-900 hover:shadow-2xl hover:shadow-indigo-500/20 active:scale-95"
           >
             Access Consultant Dashboard
           </button>
         </div>
       </div>
 
-      <div className="mt-24 grid grid-cols-1 gap-8 md:grid-cols-3 max-w-6xl w-full">
+      <div className="mt-32 grid grid-cols-1 gap-10 md:grid-cols-3 max-w-7xl w-full">
         {[
-          { title: 'Notice Tracker', desc: 'Monitor due dates for notices and pending replies. Never miss a compliance deadline again.' },
-          { title: 'ID & Password Vault', desc: 'Securely store and retrieve client portal credentials for rapid filing and status checks.' },
-          { title: 'Secure Doc Drop', desc: 'Allow clients to upload documents directly via a secure link without any account required.' }
+          { 
+            title: 'Litigation Center', 
+            desc: 'Real-time tracking for GST notices and appeals. Never miss a hearing or a drop order deadline again.',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          },
+          { 
+            title: 'Credential Vault', 
+            desc: 'A secure internal storage for all client portal IDs and passwords. Rapid retrieval for professional staff.',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0h-10" />
+          },
+          { 
+            title: 'Compliance Hub', 
+            desc: 'Complete oversight for Monthly, Quarterly, and Annual GST returns. Synced across your entire firm.',
+            icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          }
         ].map((f, i) => (
-          <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900/30 p-8 hover:border-indigo-500/50 transition-colors">
-            <div className="mb-4 h-12 w-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-               {i === 0 && <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-               {i === 1 && <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2m10 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0h-10" /></svg>}
-               {i === 2 && <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>}
+          <div key={i} className="group rounded-[2.5rem] border border-slate-200 bg-white p-10 transition-all hover:border-indigo-400 hover:shadow-2xl hover:shadow-slate-200/50">
+            <div className="mb-6 h-16 w-16 rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white shadow-sm">
+               <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">{f.icon}</svg>
             </div>
-            <h3 className="mb-2 text-xl font-bold text-white">{f.title}</h3>
-            <p className="text-slate-400">{f.desc}</p>
+            <h3 className="mb-4 text-2xl font-black text-slate-900 tracking-tight">{f.title}</h3>
+            <p className="text-lg font-medium text-slate-500 leading-relaxed">{f.desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* Trust Section */}
+      <div className="mt-40 text-center">
+         <p className="text-sm font-black uppercase tracking-[0.3em] text-slate-400 mb-8">Trusted by Elite Consulting Firms</p>
+         <div className="flex flex-wrap justify-center gap-12 opacity-40 grayscale">
+            <div className="text-3xl font-black text-slate-900">TAXCORE</div>
+            <div className="text-3xl font-black text-slate-900">GSTPRO</div>
+            <div className="text-3xl font-black text-slate-900">AUDITIFY</div>
+            <div className="text-3xl font-black text-slate-900">FINVAULT</div>
+         </div>
       </div>
     </div>
   );

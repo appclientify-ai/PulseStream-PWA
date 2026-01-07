@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { ActiveView } from '../types';
 
@@ -18,13 +18,9 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onClose }) => {
-  const { logout, user } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { logout } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
-  const [hoveredFolder, setHoveredFolder] = useState<{ item: NavItem; top: number } | null>(null);
-  const hoverTimeoutRef = useRef<number | null>(null);
 
-  // Comprehensive Nav Structure
   const navigation: { group: string; items: NavItem[] }[] = [
     {
       group: 'Primary',
@@ -43,32 +39,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
       group: 'Compliance',
       items: [
         { 
-          id: 'gst-reg', 
-          label: 'GST Regular', 
-          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />,
+          id: 'gst-return-folder', 
+          label: 'GST Return', 
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
           children: [
-            { id: 'gst-reg-monthly', label: 'Monthly Filing' },
-            { id: 'gst-reg-quarterly', label: 'Quarterly Filing' },
+            { id: 'compliance-monthly', label: 'Monthly Filing' },
+            { id: 'compliance-quarterly', label: 'Quarterly Filing' },
+            { id: 'compliance-composition', label: 'Composition Filing' },
           ]
         },
-        { id: 'gst-composition', label: 'GST Composition', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /> },
         { 
-          id: 'annual-ret', 
+          id: 'annual-ret-folder', 
           label: 'Annual Returns', 
           icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
           children: [
-            { id: 'gst-annual-4', label: 'GSTR-4' },
-            { id: 'gst-annual-9', label: 'GSTR-9/9C' },
+            { id: 'compliance-gstr4', label: 'GSTR-4' },
+            { id: 'compliance-gstr9', label: 'GSTR-9/9C' },
           ]
         },
         { 
-          id: 'it-audit', 
+          id: 'it-audit-folder', 
           label: 'IT & Audit', 
           icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
           children: [
-            { id: 'it-itr', label: 'ITR Returns' },
-            { id: 'it-audits', label: 'Tax Audits' },
-            { id: 'it-balance-sheets', label: 'Balance Sheets' },
+            { id: 'compliance-itr', label: 'ITR Returns' },
+            { id: 'compliance-taxaudit', label: 'Audit & Financials' },
           ]
         },
       ]
@@ -77,41 +72,58 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
       group: 'Litigation Suite',
       items: [
         {
-          id: 'lit-notices', label: 'GST Notices', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+          id: 'gst-notices-folder',
+          label: 'GST Notices',
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
           children: [
             { id: 'lit-notice-pending', label: 'Pending' },
             { id: 'lit-notice-filed', label: 'Filed' },
-            { id: 'lit-notice-drop', label: 'Drop Orders' },
-            { id: 'lit-notice-demand', label: 'Demand Orders' },
+            { id: 'lit-notice-drop', label: 'Dropped' },
+            { id: 'lit-notice-demand', label: 'Demand' },
           ]
         },
         {
-          id: 'lit-appeals', label: 'GST Appeals', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />,
+          id: 'gst-appeals-folder',
+          label: 'GST Appeals',
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l5 5m-5-5l5-5" />,
           children: [
             { id: 'lit-appeal-pending', label: 'Pending' },
             { id: 'lit-appeal-filed', label: 'Filed' },
-            { id: 'lit-appeal-drop', label: 'Drop' },
-            { id: 'lit-appeal-demand', label: 'Demand' },
+            { id: 'lit-appeal-drop', label: 'Relief' },
+            { id: 'lit-appeal-demand', label: 'Sustained' },
           ]
         },
         {
-          id: 'lit-tribunal', label: 'Tribunal (GSTAT)', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v20c0 4.418 7.163 8 16 8s16-3.582 16-8V14M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8" />,
+          id: 'tribunal-folder',
+          label: 'Tribunal (GSTAT)',
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2-2h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />,
           children: [
             { id: 'lit-tribunal-pending', label: 'Pending' },
             { id: 'lit-tribunal-filed', label: 'Filed' },
-            { id: 'lit-tribunal-drop', label: 'Drop' },
+            { id: 'lit-tribunal-drop', label: 'Closed' },
             { id: 'lit-tribunal-demand', label: 'Demand' },
           ]
         },
         {
-          id: 'lit-hc', label: 'High Court', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2-2h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />,
+          id: 'high-court-folder',
+          label: 'High Court',
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
           children: [
             { id: 'lit-hc-pending', label: 'Pending' },
             { id: 'lit-hc-filed', label: 'Filed' },
-            { id: 'lit-hc-drop', label: 'Drop' },
-            { id: 'lit-hc-demand', label: 'Demand' },
+            { id: 'lit-hc-drop', label: 'Relief' },
+            { id: 'lit-hc-demand', label: 'Sustained' },
           ]
-        },
+        }
+      ]
+    },
+    {
+      group: 'Miscellaneous',
+      items: [
+        { id: 'misc-gst-reg', label: 'GST Registration', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /> },
+        { id: 'misc-food-lic', label: 'Food Licenses', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> },
+        { id: 'misc-msme', label: 'MSME Registration', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2-2h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" /> },
+        { id: 'misc-work', label: 'Miscellaneous Work', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
       ]
     },
     {
@@ -119,152 +131,59 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
       items: [
         { id: 'reminders', label: 'Reminders', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
         { id: 'messenger', label: 'Bulk Messenger', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /> },
-        { id: 'invoices', label: 'Invoices', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-        { id: 'settings', label: 'Settings', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
+        { 
+          id: 'billing-folder', 
+          label: 'Billing & Fees', 
+          icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+          children: [
+            { id: 'admin-invoices', label: 'Invoices' },
+            { id: 'admin-payments', label: 'Payments Received' },
+          ]
+        },
+        { id: 'admin-duedates', label: 'Due Date Setting', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /> },
+        { id: 'settings', label: 'Setting', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /> },
         { id: 'trash', label: 'Trash', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /> },
       ]
     }
   ];
 
-  // Auto-expand logic for initial view
-  useEffect(() => {
-    const expandParents = (items: NavItem[], target: string, path: string[] = []): boolean => {
-      for (const item of items) {
-        if (item.id === target) {
-          setExpandedFolders(prev => Array.from(new Set([...prev, ...path])));
-          return true;
-        }
-        if (item.children) {
-          if (expandParents(item.children, target, [...path, item.id])) return true;
-        }
-      }
-      return false;
-    };
-    navigation.forEach(group => expandParents(group.items, activeView));
-  }, [activeView]);
-
-  const toggleFolder = (id: string) => {
-    setExpandedFolders(prev => 
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-    );
-  };
-
-  const handleItemClick = (item: NavItem, event: React.MouseEvent) => {
+  const handleItemClick = (item: NavItem) => {
     const hasChildren = !!item.children?.length;
-
-    if (isCollapsed && hasChildren) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      setHoveredFolder({ item, top: rect.top });
-      return;
-    }
-
     if (hasChildren) {
-      toggleFolder(item.id);
+      setExpandedFolders(prev => prev.includes(item.id) ? prev.filter(f => f !== item.id) : [...prev, item.id]);
     } else {
       onViewChange(item.id as ActiveView);
-      if (window.innerWidth < 768) onClose();
+      onClose();
     }
-  };
-
-  const handleMouseEnter = (item: NavItem, event: React.MouseEvent) => {
-    if (!isCollapsed || !item.children?.length) return;
-    if (hoverTimeoutRef.current) window.clearTimeout(hoverTimeoutRef.current);
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    setHoveredFolder({ item, top: rect.top });
-  };
-
-  const handleMouseLeave = () => {
-    if (!isCollapsed) return;
-    hoverTimeoutRef.current = window.setTimeout(() => {
-      setHoveredFolder(null);
-    }, 150);
-  };
-
-  const FloatingSubMenu = ({ folder }: { folder: { item: NavItem; top: number } }) => {
-    const menuHeightEstimate = (folder.item.children?.length || 0) * 44 + 50;
-    const viewportHeight = window.innerHeight;
-    
-    // Adjust top if it would overflow bottom of screen
-    let adjustedTop = folder.top;
-    if (adjustedTop + menuHeightEstimate > viewportHeight) {
-      adjustedTop = Math.max(10, viewportHeight - menuHeightEstimate - 20);
-    }
-
-    return (
-      <div 
-        className="fixed left-[76px] z-[100] w-64 rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-left-2 duration-200 ring-1 ring-white/5"
-        style={{ top: `${adjustedTop}px` }}
-        onMouseEnter={() => {
-          if (hoverTimeoutRef.current) window.clearTimeout(hoverTimeoutRef.current);
-        }}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="mb-1 px-4 py-3 border-b border-slate-800/50 bg-slate-800/20 rounded-t-2xl">
-          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{folder.item.label}</p>
-        </div>
-        <div className="p-1.5 space-y-1">
-          {folder.item.children?.map(child => (
-            <button
-              key={child.id}
-              onClick={() => {
-                onViewChange(child.id as ActiveView);
-                setHoveredFolder(null);
-                if (window.innerWidth < 768) onClose();
-              }}
-              className={`w-full rounded-xl px-4 py-2 text-left text-sm font-semibold transition-all hover:bg-slate-800/80 ${
-                activeView === child.id ? 'bg-indigo-600/15 text-indigo-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {child.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
   };
 
   const renderItem = (item: NavItem, level = 0) => {
     const isExpanded = expandedFolders.includes(item.id);
-    const isActive = activeView === item.id || (item.children?.some(c => c.id === activeView));
+    const isActive = activeView === item.id;
     const hasChildren = !!item.children?.length;
 
     return (
-      <div 
-        key={item.id} 
-        className="relative w-full"
-        onMouseEnter={(e) => handleMouseEnter(item, e)}
-        onMouseLeave={handleMouseLeave}
-      >
+      <div key={item.id} className="w-full">
         <button
-          onClick={(e) => handleItemClick(item, e)}
-          className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-300 ${
-            isActive && !hasChildren
-              ? 'bg-indigo-600/10 text-indigo-400 ring-1 ring-inset ring-indigo-500/30' 
-              : isActive && hasChildren 
-              ? 'text-indigo-400'
-              : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
-          } ${level > 0 ? 'ml-4' : ''}`}
+          onClick={() => handleItemClick(item)}
+          className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
+            isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          } ${level > 0 ? 'ml-6' : ''}`}
         >
           {item.icon && (
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {item.icon}
             </svg>
           )}
-          
-          {(!isCollapsed || level > 0) && (
-            <span className="flex-1 text-left truncate tracking-tight">{item.label}</span>
-          )}
-
-          {hasChildren && !isCollapsed && (
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          <span className="flex-1 text-left truncate">{item.label}</span>
+          {hasChildren && (
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
             </svg>
           )}
         </button>
-
-        {hasChildren && isExpanded && !isCollapsed && (
-          <div className="mt-1 space-y-1 border-l border-slate-800 ml-5 pl-1.5">
+        {hasChildren && isExpanded && (
+          <div className="mt-1 space-y-1 border-l-2 border-slate-100 ml-6 pl-2">
             {item.children?.map(child => renderItem(child, level + 1))}
           </div>
         )}
@@ -274,74 +193,35 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-md md:hidden" onClick={onClose} />
-      )}
-
-      {/* Single shared floating menu to avoid multiple renders */}
-      {isCollapsed && hoveredFolder && (
-        <FloatingSubMenu folder={hoveredFolder} />
-      )}
-
-      <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-800 bg-slate-950/90 backdrop-blur-xl transition-all duration-500 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-72'}`}>
-        
-        <div className="flex h-16 items-center justify-between px-6 border-b border-slate-900">
-          {!isCollapsed ? (
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.3)]">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-xl font-black text-white tracking-tighter">Vault<span className="text-indigo-500">Core</span></span>
-            </div>
-          ) : (
-             <div className="mx-auto h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+      <div 
+        className={`fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-md transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+        onClick={onClose} 
+      />
+      <aside className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-in-out w-80 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex h-20 items-center justify-between px-6 border-b border-slate-100 shrink-0">
+           <div className="flex items-center gap-3">
+             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
              </div>
-          )}
-          
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-800 md:flex">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-          </button>
+             <span className="text-2xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
+           </div>
+           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border border-slate-100">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+           </button>
         </div>
-
         <nav className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
           {navigation.map((group, i) => (
-            <div key={i} className="space-y-2">
-              {!isCollapsed && <h5 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">{group.group}</h5>}
+            <div key={i} className="space-y-3">
+              <h5 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{group.group}</h5>
               <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
             </div>
           ))}
         </nav>
-
-        <div className="p-4 border-t border-slate-900 bg-slate-900/10">
-          {!isCollapsed ? (
-            <div className="flex items-center gap-3 rounded-2xl bg-slate-900/40 p-3 ring-1 ring-inset ring-slate-800/50">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600/10 text-indigo-400 font-black text-sm">
-                {user?.username?.substring(0, 2).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-bold text-white">{user?.username}</p>
-                <p className="truncate text-[10px] font-bold text-slate-600 uppercase tracking-widest">Consultant</p>
-              </div>
-              <button onClick={logout} className="text-slate-600 hover:text-red-500 transition-colors p-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
-          ) : (
-            <button onClick={logout} className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-red-500/10 hover:text-red-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          )}
+        <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+          <button onClick={logout} className="flex w-full items-center gap-4 rounded-2xl bg-white border border-slate-200 p-4 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-black text-xs uppercase tracking-widest shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            Logout
+          </button>
         </div>
       </aside>
     </>

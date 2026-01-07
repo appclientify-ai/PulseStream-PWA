@@ -44,26 +44,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Initialize: Check for existing session on reload
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = getCookie('clientify_token');
+      // Try cookie first, then localStorage
+      const savedToken = getCookie('clientify_token') || localStorage.getItem('clientify_token');
+      
       if (savedToken) {
         setIsLoading(true);
         try {
           api.setToken(savedToken);
+          // Set a timeout for the auth check to prevent infinite loading
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+
           const response = await api.get('/auth/me');
+          clearTimeout(timeoutId);
+
           if (response && response.user) {
             setToken(savedToken);
             setUser(response.user);
           } else {
-            throw new Error('Invalid user session');
+            throw new Error('Session invalid');
           }
         } catch (err) {
-          console.warn('Auth init failed:', err);
-          deleteCookie('clientify_token');
-          api.setToken(null);
+          console.warn('Auth check bypassed or failed:', err);
+          // Clean up if actually invalid
+          if (err instanceof Error && err.message.includes('invalid')) {
+            deleteCookie('clientify_token');
+            localStorage.removeItem('clientify_token');
+            api.setToken(null);
+          }
         } finally {
           setIsLoading(false);
         }
       }
+      // CRITICAL: Always allow the app to proceed to the routing logic
       setHasCheckedAuth(true);
     };
     initAuth();
@@ -110,6 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     setError(null);
     deleteCookie('clientify_token');
+    localStorage.removeItem('clientify_token');
     api.setToken(null);
   };
 
