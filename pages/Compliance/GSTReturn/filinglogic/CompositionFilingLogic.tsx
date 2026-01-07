@@ -1,48 +1,65 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../../services/api';
 
 export interface FilingStatus {
   cmp08: boolean;
 }
 
-const STORAGE_KEY = 'clientify_composition_filing_v3';
-const STORAGE_KEY_DATES = 'clientify_composition_due_dates_v1';
-
 export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter: string) => {
-  const periodKey = `${selectedYear}_${selectedQuarter}`;
-  
-  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [periodData, setPeriodData] = useState<Record<string, FilingStatus>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const fetchFilingData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get(`/filings/composition?year=${selectedYear}&period=${selectedQuarter}`);
+      setPeriodData(data || {});
+      const settings = await api.get('/settings/compliance-dates');
+      setDueDates(settings || {});
+    } catch (e) {
+      console.error("Composition sync failed", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedYear, selectedQuarter]);
 
-  const toggleStatus = useCallback((clientId: string) => {
-    setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { cmp08: false }) };
-      clientData.cmp08 = !clientData.cmp08;
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, [periodKey]);
+  useEffect(() => {
+    fetchFilingData();
+  }, [fetchFilingData]);
+
+  const toggleStatus = useCallback(async (clientId: string) => {
+    const current = periodData[clientId] || { cmp08: false };
+    const nextStatus = { cmp08: !current.cmp08 };
+    
+    setPeriodData(prev => ({ ...prev, [clientId]: nextStatus }));
+    
+    try {
+      await api.post('/filings/composition', {
+        year: selectedYear,
+        period: selectedQuarter,
+        clientId,
+        status: nextStatus
+      });
+    } catch (e) {
+      setPeriodData(prev => ({ ...prev, [clientId]: current }));
+    }
+  }, [selectedYear, selectedQuarter, periodData]);
 
   const getStatus = useCallback((clientId: string): FilingStatus => {
-    return (allData[periodKey] || {})[clientId] || { cmp08: false };
-  }, [allData, periodKey]);
+    return periodData[clientId] || { cmp08: false };
+  }, [periodData]);
 
-  const updateDueDate = (val: string) => {
-    const next = { ...dueDates, [periodKey]: val };
-    setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+  const updateDueDate = async (val: string) => {
+    const key = `composition_${selectedYear}_${selectedQuarter}`;
+    try {
+      await api.post('/settings/compliance-dates', { key, value: val });
+      setDueDates(prev => ({ ...prev, [key]: val }));
+    } catch (e) {}
   };
 
-  const getDueDate = () => dueDates[periodKey] || '';
+  const getDueDate = () => dueDates[`composition_${selectedYear}_${selectedQuarter}`] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateDueDate, getDueDate, loading };
 };
