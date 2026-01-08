@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../types';
-import { mockBackend } from '../../services/mockBackend';
+import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
 
 const DEFAULT_TEMPLATES = [
@@ -25,7 +25,7 @@ const Messenger: React.FC = () => {
   const [queueIndex, setQueueIndex] = useState(0);
 
   useEffect(() => {
-    mockBackend.getClients().then(data => {
+    api.getClients().then(data => {
       setClients(data);
       setIsLoading(false);
     });
@@ -107,7 +107,7 @@ const Messenger: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{clients.length}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
@@ -117,7 +117,7 @@ const Messenger: React.FC = () => {
         </div>
 
         <div className="relative flex-1 group w-full">
-          <input type="text" placeholder="Search targets by name or GSTIN..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search targets..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
@@ -183,11 +183,7 @@ const Messenger: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-10 space-y-8 no-scrollbar">
                  <section>
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vault Templates</h4>
-                      <div className="flex gap-2 text-[8px] font-black">
-                        <span className="bg-indigo-50 text-indigo-500 px-2 py-1 rounded">LEGAL_NAME</span>
-                        <span className="bg-indigo-50 text-indigo-500 px-2 py-1 rounded">TRADE_NAME</span>
-                      </div>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Firm Templates</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
                        {DEFAULT_TEMPLATES.map(t => <button key={t.id} onClick={() => setTemplateText(t.text)} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all border border-slate-100">{t.label}</button>)}
@@ -206,8 +202,8 @@ const Messenger: React.FC = () => {
                  </section>
               </div>
               <div className="p-10 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                 <button onClick={saveCurrentTemplate} className="text-indigo-600 font-black uppercase text-[10px] hover:underline">Save current as template</button>
-                 <button onClick={startBroadcast} disabled={!templateText.trim()} className="bg-indigo-600 text-white font-black uppercase tracking-[0.2em] px-12 h-16 rounded-2xl shadow-xl hover:bg-slate-900 transition-all disabled:opacity-30">Start Broadcast</button>
+                 <button onClick={saveCurrentTemplate} className="text-indigo-600 font-black uppercase text-[10px] hover:underline">Save as template</button>
+                 <button onClick={startBroadcast} disabled={!templateText.trim()} className="bg-indigo-600 text-white font-black uppercase tracking-[0.2em] px-12 h-16 rounded-2xl shadow-xl hover:bg-slate-900 transition-all disabled:opacity-30">Start Sequence</button>
               </div>
            </div>
         </div>
@@ -218,18 +214,16 @@ const Messenger: React.FC = () => {
            <div className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
               <div className="bg-slate-900 p-8 text-white">
                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Broadcasting Sequence</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Messaging Hub</span>
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{queueIndex + 1} / {selectedClientsList.length}</span>
                  </div>
                  <h3 className="text-xl font-black uppercase truncate">{selectedClientsList[queueIndex].legalName}</h3>
-                 <p className="text-indigo-400 font-black text-xs uppercase mt-1">{selectedClientsList[queueIndex].tradeName}</p>
                  <div className="mt-8 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${((queueIndex + 1) / selectedClientsList.length) * 100}%` }} />
                  </div>
               </div>
               <div className="p-10 space-y-6">
                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6">
-                    <p className="text-[9px] font-black text-slate-400 uppercase mb-3">Live Preview</p>
                     <div className="text-slate-700 font-bold whitespace-pre-wrap leading-relaxed text-sm">{formatMessage(templateText, selectedClientsList[queueIndex])}</div>
                  </div>
                  <div className="flex gap-4">

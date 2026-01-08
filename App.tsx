@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
@@ -19,9 +18,7 @@ const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   
   const handleReconnect = useCallback(() => {
-    if (token) {
-      api.get('/auth/me').catch(console.error);
-    }
+    if (token) api.get('/auth/me').catch(() => {});
   }, [token]);
 
   const isOnline = useOffline(handleReconnect);
@@ -30,8 +27,8 @@ const AppContent: React.FC = () => {
     if (!hasCheckedAuth) return;
     if (isAuthenticated) {
       setCurrentPage('dashboard');
-    } else if (currentPage === 'dashboard') {
-      setCurrentPage('home');
+    } else {
+      if (currentPage === 'dashboard') setCurrentPage('home');
     }
   }, [isAuthenticated, hasCheckedAuth]);
 

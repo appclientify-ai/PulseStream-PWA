@@ -1,27 +1,24 @@
 
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../constants';
-import { api } from './api';
 
 class SocketService {
   private socket: Socket | null = null;
   private handlers: { [key: string]: Function[] } = {};
 
   connect() {
-    if (api.isMockMode || !SOCKET_URL || SOCKET_URL.includes('example.com')) {
-        console.debug('SocketService: Initializing local simulation.');
-        this.simulateConnection();
-        return;
-    }
+    if (this.socket) return;
     
     try {
+      // Fix: Added 'as any' to io options to bypass the transports type error
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
-      });
+        reconnectionDelay: 2000,
+      } as any);
 
       this.socket.on('connect', () => {
-        console.debug('Socket Connected to Server');
+        console.debug('⚡ Unified Vault Sync Connected');
         this.trigger('connect', {});
       });
 
@@ -29,22 +26,20 @@ class SocketService {
         this.trigger(event, args[0]);
       });
 
-    } catch (e) {
-      console.warn('Socket connection error, falling back to simulation.');
-      this.simulateConnection();
-    }
-  }
+      this.socket.on('disconnect', () => {
+        console.warn('🔌 Vault Sync Interrupted');
+        this.trigger('disconnect', {});
+      });
 
-  private simulateConnection() {
-    setTimeout(() => this.trigger('connect', {}), 500);
+    } catch (e) {
+      console.warn('Socket connection error. Real-time features may be limited.');
+    }
   }
 
   on(event: string, callback: (data: any) => void) {
-    if (this.socket) {
-      this.socket.on(event, callback);
-    }
     if (!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(callback);
+    this.socket?.on(event, callback);
   }
 
   private trigger(event: string, data: any) {
@@ -52,29 +47,17 @@ class SocketService {
   }
 
   emit(event: string, data: any) {
-    if (this.socket) {
+    if (this.socket?.connected) {
       this.socket.emit(event, data);
     } else {
-      console.debug(`[Mock Socket] Emit ${event}`, data);
-      
-      // Simulation Logic
-      if (event === 'message') {
-        // Echo back for UI feedback
-        setTimeout(() => {
-          this.trigger('message', {
-            id: `mock_reply_${Date.now()}`,
-            sender: 'VaultBot',
-            content: `I received: "${data.content}". This is a real-time simulation.`,
-            timestamp: Date.now()
-          });
-        }, 1000);
-      }
+      console.debug(`[Sync Delayed] ${event}`, data);
     }
   }
 
   disconnect() {
     this.socket?.disconnect();
     this.socket = null;
+    this.handlers = {};
   }
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
-import { mockBackend } from '../../../services/mockBackend';
+import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 
@@ -26,11 +26,13 @@ const NoticeFiled: React.FC = () => {
     setIsLoading(true);
     try {
       const [recs, clis] = await Promise.all([
-        mockBackend.getLitigationRecords(),
-        mockBackend.getClients()
+        api.getLitigationRecords(),
+        api.getClients()
       ]);
       setRecords(recs.filter(r => r.category === 'Notice' && r.status === 'Filed'));
       setClients(clis);
+    } catch (err) {
+      console.error("Vault sync failed:", err);
     } finally {
       setIsLoading(false);
     }
@@ -41,23 +43,23 @@ const NoticeFiled: React.FC = () => {
   }, []);
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    await mockBackend.saveLitigationRecord({ ...data, category: 'Notice' });
+    await api.saveLitigationRecord({ ...data, category: 'Notice' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
     setIsReissueMode(false);
     fetchAll();
   };
 
-  const updateRecordStatus = async (id: string, newStatus: LitigationStatus) => {
-    const all = await mockBackend.getLitigationRecords();
-    const idx = all.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      all[idx].status = newStatus;
+  const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
+    try {
+      const updated = { ...record, status: newStatus };
       if (newStatus === 'Drop' || newStatus === 'Demand') {
-        all[idx].orderDate = new Date().toISOString().split('T')[0];
+        updated.orderDate = new Date().toISOString().split('T')[0];
       }
-      localStorage.setItem('clientify_mock_litigation', JSON.stringify(all));
+      await api.saveLitigationRecord(updated);
       fetchAll();
+    } catch (err) {
+      alert("Status update failed.");
     }
     setActiveStatusMenuId(null);
   };
@@ -67,7 +69,7 @@ const NoticeFiled: React.FC = () => {
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     const [y, m, d] = parts;
-    return `${d}/${m}/${y}`;
+    return `${d}-${m}-${y}`;
   };
 
   const sectionCounts = useMemo(() => {
@@ -104,7 +106,7 @@ const NoticeFiled: React.FC = () => {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Filed Notices</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
           </div>
-          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[500px]">
+          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px]">
             {sectionCounts.map(([sec, count]) => (
               <div key={sec} className="text-center shrink-0">
                 <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">U/s {sec}</p>
@@ -117,7 +119,7 @@ const NoticeFiled: React.FC = () => {
         <div className="relative flex-1 w-full group">
           <input 
             type="text" 
-            placeholder="Search Trade Name, GSTIN or Ref No..." 
+            placeholder="Search filed notices by Trade Name, GSTIN or Order Reference..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
@@ -136,14 +138,14 @@ const NoticeFiled: React.FC = () => {
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
                   <div className="flex items-center gap-1">
-                    Notice U/s
+                    Section
                     <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 hover:bg-white rounded transition-colors shadow-sm">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                     </button>
                   </div>
                   {activeHeaderFilter === 'section' && (
                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
-                      <button onClick={() => { setSectionFilter('All'); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>All Sections</button>
+                      <button onClick={() => { setSectionFilter('All'); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>All</button>
                       {sections.map(s => (
                         <button key={s} onClick={() => { setSectionFilter(s); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>U/s {s}</button>
                       ))}
@@ -158,15 +160,16 @@ const NoticeFiled: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={8} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No filed notices found</td></tr>
+                <tr><td colSpan={8} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No filed notices in vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
-                    <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group">
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[12px]">
+                      <td className="px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="px-4 py-5">
                         <p className="text-[11px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
                       </td>
                       <td className="px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
                         {client?.gstProfile?.gstin || 'N/A'}
@@ -179,34 +182,24 @@ const NoticeFiled: React.FC = () => {
                       </td>
                       <td className="px-4 py-5 text-[11px] font-black text-emerald-600 uppercase">{formatDisplayDate(rec.filedDate)}</td>
                       
-                      <td className="px-4 py-5 text-center relative">
+                      <td className="px-4 py-5 text-center relative overflow-visible">
                         <div className="relative inline-block w-full">
                            <button 
                              onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
-                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 transition-all flex items-center justify-between"
+                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center justify-between shadow-sm"
                            >
-                             Update Status <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                             Update <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
                              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 text-left">
-                                <button onClick={() => {
-                                  setSelectedRecord({...rec, status: 'Drop'});
-                                  setIsReissueMode(false);
-                                  setIsModalOpen(true);
-                                  setActiveStatusMenuId(null);
-                                }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600 text-left">Drop Order</button>
+                                <button onClick={() => updateRecordStatus(rec, 'Drop')} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600 text-left">Drop Order</button>
                                 <button onClick={() => { 
                                   setSelectedRecord(rec); 
                                   setIsReissueMode(true); 
                                   setIsModalOpen(true); 
                                   setActiveStatusMenuId(null);
-                                }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-indigo-600 border-t border-slate-50 text-left">Notice Issued</button>
-                                <button onClick={() => {
-                                  setSelectedRecord({...rec, status: 'Demand'});
-                                  setIsReissueMode(false);
-                                  setIsModalOpen(true);
-                                  setActiveStatusMenuId(null);
-                                }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50 text-left">Demand Order</button>
+                                }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-indigo-600 border-t border-slate-50 text-left">Notice Reissued</button>
+                                <button onClick={() => updateRecordStatus(rec, 'Demand')} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50 text-left">Demand Order</button>
                              </div>
                            )}
                         </div>
@@ -235,40 +228,25 @@ const NoticeFiled: React.FC = () => {
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Legal Identity: {clients.find(c => c.id === viewingRecord.clientId)?.legalName || '---'}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
-                    <button onClick={() => { setSelectedRecord(viewingRecord); setIsReissueMode(false); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Edit Record</button>
+                    <button onClick={() => { setSelectedRecord(viewingRecord); setIsReissueMode(false); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Modify Record</button>
                     <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
                  </div>
               </div>
               <div className="p-10 grid grid-cols-2 gap-8">
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice U/s</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Ref No</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.referenceNo}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Entity GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
-                 
-                 {viewingRecord.isReissued && (
-                   <div className="col-span-2 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
-                      <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2">Previous Notice History</p>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">Old Ref</p>
-                          <p className="text-sm font-black text-slate-600">{viewingRecord.previousNoticeRef}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">Old Section</p>
-                          <p className="text-sm font-black text-slate-600">U/s {viewingRecord.previousNoticeSection}</p>
-                        </div>
-                      </div>
-                   </div>
-                 )}
-
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Filed Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
-                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
+                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p>
+                    <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p>
+                 </div>
               </div>
-              <div className="p-8 border-t border-slate-100 flex justify-end gap-3"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl">Close</button></div>
+              <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button></div>
            </div>
         </div>
       )}

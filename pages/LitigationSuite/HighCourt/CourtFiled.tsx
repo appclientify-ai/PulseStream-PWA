@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LitigationRecord, Client, LitigationStatus, LitigationCategory } from '../../../types';
-import { mockBackend } from '../../../services/mockBackend';
+import { LitigationRecord, Client, LitigationStatus } from '../../../types';
+import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 
@@ -19,8 +19,8 @@ const CourtFiled: React.FC = () => {
     setIsLoading(true);
     try {
       const [recs, clis] = await Promise.all([
-        mockBackend.getLitigationRecords(),
-        mockBackend.getClients()
+        api.getLitigationRecords(),
+        api.getClients()
       ]);
       setRecords(recs.filter(r => r.category === 'HighCourt' && r.status === 'Filed'));
       setClients(clis);
@@ -32,33 +32,28 @@ const CourtFiled: React.FC = () => {
   useEffect(() => { fetchAll(); }, []);
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    await mockBackend.saveLitigationRecord({ ...data });
+    await api.saveLitigationRecord({ ...data, category: 'HighCourt' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
     fetchAll();
   };
 
-  const updateHearingDate = async (id: string, date: string) => {
-    const all = await mockBackend.getLitigationRecords();
-    const idx = all.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      all[idx].hearingDate = date;
-      localStorage.setItem('clientify_mock_litigation', JSON.stringify(all));
-      fetchAll();
-    }
+  const updateHearingDate = async (record: LitigationRecord, date: string) => {
+    try {
+      await api.saveLitigationRecord({ ...record, hearingDate: date });
+      setRecords(prev => prev.map(r => r.id === record.id ? { ...r, hearingDate: date } : r));
+    } catch (err) { alert("Hearing date sync failed."); }
   };
 
-  const updateRecordStatus = async (id: string, newStatus: LitigationStatus) => {
-    const all = await mockBackend.getLitigationRecords();
-    const idx = all.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      all[idx].status = newStatus;
+  const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
+    try {
+      const updated = { ...record, status: newStatus };
       if (newStatus === 'Drop' || newStatus === 'Demand') {
-        all[idx].orderDate = new Date().toISOString().split('T')[0];
+        updated.orderDate = new Date().toISOString().split('T')[0];
       }
-      localStorage.setItem('clientify_mock_litigation', JSON.stringify(all));
+      await api.saveLitigationRecord(updated);
       fetchAll();
-    }
+    } catch (err) { alert("Outcome update failed."); }
     setActiveStatusMenuId(null);
   };
 
@@ -67,7 +62,7 @@ const CourtFiled: React.FC = () => {
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     const [y, m, d] = parts;
-    return `${d}/${m}/${y}`;
+    return `${d}-${m}-${y}`;
   };
 
   const getHearingDaysLeft = (hearingDate?: string) => {
@@ -97,12 +92,12 @@ const CourtFiled: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">High Court Filed</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">HC Filed</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
-          <input type="text" placeholder="Search filed court cases..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search filed High Court matters..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
@@ -110,71 +105,61 @@ const CourtFiled: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1600px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1550px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No.</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">Trade Name</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Order U/s</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Order Ref No</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Filing Date</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Hearing Date</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Days Left</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] text-center">Outcome</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Client Identity</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Matter U/s</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Filing Date</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Hearing Date</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Status Ref.</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center w-[160px]">Outcome Update</th>
+                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No filed matters found</td></tr>
+                <tr><td colSpan={10} className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Filed Matters Found</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   const hDays = getHearingDaysLeft(rec.hearingDate);
                   return (
-                    <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group">
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">{client?.gstProfile?.gstin || 'N/A'}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-600 uppercase">{rec.section || '---'}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-700 uppercase truncate">{rec.referenceNo}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
-                      <td className="px-4 py-5">
-                         <div className="flex items-center gap-2">
-                           <input 
-                             type="date" 
-                             value={rec.hearingDate || ''} 
-                             onChange={(e) => updateHearingDate(rec.id, e.target.value)}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-black text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/10 transition-all" 
-                           />
-                         </div>
+                    <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
+                      <td className="px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className="px-6 py-5 font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</td>
+                      <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">{client?.gstProfile?.gstin || 'N/A'}</td>
+                      <td className="px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
+                      <td className="px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
+                      <td className="px-6 py-5">
+                         <input type="date" value={rec.hearingDate || ''} onChange={(e) => updateHearingDate(rec, e.target.value)}
+                           className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-black text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-100 transition-all" />
                       </td>
-                      <td className="px-4 py-5">
+                      <td className="px-6 py-5">
                          {hDays !== null ? (
-                           <span className={`text-[11px] font-black uppercase ${hDays < 0 ? 'text-red-500' : hDays <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
+                           <span className={`text-[10px] font-black uppercase ${hDays < 0 ? 'text-red-500' : hDays <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
                               {hDays < 0 ? `${Math.abs(hDays)} Overdue` : `${hDays} Days Left`}
                            </span>
-                         ) : <span className="text-slate-300 font-black text-[10px] uppercase">Pending Schedule</span>}
+                         ) : <span className="text-slate-300 font-black text-[9px] uppercase tracking-tighter">Schedule Pending</span>}
                       </td>
-                      <td className="px-4 py-5 text-center relative">
+                      <td className="px-6 py-5 text-center relative overflow-visible">
                         <div className="relative inline-block w-full">
-                           <button 
-                             onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
-                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 transition-all flex items-center justify-between"
-                           >
-                             Update Outcome <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                           <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
+                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center justify-between shadow-sm">
+                             Outcome <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
                              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 text-left">
-                                <button onClick={() => updateRecordStatus(rec.id, 'Drop')} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600 text-left">Relief Granted</button>
-                                <button onClick={() => updateRecordStatus(rec.id, 'Demand')} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 text-left border-t border-slate-50">Sustained</button>
+                                <button onClick={() => updateRecordStatus(rec, 'Drop')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Relief Granted</button>
+                                <button onClick={() => updateRecordStatus(rec, 'Demand')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50">Sustained</button>
                              </div>
                            )}
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap">
-                         <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm">
+                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                         <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                          </button>
                       </td>
@@ -189,37 +174,30 @@ const CourtFiled: React.FC = () => {
 
       {isViewModalOpen && viewingRecord && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95">
+           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Legal ID: {clients.find(c => c.id === viewingRecord.clientId)?.legalName || '---'}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">High Court Judgment Review Profile</p>
                  </div>
                  <div className="flex items-center gap-2">
-                    <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Edit Record</button>
+                    <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg hover:bg-slate-900 transition-all">Edit Record</button>
                     <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
                  </div>
               </div>
-              <div className="p-10 grid grid-cols-2 gap-8">
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Ref No</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.referenceNo}</p></div>
+              <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Matter Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Filing Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Hearing Date</p><p className="text-base font-black text-indigo-600">{formatDisplayDate(viewingRecord.hearingDate)}</p></div>
-                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Scheduled Hearing</p><p className="text-base font-black text-indigo-600">{formatDisplayDate(viewingRecord.hearingDate)}</p></div>
+                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Case Log</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
-              <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button></div>
+              <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close View</button></div>
            </div>
         </div>
       )}
 
-      <NoticeForm 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={handleSave} 
-        clients={clients} 
-        category="HighCourt" 
-        initialData={selectedRecord}
-      />
+      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category="HighCourt" initialData={selectedRecord} />
     </div>
   );
 };

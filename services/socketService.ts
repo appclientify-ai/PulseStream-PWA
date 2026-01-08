@@ -14,10 +14,11 @@ class SocketService {
     }
 
     try {
+      // Fix: Added 'as any' to io options to bypass the transports type error
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
-      });
+      } as any);
       
       this.socket.on('connect_error', (err) => {
         console.warn('Socket connection failed, likely backend is offline. Using simulation mode.');

@@ -1,13 +1,11 @@
-
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
-
-if (!uri || uri.includes('<PASSWORD>')) {
-  console.error('⚠️  WARNING: MONGODB_URI is not configured correctly.');
-}
-
 const dbName = process.env.DB_NAME || 'clientify';
+
+if (!uri) {
+  console.error('❌ FATAL: MONGODB_URI environment variable is missing.');
+}
 
 export const client = new MongoClient(uri || 'mongodb://localhost:27017/clientify', {
   serverApi: {
@@ -15,33 +13,32 @@ export const client = new MongoClient(uri || 'mongodb://localhost:27017/clientif
     strict: true,
     deprecationErrors: true,
   },
-  connectTimeoutMS: 10000,
-  serverSelectionTimeoutMS: 10000
+  connectTimeoutMS: 15000,
+  serverSelectionTimeoutMS: 15000
 });
 
 export async function connectDB() {
-  if (!uri) {
-    console.error('❌ MONGODB_URI environment variable is missing.');
-    throw new Error("MONGODB_URI is required.");
-  }
+  if (!uri) throw new Error("MONGODB_URI is required for vault initialization.");
 
   try {
-    console.log('🔄 Connecting to MongoDB...');
+    console.log('🛡️  Initializing Vault Connection...');
     await client.connect();
-    // Send a ping to confirm a successful connection
+    
+    // Test connectivity
     await client.db("admin").command({ ping: 1 });
-    console.log("✅ Successfully connected to MongoDB!");
+    console.log("✅ Secure connection established with MongoDB Cluster.");
 
     const db = client.db(dbName);
     
-    // Ensure basic indexes
+    // Establish primary indexes for performance and uniqueness
     await db.collection('users').createIndex({ user_id: 1 }, { unique: true });
     await db.collection('users').createIndex({ email_id: 1 }, { unique: true });
+    await db.collection('items').createIndex({ createdBy: 1, name: 1 });
     
     return db;
   } catch (error) {
-    console.error('❌ MongoDB Connection Failed:', error.message);
-    // On Render/Netlify, we want the process to crash so it restarts
+    console.error('❌ Connection Protocol Failed:', error.message);
+    // Exit to allow container orchestration (Render/K8s) to restart the process
     process.exit(1); 
   }
 }

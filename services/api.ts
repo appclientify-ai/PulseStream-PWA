@@ -1,14 +1,15 @@
-
 import { API_BASE_URL } from '../constants.ts';
-import { Client, LitigationRecord, InvoiceRecord, PaymentRecord, InvoiceSettings, GSTRegistrationRecord, FoodLicenseRecord, MSMERegistrationRecord, MiscWorkRecord } from '../types.ts';
+import { 
+  Client, LitigationRecord, InvoiceRecord, PaymentRecord, 
+  InvoiceSettings, GSTRegistrationRecord, FoodLicenseRecord, 
+  MSMERegistrationRecord, MiscWorkRecord 
+} from '../types.ts';
 
 class ApiService {
   private token: string | null = null;
-  public isMockMode = false;
 
   setToken(token: string | null) {
     this.token = token;
-    if (token) this.get('/auth/me').catch(() => this.setToken(null));
   }
 
   private getFullUrl(endpoint: string): string {
@@ -20,15 +21,16 @@ class ApiService {
     if (response.status === 401) {
       document.cookie = 'clientify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       window.location.reload();
+      return;
     }
     const responseText = await response.text();
     let result;
     try {
       result = responseText ? JSON.parse(responseText) : {};
     } catch (e) {
-      throw new Error(`Invalid server response (${response.status})`);
+      throw new Error(`Cloud Error: ${response.status}`);
     }
-    if (!response.ok) throw new Error(result.message || result.error || 'Request failed');
+    if (!response.ok) throw new Error(result.message || result.error || 'Vault Access Failed');
     return result;
   }
 
@@ -70,186 +72,174 @@ class ApiService {
     return this.handleResponse(res);
   }
 
-  private transformItem(item: any) {
-    if (!item) return null;
+  private transformItem<T>(item: any): T {
+    if (!item) return null as any;
     return {
       ...item.data,
-      id: item._id, 
+      id: item._id,
       createdAt: item.createdAt
+    } as T;
+  }
+
+  async getDashboardSummary() {
+    const results = await Promise.allSettled([
+      this.getClients(),
+      this.getLitigationRecords(),
+      this.getInvoices(),
+      this.getMiscWork()
+    ]);
+    return {
+      clients: results[0].status === 'fulfilled' ? results[0].value : [],
+      litigation: results[1].status === 'fulfilled' ? results[1].value : [],
+      invoices: results[2].status === 'fulfilled' ? results[2].value : [],
+      work: results[3].status === 'fulfilled' ? results[3].value : []
     };
   }
 
+  // --- Clients ---
   async getClients(): Promise<Client[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'client').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'client').map((i: any) => this.transformItem<Client>(i));
   }
 
   async saveClient(client: Partial<Client>): Promise<Client> {
-    const payload = { name: 'client', data: { ...client } };
+    const payload = { name: 'client', data: client };
     const res = client.id 
       ? await this.put(`/items/${client.id}`, payload)
       : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<Client>(res);
   }
 
   async deleteClient(id: string): Promise<void> {
     await this.delete(`/items/${id}`);
   }
 
+  // --- Litigation ---
   async getLitigationRecords(): Promise<LitigationRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'litigation').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i));
   }
 
   async saveLitigationRecord(record: Partial<LitigationRecord>): Promise<LitigationRecord> {
-    const payload = { name: 'litigation', data: { ...record } };
+    const payload = { name: 'litigation', data: record };
     const res = record.id 
       ? await this.put(`/items/${record.id}`, payload)
       : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<LitigationRecord>(res);
   }
 
+  // --- Invoices & Billing ---
   async getInvoices(): Promise<InvoiceRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'invoice').map(this.transformItem);
-  }
-
-  async saveInvoice(invoice: Partial<InvoiceRecord>): Promise<InvoiceRecord> {
-    const payload = { name: 'invoice', data: { ...invoice } };
-    const res = invoice.id 
-      ? await this.put(`/items/${invoice.id}`, payload)
-      : await this.post('/items', payload);
-    return this.transformItem(res);
+    return items.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i));
   }
 
   async generateNextInvoiceNo(): Promise<string> {
     const invs = await this.getInvoices();
     const sets = await this.getInvoiceSettings();
-    const prefix = sets.invoicePrefix || 'INV/';
     const count = invs.length + 1;
-    return `${prefix}${new Date().getFullYear()}/${count.toString().padStart(3, '0')}`;
+    const year = new Date().getFullYear();
+    const shortYear = year.toString().slice(-2);
+    const nextYear = (year + 1).toString().slice(-2);
+    return `${sets.invoicePrefix}${year}-${nextYear}/${count.toString().padStart(3, '0')}`;
   }
 
-  async getPayments(): Promise<PaymentRecord[]> {
-    const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'payment').map(this.transformItem);
-  }
-
-  async savePayment(payment: Partial<PaymentRecord>): Promise<PaymentRecord> {
-    const payload = { name: 'payment', data: { ...payment } };
-    const res = payment.id 
-      ? await this.put(`/items/${payment.id}`, payload)
-      : await this.post('/items', payload);
-    return this.transformItem(res);
-  }
-
-  async migrateToPayment(invoiceId: string, paymentData: any): Promise<void> {
+  async migrateToPayment(invoiceId: string, paymentData: { date: string; mode: string; chequeNo?: string }): Promise<void> {
     const invs = await this.getInvoices();
     const inv = invs.find(i => i.id === invoiceId);
     if (!inv) return;
+    inv.status = 'Paid';
+    inv.paymentDate = paymentData.date;
+    inv.paymentMode = paymentData.mode;
+    await this.saveInvoice(inv);
     await this.savePayment({
       clientId: inv.clientId,
       clientName: inv.clientName,
       invoiceNo: inv.invoiceNo,
-      invoiceDate: inv.date,
-      amount: inv.totalAmount,
       date: paymentData.date,
-      mode: paymentData.mode,
-      chequeNo: paymentData.chequeNo,
-      originalItems: inv.items
+      amount: inv.totalAmount,
+      mode: paymentData.mode as any,
+      chequeNo: paymentData.chequeNo
     });
-    await this.saveInvoice({ ...inv, status: 'Paid' });
+  }
+
+  async saveInvoice(invoice: Partial<InvoiceRecord>): Promise<InvoiceRecord> {
+    const payload = { name: 'invoice', data: invoice };
+    const res = invoice.id ? await this.put(`/items/${invoice.id}`, payload) : await this.post('/items', payload);
+    return this.transformItem<InvoiceRecord>(res);
+  }
+
+  async getPayments(): Promise<PaymentRecord[]> {
+    const items = await this.get('/items');
+    return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
+  }
+
+  async savePayment(payment: Partial<PaymentRecord>): Promise<PaymentRecord> {
+    const payload = { name: 'payment', data: payment };
+    const res = payment.id ? await this.put(`/items/${payment.id}`, payload) : await this.post('/items', payload);
+    return this.transformItem<PaymentRecord>(res);
   }
 
   async getInvoiceSettings(): Promise<InvoiceSettings> {
     const items = await this.get('/items');
     const set = items.find((i: any) => i.name === 'invoice_settings');
-    if (set) return this.transformItem(set);
+    if (set) return this.transformItem<InvoiceSettings>(set);
     return {
-      firmName: 'Your Firm Name',
-      firmAddress: '',
-      firmMobile: '',
-      firmEmail: '',
-      firmGstin: '',
-      invoicePrefix: 'INV/',
-      bankName: '',
-      accountNo: '',
-      ifsc: '',
-      upiId: '',
-      terms: '',
-      isGstEnabled: true
+      firmName: 'Your Firm',
+      firmAddress: '', firmMobile: '', firmEmail: '', firmGstin: '',
+      invoicePrefix: 'INV/', bankName: '', accountNo: '', ifsc: '',
+      upiId: '', terms: '', isGstEnabled: true
     };
   }
 
   async saveInvoiceSettings(settings: InvoiceSettings): Promise<void> {
-    const existing = (await this.get('/items')).find((i: any) => i.name === 'invoice_settings');
+    const all = await this.get('/items');
+    const existing = all.find((i: any) => i.name === 'invoice_settings');
     const payload = { name: 'invoice_settings', data: settings };
-    if (existing) {
-      await this.put(`/items/${existing._id}`, payload);
-    } else {
-      await this.post('/items', payload);
-    }
+    if (existing) await this.put(`/items/${existing._id}`, payload);
+    else await this.post('/items', payload);
   }
 
+  // --- Miscellaneous ---
   async getGSTRegistrations(): Promise<GSTRegistrationRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'gst_reg').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'gst_reg').map((i: any) => this.transformItem<GSTRegistrationRecord>(i));
   }
-
-  async saveGSTRegistration(reg: Partial<GSTRegistrationRecord>): Promise<GSTRegistrationRecord> {
+  async saveGSTRegistration(reg: Partial<GSTRegistrationRecord>) {
     const payload = { name: 'gst_reg', data: reg };
-    const res = reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<GSTRegistrationRecord>(reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload));
   }
-
-  async deleteGSTRegistration(id: string): Promise<void> {
-    await this.delete(`/items/${id}`);
-  }
+  async deleteGSTRegistration(id: string) { await this.delete(`/items/${id}`); }
 
   async getFoodLicenses(): Promise<FoodLicenseRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'food_lic').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'food_lic').map((i: any) => this.transformItem<FoodLicenseRecord>(i));
   }
-
-  async saveFoodLicense(lic: Partial<FoodLicenseRecord>): Promise<FoodLicenseRecord> {
+  async saveFoodLicense(lic: Partial<FoodLicenseRecord>) {
     const payload = { name: 'food_lic', data: lic };
-    const res = lic.id ? await this.put(`/items/${lic.id}`, payload) : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<FoodLicenseRecord>(lic.id ? await this.put(`/items/${lic.id}`, payload) : await this.post('/items', payload));
   }
-
-  async deleteFoodLicense(id: string): Promise<void> {
-    await this.delete(`/items/${id}`);
-  }
+  async deleteFoodLicense(id: string) { await this.delete(`/items/${id}`); }
 
   async getMSMERegistrations(): Promise<MSMERegistrationRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'msme').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'msme').map((i: any) => this.transformItem<MSMERegistrationRecord>(i));
   }
-
-  async saveMSMERegistration(reg: Partial<MSMERegistrationRecord>): Promise<MSMERegistrationRecord> {
+  async saveMSMERegistration(reg: Partial<MSMERegistrationRecord>) {
     const payload = { name: 'msme', data: reg };
-    const res = reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<MSMERegistrationRecord>(reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload));
   }
-
-  async deleteMSMERegistration(id: string): Promise<void> {
-    await this.delete(`/items/${id}`);
-  }
+  async deleteMSMERegistration(id: string) { await this.delete(`/items/${id}`); }
 
   async getMiscWork(): Promise<MiscWorkRecord[]> {
     const items = await this.get('/items');
-    return items.filter((i: any) => i.name === 'misc_work').map(this.transformItem);
+    return items.filter((i: any) => i.name === 'misc_work').map((i: any) => this.transformItem<MiscWorkRecord>(i));
   }
-
-  async saveMiscWork(work: Partial<MiscWorkRecord>): Promise<MiscWorkRecord> {
+  async saveMiscWork(work: Partial<MiscWorkRecord>) {
     const payload = { name: 'misc_work', data: work };
-    const res = work.id ? await this.put(`/items/${work.id}`, payload) : await this.post('/items', payload);
-    return this.transformItem(res);
+    return this.transformItem<MiscWorkRecord>(work.id ? await this.put(`/items/${work.id}`, payload) : await this.post('/items', payload));
   }
-
-  async deleteMiscWork(id: string): Promise<void> {
-    await this.delete(`/items/${id}`);
-  }
+  async deleteMiscWork(id: string) { await this.delete(`/items/${id}`); }
 }
 
 export const api = new ApiService();

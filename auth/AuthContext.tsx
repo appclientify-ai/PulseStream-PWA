@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User } from '../types.ts';
 import { api } from '../services/api.ts';
@@ -17,7 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Cookie Helpers
+// Cookie Helpers for PWA compatibility and security
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`;
@@ -81,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCookie('clientify_token', response.token, 7);
       api.setToken(response.token);
     } catch (err: any) {
-      const msg = err.message || 'Login failed';
+      const msg = err.message || 'Authentication failed. Verify credentials.';
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -99,7 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCookie('clientify_token', response.token, 7);
       api.setToken(response.token);
     } catch (err: any) {
-      const msg = err.message || 'Signup failed';
+      const msg = err.message || 'Onboarding failed. User ID or Email may be taken.';
       setError(msg);
       throw new Error(msg);
     } finally {

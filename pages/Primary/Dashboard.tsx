@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
-import { socketService } from '../../services/socket.ts';
 import { INITIAL_METRICS } from '../../constants.ts';
-import { AppState, Message, MetricData, ActiveView } from '../../types.ts';
+import { MetricData, ActiveView } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { useOffline } from '../../hooks/useOffline.ts';
 import { usePWA } from '../../hooks/usePWA.ts';
 import { api } from '../../services/api.ts';
+import { socketService } from '../../services/socket.ts';
 
 import Sidebar from '../../components/Sidebar.tsx';
 import Header from '../../components/Header.tsx';
@@ -14,6 +13,7 @@ import MetricCard from '../../components/MetricCard.tsx';
 import Loader from '../../components/Loader.tsx';
 import InstallBanner from '../../components/InstallBanner.tsx';
 
+// Performance-First: Standardize Lazy Loading
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
 const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio.tsx'));
 const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling.tsx'));
@@ -47,157 +47,107 @@ const Reminders = lazy(() => import('../Administration/Reminders.tsx'));
 const Messenger = lazy(() => import('../Administration/Messenger.tsx'));
 const Invoices = lazy(() => import('../Administration/invoice/Invoices.tsx'));
 const AddInvoice = lazy(() => import('../Administration/invoice/addinvoice.tsx'));
-const InvoiceSetting = lazy(() => import('../Administration/invoice/invoicesetting.tsx'));
 const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentReceived.tsx'));
 const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
 const Setting = lazy(() => import('../Administration/Setting.tsx'));
 const Trash = lazy(() => import('../Administration/Trash.tsx'));
 
-const VIEW_CONFIG: Record<string, { label: string; description: string }> = {
-  'dashboard': { label: 'Dashboard', description: 'Real-time overview of your professional firm performance.' },
-  'gst-portfolio': { label: 'GST Portfolio', description: 'Centralized management of client GST portal access and tracking.' },
-  'it-portfolio': { label: 'IT Portfolio', description: 'Secure vault for Income Tax profiles and historical filings.' },
-  'compliance-monthly': { label: 'Monthly Filing', description: 'Tracking GSTR-1 and GSTR-3B status for regular taxpayers.' },
-  'compliance-quarterly': { label: 'Quarterly Filing', description: 'Management of QRMP scheme returns and tax payments.' },
-  'compliance-composition': { label: 'Composition Filing', description: 'CMP-08 and GSTR-4 compliance for composition dealers.' },
-  'compliance-gstr4': { label: 'GSTR-4 Annual', description: 'Manage annual compliance for composition taxpayers.' },
-  'compliance-gstr9': { label: 'GSTR-9 & 9C', description: 'Annual reconciliation and audit returns for GST compliance.' },
-  'compliance-itr': { label: 'ITR Returns', description: 'Income Tax Return management for all entity types.' },
-  'compliance-taxaudit': { label: 'Audit & Financials', description: 'Combined suite for Balance Sheet finalization and Tax Audit reporting.' },
-  'lit-notice-pending': { label: 'Pending Notices', description: 'Action required: Notices awaiting official response.' },
-  'lit-notice-filed': { label: 'Filed Notices', description: 'Historical record of submitted notice replies.' },
-  'lit-notice-drop': { label: 'Drop Orders', description: 'Closed proceedings and dropped show cause notices.' },
-  'lit-notice-demand': { label: 'Demand Orders', description: 'Confirmed tax, interest, and penalty demands.' },
-  'lit-appeal-pending': { label: 'Pending Appeals', description: 'Appeals in progress before Commissioner (Appeals).' },
-  'lit-appeal-filed': { label: 'Filed Appeals', description: 'Form GST APL-01 submission tracking.' },
-  'lit-appeal-drop': { label: 'Appeal Results: Favorable', description: 'Appeals concluded with relief for the taxpayer.' },
-  'lit-appeal-demand': { label: 'Appeal Results: Sustained', description: 'Appeals resulting in confirmed demands.' },
-  'lit-tribunal-pending': { label: 'Tribunal Pending', description: 'Matters currently before the GSTAT.' },
-  'lit-tribunal-filed': { label: 'Tribunal Filed', description: 'Second level appeals submitted to the Tribunal.' },
-  'lit-tribunal-drop': { label: 'Tribunal Drop Orders', description: 'Matters successfully dismissed by GSTAT.' },
-  'lit-tribunal-demand': { label: 'Tribunal Demands', description: 'Demands confirmed at the Tribunal level.' },
-  'lit-hc-pending': { label: 'High Court Pending', description: 'Writ petitions and Tax Appeals currently in session.' },
-  'lit-hc-filed': { label: 'High Court Filed', description: 'Documentation of cases submitted to the High Court.' },
-  'lit-hc-drop': { label: 'High Court Relief', description: 'Favorable High Court judgments and stay orders.' },
-  'lit-hc-demand': { label: 'High Court Demands', description: 'Sustained demands confirmed after High Court litigation.' },
-  'misc-gst-reg': { label: 'GST Registration', description: 'Manage new applications, amendments, and certificate downloads.' },
-  'misc-food-lic': { label: 'Food Licenses', description: 'FSSAI registration and license management suite.' },
-  'misc-msme': { label: 'MSME Registration', description: 'Udyam certificate management and validation.' },
-  'misc-work': { label: 'Miscellaneous Work', description: 'PAN, TAN, DSC, and other professional firm services.' },
-  'reminders': { label: 'Compliance Reminders', description: 'Scheduled document submission and filing alerts.' },
-  'messenger': { label: 'Bulk Messenger', description: 'Communicate with all clients via WhatsApp, Email, and SMS.' },
-  'admin-invoices': { label: 'Invoices', description: 'Generate and track professional service billing for clients.' },
-  'admin-add-invoice': { label: 'Invoice Composer', description: 'Advanced multi-item billing engine with auto-serials.' },
-  'admin-invoice-setting': { label: 'Invoice Setting', description: 'Configure firm branding, logos, signatures and bank details.' },
-  'admin-payments': { label: 'Payments Received', description: 'Log and monitor professional fees collected from clients.' },
-  'admin-duedates': { label: 'Due Date Setting', description: 'Configure automatic reminders and firm compliance calendars.' },
-  'settings': { label: 'Setting', description: 'Manage firm profile, user permissions, and security.' },
-  'trash': { label: 'Trash Bin', description: 'Recently deleted records and documents (Retained for 30 days).' }
+const VIEW_LABELS: Record<string, { label: string; desc: string }> = {
+  'dashboard': { label: 'Firm Intelligence', desc: 'Real-time performance metrics for your practice.' },
+  'gst-portfolio': { label: 'GST Master List', desc: 'Secure repository for all entity GST credentials.' },
+  'it-portfolio': { label: 'IT Master List', desc: 'Consolidated income tax identifier vault.' },
+  'compliance-monthly': { label: 'Monthly Filing', desc: 'GSTR-1 and GSTR-3B tracking for regular taxpayers.' },
+  'reminders': { label: 'Deadline Tracker', desc: 'High-priority statutory reminders for the firm.' },
+  'admin-invoices': { label: 'Professional Billing', desc: 'Fee management and tax invoice control center.' }
 };
 
 const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
   const isOnline = useOffline();
   const { installPrompt, triggerInstall } = usePWA();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDataLoading, setIsDataLoading] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [viewExtra, setViewExtra] = useState<any>(null);
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [metrics, setMetrics] = useState<MetricData[]>(INITIAL_METRICS);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const activeViewConfig = useMemo(() => VIEW_CONFIG[activeView] || { label: 'Clientify Suite', description: 'Professional Consultant Solution' }, [activeView]);
+  const activeConfig = useMemo(() => VIEW_LABELS[activeView] || { label: 'Vault Module', desc: 'Secured professional firm data.' }, [activeView]);
 
-  const handleViewChange = (view: ActiveView, extra?: any) => {
-    setActiveView(view);
-    setViewExtra(extra || null);
-  };
-
-  const loadMetrics = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!token) return;
-    setIsDataLoading(true);
     try {
-      const [clients, litigation, invoices, miscWork] = await Promise.all([
-        api.getClients(),
-        api.getLitigationRecords(),
-        api.getInvoices(),
-        api.getMiscWork()
-      ]);
-
-      const pendingLitigation = litigation.filter(r => r.status === 'Pending').length;
-      const pendingWork = miscWork.filter(r => r.status !== 'Completed').length;
-      const unpaidInvoices = invoices.filter(i => i.status !== 'Paid').length;
-
+      const summary = await api.getDashboardSummary();
       setMetrics([
-        { label: 'Active Clients', value: clients.length, trend: clients.length > 0 ? 'up' : 'stable' },
-        { label: 'Pending Litigation', value: pendingLitigation, trend: pendingLitigation > 0 ? 'up' : 'stable' },
-        { label: 'Pending Misc Work', value: pendingWork, trend: 'stable' },
-        { label: 'Unpaid Invoices', value: unpaidInvoices, trend: unpaidInvoices > 5 ? 'up' : 'stable' },
+        { label: 'Total Clients', value: summary.clients.length, trend: 'stable' },
+        { label: 'Active Litigation', value: summary.litigation.filter(l => l.status === 'Pending').length, trend: 'up' },
+        { label: 'Invoices Due', value: summary.invoices.filter(i => i.status !== 'Paid').length, trend: 'up' },
+        { label: 'Firm Backlog', value: summary.work.filter(w => w.status !== 'Completed').length, trend: 'stable' },
       ]);
     } catch (err) {
-      console.error('Master Sync Failed:', err);
+      console.error('Firm Sync Failed:', err);
     } finally {
-      setIsDataLoading(false);
+      setIsInitialLoad(false);
     }
   }, [token]);
 
   useEffect(() => {
-    if (isOnline && token) loadMetrics();
-  }, [isOnline, token, activeView, loadMetrics]);
-
-  useEffect(() => {
     if (isOnline) {
+      loadData();
       socketService.connect();
-      socketService.on('message', (msg: Message) => {
-        setMessages(prev => [...prev, msg]);
-      });
-      setIsConnected(true);
-    } else {
-      socketService.disconnect();
-      setIsConnected(false);
     }
-    return () => { socketService.disconnect(); };
-  }, [isOnline]);
+    return () => socketService.disconnect();
+  }, [isOnline, loadData]);
 
-  const handleSendMessage = useCallback((content: string) => {
-    const newMessage: Message = { id: `msg_${Date.now()}`, sender: user?.username || 'Consultant', content, timestamp: Date.now() };
-    setMessages(prev => [...prev, newMessage]);
-    socketService.emit('message', newMessage);
-  }, [user]);
+  const handleViewChange = (view: ActiveView, extra?: any) => {
+    setActiveView(view);
+    setViewExtra(extra || null);
+    setIsSidebarOpen(false);
+    window.scrollTo(0, 0);
+  };
 
-  if (isDataLoading && activeView === 'dashboard') return <Loader />;
-
-  const renderView = () => {
+  const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 overflow-y-auto h-full pr-1 no-scrollbar">
+          <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 h-full pb-20">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
             </div>
+            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm">
-                <h3 className="text-2xl font-black text-slate-900 mb-2">Firm Performance</h3>
-                <p className="text-slate-500 mb-10">Weekly compliance tracking summary</p>
-                <div className="h-64 flex items-end justify-between gap-6">
-                  {[40, 70, 45, 90, 65, 85, 30, 95, 50, 75].map((h, i) => (
-                    <div key={i} className="flex-1 bg-indigo-50 rounded-2xl group relative hover:bg-indigo-100 cursor-pointer transition-colors">
-                      <div className="absolute inset-x-0 bottom-0 bg-indigo-600 rounded-2xl transition-all duration-700" style={{ height: `${h}%` }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-[2.5rem] bg-slate-900 p-8 text-white flex flex-col justify-center border border-slate-800 shadow-xl">
-                 <h4 className="text-xl font-black uppercase tracking-tight mb-4">Quick Insights</h4>
-                 <div className="space-y-6">
-                    <div><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">System Health</p><p className="text-emerald-400 font-bold">ALL SYSTEMS NOMINAL</p></div>
-                    <div><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Database Sync</p><p className="text-indigo-400 font-bold">100% COMMITTED</p></div>
-                    <button onClick={loadMetrics} className="w-full mt-4 py-4 bg-white/10 hover:bg-white/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">Force Global Sync</button>
-                 </div>
-              </div>
+               <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm min-h-[400px] flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-xl font-black uppercase tracking-tight">Practice Intensity</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Monthly Load Distribution</p>
+                  </div>
+                  <div className="flex items-end justify-between gap-4 h-48 mt-10">
+                     {[40, 70, 55, 90, 80, 60, 30, 85, 45, 50, 65, 95].map((h, i) => (
+                       <div key={i} className="flex-1 bg-slate-50 rounded-xl relative group overflow-hidden h-full flex flex-col justify-end">
+                          <div className="w-full bg-indigo-600/10 rounded-xl transition-all duration-1000 group-hover:bg-indigo-600" style={{ height: `${h}%` }} />
+                       </div>
+                     ))}
+                  </div>
+               </div>
+               
+               <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col">
+                  <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/20 blur-3xl rounded-full -mr-10 -mt-10" />
+                  <h3 className="text-xl font-black uppercase tracking-tight relative z-10 mb-8">High Priority</h3>
+                  <div className="space-y-4 relative z-10 flex-1">
+                     <button onClick={() => handleViewChange('gst-portfolio')} className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-indigo-600 transition-all">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Master Credentials</span>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                     </button>
+                     <button onClick={() => handleViewChange('admin-invoices')} className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-indigo-600 transition-all">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Generate Bill</span>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                     </button>
+                  </div>
+                  <div className="mt-10 pt-10 border-t border-white/10 shrink-0">
+                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Authenticated As</p>
+                     <p className="text-lg font-black uppercase truncate">{user?.username}</p>
+                  </div>
+               </div>
             </div>
           </div>
         );
@@ -234,33 +184,29 @@ const Dashboard: React.FC = () => {
       case 'messenger': return <Messenger />;
       case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
-      case 'admin-invoice-setting': return <InvoiceSetting onBack={() => handleViewChange('admin-invoices')} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
       case 'admin-duedates': return <DueDateSetting />;
       case 'settings': return <Setting />;
       case 'trash': return <Trash />;
-      default: return <div className="p-20 text-center"><h2 className="text-2xl font-black">Module Not Ready</h2></div>;
+      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest">Invalid View ID</div>;
     }
   };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50">
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={handleViewChange} 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
+      <Sidebar activeView={activeView} onViewChange={handleViewChange} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <main className="flex flex-1 flex-col overflow-hidden relative">
         <Header 
-          isConnected={isConnected} 
+          isConnected={isOnline} 
           currentUser={user} 
           onMenuClick={() => setIsSidebarOpen(true)} 
-          activeViewLabel={activeViewConfig.label}
-          activeViewDescription={activeViewConfig.description}
+          activeViewLabel={activeConfig.label} 
+          activeViewDescription={activeConfig.desc} 
         />
-        <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-3 pb-6 lg:pb-12">
-          <Suspense fallback={<Loader />}>{renderView()}</Suspense>
+        <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-8 pb-12 overflow-y-auto no-scrollbar">
+          {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
+            <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
+          )}
         </div>
       </main>
     </div>

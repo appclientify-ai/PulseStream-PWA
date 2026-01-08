@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { LitigationRecord, LitigationCategory, LitigationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
@@ -23,27 +22,13 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
     issuedDate: '',
     dueDate: '',
     filedDate: '',
-    hearingDate: '',
-    orderDate: '',
     remarks: '',
-    previousNoticeRef: '',
-    previousNoticeSection: '',
     isReissued: false
   });
 
   const [dbClients, setDbClients] = useState<Client[]>(propClients || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  const isNotice = category === 'Notice';
-
-  const calculateDueDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    date.setHours(0,0,0,0);
-    date.setDate(date.getDate() + 90);
-    return date.toISOString().split('T')[0];
-  };
 
   useEffect(() => {
     if (isOpen && (!propClients || propClients.length === 0)) {
@@ -53,30 +38,11 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
 
   useEffect(() => {
     if (initialData) {
-      if (isReissue) {
-        const sourceDate = initialData.orderDate || initialData.issuedDate || '';
-        setFormData({
-          ...initialData,
-          previousNoticeRef: initialData.referenceNo,
-          previousNoticeSection: initialData.section,
-          referenceNo: initialData.referenceNo || '', 
-          section: initialData.section || '',         
-          status: 'Pending',
-          isReissued: true,
-          filedDate: '',
-          hearingDate: '',
-          orderDate: sourceDate,
-          issuedDate: sourceDate,
-          dueDate: sourceDate ? calculateDueDate(sourceDate) : '',
-          category: category 
-        });
-      } else {
-        setFormData({
-          ...initialData,
-          filedDate: initialData.filedDate || '',
-          orderDate: initialData.orderDate || ''
-        });
-      }
+      setFormData({
+        ...initialData,
+        category: category,
+        status: initialData.status || 'Pending'
+      });
       setSearchQuery(initialData.clientName || '');
     } else {
       setFormData({
@@ -87,9 +53,6 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
         referenceNo: '',
         issuedDate: '',
         dueDate: '',
-        filedDate: '',
-        hearingDate: '',
-        orderDate: '',
         remarks: '',
         isReissued: false
       });
@@ -123,11 +86,11 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <form 
         onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
-        className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95"
+        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95"
       >
         <div className="flex items-center justify-between shrink-0">
            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
-             {isReissue ? `Initiate ${category}` : (formData.id ? 'Update' : 'Add')} {category} Record
+             {category} Documentation
            </h3>
            <button type="button" onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100">
               <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
@@ -135,61 +98,58 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
         </div>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar pr-1">
-          {!initialData && (
-            <div className="relative">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Client Lookup</label>
-              <input 
-                type="text"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
-                placeholder="Search by Trade Name or GSTIN..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }}
-                onFocus={() => setIsDropdownOpen(true)}
-              />
-              {isDropdownOpen && filteredClients.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[160] max-h-48 overflow-y-auto no-scrollbar">
-                  {filteredClients.map(c => (
-                    <button key={c.id} type="button" onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0">
-                      <p className="text-xs font-black text-slate-900 uppercase">{c.tradeName || c.legalName}</p>
-                      <p className="text-[10px] text-indigo-600 font-mono tracking-tighter">{c.gstProfile?.gstin}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <div className="relative">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Lookup</label>
+            <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all uppercase"
+              placeholder="Trade Name or GSTIN..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }} />
+            {isDropdownOpen && filteredClients.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-[160] max-h-48 overflow-y-auto no-scrollbar">
+                {filteredClients.map(c => (
+                  <button key={c.id} type="button" onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0">
+                    <p className="text-xs font-black text-slate-900 uppercase truncate">{c.tradeName || c.legalName}</p>
+                    <p className="text-[10px] text-indigo-600 font-mono font-black">{c.gstProfile?.gstin || 'NO GSTIN'}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">{isNotice ? 'Notice Ref' : 'Order Ref'}</label>
-              <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100 transition-all" required value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value.toUpperCase()})} />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Section</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.section || ''} onChange={e => setFormData({...formData, section: e.target.value.toUpperCase()})} placeholder="E.G. 73" />
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Section</label>
-              <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100 transition-all" required value={formData.section || ''} onChange={e => setFormData({...formData, section: e.target.value.toUpperCase()})} />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Tax Period</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.taxPeriod || ''} onChange={e => setFormData({...formData, taxPeriod: e.target.value.toUpperCase()})} placeholder="E.G. 2023-24" />
             </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reference No</label>
+            <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value.toUpperCase()})} placeholder="Notice/Order No" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Issued Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all" required value={formData.issuedDate || ''} onChange={e => setFormData({...formData, issuedDate: e.target.value})} />
+              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => setFormData({...formData, issuedDate: e.target.value})} />
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all" required={formData.status === 'Pending'} value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
             </div>
           </div>
 
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Internal Notes</label>
-            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20" value={formData.remarks || ''} onChange={e => setFormData({...formData, remarks: e.target.value})} />
+            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20" value={formData.remarks || ''} onChange={e => setFormData({...formData, remarks: e.target.value})} placeholder="Staff instructions..." />
           </div>
         </div>
 
         <div className="flex gap-4 pt-4 shrink-0">
           <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
-          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save Entry</button>
+          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save Litigation</button>
         </div>
       </form>
     </div>

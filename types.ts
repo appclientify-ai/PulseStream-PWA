@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   sender: string;
@@ -21,14 +20,6 @@ export interface User {
   firm_name?: string | null;
   gstn?: string | null;
   status: 'online' | 'away' | 'offline';
-}
-
-export interface AppState {
-  messages: Message[];
-  metrics: MetricData[];
-  users: User[];
-  isConnected: boolean;
-  currentUser: User | null;
 }
 
 export type ActiveView = string;
@@ -155,7 +146,6 @@ export interface PaymentRecord {
   chequeNo?: string;
 }
 
-// Fix: Exported Litigation types and updated interface
 export type LitigationCategory = 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt';
 export type LitigationStatus = 'Pending' | 'Filed' | 'Drop' | 'Demand';
 
@@ -180,7 +170,6 @@ export interface LitigationRecord {
   hearingDate?: string;
 }
 
-// Fix: Exported GST Registration types and updated interface
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation' | 'Surrender';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
@@ -196,7 +185,6 @@ export interface GSTRegistrationRecord {
   remarks?: string;
 }
 
-// Fix: Exported Food License types and updated interface
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
 export type FoodLicenseStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Applied' | 'Completed' | 'Rejected';
 
@@ -212,21 +200,19 @@ export interface FoodLicenseRecord {
   remarks?: string;
 }
 
-// Fix: Exported MSME Registration status type and updated interface
 export type MSMERegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
+  regType?: string;
   status: MSMERegistrationStatus;
   appDate: string;
   udyamNumber: string;
   remarks?: string;
-  regType?: string;
 }
 
-// Fix: Exported Misc Work status type and updated interface
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {
