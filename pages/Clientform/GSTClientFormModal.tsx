@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Client, GSTProfile, ConstitutionType, GstStatus, GstRegType, GstFilingFreq, ClientStatus } from '../../types.ts';
+import { Client, GSTProfile, ConstitutionType, GstStatus, GstRegType, GstFilingFreq, ClientStatus, JurisdictionType } from '../../types.ts';
 import { api } from '../../services/api.ts';
 
 interface GSTClientFormModalProps {
@@ -13,6 +13,7 @@ interface GSTClientFormModalProps {
 const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'basic' | 'portal' | 'office'>('basic');
   
   const [formData, setFormData] = useState<Partial<Client>>({
     legalName: '',
@@ -25,8 +26,10 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
       regDate: '', regType: 'Regular', filingFreq: 'Monthly',
       constitution: 'Proprietorship', stakeholders: [],
       accountantName: '', accountantMobile: '', address: '',
+      jurisdictionType: 'State', sector: '', range: ''
     },
-    bankDetails: { bankName: '', accountNo: '', ifsc: '' }
+    bankDetails: { bankName: '', accountNo: '', ifsc: '' },
+    remarks: ''
   });
 
   useEffect(() => {
@@ -40,23 +43,15 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
           regDate: '', regType: 'Regular', filingFreq: 'Monthly',
           constitution: 'Proprietorship', stakeholders: [],
           accountantName: '', accountantMobile: '', address: '',
+          jurisdictionType: 'State', sector: '', range: ''
         },
-        bankDetails: { bankName: '', accountNo: '', ifsc: '' }
+        bankDetails: { bankName: '', accountNo: '', ifsc: '' },
+        remarks: ''
       });
     }
     setError(null);
+    setActiveTab('basic');
   }, [initialData, isOpen]);
-
-  const handleReturnLogic = (type: GstRegType) => {
-    setFormData(prev => ({
-      ...prev,
-      gstProfile: {
-        ...prev.gstProfile!,
-        regType: type,
-        filingFreq: type === 'Composition' ? 'Quarterly' : prev.gstProfile?.filingFreq || 'Monthly'
-      }
-    }));
-  };
 
   const handleGstinChange = (val: string) => {
     const gstin = val.toUpperCase().slice(0, 15);
@@ -67,6 +62,17 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     setFormData(prev => ({
       ...prev,
       gstProfile: { ...prev.gstProfile!, gstin, pan }
+    }));
+  };
+
+  const handleReturnLogic = (type: GstRegType) => {
+    setFormData(prev => ({
+      ...prev,
+      gstProfile: {
+        ...prev.gstProfile!,
+        regType: type,
+        filingFreq: type === 'Composition' ? 'Quarterly' : prev.gstProfile?.filingFreq || 'Monthly'
+      }
     }));
   };
 
@@ -97,7 +103,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] animate-in zoom-in-95">
         <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
           <div className="flex items-center gap-4">
@@ -106,7 +112,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
              <div>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">GST Client Master</h2>
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Compliance Vault</p>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Live MongoDB Synchronization</p>
              </div>
           </div>
           <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-xl transition-colors">
@@ -114,87 +120,187 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
           </button>
         </div>
 
+        <div className="flex border-b border-slate-100 bg-white shrink-0">
+           {['basic', 'portal', 'office'].map((t) => (
+             <button key={t} onClick={() => setActiveTab(t as any)} 
+               className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === t ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30' : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}>
+               {t === 'basic' ? 'Basic Identity' : t === 'portal' ? 'Return & Portal' : 'Office & Banking'}
+             </button>
+           ))}
+        </div>
+
         <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar">
           {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100">{error}</div>}
           
-          <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Identity & Status <div className="h-px flex-1 bg-slate-100" /></h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Legal Name</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                 <div>
+          {activeTab === 'basic' && (
+            <div className="space-y-10 animate-in fade-in duration-300">
+               <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Business Information <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Legal Name (As per PAN)</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Trade/Business Name</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value})} />
+                  </div>
+                  <div className="relative">
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Identifier</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none pr-12 focus:ring-4 focus:ring-indigo-50" placeholder="22AAAAA0000A1Z5" value={formData.gstProfile?.gstin} onChange={e => handleGstinChange(e.target.value)} />
+                    <button type="button" onClick={verifyGSTIN} title="Verify on GST Portal" className="absolute right-4 top-[42px] h-8 w-8 text-indigo-600 hover:bg-white rounded-lg flex items-center justify-center transition-all shadow-sm">
+                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">PAN Number</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.gstProfile?.pan} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, pan: e.target.value.toUpperCase().slice(0, 10)}})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Constitution of Business</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.constitution} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, constitution: e.target.value as ConstitutionType}})}>
+                       <option value="Proprietorship">Proprietorship</option>
+                       <option value="Partnership">Partnership</option>
+                       <option value="Company">Private Ltd Company</option>
+                       <option value="HUF">HUF</option>
+                       <option value="Trust">Trust</option>
+                       <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Client Status</label>
                     <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as ClientStatus})}>
                        <option value="Active Filing">Active Filing</option>
                        <option value="Case-by-Case">Case-by-Case</option>
                        <option value="Inactive">Inactive</option>
                     </select>
-                 </div>
-                 <div>
-                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Constitution</label>
-                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.constitution} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, constitution: e.target.value as ConstitutionType}})}>
-                       <option value="Proprietorship">Proprietorship</option>
-                       <option value="Partnership">Partnership</option>
-                       <option value="Company">Company</option>
-                    </select>
-                 </div>
-              </div>
-              <div className="relative">
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Identifier</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none pr-12" placeholder="22AAAAA0000A1Z5" value={formData.gstProfile?.gstin} onChange={e => handleGstinChange(e.target.value)} />
-                <button type="button" onClick={verifyGSTIN} className="absolute right-4 top-[42px] h-8 w-8 text-indigo-600 hover:bg-white rounded-lg flex items-center justify-center transition-all shadow-sm">
-                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                </button>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">PAN Number</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.gstProfile?.pan} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, pan: e.target.value.toUpperCase().slice(0, 10)}})} />
-              </div>
+                  </div>
+                </div>
+              </section>
+              <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Contact Details <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Mobile No</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
+                   </div>
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Email Address</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                   </div>
+                </div>
+              </section>
             </div>
-          </section>
+          )}
 
-          <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Registration & Return Logic <div className="h-px flex-1 bg-slate-100" /></h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Status</label>
-                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.gstStatus} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstStatus: e.target.value as GstStatus}})}>
-                   <option value="Active">Active</option>
-                   <option value="Suspended">Suspended</option>
-                   <option value="Cancelled">Cancelled</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Return Type</label>
-                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.regType} onChange={e => handleReturnLogic(e.target.value as GstRegType)}>
-                   <option value="Regular">Regular</option>
-                   <option value="Composition">Composition</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Frequency</label>
-                <select disabled={formData.gstProfile?.regType === 'Composition'} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none disabled:opacity-50" value={formData.gstProfile?.filingFreq} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, filingFreq: e.target.value as GstFilingFreq}})}>
-                   <option value="Monthly">Monthly</option>
-                   <option value="Quarterly">Quarterly</option>
-                </select>
-              </div>
+          {activeTab === 'portal' && (
+            <div className="space-y-10 animate-in fade-in duration-300">
+               <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Statutory Return Logic <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Return Type</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.regType} onChange={e => handleReturnLogic(e.target.value as GstRegType)}>
+                       <option value="Regular">Regular</option>
+                       <option value="Composition">Composition</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Frequency</label>
+                    <select disabled={formData.gstProfile?.regType === 'Composition'} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none disabled:opacity-50" value={formData.gstProfile?.filingFreq} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, filingFreq: e.target.value as GstFilingFreq}})}>
+                       <option value="Monthly">Monthly</option>
+                       <option value="Quarterly">Quarterly</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Status</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.gstStatus} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstStatus: e.target.value as GstStatus}})}>
+                       <option value="Active">Active</option>
+                       <option value="Suspended">Suspended</option>
+                       <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Registration Date</label>
+                      <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase" value={formData.gstProfile?.regDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regDate: e.target.value}})} />
+                   </div>
+                   {formData.gstProfile?.gstStatus === 'Cancelled' && (
+                     <div className="animate-in slide-in-from-left-4">
+                        <label className="text-[10px] font-black uppercase text-red-500 mb-2 block ml-1">Cancellation Date</label>
+                        <input type="date" className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl font-bold uppercase text-red-600 outline-none" value={formData.gstProfile?.cancelDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, cancelDate: e.target.value}})} />
+                     </div>
+                   )}
+                </div>
+              </section>
+              <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Portal Credentials <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Portal Username</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.username} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, username: e.target.value}})} />
+                   </div>
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Portal Password</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.password} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, password: e.target.value}})} />
+                   </div>
+                </div>
+              </section>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div>
-                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Registration Date</label>
-                  <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase" value={formData.gstProfile?.regDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regDate: e.target.value}})} />
-               </div>
-               {formData.gstProfile?.gstStatus === 'Cancelled' && (
-                 <div>
-                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1 text-red-500">Cancellation Date</label>
-                    <input type="date" className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl font-bold uppercase text-red-600 outline-none" value={formData.gstProfile?.cancelDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, cancelDate: e.target.value}})} />
-                 </div>
-               )}
+          )}
+
+          {activeTab === 'office' && (
+            <div className="space-y-10 animate-in fade-in duration-300">
+               <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Jurisdiction <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Jurisdiction Type</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.jurisdictionType} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, jurisdictionType: e.target.value as JurisdictionType}})}>
+                       <option value="State">State</option>
+                       <option value="Center">Center</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Sector/Circle</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Range</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} />
+                  </div>
+                </div>
+              </section>
+              <section className="space-y-6">
+                <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Accountant & Banking <div className="h-px flex-1 bg-slate-100" /></h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Accountant Name</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.accountantName} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantName: e.target.value}})} />
+                   </div>
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Accountant Mobile</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.accountantMobile} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantMobile: e.target.value}})} />
+                   </div>
+                   <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Bank Name</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.bankDetails?.bankName} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, bankName: e.target.value}})} />
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">A/c No</label>
+                        <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.bankDetails?.accountNo} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, accountNo: e.target.value}})} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">IFSC</label>
+                        <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value.toUpperCase()}})} />
+                      </div>
+                   </div>
+                </div>
+              </section>
             </div>
-          </section>
+          )}
         </div>
 
         <div className="p-10 border-t border-slate-100 flex gap-4 bg-slate-50 shrink-0">

@@ -8,7 +8,7 @@ class ApiService {
 
   setToken(token: string | null) {
     this.token = token;
-    if (token) api.get('/auth/me').catch(() => this.setToken(null));
+    if (token) this.get('/auth/me').catch(() => this.setToken(null));
   }
 
   private getFullUrl(endpoint: string): string {
@@ -70,7 +70,6 @@ class ApiService {
     return this.handleResponse(res);
   }
 
-  // --- Helpers ---
   private transformItem(item: any) {
     if (!item) return null;
     return {
@@ -79,8 +78,6 @@ class ApiService {
       createdAt: item.createdAt
     };
   }
-
-  // --- Domain Logic Mapped to /api/items ---
 
   async getClients(): Promise<Client[]> {
     const items = await this.get('/items');
@@ -130,7 +127,7 @@ class ApiService {
     const sets = await this.getInvoiceSettings();
     const prefix = sets.invoicePrefix || 'INV/';
     const count = invs.length + 1;
-    return `${prefix}${new Date().getFullYear()}-${(new Date().getFullYear() + 1).toString().slice(-2)}/${count.toString().padStart(3, '0')}`;
+    return `${prefix}${new Date().getFullYear()}/${count.toString().padStart(3, '0')}`;
   }
 
   async getPayments(): Promise<PaymentRecord[]> {
@@ -150,7 +147,6 @@ class ApiService {
     const invs = await this.getInvoices();
     const inv = invs.find(i => i.id === invoiceId);
     if (!inv) return;
-
     await this.savePayment({
       clientId: inv.clientId,
       clientName: inv.clientName,
@@ -162,7 +158,6 @@ class ApiService {
       chequeNo: paymentData.chequeNo,
       originalItems: inv.items
     });
-
     await this.saveInvoice({ ...inv, status: 'Paid' });
   }
 

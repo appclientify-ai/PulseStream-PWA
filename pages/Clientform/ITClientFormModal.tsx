@@ -25,8 +25,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       username: '',
       password: '',
       fatherName: '',
-      incomeType: 'Both',
-      companyName: ''
+      incomeType: 'Both'
     },
     bankDetails: { bankName: '', accountNo: '', ifsc: '' }
   });
@@ -39,11 +38,12 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
         legalName: '', mobile: '', email: '', status: 'Active',
         itProfile: {
           pan: '', category: 'Individual', username: '', password: '',
-          fatherName: '', incomeType: 'Both', companyName: ''
+          fatherName: '', incomeType: 'Both'
         },
         bankDetails: { bankName: '', accountNo: '', ifsc: '' }
       });
     }
+    setError(null);
   }, [initialData, isOpen]);
 
   const handleSave = async () => {
@@ -57,7 +57,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       onSave(saved);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to save client.");
+      setError(err.message || "Failed to save IT client.");
     } finally {
       setIsSaving(false);
     }
@@ -66,7 +66,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-in zoom-in-95">
         <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">IT Client Vault</h2>
@@ -83,19 +83,24 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div>
                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Full Legal Name (As per PAN)</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
+                 <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
                </div>
                <div>
                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Father's Name</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value}})} />
+                 <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value}})} />
                </div>
                <div>
                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">PAN Number</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.itProfile?.pan} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, pan: e.target.value.toUpperCase().slice(0,10), username: e.target.value.toUpperCase().slice(0,10)}})} />
+                 <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.itProfile?.pan} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, pan: e.target.value.toUpperCase().slice(0,10), username: e.target.value.toUpperCase().slice(0,10)}})} />
                </div>
                <div>
-                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Mobile Contact</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold outline-none" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Category</label>
+                 <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.itProfile?.category} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, category: e.target.value}})}>
+                   <option value="Individual">Individual</option>
+                   <option value="HUF">HUF</option>
+                   <option value="Partnership">Partnership Firm</option>
+                   <option value="Company">Company</option>
+                 </select>
                </div>
             </div>
           </section>
@@ -105,11 +110,11 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Username</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-black outline-none" value={formData.itProfile?.username} readOnly />
+                 <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black outline-none" value={formData.itProfile?.username} readOnly />
               </div>
               <div>
                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Password</label>
-                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold outline-none" value={formData.itProfile?.password} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, password: e.target.value}})} />
+                 <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.itProfile?.password} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, password: e.target.value}})} />
               </div>
             </div>
           </section>

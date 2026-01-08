@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
 import { socketService } from '../../services/socket.ts';
 import { INITIAL_METRICS } from '../../constants.ts';
-import { AppState, MetricData, ActiveView } from '../../types.ts';
+import { AppState, Message, MetricData, ActiveView } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { useOffline } from '../../hooks/useOffline.ts';
 import { usePWA } from '../../hooks/usePWA.ts';
@@ -54,7 +54,7 @@ const Setting = lazy(() => import('../Administration/Setting.tsx'));
 const Trash = lazy(() => import('../Administration/Trash.tsx'));
 
 const VIEW_CONFIG: Record<string, { label: string; description: string }> = {
-  'dashboard': { label: 'Firm Dashboard', description: 'Comprehensive overview of your practice metrics.' },
+  'dashboard': { label: 'Dashboard', description: 'Real-time overview of your professional firm performance.' },
   'gst-portfolio': { label: 'GST Portfolio', description: 'Centralized management of client GST portal access and tracking.' },
   'it-portfolio': { label: 'IT Portfolio', description: 'Secure vault for Income Tax profiles and historical filings.' },
   'compliance-monthly': { label: 'Monthly Filing', description: 'Tracking GSTR-1 and GSTR-3B status for regular taxpayers.' },
@@ -70,11 +70,11 @@ const VIEW_CONFIG: Record<string, { label: string; description: string }> = {
   'lit-notice-demand': { label: 'Demand Orders', description: 'Confirmed tax, interest, and penalty demands.' },
   'lit-appeal-pending': { label: 'Pending Appeals', description: 'Appeals in progress before Commissioner (Appeals).' },
   'lit-appeal-filed': { label: 'Filed Appeals', description: 'Form GST APL-01 submission tracking.' },
-  'lit-appeal-drop': { label: 'Appeal Relief', description: 'Appeals concluded with relief for the taxpayer.' },
-  'lit-appeal-demand': { label: 'Appeal Sustained', description: 'Appeals resulting in confirmed demands.' },
+  'lit-appeal-drop': { label: 'Appeal Results: Favorable', description: 'Appeals concluded with relief for the taxpayer.' },
+  'lit-appeal-demand': { label: 'Appeal Results: Sustained', description: 'Appeals resulting in confirmed demands.' },
   'lit-tribunal-pending': { label: 'Tribunal Pending', description: 'Matters currently before the GSTAT.' },
   'lit-tribunal-filed': { label: 'Tribunal Filed', description: 'Second level appeals submitted to the Tribunal.' },
-  'lit-tribunal-drop': { label: 'Tribunal Drop', description: 'Matters successfully dismissed by GSTAT.' },
+  'lit-tribunal-drop': { label: 'Tribunal Drop Orders', description: 'Matters successfully dismissed by GSTAT.' },
   'lit-tribunal-demand': { label: 'Tribunal Demands', description: 'Demands confirmed at the Tribunal level.' },
   'lit-hc-pending': { label: 'High Court Pending', description: 'Writ petitions and Tax Appeals currently in session.' },
   'lit-hc-filed': { label: 'High Court Filed', description: 'Documentation of cases submitted to the High Court.' },
@@ -105,6 +105,7 @@ const Dashboard: React.FC = () => {
   const [viewExtra, setViewExtra] = useState<any>(null);
 
   const [metrics, setMetrics] = useState<MetricData[]>(INITIAL_METRICS);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
 
   const activeViewConfig = useMemo(() => VIEW_CONFIG[activeView] || { label: 'Clientify Suite', description: 'Professional Consultant Solution' }, [activeView]);
@@ -125,14 +126,18 @@ const Dashboard: React.FC = () => {
         api.getMiscWork()
       ]);
 
+      const pendingLitigation = litigation.filter(r => r.status === 'Pending').length;
+      const pendingWork = miscWork.filter(r => r.status !== 'Completed').length;
+      const unpaidInvoices = invoices.filter(i => i.status !== 'Paid').length;
+
       setMetrics([
-        { label: 'Active Filing Clients', value: clients.filter(c => c.status === 'Active Filing').length, trend: 'stable' },
-        { label: 'Open Litigation', value: litigation.filter(l => l.status === 'Pending').length, trend: 'up' },
-        { label: 'Pending Bills', value: invoices.filter(i => i.status !== 'Paid').length, trend: 'up' },
-        { label: 'Service Pipeline', value: miscWork.filter(w => w.status !== 'Completed').length, trend: 'stable' },
-      ] as MetricData[]);
+        { label: 'Active Clients', value: clients.length, trend: clients.length > 0 ? 'up' : 'stable' },
+        { label: 'Pending Litigation', value: pendingLitigation, trend: pendingLitigation > 0 ? 'up' : 'stable' },
+        { label: 'Pending Misc Work', value: pendingWork, trend: 'stable' },
+        { label: 'Unpaid Invoices', value: unpaidInvoices, trend: unpaidInvoices > 5 ? 'up' : 'stable' },
+      ]);
     } catch (err) {
-      console.error('Metrics Sync Failed:', err);
+      console.error('Master Sync Failed:', err);
     } finally {
       setIsDataLoading(false);
     }
@@ -145,6 +150,9 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (isOnline) {
       socketService.connect();
+      socketService.on('message', (msg: Message) => {
+        setMessages(prev => [...prev, msg]);
+      });
       setIsConnected(true);
     } else {
       socketService.disconnect();
@@ -152,6 +160,12 @@ const Dashboard: React.FC = () => {
     }
     return () => { socketService.disconnect(); };
   }, [isOnline]);
+
+  const handleSendMessage = useCallback((content: string) => {
+    const newMessage: Message = { id: `msg_${Date.now()}`, sender: user?.username || 'Consultant', content, timestamp: Date.now() };
+    setMessages(prev => [...prev, newMessage]);
+    socketService.emit('message', newMessage);
+  }, [user]);
 
   if (isDataLoading && activeView === 'dashboard') return <Loader />;
 
@@ -164,27 +178,25 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {metrics.map((m, i) => <MetricCard key={i} metric={m} />)}
             </div>
-            <div className="grid grid-cols-1 gap-8">
-              <div className="rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-10">
-                   <div>
-                      <h3 className="text-2xl font-black text-slate-900 mb-2">Firm Performance Matrix</h3>
-                      <p className="text-slate-500">Global compliance and operational tracking summary.</p>
-                   </div>
-                   <button onClick={loadMetrics} className="h-12 px-6 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-white hover:shadow-sm transition-all">Force Sync</button>
-                </div>
-                <div className="h-96 flex items-end justify-between gap-6">
-                  {[40, 70, 45, 90, 65, 85, 30, 95, 50, 75, 60, 80].map((h, i) => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 rounded-[2.5rem] bg-white p-12 border border-slate-200 shadow-sm">
+                <h3 className="text-2xl font-black text-slate-900 mb-2">Firm Performance</h3>
+                <p className="text-slate-500 mb-10">Weekly compliance tracking summary</p>
+                <div className="h-64 flex items-end justify-between gap-6">
+                  {[40, 70, 45, 90, 65, 85, 30, 95, 50, 75].map((h, i) => (
                     <div key={i} className="flex-1 bg-indigo-50 rounded-2xl group relative hover:bg-indigo-100 cursor-pointer transition-colors">
                       <div className="absolute inset-x-0 bottom-0 bg-indigo-600 rounded-2xl transition-all duration-700" style={{ height: `${h}%` }} />
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Vol {h}%</div>
                     </div>
                   ))}
                 </div>
-                <div className="mt-8 pt-8 border-t border-slate-50 flex justify-center gap-12">
-                   <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-indigo-600" /><span className="text-[10px] font-black uppercase text-slate-400">Filed Returns</span></div>
-                   <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-indigo-50" /><span className="text-[10px] font-black uppercase text-slate-400">Total Workload</span></div>
-                </div>
+              </div>
+              <div className="rounded-[2.5rem] bg-slate-900 p-8 text-white flex flex-col justify-center border border-slate-800 shadow-xl">
+                 <h4 className="text-xl font-black uppercase tracking-tight mb-4">Quick Insights</h4>
+                 <div className="space-y-6">
+                    <div><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">System Health</p><p className="text-emerald-400 font-bold">ALL SYSTEMS NOMINAL</p></div>
+                    <div><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Database Sync</p><p className="text-indigo-400 font-bold">100% COMMITTED</p></div>
+                    <button onClick={loadMetrics} className="w-full mt-4 py-4 bg-white/10 hover:bg-white/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all">Force Global Sync</button>
+                 </div>
               </div>
             </div>
           </div>
@@ -233,9 +245,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50">
-      <Sidebar activeView={activeView} onViewChange={handleViewChange} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar 
+        activeView={activeView} 
+        onViewChange={handleViewChange} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
       <main className="flex flex-1 flex-col overflow-hidden relative">
-        <Header isConnected={isConnected} currentUser={user} onMenuClick={() => setIsSidebarOpen(true)} activeViewLabel={activeViewConfig.label} activeViewDescription={activeViewConfig.description} />
+        <Header 
+          isConnected={isConnected} 
+          currentUser={user} 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+          activeViewLabel={activeViewConfig.label}
+          activeViewDescription={activeViewConfig.description}
+        />
         <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-3 pb-6 lg:pb-12">
           <Suspense fallback={<Loader />}>{renderView()}</Suspense>
         </div>

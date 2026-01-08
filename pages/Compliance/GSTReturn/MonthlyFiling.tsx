@@ -13,49 +13,54 @@ const MonthlyFiling: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
   const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
   
-  const { getStatus, toggleStatus, getDueDate } = useMonthlyFilingLogic(selectedYear, selectedMonth);
+  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useMonthlyFilingLogic(selectedYear, selectedMonth);
 
   const fetchClients = async () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      // Logic: Only "Active Filing" status clients appear here.
-      // Logical check for monthly/regular handled by filtering
-      const filingReady = data.filter(c => 
+      // Requirement: Only show clients with status "Active Filing"
+      // Filter for Monthly Regular taxpayers
+      const activeList = data.filter(c => 
         c.status === 'Active Filing' && 
         c.gstProfile?.regType === 'Regular' &&
         c.gstProfile?.filingFreq === 'Monthly'
       );
-      setClients(filingReady);
-    } finally { setIsLoading(false); }
+      setClients(activeList);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { fetchClients(); }, []);
 
   const filteredClients = useMemo(() => {
+    // Determine the date for comparison (1st day of the selected period)
     const monthIdx = MONTHS.indexOf(selectedMonth);
     const yearStart = parseInt(selectedYear.split('-')[0]);
-    const actualYear = monthIdx >= 3 ? yearStart : yearStart + 1;
-    const periodFirstDay = new Date(actualYear, monthIdx, 1);
+    const actualYear = monthIdx >= 3 ? yearStart : yearStart + 1; // FY starts in April
+    const periodDate = new Date(actualYear, monthIdx, 1);
 
     return clients.filter(c => {
-      // 1. Lifecycle: Hide if period is before Registration Date
+      // 1. Search filter
+      const searchMatch = (c.legalName || '').toLowerCase().includes(search.toLowerCase()) || 
+                          (c.tradeName || '').toLowerCase().includes(search.toLowerCase()) ||
+                          (c.gstProfile?.gstin || '').toLowerCase().includes(search.toLowerCase());
+      if (!searchMatch) return false;
+
+      // 2. Timeline Logic: Hide if period is before registration
       if (c.gstProfile?.regDate) {
         const regDate = new Date(c.gstProfile.regDate);
-        if (periodFirstDay < regDate) return false;
+        if (periodDate < regDate) return false;
       }
 
-      // 2. Lifecycle: Hide if Cancelled and period is after Cancellation Date
+      // 3. Status Logic: Suspended stays, Cancelled is hidden if period > cancellation
       if (c.gstProfile?.gstStatus === 'Cancelled' && c.gstProfile.cancelDate) {
         const cancelDate = new Date(c.gstProfile.cancelDate);
-        if (periodFirstDay > cancelDate) return false;
+        if (periodDate > cancelDate) return false;
       }
 
-      // 3. Status Handling: Suspended ARE shown (as requirement stated)
-      // 4. Search Filter
-      const s = search.toLowerCase();
-      return (c.legalName || '').toLowerCase().includes(s) || 
-             (c.gstProfile?.gstin || '').toLowerCase().includes(s);
+      return true;
     });
   }, [clients, search, selectedMonth, selectedYear]);
 
@@ -65,7 +70,10 @@ const MonthlyFiling: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-           <div className="text-center"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{selectedMonth}</p><p className="text-xl font-black text-slate-900 leading-none">{filteredClients.length}</p></div>
+           <div className="text-center">
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{selectedMonth}</p>
+             <p className="text-xl font-black text-slate-900 leading-none">{filteredClients.length}</p>
+           </div>
         </div>
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search active filing vault..." value={search} onChange={e => setSearch(e.target.value)}
@@ -88,7 +96,7 @@ const MonthlyFiling: React.FC = () => {
                 <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
                 <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-center w-[120px]">GSTR-1</th>
                 <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-center w-[120px]">GSTR-3B</th>
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[140px]">GSTIN Status</th>
+                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Status</th>
                 <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
               </tr>
             </thead>
@@ -100,7 +108,7 @@ const MonthlyFiling: React.FC = () => {
                   <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
                     <td className="px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className="px-4 py-5 font-black text-slate-900 uppercase truncate">{client.tradeName || client.legalName}</td>
-                    <td className="px-4 py-5 font-black text-indigo-600 font-mono tracking-widest">{client.gstProfile?.gstin}</td>
+                    <td className="px-4 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</td>
                     <td className="px-4 py-5 text-center">
                        <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${st.r1 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
                          {st.r1 ? 'Filed' : 'Pending'}
@@ -116,7 +124,7 @@ const MonthlyFiling: React.FC = () => {
                          {isSuspended ? 'Suspended' : 'Active'}
                        </span>
                     </td>
-                    <td className="px-4 py-5 text-right whitespace-nowrap">
+                    <td className="px-4 py-5 text-right">
                        <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg>
                        </button>

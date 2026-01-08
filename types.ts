@@ -39,7 +39,6 @@ export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
 export type ConstitutionType = 'Proprietorship' | 'Partnership' | 'HUF' | 'Company' | 'Trust' | 'Other';
 export type JurisdictionType = 'Center' | 'State';
-export type ClientService = 'IT Return' | 'Audit' | 'Notice handling' | 'MSME' | 'Food License';
 
 export interface Stakeholder {
   id: string;
@@ -62,7 +61,6 @@ export interface GSTProfile {
   stakeholders: Stakeholder[];
   accountantName?: string;
   accountantMobile?: string;
-  certificateUrl?: string;
   address?: string;
   jurisdictionType?: JurisdictionType;
   sector?: string;
@@ -76,7 +74,6 @@ export interface ITProfile {
   password?: string;
   fatherName?: string;
   incomeType?: 'Business' | 'Salary' | 'Both';
-  companyName?: string;
 }
 
 export interface BankDetails {
@@ -94,19 +91,17 @@ export interface Client {
   status: ClientStatus;
   gstProfile?: GSTProfile;
   itProfile?: ITProfile;
-  services?: ClientService[];
   bankDetails?: BankDetails;
   remarks?: string;
   createdAt: number;
 }
 
-// Administration Types
 export interface InvoiceLineItem {
   id: string;
   description: string;
   quantity: number;
   rate: number;
-  taxRate: number; // 0, 5, 12, 18, 28
+  taxRate: number;
   amount: number;
 }
 
@@ -114,9 +109,6 @@ export interface InvoiceRecord {
   id: string;
   clientId: string;
   clientName: string;
-  isMiscClient?: boolean;
-  miscMobile?: string;
-  miscAddress?: string;
   invoiceNo: string;
   date: string;
   dueDate: string;
@@ -125,10 +117,11 @@ export interface InvoiceRecord {
   totalTax: number;
   totalAmount: number;
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
-  paymentMode?: 'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI' | 'Online';
+  paymentMode?: string;
   paymentDate?: string;
-  chequeNo?: string;
-  createdAt: number;
+  miscMobile?: string;
+  miscAddress?: string;
+  isMiscClient?: boolean;
 }
 
 export interface InvoiceSettings {
@@ -137,8 +130,6 @@ export interface InvoiceSettings {
   firmMobile: string;
   firmEmail: string;
   firmGstin: string;
-  firmLogo?: string; // Base64
-  firmSignature?: string; // Base64
   bankName: string;
   accountNo: string;
   ifsc: string;
@@ -146,6 +137,8 @@ export interface InvoiceSettings {
   invoicePrefix: string;
   terms: string;
   isGstEnabled: boolean;
+  firmLogo?: string;
+  firmSignature?: string;
 }
 
 export interface PaymentRecord {
@@ -154,26 +147,15 @@ export interface PaymentRecord {
   clientName: string;
   invoiceNo?: string;
   invoiceDate?: string;
-  date: string; // Payment Date
+  date: string;
   amount: number;
   mode: 'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI' | 'Online';
   referenceNo?: string;
-  chequeNo?: string;
-  createdAt: number;
   originalItems?: InvoiceLineItem[];
+  chequeNo?: string;
 }
 
-export interface ReminderRecord {
-  id: string;
-  title: string;
-  description?: string;
-  dueDate: string;
-  category: 'GST' | 'IT' | 'Audit' | 'General';
-  priority: 'High' | 'Medium' | 'Low';
-  isCompleted: boolean;
-  createdAt: number;
-}
-
+// Fix: Exported Litigation types and updated interface
 export type LitigationCategory = 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt';
 export type LitigationStatus = 'Pending' | 'Filed' | 'Drop' | 'Demand';
 
@@ -189,18 +171,16 @@ export interface LitigationRecord {
   issuedDate: string;
   dueDate: string;
   filedDate?: string;
-  hearingDate?: string;
   orderDate?: string;
-  officerName?: string;
-  amountInvolved?: number;
   remarks?: string;
-  createdAt: number;
+  isReissued?: boolean;
   previousNoticeRef?: string;
   previousNoticeSection?: string;
-  isReissued?: boolean;
   isDemandPaid?: boolean;
+  hearingDate?: string;
 }
 
+// Fix: Exported GST Registration types and updated interface
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation' | 'Surrender';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
@@ -214,9 +194,9 @@ export interface GSTRegistrationRecord {
   arn: string;
   completionDate?: string;
   remarks?: string;
-  createdAt: number;
 }
 
+// Fix: Exported Food License types and updated interface
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
 export type FoodLicenseStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Applied' | 'Completed' | 'Rejected';
 
@@ -230,23 +210,23 @@ export interface FoodLicenseRecord {
   licenseNo: string;
   expiryDate?: string;
   remarks?: string;
-  createdAt: number;
 }
 
+// Fix: Exported MSME Registration status type and updated interface
 export type MSMERegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
-  regType: 'Udyam Registration';
   status: MSMERegistrationStatus;
   appDate: string;
   udyamNumber: string;
   remarks?: string;
-  createdAt: number;
+  regType?: string;
 }
 
+// Fix: Exported Misc Work status type and updated interface
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {
@@ -259,5 +239,4 @@ export interface MiscWorkRecord {
   startDate: string;
   completionDate?: string;
   remarks?: string;
-  createdAt: number;
 }
