@@ -50,6 +50,7 @@ export interface Stakeholder {
 
 export interface GSTProfile {
   gstin: string;
+  pan?: string;
   username: string;
   password?: string;
   gstStatus: GstStatus;

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Client, GSTProfile, ConstitutionType, GstStatus, GstRegType, GstFilingFreq, ClientStatus, JurisdictionType } from '../../types.ts';
+import { Client, GSTProfile, ConstitutionType, GstStatus, GstRegType, GstFilingFreq, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 
 interface GSTClientFormModalProps {
@@ -21,11 +21,10 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     mobile: '',
     status: 'Active Filing',
     gstProfile: {
-      gstin: '', username: '', password: '', gstStatus: 'Active',
+      gstin: '', pan: '', username: '', password: '', gstStatus: 'Active',
       regDate: '', regType: 'Regular', filingFreq: 'Monthly',
       constitution: 'Proprietorship', stakeholders: [],
       accountantName: '', accountantMobile: '', address: '',
-      jurisdictionType: 'State', sector: '', range: ''
     },
     bankDetails: { bankName: '', accountNo: '', ifsc: '' }
   });
@@ -37,17 +36,46 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
       setFormData({
         legalName: '', tradeName: '', email: '', mobile: '', status: 'Active Filing',
         gstProfile: {
-          gstin: '', username: '', password: '', gstStatus: 'Active',
+          gstin: '', pan: '', username: '', password: '', gstStatus: 'Active',
           regDate: '', regType: 'Regular', filingFreq: 'Monthly',
           constitution: 'Proprietorship', stakeholders: [],
           accountantName: '', accountantMobile: '', address: '',
-          jurisdictionType: 'State', sector: '', range: ''
         },
         bankDetails: { bankName: '', accountNo: '', ifsc: '' }
       });
     }
     setError(null);
   }, [initialData, isOpen]);
+
+  const handleReturnLogic = (type: GstRegType) => {
+    setFormData(prev => ({
+      ...prev,
+      gstProfile: {
+        ...prev.gstProfile!,
+        regType: type,
+        filingFreq: type === 'Composition' ? 'Quarterly' : prev.gstProfile?.filingFreq || 'Monthly'
+      }
+    }));
+  };
+
+  const handleGstinChange = (val: string) => {
+    const gstin = val.toUpperCase().slice(0, 15);
+    let pan = formData.gstProfile?.pan || '';
+    if (gstin.length >= 12) {
+      pan = gstin.substring(2, 12);
+    }
+    setFormData(prev => ({
+      ...prev,
+      gstProfile: { ...prev.gstProfile!, gstin, pan }
+    }));
+  };
+
+  const verifyGSTIN = () => {
+    const gstin = formData.gstProfile?.gstin;
+    if (!gstin) return;
+    navigator.clipboard.writeText(gstin);
+    window.open('https://services.gst.gov.in/services/searchtp', '_blank');
+  };
 
   const handleSave = async () => {
     setError(null);
@@ -60,7 +88,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
       onSave(saved);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to sync with vault.");
+      setError(err.message || "Failed to save client.");
     } finally {
       setIsSaving(false);
     }
@@ -78,7 +106,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
              <div>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">GST Client Master</h2>
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Statuatory Compliance Vault</p>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Compliance Vault</p>
              </div>
           </div>
           <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-xl transition-colors">
@@ -90,84 +118,89 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
           {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100">{error}</div>}
           
           <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Business Information <div className="h-px flex-1 bg-slate-100" /></h3>
+            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Identity & Status <div className="h-px flex-1 bg-slate-100" /></h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Full Legal Name (as per PAN)</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50 transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Legal Name</label>
+                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Client Status</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as ClientStatus})}>
+                       <option value="Active Filing">Active Filing</option>
+                       <option value="Case-by-Case">Case-by-Case</option>
+                       <option value="Inactive">Inactive</option>
+                    </select>
+                 </div>
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Constitution</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.constitution} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, constitution: e.target.value as ConstitutionType}})}>
+                       <option value="Proprietorship">Proprietorship</option>
+                       <option value="Partnership">Partnership</option>
+                       <option value="Company">Company</option>
+                    </select>
+                 </div>
+              </div>
+              <div className="relative">
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Identifier</label>
+                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none pr-12" placeholder="22AAAAA0000A1Z5" value={formData.gstProfile?.gstin} onChange={e => handleGstinChange(e.target.value)} />
+                <button type="button" onClick={verifyGSTIN} className="absolute right-4 top-[42px] h-8 w-8 text-indigo-600 hover:bg-white rounded-lg flex items-center justify-center transition-all shadow-sm">
+                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </button>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Trade/Business Name</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50 transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value})} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Number</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none focus:ring-4 focus:ring-indigo-50 transition-all" placeholder="22AAAAA0000A1Z5" value={formData.gstProfile?.gstin} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstin: e.target.value.toUpperCase()}})} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Primary Contact No.</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50 transition-all" maxLength={10} value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} />
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">PAN Number</label>
+                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.gstProfile?.pan} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, pan: e.target.value.toUpperCase().slice(0, 10)}})} />
               </div>
             </div>
           </section>
 
           <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Portal Credentials <div className="h-px flex-1 bg-slate-100" /></h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Portal Username</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50 transition-all" value={formData.gstProfile?.username} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, username: e.target.value}})} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Portal Password</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50 transition-all" value={formData.gstProfile?.password} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, password: e.target.value}})} />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Internal Coordination <div className="h-px flex-1 bg-slate-100" /></h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Accountant/Staff Name</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-indigo-50 transition-all" value={formData.gstProfile?.accountantName} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantName: e.target.value}})} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Accountant Mobile</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50 transition-all" maxLength={10} value={formData.gstProfile?.accountantMobile} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantMobile: e.target.value.replace(/\D/g, '')}})} />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Statutory Details <div className="h-px flex-1 bg-slate-100" /></h3>
+            <h3 className="text-[11px] font-black uppercase text-indigo-600 tracking-[0.25em] flex items-center gap-3">Registration & Return Logic <div className="h-px flex-1 bg-slate-100" /></h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Registration Date</label>
-                <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50 transition-all uppercase" value={formData.gstProfile?.regDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regDate: e.target.value}})} />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Registration Type</label>
-                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50" value={formData.gstProfile?.regType} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regType: e.target.value as GstRegType}})}>
-                   <option value="Regular">Regular (Normal)</option>
-                   <option value="Composition">Composition Scheme</option>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">GSTIN Status</label>
+                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.gstStatus} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstStatus: e.target.value as GstStatus}})}>
+                   <option value="Active">Active</option>
+                   <option value="Suspended">Suspended</option>
+                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Filing Frequency</label>
-                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50" value={formData.gstProfile?.filingFreq} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, filingFreq: e.target.value as GstFilingFreq}})}>
-                   <option value="Monthly">Monthly Filing</option>
-                   <option value="Quarterly">Quarterly (QRMP)</option>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Return Type</label>
+                <select className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none" value={formData.gstProfile?.regType} onChange={e => handleReturnLogic(e.target.value as GstRegType)}>
+                   <option value="Regular">Regular</option>
+                   <option value="Composition">Composition</option>
                 </select>
               </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Frequency</label>
+                <select disabled={formData.gstProfile?.regType === 'Composition'} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none disabled:opacity-50" value={formData.gstProfile?.filingFreq} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, filingFreq: e.target.value as GstFilingFreq}})}>
+                   <option value="Monthly">Monthly</option>
+                   <option value="Quarterly">Quarterly</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1">Registration Date</label>
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase" value={formData.gstProfile?.regDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regDate: e.target.value}})} />
+               </div>
+               {formData.gstProfile?.gstStatus === 'Cancelled' && (
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-1 text-red-500">Cancellation Date</label>
+                    <input type="date" className="w-full bg-red-50 border border-red-100 p-4 rounded-2xl font-bold uppercase text-red-600 outline-none" value={formData.gstProfile?.cancelDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, cancelDate: e.target.value}})} />
+                 </div>
+               )}
             </div>
           </section>
         </div>
 
         <div className="p-10 border-t border-slate-100 flex gap-4 bg-slate-50 shrink-0">
           <button onClick={onClose} className="flex-1 py-5 rounded-[1.5rem] text-slate-500 font-black uppercase tracking-widest text-[11px] border border-slate-200 hover:bg-white transition-all">Discard</button>
-          <button onClick={handleSave} disabled={isSaving} className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-[1.5rem] shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98] disabled:opacity-50">
-            {isSaving ? 'Synchronizing...' : 'Save to Master Vault'}
+          <button onClick={handleSave} disabled={isSaving} className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[11px] py-5 rounded-[1.5rem] shadow-xl hover:bg-slate-900 transition-all">
+            {isSaving ? 'Synchronizing...' : 'Save to Vault'}
           </button>
         </div>
       </div>

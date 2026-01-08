@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Client, ClientStatus, ITProfile } from '../../types';
+import { Client, ITProfile } from '../../types';
 import { api } from '../../services/api.ts';
 
 interface ITClientFormModalProps {
@@ -10,18 +10,14 @@ interface ITClientFormModalProps {
   initialData?: Client | null;
 }
 
-const IT_PORTAL_LOGIN_URL = 'https://eportal.incometax.gov.in/iec/foservices/#/login';
-
 const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Client>>({
     legalName: '',
-    tradeName: '',
-    email: '',
     mobile: '',
+    email: '',
     status: 'Active',
     itProfile: {
       pan: '',
@@ -29,15 +25,10 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       username: '',
       password: '',
       fatherName: '',
-      incomeType: 'Business',
+      incomeType: 'Both',
       companyName: ''
     },
-    bankDetails: {
-      bankName: '',
-      accountNo: '',
-      ifsc: ''
-    },
-    remarks: ''
+    bankDetails: { bankName: '', accountNo: '', ifsc: '' }
   });
 
   useEffect(() => {
@@ -45,73 +36,19 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       setFormData(initialData);
     } else {
       setFormData({
-        legalName: '',
-        tradeName: '',
-        email: '',
-        mobile: '',
-        status: 'Active',
+        legalName: '', mobile: '', email: '', status: 'Active',
         itProfile: {
-          pan: '',
-          category: 'Individual',
-          username: '',
-          password: '',
-          fatherName: '',
-          incomeType: 'Business',
-          companyName: ''
+          pan: '', category: 'Individual', username: '', password: '',
+          fatherName: '', incomeType: 'Both', companyName: ''
         },
-        bankDetails: { bankName: '', accountNo: '', ifsc: '' },
-        remarks: ''
+        bankDetails: { bankName: '', accountNo: '', ifsc: '' }
       });
     }
-    setError(null);
   }, [initialData, isOpen]);
-
-  const handleItChange = (field: keyof ITProfile, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      itProfile: { ...prev.itProfile!, [field]: value }
-    }));
-  };
-
-  const handlePanChange = async (val: string) => {
-    const pan = val.toUpperCase().slice(0, 10);
-    handleItChange('pan', pan);
-    handleItChange('username', pan);
-
-    if (pan.length === 10 && !initialData) {
-      setIsFetching(true);
-      try {
-        const clients = await api.getClients();
-        const match = clients.find(c => 
-          (c.itProfile?.pan === pan) || 
-          (c.gstProfile?.gstin && c.gstProfile.gstin.substring(2, 12) === pan)
-        );
-
-        if (match) {
-          setFormData(prev => ({
-            ...prev,
-            legalName: match.legalName || prev.legalName,
-            tradeName: match.tradeName || prev.tradeName,
-            mobile: match.mobile || prev.mobile,
-            email: match.email || prev.email,
-            bankDetails: match.bankDetails ? { ...match.bankDetails } : prev.bankDetails,
-            itProfile: {
-              ...prev.itProfile!,
-              category: match.gstProfile?.constitution || prev.itProfile?.category || 'Individual',
-              username: pan,
-            }
-          }));
-        }
-      } catch (err) {
-        console.error("PAN Fetch Error:", err);
-      } finally {
-        setTimeout(() => setIsFetching(false), 500);
-      }
-    }
-  };
 
   const handleSave = async () => {
     setError(null);
+    setIsSaving(true);
     try {
       if (!formData.legalName) throw new Error("Legal Name is required");
       if (!formData.itProfile?.pan) throw new Error("PAN is required");
@@ -120,38 +57,68 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       onSave(saved);
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to save client.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-hidden">
-      <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
-        <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+      <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-in zoom-in-95">
+        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">IT Client Vault</h2>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full">
+          <button onClick={onClose} className="p-3 hover:bg-slate-200 rounded-xl transition-colors">
             <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-6">
-          {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl font-bold">{error}</div>}
-          <div className="grid grid-cols-2 gap-4">
-             <input className="w-full bg-slate-50 border p-3 rounded-xl font-bold uppercase" placeholder="PAN Number" value={formData.itProfile?.pan} onChange={e => handlePanChange(e.target.value)} />
-             <input className="w-full bg-slate-50 border p-3 rounded-xl font-bold uppercase" placeholder="Legal Name" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <input className="w-full bg-slate-50 border p-3 rounded-xl font-bold" placeholder="Mobile" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
-             <input className="w-full bg-slate-50 border p-3 rounded-xl font-bold" placeholder="Portal Password" value={formData.itProfile?.password} onChange={e => handleItChange('password', e.target.value)} />
-          </div>
+        <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
+          {error && <div className="p-4 bg-red-50 text-red-600 rounded-xl font-bold border border-red-100">{error}</div>}
+          
+          <section className="space-y-6">
+            <h3 className="text-[11px] font-black uppercase text-emerald-600 tracking-[0.25em] flex items-center gap-3">General Information <div className="h-px flex-1 bg-slate-100" /></h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Full Legal Name (As per PAN)</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} />
+               </div>
+               <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Father's Name</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-emerald-50" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value}})} />
+               </div>
+               <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">PAN Number</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-black uppercase font-mono tracking-widest outline-none" value={formData.itProfile?.pan} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, pan: e.target.value.toUpperCase().slice(0,10), username: e.target.value.toUpperCase().slice(0,10)}})} />
+               </div>
+               <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Mobile Contact</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold outline-none" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
+               </div>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <h3 className="text-[11px] font-black uppercase text-emerald-600 tracking-[0.25em] flex items-center gap-3">Portal Credentials <div className="h-px flex-1 bg-slate-100" /></h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Username</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-black outline-none" value={formData.itProfile?.username} readOnly />
+              </div>
+              <div>
+                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Password</label>
+                 <input className="w-full bg-slate-50 border p-4 rounded-2xl font-bold outline-none" value={formData.itProfile?.password} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, password: e.target.value}})} />
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div className="p-8 border-t border-slate-100 flex gap-4 bg-slate-50/50">
-          <button onClick={onClose} className="flex-1 py-4 rounded-xl text-slate-500 font-black uppercase text-[10px]">Discard</button>
-          <button onClick={handleSave} className="flex-[2] bg-emerald-600 text-white font-black uppercase text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all">
-            {initialData ? 'Update IT Vault' : 'Save IT Client'}
+        <div className="p-10 border-t border-slate-100 flex gap-4 bg-slate-50 shrink-0">
+          <button onClick={onClose} className="flex-1 py-5 rounded-xl text-slate-500 font-black uppercase text-[10px]">Discard</button>
+          <button onClick={handleSave} disabled={isSaving} className="flex-[2] bg-emerald-600 text-white font-black uppercase text-[10px] py-5 rounded-xl shadow-xl hover:bg-slate-900 transition-all">
+            {isSaving ? 'Saving...' : 'Commit to IT Vault'}
           </button>
         </div>
       </div>
