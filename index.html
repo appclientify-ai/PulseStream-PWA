@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="font-sans text-base">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -24,6 +23,10 @@
       }
     </script>
     <style>
+      :root {
+        --ui-font-size: 16px;
+      }
+      html { font-size: var(--ui-font-size); }
       body {
         background-color: #f8fafc;
         color: #0f172a;
@@ -31,6 +34,17 @@
       }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      /* Global Customization Classes */
+      .app-font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+      .app-font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+      .app-font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      
+      .text-ui-xs { font-size: 0.75rem; }
+      .text-ui-sm { font-size: 0.875rem; }
+      .text-ui-base { font-size: 1rem; }
+      .text-ui-lg { font-size: 1.125rem; }
+      .text-ui-xl { font-size: 1.25rem; }
     </style>
     <script type="importmap">
 {
@@ -57,8 +71,19 @@
 }
 </script>
   </head>
-  <body>
+  <body class="app-font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <script>
+      // Load UI settings immediately to prevent flicker
+      try {
+        const settings = JSON.parse(localStorage.getItem('clientify_ui_settings') || '{}');
+        if (settings.fontSize) document.documentElement.style.setProperty('--ui-font-size', settings.fontSize + 'px');
+        if (settings.fontStyle) {
+          document.body.classList.remove('app-font-sans', 'app-font-serif', 'app-font-mono');
+          document.body.classList.add('app-font-' + settings.fontStyle);
+        }
+      } catch (e) {}
+    </script>
   </body>
 </html>

@@ -1,5 +1,6 @@
 import { getCollection } from '../db/mongo.js';
 import { generateToken } from './jwt.js';
+import { ObjectId } from 'mongodb';
 
 export const signup = async (req, res) => {
   const { username, mobile_no, email_id, firm_name, gstn, user_id, password } = req.body;
@@ -33,7 +34,8 @@ export const signup = async (req, res) => {
       user_id: user_id.toUpperCase(),
       password, // Note: For production, implement bcrypt hashing
       createdAt: new Date(),
-      status: 'online'
+      status: 'online',
+      avatar: null
     };
 
     const result = await users.insertOne(newUser);
@@ -43,7 +45,8 @@ export const signup = async (req, res) => {
       user_id: newUser.user_id, 
       email_id,
       firm_name: newUser.firm_name,
-      gstn: newUser.gstn
+      gstn: newUser.gstn,
+      avatar: newUser.avatar
     };
     const token = generateToken({ ...newUser, _id: result.insertedId });
 
@@ -81,7 +84,8 @@ export const login = async (req, res) => {
         user_id: user.user_id, 
         email_id: user.email_id,
         firm_name: user.firm_name,
-        gstn: user.gstn
+        gstn: user.gstn,
+        avatar: user.avatar
       }
     });
   } catch (err) {
@@ -99,7 +103,55 @@ export const me = async (req, res) => {
       user_id: req.user.user_id,
       email_id: req.user.email_id,
       firm_name: req.user.firm_name,
-      gstn: req.user.gstn
+      gstn: req.user.gstn,
+      avatar: req.user.avatar
     } 
   });
+};
+
+export const updateProfile = async (req, res) => {
+  const { username, mobile_no, email_id, firm_name, gstn, user_id, password, avatar } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const users = getCollection('users');
+    const updateData = {};
+    if (username) updateData.username = username;
+    if (mobile_no) updateData.mobile_no = mobile_no;
+    if (email_id) updateData.email_id = email_id;
+    if (firm_name) updateData.firm_name = firm_name;
+    if (gstn) updateData.gstn = gstn;
+    if (user_id) updateData.user_id = user_id.toUpperCase();
+    if (password) updateData.password = password;
+    if (avatar !== undefined) updateData.avatar = avatar;
+
+    // Check if new user_id is taken
+    if (user_id && user_id.toUpperCase() !== req.user.user_id) {
+      const existing = await users.findOne({ user_id: user_id.toUpperCase() });
+      if (existing) return res.status(400).json({ error: 'New Master User ID is already claimed' });
+    }
+
+    const result = await users.findOneAndUpdate(
+      { _id: new ObjectId(userId) },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    );
+
+    if (!result) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      user: {
+        id: result._id,
+        username: result.username,
+        user_id: result.user_id,
+        email_id: result.email_id,
+        firm_name: result.firm_name,
+        gstn: result.gstn,
+        avatar: result.avatar
+      }
+    });
+  } catch (err) {
+    console.error('Profile Update Error:', err);
+    res.status(500).json({ error: 'Failed to update professional profile' });
+  }
 };

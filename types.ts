@@ -11,6 +11,11 @@ export interface MetricData {
   trend: 'up' | 'down' | 'stable';
 }
 
+export interface UISettings {
+  fontSize: number; // in px, default 16
+  fontStyle: 'sans' | 'serif' | 'mono';
+}
+
 export interface User {
   id: string;
   username: string;
@@ -20,6 +25,8 @@ export interface User {
   firm_name?: string | null;
   gstn?: string | null;
   status: 'online' | 'away' | 'offline';
+  avatar?: string; // base64 string for DP
+  uiSettings?: UISettings;
 }
 
 export type ActiveView = string;

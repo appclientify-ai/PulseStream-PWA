@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
+import { useAuth } from '../auth/AuthContext';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -10,6 +11,9 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, activeViewLabel, activeViewDescription }) => {
+  const { logout } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   return (
     <header className="flex h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur-md sticky top-0 z-30">
       <div className="flex items-center gap-6 flex-1 min-w-0">
@@ -31,7 +35,6 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
              <span className="text-xs font-bold text-slate-400 shrink-0 hidden sm:inline">|</span>
              <div className="hidden sm:flex items-baseline gap-1.5 truncate">
                 <span className="text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
-                <span className="text-sm font-semibold text-slate-500 tracking-normal ml-0.5">Secure Your Client Vault.</span>
              </div>
            </div>
            <p className="text-sm font-medium text-slate-500 truncate mt-1" title={activeViewDescription}>
@@ -46,14 +49,41 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Cloud Sync Active' : 'Offline Mode'}</span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-black text-slate-900 leading-none">{currentUser?.username}</p>
-            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">Authorized User</p>
-          </div>
-          <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-lg font-black text-white shadow-lg ring-4 ring-slate-50">
-            {currentUser?.username?.substring(0, 2).toUpperCase()}
-          </div>
+        <div className="relative">
+          <button 
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="flex items-center gap-4 group hover:bg-slate-50 p-1.5 rounded-2xl transition-all"
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-black text-slate-900 leading-none">{currentUser?.username}</p>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">{currentUser?.firm_name || 'Practitioner'}</p>
+            </div>
+            {currentUser?.avatar ? (
+              <img src={currentUser.avatar} alt="DP" className="h-12 w-12 rounded-2xl object-cover shadow-lg ring-4 ring-slate-50" />
+            ) : (
+              <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-lg font-black text-white shadow-lg ring-4 ring-slate-50">
+                {currentUser?.username?.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right">
+               <div className="p-3 border-b border-slate-100 mb-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Logged in as</p>
+                  <p className="text-sm font-black text-slate-900 truncate">{currentUser?.user_id}</p>
+               </div>
+               <button 
+                 onClick={logout}
+                 className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-black text-xs uppercase tracking-widest"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                 </svg>
+                 Exit Vault
+               </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

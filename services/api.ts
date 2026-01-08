@@ -2,7 +2,7 @@ import { API_BASE_URL } from '../constants.ts';
 import { 
   Client, LitigationRecord, InvoiceRecord, PaymentRecord, 
   InvoiceSettings, GSTRegistrationRecord, FoodLicenseRecord, 
-  MSMERegistrationRecord, MiscWorkRecord 
+  MSMERegistrationRecord, MiscWorkRecord, User
 } from '../types.ts';
 
 class ApiService {
@@ -81,6 +81,22 @@ class ApiService {
     } as T;
   }
 
+  async updateProfile(data: Partial<User>): Promise<{ user: User }> {
+    return this.put('/auth/update', data);
+  }
+
+  async backupAllData(): Promise<string> {
+    const items = await this.get('/items');
+    return JSON.stringify(items, null, 2);
+  }
+
+  async restoreData(items: any[]): Promise<void> {
+    for (const item of items) {
+      const payload = { name: item.name, data: item.data };
+      await this.post('/items', payload);
+    }
+  }
+
   async getDashboardSummary() {
     const results = await Promise.allSettled([
       this.getClients(),
@@ -139,9 +155,7 @@ class ApiService {
     const sets = await this.getInvoiceSettings();
     const count = invs.length + 1;
     const year = new Date().getFullYear();
-    const shortYear = year.toString().slice(-2);
-    const nextYear = (year + 1).toString().slice(-2);
-    return `${sets.invoicePrefix}${year}-${nextYear}/${count.toString().padStart(3, '0')}`;
+    return `${sets.invoicePrefix}${year}/${count.toString().padStart(3, '0')}`;
   }
 
   async migrateToPayment(invoiceId: string, paymentData: { date: string; mode: string; chequeNo?: string }): Promise<void> {
