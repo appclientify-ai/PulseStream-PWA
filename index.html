@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en" class="font-sans text-base">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Clientify | GST & IT Management</title>
-    <meta name="description" content="Manage your tax clients and filings in real-time with Clientify." />
+    <title>Clientify | Practice Intelligence Operating System</title>
+    <meta name="description" content="Master your practice with Clientify. The high-performance vault for professional tax consultants." />
     <meta name="theme-color" content="#4f46e5" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%234f46e5;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='white' /%3E%3Cpath d='M70 35C65 25 50 20 40 25C25 32 25 68 40 75C50 80 65 75 70 65' fill='none' stroke='url(%23grad)' stroke-width='12' stroke-linecap='round' /%3E%3C/svg%3E" />
@@ -17,6 +18,25 @@
               primary: '#4f46e5',
               secondary: '#6366f1',
               accent: '#f59e0b',
+              surface: '#ffffff',
+              glass: 'rgba(255, 255, 255, 0.7)',
+            },
+            boxShadow: {
+              'glass-silk': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+            },
+            animation: {
+              'pulse-priority': 'pulse-priority 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              'pulse-priority': {
+                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                '50%': { opacity: .7, transform: 'scale(1.05)' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
             }
           }
         }
@@ -26,25 +46,31 @@
       :root {
         --ui-font-size: 16px;
       }
-      html { font-size: var(--ui-font-size); }
+      html { font-size: var(--ui-font-size); scroll-behavior: smooth; }
       body {
-        background-color: #f8fafc;
+        background-color: #fcfdfe;
         color: #0f172a;
         -webkit-tap-highlight-color: transparent;
       }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       
-      /* Global Customization Classes */
+      .glass-card {
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+      }
+
       .app-font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
       .app-font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
-      .app-font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      .app-font-mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
       
-      .text-ui-xs { font-size: 0.75rem; }
-      .text-ui-sm { font-size: 0.875rem; }
-      .text-ui-base { font-size: 1rem; }
-      .text-ui-lg { font-size: 1.125rem; }
-      .text-ui-xl { font-size: 1.25rem; }
+      /* Priority indicators */
+      .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+      .traffic-amber { background-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+      .traffic-green { background-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
     </style>
     <script type="importmap">
 {
@@ -66,7 +92,8 @@
     "jsonwebtoken": "https://esm.sh/jsonwebtoken@^9.0.3",
     "vite": "https://esm.sh/vite@^7.3.1",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0"
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
   }
 }
 </script>
@@ -74,16 +101,5 @@
   <body class="app-font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-    <script>
-      // Load UI settings immediately to prevent flicker
-      try {
-        const settings = JSON.parse(localStorage.getItem('clientify_ui_settings') || '{}');
-        if (settings.fontSize) document.documentElement.style.setProperty('--ui-font-size', settings.fontSize + 'px');
-        if (settings.fontStyle) {
-          document.body.classList.remove('app-font-sans', 'app-font-serif', 'app-font-mono');
-          document.body.classList.add('app-font-' + settings.fontStyle);
-        }
-      } catch (e) {}
-    </script>
   </body>
 </html>

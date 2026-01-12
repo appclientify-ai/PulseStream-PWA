@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User } from '../types.ts';
 import { api } from '../services/api.ts';
@@ -36,8 +37,11 @@ const deleteCookie = (name: string) => {
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const cached = localStorage.getItem('clientify_user');
+    return cached ? JSON.parse(cached) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => getCookie('clientify_token') || null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +52,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         const savedToken = getCookie('clientify_token');
         if (savedToken) {
-          setIsLoading(true);
           api.setToken(savedToken);
+          // If we have a cached user, we can skip the full screen loader for a "smooth" open
+          const cachedUser = localStorage.getItem('clientify_user');
+          if (!cachedUser) setIsLoading(true);
+
           const response = await api.get('/auth/me');
           if (response && response.user) {
             setToken(savedToken);
             setUser(response.user);
+            localStorage.setItem('clientify_user', JSON.stringify(response.user));
           } else {
             throw new Error('Invalid user session');
           }
@@ -61,7 +69,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (err) {
         console.warn('Auth check skipped or failed:', err);
         deleteCookie('clientify_token');
+        localStorage.removeItem('clientify_user');
         api.setToken(null);
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
         setHasCheckedAuth(true);
@@ -77,6 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await api.post('/auth/login', { user_id, password });
       setToken(response.token);
       setUser(response.user);
+      localStorage.setItem('clientify_user', JSON.stringify(response.user));
       setCookie('clientify_token', response.token, 7);
       api.setToken(response.token);
     } catch (err: any) {
@@ -95,6 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await api.post('/auth/signup', data);
       setToken(response.token);
       setUser(response.user);
+      localStorage.setItem('clientify_user', JSON.stringify(response.user));
       setCookie('clientify_token', response.token, 7);
       api.setToken(response.token);
     } catch (err: any) {
@@ -111,6 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     setError(null);
     deleteCookie('clientify_token');
+    localStorage.removeItem('clientify_user');
     api.setToken(null);
   };
 

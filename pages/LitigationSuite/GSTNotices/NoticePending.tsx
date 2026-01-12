@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
+import { GoogleGenAI } from '@google/genai';
 
 const NoticePending: React.FC = () => {
   const [records, setRecords] = useState<LitigationRecord[]>([]);
@@ -12,14 +14,9 @@ const NoticePending: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
 
-  // Detail/View Modal
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
-
-  // Inline Status Menu
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
-
-  // Column Specific Filters
   const [sectionFilter, setSectionFilter] = useState('All');
   const [daysLeftFilter, setDaysLeftFilter] = useState<'All' | 'Critical' | 'Healthy'>('All');
   const [activeHeaderFilter, setActiveHeaderFilter] = useState<'section' | 'days' | null>(null);
@@ -27,61 +24,48 @@ const NoticePending: React.FC = () => {
   const fetchAll = async () => {
     setIsLoading(true);
     try {
-      const [recs, clis] = await Promise.all([
-        api.getLitigationRecords(),
-        api.getClients()
-      ]);
-      // Filter strictly for Pending Notices
+      const [recs, clis] = await Promise.all([api.getLitigationRecords(), api.getClients()]);
       setRecords(recs.filter(r => r.category === 'Notice' && r.status === 'Pending'));
       setClients(clis);
-    } catch (err) {
-      console.error("Failed to sync notice vault:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { console.error("Failed to sync notice vault:", err); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    if (!data.clientId || !data.referenceNo) {
-      alert("Please select a client and enter a Reference Number.");
-      return;
-    }
-    
-    await api.saveLitigationRecord({
-      ...data,
-      category: 'Notice',
-    });
-    setIsModalOpen(false);
-    setIsViewModalOpen(false);
-    fetchAll();
+    if (!data.clientId || !data.referenceNo) { alert("Missing Client or Reference No."); return; }
+    await api.saveLitigationRecord({ ...data, category: 'Notice' });
+    setIsModalOpen(false); setIsViewModalOpen(false); fetchAll();
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
     try {
       const updated = { ...record, status: newStatus };
-      if (newStatus === 'Filed') {
-        updated.filedDate = new Date().toISOString().split('T')[0];
-      }
+      if (newStatus === 'Filed') updated.filedDate = new Date().toISOString().split('T')[0];
       await api.saveLitigationRecord(updated);
       fetchAll();
-    } catch (err) {
-      alert("Status update failed.");
-    }
+    } catch (err) { alert("Status update failed."); }
     setActiveStatusMenuId(null);
+  };
+
+  // Power-User Feature: AI Magic Moment
+  const primeAI = (rec: LitigationRecord) => {
+    const client = clients.find(c => c.id === rec.clientId);
+    const event = new CustomEvent('vault_ai_prime', { 
+      detail: { 
+        prompt: `I am currently looking at a pending GST Notice for ${rec.clientName}. 
+        Notice Ref: ${rec.referenceNo} issued under Section ${rec.section} for Tax Period ${rec.taxPeriod}. 
+        The GSTIN is ${client?.gstProfile?.gstin}. 
+        Please provide a professional draft outline for a reply contesting this notice based on statutory provisions of Section ${rec.section}.` 
+      }
+    });
+    window.dispatchEvent(event);
+    alert("AI Assistant primed with case context. Open the Assistant sidebar to view results.");
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Permanently remove this notice record from the secure vault?')) {
-      try {
-        await api.delete(`/items/${id}`);
-        fetchAll();
-      } catch (err) {
-        alert("Deletion failed.");
-      }
+      try { await api.delete(`/items/${id}`); fetchAll(); } catch (err) { alert("Deletion failed."); }
     }
   };
 
@@ -102,15 +86,6 @@ const NoticePending: React.FC = () => {
     return Math.round(diff / (1000 * 60 * 60 * 24));
   };
 
-  const sectionCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    records.forEach(r => {
-      const sec = r.section || 'N/A';
-      counts[sec] = (counts[sec] || 0) + 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [records]);
-
   const sections = useMemo(() => Array.from(new Set(records.map(r => r.section).filter(Boolean))).sort(), [records]);
 
   const filteredRecords = useMemo(() => {
@@ -121,16 +96,13 @@ const NoticePending: React.FC = () => {
              (r.referenceNo || '').toLowerCase().includes(s) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
-
     if (sectionFilter !== 'All') list = list.filter(r => r.section === sectionFilter);
-
     if (daysLeftFilter !== 'All') {
       list = list.filter(r => {
         const dl = getDaysLeft(r.dueDate);
         return daysLeftFilter === 'Critical' ? dl <= 7 : dl > 7;
       });
     }
-
     return list;
   }, [records, clients, search, sectionFilter, daysLeftFilter]);
 
@@ -145,15 +117,6 @@ const NoticePending: React.FC = () => {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Notices</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
           </div>
-          
-          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px]">
-            {sectionCounts.map(([sec, count]) => (
-              <div key={sec} className="text-center shrink-0">
-                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">U/s {sec}</p>
-                <p className="text-sm font-black text-indigo-600 leading-none">{count}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative flex-1 w-full group">
@@ -164,7 +127,7 @@ const NoticePending: React.FC = () => {
             onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
           />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
         <button 
@@ -178,52 +141,33 @@ const NoticePending: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1300px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S. No.</th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
-                  <div className="flex items-center gap-1">
-                    Section
-                    <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 hover:bg-white rounded transition-colors shadow-sm">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                  </div>
+                  <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'section' && (
                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
                       <button onClick={() => { setSectionFilter('All'); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>All</button>
-                      {sections.map(s => (
-                        <button key={s} onClick={() => { setSectionFilter(s); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>U/s {s}</button>
-                      ))}
+                      {sections.map(s => <button key={s} onClick={() => { setSectionFilter(s); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>U/s {s}</button>)}
                     </div>
                   )}
                 </th>
-
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Date</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Due Date</th>
-                
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px] relative">
-                  <div className="flex items-center gap-1">
-                    Deadline
-                    <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 hover:bg-white rounded transition-colors shadow-sm">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                  </div>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
+                  <div className="flex items-center gap-1">Deadline <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'days' && (
                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
-                      {['All', 'Critical', 'Healthy'].map(opt => (
-                        <button key={opt} onClick={() => { setDaysLeftFilter(opt as any); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${daysLeftFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>
-                      ))}
+                      {['All', 'Critical', 'Healthy'].map(opt => <button key={opt} onClick={() => { setDaysLeftFilter(opt as any); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${daysLeftFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
                     </div>
                   )}
                 </th>
-
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Filing Action</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[150px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -235,7 +179,6 @@ const NoticePending: React.FC = () => {
                   const client = clients.find(c => c.id === rec.clientId);
                   const isOverdue = dl < 0;
                   const isCritical = dl <= 7 && dl >= 0;
-
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group">
                       <td className="px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
@@ -243,48 +186,37 @@ const NoticePending: React.FC = () => {
                         <p className="text-[11px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                         <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
                       </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
-                        {client?.gstProfile?.gstin || 'N/A'}
-                      </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-600 uppercase">
-                        {rec.section ? `U/s ${rec.section}` : '---'}
-                      </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-700 uppercase">
-                        {rec.taxPeriod || '---'}
-                      </td>
+                      <td className="px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">{client?.gstProfile?.gstin || 'N/A'}</td>
+                      <td className="px-4 py-5 text-[11px] font-black text-slate-600 uppercase">{rec.section ? `U/s ${rec.section}` : '---'}</td>
+                      <td className="px-4 py-5 text-[11px] font-black text-slate-700 uppercase">{rec.taxPeriod || '---'}</td>
                       <td className="px-4 py-5 text-[11px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
                       <td className="px-4 py-5">
                          <div className="flex items-center gap-1.5">
                             <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
                             <span className={`text-[11px] font-black ${isOverdue || isCritical ? 'text-red-500' : 'text-slate-700'}`}>
-                              {dl < 0 ? `${Math.abs(dl)} overdue` : `${dl} days left`}
+                              {dl < 0 ? `${Math.abs(dl)} Overdue` : `${dl} Days`}
                             </span>
                          </div>
                       </td>
-                      <td className="px-4 py-5 text-center relative">
-                         <button 
-                            onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
-                            className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border flex items-center justify-between ${
-                              isOverdue ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'
-                            }`}
-                         >
-                            {isOverdue ? 'Overdue' : 'Pending'}
-                            <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                      <td className="px-4 py-5 text-center relative overflow-visible">
+                         <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)} className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${isOverdue ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                            {isOverdue ? 'Overdue' : 'Pending'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                          </button>
                          {activeStatusMenuId === rec.id && (
-                           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
+                           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 text-left">
                               <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Mark Filed</button>
                            </div>
                          )}
                       </td>
                       <td className="px-4 py-5 text-right whitespace-nowrap">
-                         <button 
-                           onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }}
-                           className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                         </button>
+                         <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => primeAI(rec)} className="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm" title="Draft with AI">
+                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            </button>
+                            <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
+                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
+                            </button>
+                         </div>
                       </td>
                     </tr>
                   );
@@ -295,56 +227,37 @@ const NoticePending: React.FC = () => {
         </div>
       </div>
 
-      {/* DETAILED VIEW MODAL */}
       {isViewModalOpen && viewingRecord && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                      Ref: {viewingRecord.referenceNo}
-                    </p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }}
-                      className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg hover:bg-slate-900 transition-all active:scale-95"
-                    >
-                      Modify
-                    </button>
-                    <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
-                      <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
-                    </button>
+                    <button onClick={() => primeAI(viewingRecord)} className="h-10 px-4 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm hover:bg-indigo-100 transition-all"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> AI Draft</button>
+                    <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
                  </div>
               </div>
-              <div className="p-10 grid grid-cols-2 gap-8">
+              <div className="p-10 grid grid-cols-2 gap-8 overflow-y-auto no-scrollbar max-h-[60vh]">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Entity GSTIN</p><p className="text-base font-black text-indigo-600 font-mono tracking-widest">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice U/s</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Due Date</p><p className="text-base font-black text-red-500">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
-                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Office Notes</p>
-                    <p className="text-sm font-medium text-slate-600 leading-relaxed italic">{viewingRecord.remarks || 'No notes found.'}</p>
-                 </div>
+                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Office Notes</p><p className="text-sm font-medium text-slate-600 leading-relaxed italic">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>
-              <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0">
+                 <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }} className="px-6 py-3 text-indigo-600 font-black uppercase text-[10px] hover:bg-indigo-100/30 rounded-xl transition-colors">Modify Record</button>
                  <button onClick={() => { handleDelete(viewingRecord.id); setIsViewModalOpen(false); }} className="px-6 py-3 text-red-500 font-black uppercase text-[10px] hover:bg-red-50 rounded-xl transition-colors">Untrack Notice</button>
-                 <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button>
+                 <button onClick={() => setIsViewModalOpen(false)} className="px-10 py-3 bg-white border border-slate-200 text-slate-900 font-black uppercase text-[10px] rounded-xl shadow-sm">Close</button>
               </div>
            </div>
         </div>
       )}
 
-      <NoticeForm 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        clients={clients}
-        category="Notice"
-        initialData={selectedRecord}
-      />
+      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category="Notice" initialData={selectedRecord} />
     </div>
   );
 };

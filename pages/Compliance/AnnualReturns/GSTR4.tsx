@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -7,10 +8,9 @@ import { useGSTR4Logic } from './GSTR4logic';
 import { YEARS, FY_QUARTERS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 
 const GSTR4: React.FC = () => {
-  // Logic to determine the default previous Financial Year
   const getPreviousFY = () => {
     const now = new Date();
-    const currentMonth = now.getMonth(); // 0-11
+    const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     const startYear = currentMonth >= 3 ? currentYear - 1 : currentYear - 2;
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
@@ -29,18 +29,15 @@ const GSTR4: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
 
-  // Inline editing states for Table
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPasswordValue, setNewPasswordValue] = useState('');
 
-  // Detail Modal Specific Password States
   const [showPassInModal, setShowPassInModal] = useState(false);
   const [isEditingPassInModal, setIsEditingPassInModal] = useState(false);
   const [modalPassValue, setModalPassValue] = useState('');
 
   const { getStatus, toggleStatus, updateDueDate, getDueDate } = useGSTR4Logic(selectedYear);
 
-  // Fetch CMP-08 data directly from its storage for the summary column
   const cmp08Data = useMemo(() => {
     const saved = localStorage.getItem('clientify_composition_filing_v3');
     return saved ? JSON.parse(saved) : {};
@@ -50,7 +47,6 @@ const GSTR4: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      // Strictly filter for Composition taxpayers who are Active or Suspended
       const filtered = data.filter(c => 
         c.gstProfile?.regType === 'Composition' &&
         (c.status === 'Active Filing' || c.status === 'Active')
@@ -74,7 +70,7 @@ const GSTR4: React.FC = () => {
       setClients(prev => prev.map(c => c.id === client.id ? (updated as Client) : c));
       setEditingPasswordId(null);
     } catch (err) { 
-      alert("Portal Password update failed. Please check network."); 
+      alert("Portal Password update failed."); 
     }
   };
 
@@ -118,7 +114,7 @@ const GSTR4: React.FC = () => {
   };
 
   const shareViaWhatsApp = (text: string) => {
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    const url = `https://api.whatsapp.com/send?phone=&text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
 
@@ -130,31 +126,62 @@ const GSTR4: React.FC = () => {
   };
 
   const handleExport = () => {
-    const headers = ["S.No", "Trade Name", "Legal Name", "GSTIN", "User ID", "Password", "CMP-08 Q1", "CMP-08 Q2", "CMP-08 Q3", "CMP-08 Q4", "GSTR-4 Status", "Filing Date"].join(",");
-    const rows = filteredClients.map((c, i) => {
-      const st = getStatus(c.id);
-      const qStatus = FY_QUARTERS.map(q => {
+    const csvHeaders = [
+      "S.No",
+      "Trade Name",
+      "Legal Name",
+      "GSTIN",
+      "User ID",
+      "Password",
+      "CMP-08 Q1",
+      "CMP-08 Q2",
+      "CMP-08 Q3",
+      "CMP-08 Q4",
+      "GSTR-4 Status",
+      "Filing Date"
+    ].join(",");
+
+    const csvRows = filteredClients.map((client, index) => {
+      const gstr4Status = getStatus(client.id);
+      const qStatuses = FY_QUARTERS.map(q => {
         const periodKey = `${selectedYear}_${q}`;
-        return (cmp08Data[periodKey]?.[c.id]?.cmp08) ? "FILED" : "PENDING";
+        const periodData = cmp08Data[periodKey];
+        return (periodData && periodData[client.id]?.cmp08) ? "FILED" : "PENDING";
       });
-      return [
-        i + 1, c.tradeName, c.legalName, c.gstProfile?.gstin, c.gstProfile?.username, c.gstProfile?.password,
-        ...qStatus, st.filed ? "FILED" : "PENDING", st.date || "N/A"
-      ].join(",");
+
+      const rowValues = [
+        index + 1,
+        client.tradeName || "N/A",
+        client.legalName || "N/A",
+        client.gstProfile?.gstin || "N/A",
+        client.gstProfile?.username || "N/A",
+        client.gstProfile?.password || "N/A",
+        ...qStatuses,
+        gstr4Status.filed ? "FILED" : "PENDING",
+        gstr4Status.date || "N/A"
+      ];
+
+      return rowValues.map(val => {
+        const strValue = String(val).replace(/"/g, '""');
+        return strValue.includes(',') ? `"${strValue}"` : strValue;
+      }).join(",");
     }).join("\n");
 
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([headers + "\n" + rows], { type: 'text/csv' }));
-    link.download = `GSTR4_Annual_Return_${selectedYear}.csv`;
+    const fullCsvContent = csvHeaders + "\n" + csvRows;
+    const blob = new Blob([fullCsvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `GSTR4_Audit_Sheet_${selectedYear}.csv`);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   if (isLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
-      
-      {/* Header Toolbar */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
@@ -186,13 +213,13 @@ const GSTR4: React.FC = () => {
             <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
           </div>
 
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-900 text-white rounded-xl shadow-lg hover:bg-emerald-600 transition-all" title="Export to CSV">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          <button onClick={handleExport} className="h-11 px-5 flex items-center justify-center bg-slate-900 text-white rounded-xl shadow-lg hover:bg-emerald-600 transition-all gap-2" title="Export to CSV">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4 4m4-4V4" /></svg>
+            <span className="text-[10px] font-black uppercase tracking-widest">Export CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Main Table Content */}
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
           <table className="w-full text-left border-collapse table-fixed min-w-[1300px]">
@@ -236,7 +263,7 @@ const GSTR4: React.FC = () => {
                       <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-4">
                         <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       </div>
-                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">No composition records found in vault</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">No composition records found</p>
                     </div>
                   </td>
                 </tr>
@@ -329,7 +356,6 @@ const GSTR4: React.FC = () => {
 
       <GSTClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={() => fetchClients()} initialData={selectedClient} />
 
-      {/* COMPREHENSIVE DETAIL MODAL */}
       {isDetailModalOpen && selectedClient && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
@@ -370,7 +396,7 @@ const GSTR4: React.FC = () => {
                   <div className="flex flex-col md:flex-row gap-4 items-stretch">
                      <div className="flex-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                         <div className="space-y-0.5"><p className="text-[9px] font-black uppercase text-slate-400">Portal User ID</p><p className="text-sm md:text-base font-black text-slate-900">{selectedClient.gstProfile?.username}</p></div>
-                        <button onClick={() => copyToClipboard(selectedClient.gstProfile?.username || '')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
+                        <button onClick={() => copyToClipboard(selectedClient.gstProfile?.username || '')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                      </div>
                      <div className="flex-[1.5] bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4 min-w-0">
                         <div className="flex-1 space-y-0.5 min-w-0">

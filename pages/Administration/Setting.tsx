@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { api } from '../../services/api.ts';
@@ -229,7 +230,7 @@ const Setting: React.FC = () => {
               <div className="space-y-6">
                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block ml-1">Master User ID</label>
-                    <input required value={securityData.user_id} onChange={e => setSecurityData({...securityData, user_id: e.target.value})} className="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl p-5 font-black text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition-all uppercase" />
+                    <input required value={securityData.user_id} onChange={e => setSecurityData({...securityData, user_id: e.target.value})} className="w-full border-2 border-slate-100 bg-slate-50 rounded-2xl p-5 font-black text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition-all" />
                  </div>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">

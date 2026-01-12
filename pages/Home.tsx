@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface HomeProps {
@@ -6,7 +7,7 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="flex min-h-screen flex-col items-center bg-white selection:bg-indigo-100 selection:text-indigo-900 scroll-smooth">
       {/* Dynamic Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute left-[10%] top-[-10%] h-[600px] w-[600px] rounded-full bg-indigo-50/50 blur-[120px] animate-pulse" />
@@ -24,7 +25,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
         </div>
 
         <h1 className="mb-8 text-6xl font-black tracking-tight text-slate-900 md:text-8xl lg:text-9xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-          Precision <span className="text-indigo-600">Unveiled.</span>
+          Client<span className="text-indigo-600">ify.</span>
         </h1>
         
         <p className="mb-12 text-xl font-medium leading-relaxed text-slate-500 md:text-2xl max-w-3xl mx-auto animate-in fade-in duration-1000 delay-300">
@@ -42,46 +43,40 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
             </span>
           </button>
         </div>
-
-        <div className="mt-20 flex flex-wrap justify-center items-center gap-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-           {['SOC2 COMPLIANT', 'AES-256 ENCRYPTED', 'REAL-TIME SYNC', 'PWA ENABLED'].map(trust => (
-             <span key={trust} className="text-[11px] font-black tracking-[0.3em] text-slate-900">{trust}</span>
-           ))}
-        </div>
       </section>
 
-      {/* Feature Matrix */}
-      <section className="w-full bg-slate-50 py-32 border-y border-slate-100 px-6">
+      {/* Platform Section */}
+      <section id="platform" className="w-full bg-slate-50 py-32 border-y border-slate-100 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-20 text-left">
-             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4 uppercase">Practice Modules</h2>
-             <p className="text-slate-500 font-bold uppercase tracking-widest text-sm italic">Engineered for legal precision</p>
+          <div className="mb-20 text-center">
+             <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight mb-6">The Next-Gen <span className="text-indigo-600">Platform.</span></h2>
+             <p className="text-slate-500 font-bold uppercase tracking-widest text-sm max-w-2xl mx-auto">Engineered for high-throughput practice management</p>
           </div>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
               { 
-                title: 'Litigation Center', 
-                desc: 'Intelligent lifecycle tracking for GST notices, appeals, and tribunal matters. Never miss a statutory deadline again.',
-                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />,
+                title: 'Executive Pulse', 
+                desc: 'A real-time nerve center that visualizes your firm load, receivables, and filing velocity in a single high-density dashboard.',
+                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />,
                 color: 'text-indigo-600',
                 bg: 'bg-indigo-50'
               },
               { 
-                title: 'Portal Credentials', 
-                desc: 'Secure, encrypted internal vault for all client GST & Income Tax credentials. Rapid one-click access for staff members.',
+                title: 'ID Vault', 
+                desc: 'Secure repository for GST and Income Tax credentials with zero-click copy-paste and direct portal integration.',
                 icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />,
                 color: 'text-emerald-600',
                 bg: 'bg-emerald-50'
               },
               { 
-                title: 'Compliance Hub', 
-                desc: 'Centralized oversight for Monthly, Quarterly, and Annual returns. Real-time filing status shared across the entire firm.',
-                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50'
+                title: 'Litigation Suite', 
+                desc: 'Intelligent lifecycle tracking for GST notices and appeals. Never miss a 90-day filing window again.',
+                icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />,
+                color: 'text-rose-600',
+                bg: 'bg-rose-50'
               }
             ].map((f, i) => (
-              <div key={i} className="group rounded-[2.5rem] bg-white p-10 border border-slate-200 transition-all hover:border-indigo-400 hover:shadow-2xl hover:-translate-y-2">
+              <div key={i} className="group rounded-[2.5rem] bg-white p-10 border border-slate-200 transition-all hover:border-indigo-400 hover:shadow-2xl">
                 <div className={`mb-8 h-16 w-16 rounded-3xl ${f.bg} flex items-center justify-center ${f.color} transition-all group-hover:scale-110 shadow-sm`}>
                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">{f.icon}</svg>
                 </div>
@@ -93,37 +88,43 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
         </div>
       </section>
 
-      {/* Trust & Security Section */}
-      <section className="py-32 px-6 max-w-7xl w-full">
+      {/* Security Section */}
+      <section id="security" className="py-32 px-6 max-w-7xl w-full">
          <div className="rounded-[3.5rem] bg-slate-900 p-12 md:p-24 text-white relative overflow-hidden shadow-2xl">
             <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-indigo-600/20 blur-[120px]" />
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                <div>
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Architected for <span className="text-indigo-400">Total Security.</span></h2>
-                  <p className="text-xl text-slate-400 leading-relaxed mb-10">Clientify is not just a tool; it's a fortress for your professional data. We use industry-standard encryption protocols to ensure that sensitive client credentials and litigation history remain private and secure.</p>
-                  <div className="flex flex-wrap gap-4">
-                     <div className="px-6 py-3 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest">End-to-End Encryption</div>
-                     <div className="px-6 py-3 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest">Biometric Ready</div>
-                     <div className="px-6 py-3 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest">Auto-Snapshot Backups</div>
-                  </div>
-               </div>
-               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Advanced Vault <span className="text-indigo-400">Security.</span></h2>
+                  <p className="text-xl text-slate-400 leading-relaxed mb-10">Your client data is protected by the same encryption standards used by global financial institutions. Clientify is architected for total privacy and zero-trust access.</p>
                   <div className="space-y-6">
                      {[
-                       { label: 'Client Privacy', val: '100%' },
-                       { label: 'Uptime Reliability', val: '99.9%' },
-                       { label: 'Filing Accuracy', val: 'Precision' }
-                     ].map(metric => (
-                       <div key={metric.label}>
-                          <div className="flex justify-between mb-2">
-                             <span className="text-xs font-black uppercase text-slate-500 tracking-widest">{metric.label}</span>
-                             <span className="text-xs font-black text-indigo-400">{metric.val}</span>
+                       { title: 'AES-256 Encryption', detail: 'All data at rest is encrypted using the most robust cryptographic standard available.' },
+                       { title: 'Isolated Vaults', detail: 'Each practitioner has a dedicated, logically isolated data partition.' },
+                       { title: 'SOC2 Ready Compliance', detail: 'Strict access control logs and regular security audits of our cloud infrastructure.' }
+                     ].map((item, idx) => (
+                       <div key={idx} className="flex gap-4">
+                          <div className="h-6 w-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                           </div>
-                          <div className="h-1.5 w-full bg-white/10 rounded-full">
-                             <div className="h-full bg-indigo-500 rounded-full w-full" />
+                          <div>
+                             <p className="font-black text-sm uppercase tracking-widest text-indigo-300">{item.title}</p>
+                             <p className="text-slate-400 text-sm mt-1">{item.detail}</p>
                           </div>
                        </div>
                      ))}
+                  </div>
+               </div>
+               <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl">
+                  <div className="space-y-6 text-center">
+                     <div className="mx-auto h-20 w-20 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-6">
+                        <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                     </div>
+                     <p className="text-xs font-black uppercase text-indigo-400 tracking-widest">Active Protection Status</p>
+                     <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500 w-full animate-pulse" />
+                     </div>
+                     <p className="text-2xl font-black text-white">FULLY SECURED</p>
+                     <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">Zero Data Breaches to Date</p>
                   </div>
                </div>
             </div>

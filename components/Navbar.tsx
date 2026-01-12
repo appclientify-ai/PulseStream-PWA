@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface NavbarProps {
@@ -6,6 +7,15 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      onHomeClick();
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-[100] w-full bg-white/70 px-6 md:px-12 py-6 backdrop-blur-2xl border-b border-slate-100">
       <div className="max-w-7xl mx-auto flex w-full items-center justify-between">
@@ -23,9 +33,8 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
         
         <div className="flex items-center gap-8">
           <div className="hidden lg:flex items-center gap-8 border-r border-slate-100 pr-8 mr-2">
-             <button onClick={onHomeClick} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Platform</button>
-             <button onClick={onHomeClick} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Security</button>
-             <button onClick={onHomeClick} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Pricing</button>
+             <button onClick={() => scrollToSection('platform')} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Platform</button>
+             <button onClick={() => scrollToSection('security')} className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-colors">Security</button>
           </div>
           <button 
             onClick={onLoginClick} 

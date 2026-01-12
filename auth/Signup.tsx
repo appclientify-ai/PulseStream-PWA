@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import Loader from '../components/Loader';
@@ -54,7 +55,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch, onBackToHome }) => {
         <div className="mb-12 text-center pt-8">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-100">
             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2-2h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />
             </svg>
           </div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase leading-none">Register Firm</h2>
@@ -81,7 +82,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch, onBackToHome }) => {
                 </div>
              </div>
              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Professional Email</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Professional Email</label>
                 <input type="email" name="email_id" required value={formData.email_id} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 text-slate-900 font-bold placeholder-slate-300 focus:border-indigo-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all lowercase" placeholder="office@firm.com" />
              </div>
           </div>
@@ -105,7 +106,7 @@ const Signup: React.FC<SignupProps> = ({ onSwitch, onBackToHome }) => {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Master User ID</label>
-                  <input type="text" name="user_id" required value={formData.user_id} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 text-slate-900 font-black placeholder-slate-300 focus:border-indigo-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all uppercase" placeholder="DESIRED_ID" />
+                  <input type="text" name="user_id" required value={formData.user_id} onChange={handleChange} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 text-slate-900 font-black placeholder-slate-300 focus:border-indigo-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-50 transition-all" placeholder="DesiredID" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Master Password</label>

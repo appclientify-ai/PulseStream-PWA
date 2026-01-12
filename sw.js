@@ -1,8 +1,10 @@
-const CACHE_NAME = 'clientify-v2';
+
+const CACHE_NAME = 'clientify-v3-prod';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  'https://cdn.tailwindcss.com'
 ];
 
 self.addEventListener('install', (event) => {
@@ -24,15 +26,21 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first for API and Auth
-  if (url.pathname.includes('/api/') || url.pathname.includes('/auth/')) {
+  // Network-only for Auth to prevent stale tokens
+  if (url.pathname.includes('/auth/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Network-first for API
+  if (url.pathname.includes('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first for dependencies (esm.sh) and images
+  // Cache-first for large static scripts and images
   if (url.hostname.includes('esm.sh') || event.request.destination === 'image') {
     event.respondWith(
       caches.match(event.request).then((cached) => {
@@ -46,7 +54,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for local scripts and pages
+  // Default: Stale-while-revalidate for everything else
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const networked = fetch(event.request).then((response) => {

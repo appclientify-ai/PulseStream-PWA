@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   sender: string;
@@ -43,6 +44,8 @@ export interface Stakeholder {
   name: string;
   mobile: string;
   pan: string;
+  itPassword?: string;
+  address?: string;
 }
 
 export interface GSTProfile {
@@ -57,6 +60,12 @@ export interface GSTProfile {
   filingFreq: GstFilingFreq;
   constitution: ConstitutionType;
   stakeholders: Stakeholder[];
+  advisoryWork?: {
+    returns: boolean;
+    notices: boolean;
+    appeals: boolean;
+    audit: boolean;
+  };
   accountantName?: string;
   accountantMobile?: string;
   address?: string;
@@ -65,13 +74,24 @@ export interface GSTProfile {
   range?: string;
 }
 
+export type NatureOfWork = 'Salaried' | 'Business' | 'Profession' | 'House Property' | 'Capital Gain' | 'Others';
+
 export interface ITProfile {
   pan: string;
   category: string;
   username: string;
   password?: string;
   fatherName?: string;
-  incomeType?: 'Business' | 'Salary' | 'Both';
+  dob?: string;
+  natureOfWork?: NatureOfWork;
+  employmentType?: string;
+  businessName?: string;
+  advisoryWork?: {
+    itrFiling: boolean;
+    taxAudit: boolean;
+    balanceSheet: boolean;
+    appeals: boolean;
+  };
 }
 
 export interface BankDetails {

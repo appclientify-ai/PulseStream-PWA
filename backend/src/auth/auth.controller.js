@@ -1,3 +1,4 @@
+
 import { getCollection } from '../db/mongo.js';
 import { generateToken } from './jwt.js';
 import { ObjectId } from 'mongodb';
@@ -31,7 +32,7 @@ export const signup = async (req, res) => {
       email_id,
       firm_name: firm_name || null,
       gstn: gstn || null,
-      user_id: user_id.toUpperCase(),
+      user_id: user_id,
       password, // Note: For production, implement bcrypt hashing
       createdAt: new Date(),
       status: 'online',
@@ -69,7 +70,7 @@ export const login = async (req, res) => {
 
   try {
     const users = getCollection('users');
-    const user = await users.findOne({ user_id: user_id.toUpperCase() });
+    const user = await users.findOne({ user_id: user_id });
 
     if (!user || user.password !== password) {
       return res.status(401).json({ error: 'Authentication failed. Invalid User ID or Password.' });
@@ -91,6 +92,64 @@ export const login = async (req, res) => {
   } catch (err) {
     console.error('Authentication Error:', err);
     res.status(500).json({ error: 'Vault access denied due to internal error' });
+  }
+};
+
+export const recoverIdentity = async (req, res) => {
+  const { username, mobile_no, email_id } = req.body;
+
+  if (!username || !mobile_no || !email_id) {
+    return res.status(400).json({ error: 'Name, Mobile, and Email are required for identity lookup' });
+  }
+
+  try {
+    const users = getCollection('users');
+    // Case-insensitive search for identity matches
+    const user = await users.findOne({
+      username: { $regex: new RegExp(`^${username}$`, 'i') },
+      mobile_no: mobile_no,
+      email_id: { $regex: new RegExp(`^${email_id}$`, 'i') }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'No practitioner found with these details.' });
+    }
+
+    res.json({ user_id: user.user_id });
+  } catch (err) {
+    console.error('Recovery Error:', err);
+    res.status(500).json({ error: 'Lookup failed during vault synchronization.' });
+  }
+};
+
+export const resetPasswordRecovery = async (req, res) => {
+  const { user_id, new_password, username, mobile_no, email_id } = req.body;
+
+  if (!user_id || !new_password || !username || !mobile_no || !email_id) {
+    return res.status(400).json({ error: 'Missing security verification parameters.' });
+  }
+
+  try {
+    const users = getCollection('users');
+    const user = await users.findOne({
+      user_id: user_id,
+      username: { $regex: new RegExp(`^${username}$`, 'i') },
+      mobile_no: mobile_no,
+      email_id: { $regex: new RegExp(`^${email_id}$`, 'i') }
+    });
+
+    if (!user) {
+      return res.status(403).json({ error: 'Identity validation failed. Access denied.' });
+    }
+
+    await users.updateOne(
+      { _id: user._id },
+      { $set: { password: new_password, updatedAt: new Date() } }
+    );
+
+    res.json({ message: 'Success' });
+  } catch (err) {
+    res.status(500).json({ error: 'Password vault rotation failed.' });
   }
 };
 
@@ -121,13 +180,13 @@ export const updateProfile = async (req, res) => {
     if (email_id) updateData.email_id = email_id;
     if (firm_name) updateData.firm_name = firm_name;
     if (gstn) updateData.gstn = gstn;
-    if (user_id) updateData.user_id = user_id.toUpperCase();
+    if (user_id) updateData.user_id = user_id;
     if (password) updateData.password = password;
     if (avatar !== undefined) updateData.avatar = avatar;
 
     // Check if new user_id is taken
-    if (user_id && user_id.toUpperCase() !== req.user.user_id) {
-      const existing = await users.findOne({ user_id: user_id.toUpperCase() });
+    if (user_id && user_id !== req.user.user_id) {
+      const existing = await users.findOne({ user_id: user_id });
       if (existing) return res.status(400).json({ error: 'New Master User ID is already claimed' });
     }
 

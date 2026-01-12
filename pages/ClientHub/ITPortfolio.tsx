@@ -50,7 +50,7 @@ const ITPortfolio: React.FC = () => {
         
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Vault</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
@@ -66,7 +66,7 @@ const ITPortfolio: React.FC = () => {
         <div className="relative flex-1 group w-full">
           <input 
             type="text" 
-            placeholder="Search by PAN, Legal Name or Father Name..." 
+            placeholder="Search IT Portfolio by PAN, Name or Father's Name..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 transition-all outline-none" 
