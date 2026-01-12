@@ -91,7 +91,6 @@ const Dashboard: React.FC = () => {
         { label: 'Firm Backlog', value: summary.work.filter(w => w.status !== 'Completed').length, trend: 'stable' },
       ]);
       
-      // Filter for priority items: Due in less than 7 days
       const now = new Date();
       const priority = summary.litigation.filter(r => {
         if (r.status !== 'Pending') return false;
@@ -120,27 +119,27 @@ const Dashboard: React.FC = () => {
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700 h-full pb-32">
+          <div className="max-w-7xl mx-auto space-y-6 md:space-y-10 animate-in fade-in duration-700 h-full pb-32">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
             
-            {/* High-Velocity Action Strip */}
-            <div className="flex flex-wrap gap-4 items-center justify-center lg:justify-start">
-               <button onClick={() => handleViewChange('gst-portfolio')} className="px-8 py-5 glass-card rounded-2xl font-black uppercase text-[11px] tracking-widest text-indigo-600 hover:bg-indigo-600 hover:text-white hover:shadow-xl transition-all flex items-center gap-3">
+            {/* Action Strip: Centered on mobile, Left on Desktop */}
+            <div className="flex flex-wrap gap-3 md:gap-4 items-center justify-center lg:justify-start">
+               <button onClick={() => handleViewChange('gst-portfolio')} className="px-5 py-4 md:px-8 md:py-5 glass-card rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-3 flex-1 md:flex-none">
                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                 Onboard Client
+                 Onboard
                </button>
-               <button onClick={() => handleViewChange('admin-add-invoice')} className="px-8 py-5 glass-card rounded-2xl font-black uppercase text-[11px] tracking-widest text-emerald-600 hover:bg-emerald-600 hover:text-white hover:shadow-xl transition-all flex items-center gap-3">
+               <button onClick={() => handleViewChange('admin-add-invoice')} className="px-5 py-4 md:px-8 md:py-5 glass-card rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-3 flex-1 md:flex-none">
                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                 Create Invoice
+                 Invoice
                </button>
-               <button onClick={() => handleViewChange('lit-notice-pending')} className="px-8 py-5 glass-card rounded-2xl font-black uppercase text-[11px] tracking-widest text-rose-600 hover:bg-rose-600 hover:text-white hover:shadow-xl transition-all flex items-center gap-3">
+               <button onClick={() => handleViewChange('lit-notice-pending')} className="px-5 py-4 md:px-8 md:py-5 glass-card rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center gap-3 w-full md:w-auto justify-center">
                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                  Log Notice
                </button>
             </div>
 
-            {/* Strategic Intelligence Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Metric Grid: 1 col on Mobile, 2 on Tablet, 4 on Desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {metrics.map((m, i) => (
                 <MetricCard 
                   key={i} 
@@ -155,45 +154,37 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
             
-            {/* Operational Nerve Center */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
-               <div className="xl:col-span-2 space-y-8">
+            {/* Operational Nerve Center: Stacked on small screens */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 items-stretch">
+               <div className="xl:col-span-2 space-y-6 md:space-y-8">
                   <ComplianceRunway 
                     month="May" 
                     stats={{ requested: 124, prepared: 82, filed: 45, total: 124 }} 
                   />
                   
-                  {/* Practice Density / Load Analysis */}
-                  <div className="glass-card rounded-[2.5rem] p-10 border border-slate-200 min-h-[400px] flex flex-col justify-between">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-6 mb-10">
+                  {/* Practice Intensity: Hidden on very small mobile for focus */}
+                  <div className="hidden xs:flex glass-card rounded-[2.5rem] p-6 md:p-10 border border-slate-200 min-h-[300px] md:min-h-[400px] flex-col justify-between">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-6 mb-6 md:mb-10">
                       <div>
-                        <h3 className="text-xl font-black uppercase tracking-tight text-slate-900">Practice Intensity</h3>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Firm Load Distribution (Last 12 Months)</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         <kbd className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-tighter shadow-sm">Ctrl + K Commands</kbd>
+                        <h3 className="text-lg md:text-xl font-black uppercase tracking-tight text-slate-900">Practice Intensity</h3>
+                        <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Firm Load (Last 12 Mo)</p>
                       </div>
                     </div>
-                    <div className="flex items-end justify-between gap-4 h-48">
+                    <div className="flex items-end justify-between gap-1.5 md:gap-4 h-48">
                        {[40, 70, 55, 90, 80, 60, 30, 85, 45, 50, 65, 95].map((h, i) => (
-                         <div key={i} className="flex-1 bg-slate-50/50 rounded-xl relative group overflow-hidden h-full flex flex-col justify-end border border-slate-100/50">
+                         <div key={i} className="flex-1 bg-slate-50/50 rounded-lg md:rounded-xl relative group overflow-hidden h-full flex flex-col justify-end border border-slate-100/50">
                             <div 
-                              className={`w-full rounded-xl transition-all duration-1000 group-hover:bg-indigo-600 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.4)] ${h > 80 ? 'bg-rose-500/20' : h > 50 ? 'bg-indigo-600/10' : 'bg-slate-200'}`} 
+                              className={`w-full rounded-lg md:rounded-xl transition-all duration-1000 group-hover:bg-indigo-600 ${h > 80 ? 'bg-rose-500/20' : h > 50 ? 'bg-indigo-600/10' : 'bg-slate-200'}`} 
                               style={{ height: `${h}%` }} 
                             />
-                            <div className="absolute top-0 inset-x-0 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[8px] font-black py-1 text-center rounded-t-xl">{h}%</div>
                          </div>
                        ))}
-                    </div>
-                    <div className="mt-8 flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                       <span>JUN '24</span>
-                       <span>MAY '25</span>
                     </div>
                   </div>
                </div>
                
                {/* Litigation Pulse Sidebar */}
-               <div className="h-full min-h-[600px]">
+               <div className="h-full min-h-[400px] md:min-h-[600px]">
                  <LegalEscalationFeed 
                    items={priorityNotices} 
                    onAction={(id) => handleViewChange('lit-notice-pending')} 
@@ -254,7 +245,7 @@ const Dashboard: React.FC = () => {
           activeViewLabel={activeConfig.label} 
           activeViewDescription={activeConfig.desc} 
         />
-        <div className="flex-1 flex flex-col min-h-0 px-6 lg:px-12 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
+        <div className="flex-1 flex flex-col min-h-0 px-4 md:px-6 lg:px-12 pt-6 md:pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
           )}

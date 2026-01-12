@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User } from '../types';
 import { useAuth } from '../auth/AuthContext';
@@ -15,35 +16,35 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="flex h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-6 backdrop-blur-md sticky top-0 z-30">
-      <div className="flex items-center gap-6 flex-1 min-w-0">
+    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-30">
+      <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
         <button 
           onClick={onMenuClick} 
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm"
+          className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm"
           aria-label="Toggle Menu"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 md:h-7 md:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
         
-        <div className="h-8 w-[1px] bg-slate-200 hidden md:block" />
+        <div className="h-6 md:h-8 w-[1px] bg-slate-200 hidden sm:block" />
 
         <div className="min-w-0 flex-1">
            <div className="flex items-baseline gap-2 overflow-hidden">
-             <h2 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0">{activeViewLabel}</h2>
-             <span className="text-xs font-bold text-slate-400 shrink-0 hidden sm:inline">|</span>
-             <div className="hidden sm:flex items-baseline gap-1.5 truncate">
-                <span className="text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
+             <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0">{activeViewLabel}</h2>
+             <span className="text-xs font-bold text-slate-300 shrink-0 hidden xs:inline">|</span>
+             <div className="hidden xs:flex items-baseline gap-1.5 truncate">
+                <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
              </div>
            </div>
-           <p className="text-sm font-medium text-slate-500 truncate mt-1" title={activeViewDescription}>
+           <p className="text-[10px] md:text-sm font-medium text-slate-500 truncate mt-0.5 md:mt-1 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
            </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-6 shrink-0">
+      <div className="flex items-center gap-3 md:gap-6 shrink-0">
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Cloud Sync Active' : 'Offline Mode'}</span>
@@ -52,16 +53,16 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         <div className="relative">
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-4 group hover:bg-slate-50 p-1.5 rounded-2xl transition-all"
+            className="flex items-center gap-2 md:gap-4 group hover:bg-slate-50 p-1 rounded-2xl transition-all"
           >
-            <div className="text-right hidden sm:block">
+            <div className="text-right hidden md:block">
               <p className="text-sm font-black text-slate-900 leading-none">{currentUser?.username}</p>
-              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1">{currentUser?.firm_name || 'Practitioner'}</p>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 truncate max-w-[100px]">{currentUser?.firm_name || 'Practitioner'}</p>
             </div>
             {currentUser?.avatar ? (
-              <img src={currentUser.avatar} alt="DP" className="h-12 w-12 rounded-2xl object-cover shadow-lg ring-4 ring-slate-50" />
+              <img src={currentUser.avatar} alt="DP" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl object-cover shadow-lg ring-2 ring-slate-50" />
             ) : (
-              <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-lg font-black text-white shadow-lg ring-4 ring-slate-50">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-indigo-600 flex items-center justify-center text-sm md:text-lg font-black text-white shadow-lg ring-2 ring-slate-50">
                 {currentUser?.username?.substring(0, 2).toUpperCase()}
               </div>
             )}

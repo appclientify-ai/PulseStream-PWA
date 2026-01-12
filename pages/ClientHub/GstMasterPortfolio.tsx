@@ -50,7 +50,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeFilterMenu]);
+  }, [activeFilterMenu, activeActionsId]);
 
   const handleDataChange = () => {
     fetch();
@@ -81,7 +81,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard");
   };
 
   const shareCredentials = (client: Client) => {
@@ -113,7 +112,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Legal Name</th>
               <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
               
-              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] filter-container">
+              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] filter-container relative">
                  <div className="flex items-center gap-2">
                     GSTIN Status
                     <button onClick={() => setActiveFilterMenu(activeFilterMenu === 'gst' ? null : 'gst')} className="p-1 hover:bg-slate-200 rounded transition-colors">
@@ -121,7 +120,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                     </button>
                  </div>
                  {activeFilterMenu === 'gst' && (
-                    <div className="absolute mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-1 animate-in zoom-in-95">
+                    <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-1 animate-in zoom-in-95">
                        {['All', 'Active', 'Suspended', 'Cancelled'].map(s => (
                          <button key={s} onClick={() => { setGstStatusFilter(s as any); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${gstStatusFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{s}</button>
                        ))}
@@ -129,7 +128,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                  )}
               </th>
 
-              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] filter-container">
+              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] filter-container relative">
                  <div className="flex items-center gap-2">
                     Client Status
                     <button onClick={() => setActiveFilterMenu(activeFilterMenu === 'client' ? null : 'client')} className="p-1 hover:bg-slate-200 rounded transition-colors">
@@ -137,7 +136,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                     </button>
                  </div>
                  {activeFilterMenu === 'client' && (
-                    <div className="absolute mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
+                    <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
                        {['All', 'Active', 'Inactive'].map(s => (
                          <button key={s} onClick={() => { setClientStatusFilter(s as any); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${clientStatusFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{s}</button>
                        ))}
@@ -145,7 +144,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                  )}
               </th>
 
-              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+              <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -164,7 +163,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                        <p className="font-bold text-slate-600 uppercase truncate text-xs" title={client.legalName}>{client.legalName}</p>
                     </td>
                     <td className="px-6 py-5">
-                       <span className="font-black text-indigo-600 font-mono tracking-widest uppercase text-xs">{client.gstProfile?.gstin}</span>
+                       <span className={`font-black font-mono tracking-widest uppercase text-xs ${isClosed ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
                     </td>
                     <td className="px-6 py-5">
                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
@@ -192,7 +191,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                           </button>
                           
-                          <div className="relative">
+                          <div className="relative inline-block text-left">
                             <button 
                               onClick={() => setActiveActionsId(activeActionsId === client.id ? null : client.id)}
                               className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
@@ -201,7 +200,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                             </button>
 
                             {activeActionsId === client.id && (
-                               <div ref={actionsRef} className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-50 p-2 animate-in slide-in-from-top-2 origin-top-right overflow-hidden">
+                               <div ref={actionsRef} className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[200] p-2 animate-in slide-in-from-top-2 origin-top-right overflow-hidden">
                                   <button onClick={() => { copyToClipboard(client.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); setActiveActionsId(null); }} 
                                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group">
                                      <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white transition-colors"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></div>
@@ -238,9 +237,8 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
 
       <GSTClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
 
-      {/* QUICK DETAIL MODAL (Moved from GSTPortfolio for better encapsulation) */}
       {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
             <div className="px-6 md:px-10 py-6 md:py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div className="min-w-0">
@@ -260,8 +258,8 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                         <p className="text-[9px] font-black uppercase text-slate-400 mb-1">GSTIN Identification</p>
                         <div className="flex items-center gap-2">
                           <p className={`text-base md:text-lg font-black font-mono tracking-widest ${selectedClient.gstProfile?.gstStatus === 'Cancelled' ? 'text-red-600' : 'text-indigo-600'}`}>{selectedClient.gstProfile?.gstin}</p>
-                          <button onClick={() => copyToClipboard(selectedClient.gstProfile?.gstin || '')} className="h-8 w-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                          <button onClick={() => { copyToClipboard(selectedClient.gstProfile?.gstin || ''); alert("Copied GSTIN"); }} className="h-8 w-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
                           </button>
                         </div>
                      </div>
@@ -277,11 +275,11 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                         <div className="space-y-0.5"><p className="text-[9px] font-black uppercase text-slate-400">User ID</p><p className="text-sm md:text-base font-black text-slate-900">{selectedClient.gstProfile?.username}</p></div>
-                        <button onClick={() => copyToClipboard(selectedClient.gstProfile?.username || '')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
+                        <button onClick={() => { copyToClipboard(selectedClient.gstProfile?.username || ''); alert("Copied ID"); }} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                      </div>
                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                         <div className="space-y-0.5"><p className="text-[9px] font-black uppercase text-slate-400">Password</p><p className="text-sm md:text-base font-black text-slate-900 tracking-wider">••••••••</p></div>
-                        <button onClick={() => copyToClipboard(selectedClient.gstProfile?.password || '')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
+                        <button onClick={() => { copyToClipboard(selectedClient.gstProfile?.password || ''); alert("Copied Pass"); }} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white text-slate-400 hover:text-indigo-600 shadow-sm transition-all border border-slate-100"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                      </div>
                   </div>
                </section>

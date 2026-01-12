@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ActiveView } from '../types';
 
@@ -163,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
       <div key={item.id} className="w-full">
         <button
           onClick={() => handleItemClick(item)}
-          className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
+          className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3 md:py-2.5 text-sm font-bold transition-all duration-200 ${
             isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           } ${level > 0 ? 'ml-6' : ''}`}
         >
@@ -194,22 +195,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
         className={`fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-md transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
         onClick={onClose} 
       />
-      <aside className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-in-out w-80 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex h-20 items-center justify-between px-6 border-b border-slate-100 shrink-0">
+      <aside className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-in-out w-[280px] sm:w-80 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex h-16 md:h-20 items-center justify-between px-6 border-b border-slate-100 shrink-0">
            <div className="flex items-center gap-3">
              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
              </div>
-             <span className="text-2xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
+             <span className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
            </div>
            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border border-slate-100">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
            </button>
         </div>
-        <nav className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
+        <nav className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
           {navigation.map((group, i) => (
             <div key={i} className="space-y-3">
-              <h5 className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{group.group}</h5>
+              <h5 className="px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{group.group}</h5>
               <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
             </div>
           ))}
