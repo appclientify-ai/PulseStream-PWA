@@ -37,10 +37,12 @@ const GeminiAssistant: React.FC<{ activeView: string }> = ({ activeView }) => {
     setMessages(prev => [...prev, { role: 'user', text: "Generating context-aware draft..." }]);
     setIsTyping(true);
     try {
+      // Fix: Follow guidelines to create instance right before call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ role: 'user', parts: [{ text: promptText }] }],
+        // Fix: Use recommended string-based contents for simple text prompts
+        contents: promptText,
         config: {
           systemInstruction: `You are a world-class tax and legal assistant. The user is ${user?.username}. 
           Provide highly technical and professional legal drafting suggestions.`,
@@ -63,10 +65,12 @@ const GeminiAssistant: React.FC<{ activeView: string }> = ({ activeView }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsTyping(true);
     try {
+      // Fix: Follow guidelines to create instance right before call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+        // Fix: Use recommended string-based contents for simple text prompts
+        contents: userMsg,
         config: {
           systemInstruction: `You are a world-class tax and legal assistant for a practitioner named ${user?.username}. 
           Currently viewing: ${activeView}. Format responses with clean professional bullet points.`,
@@ -118,7 +122,7 @@ const GeminiAssistant: React.FC<{ activeView: string }> = ({ activeView }) => {
           <div className="p-8 border-t border-slate-200 bg-slate-50/50">
             <form onSubmit={handleSend} className="relative">
               <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask anything about the law..." className="w-full bg-white border border-slate-300 rounded-2xl py-4 pl-6 pr-14 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-indigo-100 outline-none transition-all shadow-sm" />
-              <button type="submit" disabled={!input.trim() || isTyping} className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg disabled:opacity-30 hover:bg-slate-900 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7 7" /></svg></button>
+              <button type="submit" disabled={!input.trim() || isTyping} className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg disabled:opacity-30 hover:bg-slate-900 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7-7" /></svg></button>
             </form>
           </div>
         </div>

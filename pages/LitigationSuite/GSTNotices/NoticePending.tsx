@@ -4,7 +4,6 @@ import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
-import { GoogleGenAI } from '@google/genai';
 
 const NoticePending: React.FC = () => {
   const [records, setRecords] = useState<LitigationRecord[]>([]);
@@ -48,7 +47,6 @@ const NoticePending: React.FC = () => {
     setActiveStatusMenuId(null);
   };
 
-  // Power-User Feature: AI Magic Moment
   const primeAI = (rec: LitigationRecord) => {
     const client = clients.find(c => c.id === rec.clientId);
     const event = new CustomEvent('vault_ai_prime', { 
@@ -167,7 +165,7 @@ const NoticePending: React.FC = () => {
                   )}
                 </th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[150px]">Actions</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[150px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -176,6 +174,7 @@ const NoticePending: React.FC = () => {
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const dl = getDaysLeft(rec.dueDate);
+                  // Fix: correctly reference 'rec' instead of undefined 'r'
                   const client = clients.find(c => c.id === rec.clientId);
                   const isOverdue = dl < 0;
                   const isCritical = dl <= 7 && dl >= 0;
