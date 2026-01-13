@@ -32,11 +32,11 @@ export interface User {
 
 export type ActiveView = string;
 
-export type ClientStatus = 'Active Filing' | 'Case-by-Case' | 'Inactive (Temporary)' | 'Inactive (Closed)' | 'Active' | 'Inactive';
-export type GstStatus = 'Active' | 'Suspended' | 'Cancelled';
+export type ClientStatus = 'Active' | 'Litigation' | 'Inactive' | 'Active Filing';
+export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
-export type ConstitutionType = 'Proprietorship' | 'Partnership' | 'HUF' | 'Company' | 'Trust' | 'Other';
+export type ConstitutionType = 'Proprietorship' | 'Partnership' | 'HUF' | 'Company' | 'Trust' | 'Society' | 'Other';
 export type JurisdictionType = 'Center' | 'State';
 
 export interface Stakeholder {
@@ -60,12 +60,6 @@ export interface GSTProfile {
   filingFreq: GstFilingFreq;
   constitution: ConstitutionType;
   stakeholders: Stakeholder[];
-  advisoryWork?: {
-    returns: boolean;
-    notices: boolean;
-    appeals: boolean;
-    audit: boolean;
-  };
   accountantName?: string;
   accountantMobile?: string;
   address?: string;
@@ -197,7 +191,8 @@ export interface LitigationRecord {
   hearingDate?: string;
 }
 
-export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation' | 'Surrender';
+/* Fix: Adding GST Registration related types */
+export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
 export interface GSTRegistrationRecord {
@@ -212,8 +207,9 @@ export interface GSTRegistrationRecord {
   remarks?: string;
 }
 
+/* Fix: Adding Food License related types */
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
-export type FoodLicenseStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Applied' | 'Completed' | 'Rejected';
+export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected';
 
 export interface FoodLicenseRecord {
   id: string;
@@ -227,19 +223,21 @@ export interface FoodLicenseRecord {
   remarks?: string;
 }
 
-export type MSMERegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'Completed' | 'Failed';
+/* Fix: Adding MSME Registration related types */
+export type MSMERegistrationStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
-  regType?: string;
+  regType: string;
   status: MSMERegistrationStatus;
   appDate: string;
   udyamNumber: string;
   remarks?: string;
 }
 
+/* Fix: Adding Miscellaneous Work related types */
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {

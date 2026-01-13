@@ -31,12 +31,10 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         <div className="h-6 md:h-8 w-[1px] bg-slate-200 hidden sm:block" />
 
         <div className="min-w-0 flex-1">
-           <div className="flex items-baseline gap-2 overflow-hidden">
-             <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0">{activeViewLabel}</h2>
-             <span className="text-xs font-bold text-slate-300 shrink-0 hidden xs:inline">|</span>
-             <div className="hidden xs:flex items-baseline gap-1.5 truncate">
-                <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
-             </div>
+           <div className="flex items-center gap-2 overflow-hidden">
+             <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0">{activeViewLabel}</h2>
+             <span className="text-sm font-bold text-slate-300 shrink-0">|</span>
+             <span className="text-base md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
            </div>
            <p className="text-[10px] md:text-sm font-medium text-slate-500 truncate mt-0.5 md:mt-1 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
@@ -47,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
       <div className="flex items-center gap-3 md:gap-6 shrink-0">
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Cloud Sync Active' : 'Offline Mode'}</span>
+           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Sync Active' : 'Offline'}</span>
         </div>
 
         <div className="relative">
@@ -71,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           {isProfileOpen && (
             <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right">
                <div className="p-3 border-b border-slate-100 mb-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Logged in as</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault ID</p>
                   <p className="text-sm font-black text-slate-900 truncate">{currentUser?.user_id}</p>
                </div>
                <button 

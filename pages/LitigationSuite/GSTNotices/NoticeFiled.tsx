@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -155,7 +156,7 @@ const NoticeFiled: React.FC = () => {
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Filing Date</th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] text-center">Status Update</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

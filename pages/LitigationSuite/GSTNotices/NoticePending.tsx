@@ -47,20 +47,6 @@ const NoticePending: React.FC = () => {
     setActiveStatusMenuId(null);
   };
 
-  const primeAI = (rec: LitigationRecord) => {
-    const client = clients.find(c => c.id === rec.clientId);
-    const event = new CustomEvent('vault_ai_prime', { 
-      detail: { 
-        prompt: `I am currently looking at a pending GST Notice for ${rec.clientName}. 
-        Notice Ref: ${rec.referenceNo} issued under Section ${rec.section} for Tax Period ${rec.taxPeriod}. 
-        The GSTIN is ${client?.gstProfile?.gstin}. 
-        Please provide a professional draft outline for a reply contesting this notice based on statutory provisions of Section ${rec.section}.` 
-      }
-    });
-    window.dispatchEvent(event);
-    alert("AI Assistant primed with case context. Open the Assistant sidebar to view results.");
-  };
-
   const handleDelete = async (id: string) => {
     if (confirm('Permanently remove this notice record from the secure vault?')) {
       try { await api.delete(`/items/${id}`); fetchAll(); } catch (err) { alert("Deletion failed."); }
@@ -165,7 +151,7 @@ const NoticePending: React.FC = () => {
                   )}
                 </th>
                 <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[150px]">Actions</th>
+                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -174,7 +160,6 @@ const NoticePending: React.FC = () => {
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const dl = getDaysLeft(rec.dueDate);
-                  // Fix: correctly reference 'rec' instead of undefined 'r'
                   const client = clients.find(c => c.id === rec.clientId);
                   const isOverdue = dl < 0;
                   const isCritical = dl <= 7 && dl >= 0;
@@ -209,9 +194,6 @@ const NoticePending: React.FC = () => {
                       </td>
                       <td className="px-4 py-5 text-right whitespace-nowrap">
                          <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => primeAI(rec)} className="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm" title="Draft with AI">
-                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                            </button>
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -235,7 +217,6 @@ const NoticePending: React.FC = () => {
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
-                    <button onClick={() => primeAI(viewingRecord)} className="h-10 px-4 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-sm hover:bg-indigo-100 transition-all"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> AI Draft</button>
                     <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
                  </div>
               </div>
