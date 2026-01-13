@@ -1,3 +1,4 @@
+
 import { API_BASE_URL } from '../constants.ts';
 import { 
   Client, LitigationRecord, InvoiceRecord, PaymentRecord, 
@@ -13,8 +14,11 @@ class ApiService {
   }
 
   private getFullUrl(endpoint: string): string {
+    // Ensure the endpoint is clean
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    return `${API_BASE_URL}/api${cleanEndpoint}`;
+    // The backend routes are prefixed with /api, so we ensure /api is in the final string
+    const apiPath = cleanEndpoint.startsWith('/api') ? cleanEndpoint : `/api${cleanEndpoint}`;
+    return `${API_BASE_URL}${apiPath}`;
   }
 
   private async handleResponse(response: Response) {

@@ -1,3 +1,4 @@
+
 // Detect current environment
 const isProd = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
 
@@ -6,9 +7,10 @@ const isProd = window.location.hostname !== 'localhost' && !window.location.host
  */
 const BACKEND_URL_ENV = (import.meta as any).env?.VITE_BACKEND_URL;
 
+// Use empty string to rely on Vite proxy in development, or the env var in production
 export const API_BASE_URL = BACKEND_URL_ENV 
   ? BACKEND_URL_ENV.replace(/\/$/, '') 
-  : (isProd ? '' : 'http://localhost:3001');
+  : '';
 
 export const SOCKET_URL = BACKEND_URL_ENV
   ? BACKEND_URL_ENV.replace(/^http/, 'ws')
