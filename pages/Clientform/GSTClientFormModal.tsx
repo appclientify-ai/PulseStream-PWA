@@ -106,10 +106,38 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     setError(null);
   };
 
+  // Logic to auto-fetch Legal Name and PAN based on Constitution and Stakeholder 0
+  const syncEntityDetails = (constitution: ConstitutionType, firstStakeholder: Stakeholder) => {
+    if (!firstStakeholder) return;
+    
+    let derivedName = formData.legalName || '';
+    let derivedPan = formData.gstProfile?.pan || '';
+
+    if (constitution === 'Proprietorship') {
+      derivedName = firstStakeholder.name;
+      derivedPan = firstStakeholder.pan;
+    } else if (constitution === 'HUF') {
+      derivedName = firstStakeholder.name.includes('HUF') ? firstStakeholder.name : `${firstStakeholder.name} HUF`;
+    }
+
+    setFormData(prev => ({ 
+      ...prev, 
+      legalName: derivedName.toUpperCase(),
+      gstProfile: {
+        ...prev.gstProfile!,
+        pan: derivedPan.toUpperCase()
+      }
+    }));
+  };
+
   const handleGstinChange = (val: string) => {
     const gstin = val.toUpperCase().trim().slice(0, 15);
     let pan = formData.gstProfile?.pan || '';
-    if (gstin.length >= 10) pan = gstin.substring(2, 12);
+    
+    // Auto extract PAN from GSTIN (chars 3 to 12)
+    if (gstin.length >= 12) {
+      pan = gstin.substring(2, 12);
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -117,24 +145,51 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
         ...prev.gstProfile!,
         gstin,
         pan,
-        username: prev.gstProfile?.username || gstin,
-        stakeholders: prev.gstProfile!.stakeholders.map((s, idx) => 
-          idx === 0 && !s.pan ? { ...s, pan: pan } : s
-        )
+        // Manual User ID preference - don't auto-set username to gstin anymore as per request
       }
     }));
   };
 
-  const updateStakeholder = (id: string, field: keyof Stakeholder, val: string) => {
+  const handleRegTypeChange = (type: GstRegType) => {
     setFormData(prev => ({
       ...prev,
       gstProfile: {
         ...prev.gstProfile!,
-        stakeholders: prev.gstProfile!.stakeholders.map(s => 
-          s.id === id ? { ...s, [field]: val } : s
-        )
+        regType: type,
+        // Auto-select Quarterly for Composition taxpayers
+        filingFreq: type === 'Composition' ? 'Quarterly' : prev.gstProfile?.filingFreq || 'Monthly'
       }
     }));
+  };
+
+  const handleConstitutionChange = (val: ConstitutionType) => {
+    const firstStakeholder = formData.gstProfile?.stakeholders[0];
+    setFormData(prev => ({
+      ...prev,
+      gstProfile: { ...prev.gstProfile!, constitution: val }
+    }));
+    if (firstStakeholder) syncEntityDetails(val, firstStakeholder);
+  };
+
+  const updateStakeholder = (id: string, field: keyof Stakeholder, val: string) => {
+    setFormData(prev => {
+      const updatedStakeholders = prev.gstProfile!.stakeholders.map(s => 
+        s.id === id ? { ...s, [field]: val } : s
+      );
+      
+      // If updating first member name/pan and constitution is Proprietorship/HUF, sync Entity Details
+      if (updatedStakeholders[0].id === id) {
+        setTimeout(() => syncEntityDetails(prev.gstProfile!.constitution, updatedStakeholders[0]), 0);
+      }
+
+      return {
+        ...prev,
+        gstProfile: {
+          ...prev.gstProfile!,
+          stakeholders: updatedStakeholders
+        }
+      };
+    });
   };
 
   const addStakeholder = () => {
@@ -147,10 +202,44 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     }));
   };
 
+  const removeStakeholder = (id: string) => {
+    setFormData(prev => {
+      if (prev.gstProfile!.stakeholders.length <= 1) return prev;
+      return {
+        ...prev,
+        gstProfile: {
+          ...prev.gstProfile!,
+          stakeholders: prev.gstProfile!.stakeholders.filter(s => s.id !== id)
+        }
+      };
+    });
+  };
+
+  const validateFormats = () => {
+    const mobileRegex = /^[0-9]{10}$/;
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    if (formData.mobile && !mobileRegex.test(formData.mobile)) return "Invalid 10-digit mobile number.";
+    if (formData.gstProfile?.pan && !panRegex.test(formData.gstProfile.pan)) return "Invalid PAN format (e.g. ABCDE1234F).";
+    if (formData.gstProfile?.gstin && !gstinRegex.test(formData.gstProfile.gstin)) return "Invalid GSTIN format.";
+    
+    // Validate stakeholders
+    for (const s of formData.gstProfile?.stakeholders || []) {
+      if (s.pan && !panRegex.test(s.pan)) return `Invalid PAN format for member: ${s.name || 'Member'}`;
+      if (s.mobile && !mobileRegex.test(s.mobile)) return `Invalid 10-digit mobile for member: ${s.name || 'Member'}`;
+    }
+
+    return null;
+  };
+
   const handleSave = async () => {
     setError(null);
     if (!formData.tradeName) return setError("Trade Name is mandatory.");
     if (!formData.gstProfile?.gstin) return setError("GSTIN identifier required.");
+    
+    const formatError = validateFormats();
+    if (formatError) return setError(formatError);
 
     setIsSaving(true);
     try {
@@ -165,6 +254,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   };
 
   if (!isOpen) return null;
+
+  const isProprietorship = formData.gstProfile?.constitution === 'Proprietorship';
 
   return (
     <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 overflow-hidden animate-in fade-in duration-300">
@@ -195,7 +286,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
           {/* 1. Administrative Status */}
           <section className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Administrative Status <div className="h-px flex-1 bg-slate-100" /></h4>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Professional Status</label>
                    <select 
@@ -203,9 +294,10 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                      value={formData.status} 
                      onChange={e => setFormData({...formData, status: e.target.value as ClientStatus})}
                    >
-                      <option value="Active">Relationship: Active</option>
-                      <option value="Litigation">Relationship: Litigation Case</option>
-                      <option value="Inactive">Relationship: Inactive/Old</option>
+                      <option value="Active">Active Relationship</option>
+                      <option value="Active Filing">Active Filing Service</option>
+                      <option value="Litigation">Litigation / Case Work</option>
+                      <option value="Inactive">Inactive / Suspended</option>
                    </select>
                 </div>
                 <div className="space-y-2">
@@ -215,18 +307,22 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Legal Form (Constitution)</label>
                    <select 
-                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none"
+                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none cursor-pointer focus:ring-4 focus:ring-indigo-50"
                      value={formData.gstProfile?.constitution} 
-                     onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, constitution: e.target.value as ConstitutionType}})}
+                     onChange={e => handleConstitutionChange(e.target.value as ConstitutionType)}
                    >
                       <option value="Proprietorship">Proprietorship</option>
                       <option value="Partnership">Partnership Firm</option>
-                      <option value="HUF">HUF</option>
+                      <option value="HUF">HUF (Hindu Undivided Family)</option>
                       <option value="Company">Private/Public Limited</option>
                       <option value="Trust">Trust / NGO</option>
                       <option value="Society">Co-operative Society</option>
-                      <option value="Other">Other Category</option>
+                      <option value="Other">Other / Miscellaneous</option>
                    </select>
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Legal Name (As per PAN)</label>
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value.toUpperCase()})} placeholder="LEGAL ENTITY NAME" />
                 </div>
              </div>
           </section>
@@ -244,8 +340,17 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                         onChange={e => handleGstinChange(e.target.value)} 
                         placeholder="GSTIN NO" 
                       />
-                      <button type="button" onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${formData.gstProfile?.gstin}`, '_blank')} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
+                      <button type="button" onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${formData.gstProfile?.gstin}`, '_blank')} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600 transition-colors"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
                    </div>
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-indigo-400 tracking-widest ml-1">Entity PAN No.</label>
+                   <input 
+                     className="w-full bg-white border border-indigo-100 p-4 rounded-2xl font-black uppercase font-mono tracking-[0.2em] outline-none focus:border-indigo-600 transition-all text-indigo-600" 
+                     value={formData.gstProfile?.pan} 
+                     onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, pan: e.target.value.toUpperCase().slice(0, 10)}})} 
+                     placeholder="ABCDE1234F" 
+                   />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-indigo-400 tracking-widest ml-1">Portal User ID</label>
@@ -258,14 +363,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                    <label className="text-[10px] font-black uppercase text-indigo-400 tracking-widest ml-1">Secret Password</label>
                    <div className="relative">
                       <input type={showPassword ? "text" : "password"} className="w-full bg-white border border-indigo-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-600" value={formData.gstProfile?.password} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, password: e.target.value}})} placeholder="••••••••" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600">{showPassword ? '🙈' : '👁️'}</button>
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors">{showPassword ? '🙈' : '👁️'}</button>
                    </div>
-                </div>
-                <div className="md:col-span-3">
-                   <button type="button" onClick={() => { navigator.clipboard.writeText(formData.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-lg flex items-center justify-center gap-3">
-                      Launch Portal & Copy ID
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                   </button>
                 </div>
              </div>
           </section>
@@ -289,9 +388,9 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Taxpayer Category</label>
                    <select 
-                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none"
+                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-50"
                      value={formData.gstProfile?.regType} 
-                     onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regType: e.target.value as GstRegType}})}
+                     onChange={e => handleRegTypeChange(e.target.value as GstRegType)}
                    >
                       <option value="Regular">Regular Taxpayer</option>
                       <option value="Composition">Composition Taxpayer</option>
@@ -300,7 +399,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Filing Cycle</label>
                    <select 
-                     className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none"
+                     className={`w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none ${formData.gstProfile?.regType === 'Composition' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                     disabled={formData.gstProfile?.regType === 'Composition'}
                      value={formData.gstProfile?.filingFreq} 
                      onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, filingFreq: e.target.value as GstFilingFreq}})}
                    >
@@ -312,17 +412,45 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Registration Date</label>
                    <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase text-xs" value={formData.gstProfile?.regDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, regDate: e.target.value}})} />
                 </div>
-
-                {formData.gstProfile?.gstStatus === 'Closed' && (
-                  <div className="space-y-2 animate-in slide-in-from-top-4 col-span-full md:col-span-1">
-                     <label className="text-[10px] font-black uppercase text-rose-500 tracking-widest ml-1">Cancellation Date</label>
-                     <input type="date" className="w-full bg-rose-50 border border-rose-200 p-4 rounded-2xl font-black uppercase text-xs text-rose-600" value={formData.gstProfile?.cancelDate} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, cancelDate: e.target.value}})} />
-                  </div>
-                )}
              </div>
           </section>
 
-          {/* 4. Personnel Details */}
+          {/* 5. Stakeholders */}
+          <section className="space-y-6">
+             <div className="flex items-center justify-between">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600">Personnel / Members</h4>
+                {!isProprietorship && (
+                  <button type="button" onClick={addStakeholder} className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">+ Add Member</button>
+                )}
+             </div>
+             <div className="space-y-3">
+                {formData.gstProfile?.stakeholders.map((s, idx) => (
+                  <div key={s.id} className="group relative grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Member Name</label>
+                        <input className="w-full bg-white border border-slate-200 p-3 rounded-xl font-black text-[10px] uppercase outline-none focus:border-indigo-600" value={s.name} onChange={e => updateStakeholder(s.id, 'name', e.target.value.toUpperCase())} placeholder="FULL LEGAL NAME" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Member PAN</label>
+                        <input className="w-full bg-white border border-slate-200 p-3 rounded-xl font-black font-mono tracking-widest text-[10px] uppercase outline-none focus:border-indigo-600" value={s.pan} onChange={e => updateStakeholder(s.id, 'pan', e.target.value.toUpperCase().slice(0, 10))} placeholder="ABCDE1234F" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-black uppercase text-slate-400 ml-1">Contact Mobile</label>
+                        <div className="flex gap-2">
+                           <input className="w-full bg-white border border-slate-200 p-3 rounded-xl font-black text-[10px] outline-none focus:border-indigo-600" value={s.mobile} onChange={e => updateStakeholder(s.id, 'mobile', e.target.value.replace(/\D/g, ''))} placeholder="MOBILE NO" />
+                           {formData.gstProfile!.stakeholders.length > 1 && (
+                             <button type="button" onClick={() => removeStakeholder(s.id)} className="h-10 w-10 shrink-0 bg-white border border-rose-100 text-rose-300 hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center justify-center rounded-xl">
+                               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                             </button>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </section>
+
+          {/* 4. Contact Details */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-10">
              <div className="space-y-6">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Accountant Contact <div className="h-px flex-1 bg-slate-100" /></h4>
@@ -337,23 +465,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                    <input className="bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} placeholder="ENTITY MOBILE" />
                    <input className="bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-xs lowercase" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="ENTITY EMAIL" />
                 </div>
-             </div>
-          </section>
-
-          {/* 5. Stakeholders */}
-          <section className="space-y-6">
-             <div className="flex items-center justify-between">
-                <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600">Personnel / Members</h4>
-                <button type="button" onClick={addStakeholder} className="text-[10px] font-black uppercase text-indigo-600 hover:underline">+ Add Member</button>
-             </div>
-             <div className="space-y-3">
-                {formData.gstProfile?.stakeholders.map((s) => (
-                  <div key={s.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 animate-in fade-in zoom-in-95">
-                     <input className="bg-white border border-slate-200 p-3 rounded-xl font-black text-[10px] uppercase" value={s.name} onChange={e => updateStakeholder(s.id, 'name', e.target.value.toUpperCase())} placeholder="FULL LEGAL NAME" />
-                     <input className="bg-white border border-slate-200 p-3 rounded-xl font-black font-mono tracking-widest text-[10px] uppercase" value={s.pan} onChange={e => updateStakeholder(s.id, 'pan', e.target.value.toUpperCase())} placeholder="PAN NO" />
-                     <input className="bg-white border border-slate-200 p-3 rounded-xl font-black text-[10px]" value={s.mobile} onChange={e => updateStakeholder(s.id, 'mobile', e.target.value.replace(/\D/g, ''))} placeholder="MOBILE NO" />
-                  </div>
-                ))}
              </div>
           </section>
 

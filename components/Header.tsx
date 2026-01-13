@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User } from '../types';
+import { User, ActiveView } from '../types';
 import { useAuth } from '../auth/AuthContext';
 
 interface HeaderProps {
@@ -9,9 +9,10 @@ interface HeaderProps {
   onMenuClick: () => void;
   activeViewLabel: string;
   activeViewDescription: string;
+  onViewChange: (view: ActiveView) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, activeViewLabel, activeViewDescription }) => {
+const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, activeViewLabel, activeViewDescription, onViewChange }) => {
   const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -32,11 +33,11 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
 
         <div className="min-w-0 flex-1">
            <div className="flex items-center gap-2 overflow-hidden">
-             <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0">{activeViewLabel}</h2>
+             <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0 uppercase">{activeViewLabel}</h2>
              <span className="text-sm font-bold text-slate-300 shrink-0">|</span>
              <span className="text-base md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
            </div>
-           <p className="text-[10px] md:text-sm font-medium text-slate-500 truncate mt-0.5 md:mt-1 hidden sm:block" title={activeViewDescription}>
+           <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
            </p>
         </div>
@@ -45,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
       <div className="flex items-center gap-3 md:gap-6 shrink-0">
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Sync Active' : 'Offline'}</span>
+           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
         </div>
 
         <div className="relative">
@@ -55,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           >
             <div className="text-right hidden md:block">
               <p className="text-sm font-black text-slate-900 leading-none">{currentUser?.username}</p>
-              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 truncate max-w-[100px]">{currentUser?.firm_name || 'Practitioner'}</p>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 truncate max-w-[120px]">{currentUser?.firm_name || 'Practitioner'}</p>
             </div>
             {currentUser?.avatar ? (
               <img src={currentUser.avatar} alt="DP" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl object-cover shadow-lg ring-2 ring-slate-50" />
@@ -68,10 +69,19 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
 
           {isProfileOpen && (
             <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right">
-               <div className="p-3 border-b border-slate-100 mb-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault ID</p>
-                  <p className="text-sm font-black text-slate-900 truncate">{currentUser?.user_id}</p>
+               <div className="p-3 border-b border-slate-100 mb-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault Session ID</p>
+                  <p className="text-xs font-black text-slate-900 truncate">{currentUser?.user_id}</p>
                </div>
+               <button 
+                 onClick={() => { onViewChange('settings'); setIsProfileOpen(false); }}
+                 className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-all font-black text-xs uppercase tracking-widest"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                 </svg>
+                 Firm Settings
+               </button>
                <button 
                  onClick={logout}
                  className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-black text-xs uppercase tracking-widest"
