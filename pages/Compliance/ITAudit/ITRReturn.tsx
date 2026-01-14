@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -37,6 +38,7 @@ const ITRReturn: React.FC = () => {
     try {
       const data = await api.getClients();
       // Filter for clients with IT profiles who are active
+      // Fix: Comparison between status and 'Active' is now valid as 'Active' is included in ClientStatus union
       setClients(data.filter(c => !!c.itProfile && (c.status === 'Active' || c.status === 'Active Filing')));
     } catch (err) {
       console.error("ITR Sync Error:", err);

@@ -39,7 +39,7 @@ const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFil
 const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop.tsx'));
 const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand.tsx'));
 const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending.tsx'));
-const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled.tsx'));
+const CourtFiled = lazy(() => import('../LitigationCourt/CourtFiled.tsx'));
 const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop.tsx'));
 const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand.tsx'));
 const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration.tsx'));
@@ -54,6 +54,8 @@ const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentRece
 const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
 const Setting = lazy(() => import('../Administration/Setting.tsx'));
 const Trash = lazy(() => import('../Administration/Trash.tsx'));
+const GSTviewicon = lazy(() => import('./GSTviewicon.tsx'));
+const ITviewicon = lazy(() => import('./ITviewicon.tsx'));
 
 const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
@@ -61,7 +63,7 @@ const Dashboard: React.FC = () => {
   const { installPrompt, triggerInstall } = usePWA();
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [viewExtra, setViewExtra] = useState<any>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
@@ -204,8 +206,6 @@ const Dashboard: React.FC = () => {
         return (
           <div className="max-w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            
-            {/* Sector 1: Client Hub */}
             <section>
               <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -243,8 +243,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </section>
-
-            {/* Sector 2: Compliance */}
             <section>
               <SectionHeader title="Compliance Matrix" subtitle="Statutory Filing Lifecycle" />
               <div className="space-y-10">
@@ -272,8 +270,6 @@ const Dashboard: React.FC = () => {
                  </div>
               </div>
             </section>
-
-            {/* Sector 3: Litigation */}
             <section>
               <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
               <div className="grid grid-cols-1 gap-12">
@@ -283,70 +279,32 @@ const Dashboard: React.FC = () => {
                  <LitigationBlock forum="HighCourt" label="High Court Matters" icon={<path d="M8 14v20c0 4.418 7.163 8 16 8" />} />
               </div>
             </section>
-
-            {/* Sector 4: Services */}
-            <section>
-              <SectionHeader title="Service Desk" subtitle="New Enrollments & Work Logs" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                 <CompactCard label="GST Reg." count={clients.filter(c => c.status === 'Active').length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
-                 <CompactCard label="Food License" count={0} viewId="misc-food-lic" color="bg-emerald-500" icon={<path d="M3 3h2l.4 2" />} />
-                 <CompactCard label="MSME Reg." count={0} viewId="misc-msme" color="bg-blue-500" icon={<path d="M21 13.255A23.931 23.931 0 0112 15" />} />
-                 <CompactCard label="Work Log" count={miscWork.length} viewId="misc-work" color="bg-slate-700" icon={<path d="M12 8v4l3 3" />} />
-              </div>
-            </section>
-
-            {/* Sector 5: Admin */}
-            <section>
-              <SectionHeader title="Administration" subtitle="Back-Office Controls" />
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                 <CompactCard label="Message" count={0} viewId="messenger" color="bg-indigo-600" icon={<path d="M8 10h.01M12 10h.01" />} />
-                 <CompactCard label="Reminders" count={0} viewId="reminders" color="bg-rose-500" icon={<path d="M15 17h5l-1.405-1.405" />} />
-                 <CompactCard label="Invoices" count={invoices.length} viewId="admin-invoices" color="bg-slate-900" icon={<path d="M9 14l6-6" />} />
-                 <CompactCard label="Payments" count={0} viewId="admin-payments" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2" />} />
-                 <CompactCard label="Due Date" count={0} viewId="admin-duedates" color="bg-amber-600" icon={<path d="M8 7V3m8 4V3" />} />
-                 <CompactCard label="Trash" count={0} viewId="trash" color="bg-slate-400" icon={<path d="M19 7l-.867 12.142" />} />
-              </div>
-            </section>
           </div>
         );
       case 'gst-portfolio': return <GSTPortfolio />;
       case 'it-portfolio': return <ITPortfolio />;
-      case 'compliance-monthly': return <MonthlyFiling />;
+      case 'compliance-monthly': return <MonthlyFiling onViewChange={handleViewChange} />;
       case 'compliance-quarterly': return <QuarterlyFiling />;
       case 'compliance-composition': return <CompositionFiling />;
       case 'compliance-gstr4': return <GSTR4 />;
       case 'compliance-gstr9': return <GSTR9_9C />;
       case 'compliance-itr': return <ITRReturn />;
       case 'compliance-taxaudit': return <TAXAudit />;
-      case 'lit-notice-pending': return <NoticePending />;
-      case 'lit-notice-filed': return <NoticeFiled />;
-      case 'lit-notice-drop': return <NoticeDrop />;
-      case 'lit-notice-demand': return <NoticeDemand />;
-      case 'lit-appeal-pending': return <AppealPending />;
-      case 'lit-appeal-filed': return <AppealFiled />;
-      case 'lit-appeal-drop': return <AppealDrop />;
-      case 'lit-appeal-demand': return <AppealDemand />;
-      case 'lit-tribunal-pending': return <TribunalPending />;
-      case 'lit-tribunal-filed': return <TribunalFiled />;
-      case 'lit-tribunal-drop': return <TribunalDrop />;
-      case 'lit-tribunal-demand': return <TribunalDemand />;
-      case 'lit-hc-pending': return <CourtPending />;
-      case 'lit-hc-filed': return <CourtFiled />;
-      case 'lit-hc-drop': return <CourtDrop />;
-      case 'lit-hc-demand': return <CourtDemand />;
-      case 'misc-gst-reg': return <GSTRegistration />;
-      case 'misc-food-lic': return <FoodLicenses />;
-      case 'misc-msme': return <MSMERegistration />;
-      case 'misc-work': return <Miscellaneouswork />;
-      case 'reminders': return <Reminders />;
-      case 'messenger': return <Messenger />;
+      case 'gst-view-detail': return <GSTviewicon client={viewExtra} onBack={() => handleViewChange('gst-portfolio')} />;
+      case 'it-view-detail': return <ITviewicon client={viewExtra} onBack={() => handleViewChange('it-portfolio')} />;
       case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
       case 'admin-duedates': return <DueDateSetting />;
       case 'settings': return <Setting />;
       case 'trash': return <Trash />;
-      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Synchronizing Secure Module...</div>;
+      case 'messenger': return <Messenger />;
+      case 'reminders': return <Reminders />;
+      case 'misc-gst-reg': return <GSTRegistration />;
+      case 'misc-food-lic': return <FoodLicenses />;
+      case 'misc-msme': return <MSMERegistration />;
+      case 'misc-work': return <Miscellaneouswork />;
+      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Syncing module...</div>;
     }
   };
 
@@ -355,62 +313,21 @@ const Dashboard: React.FC = () => {
       'dashboard': { label: 'Dashboard', desc: 'Practice Intelligence Operating System' },
       'gst-portfolio': { label: 'GST Portfolio', desc: 'Master GST Client Vault' },
       'it-portfolio': { label: 'IT Portfolio', desc: 'Master Income Tax Client Vault' },
-      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' },
-      'compliance-quarterly': { label: 'Quarterly Returns', desc: 'QRMP and IFF Compliance Hub' },
-      'compliance-composition': { label: 'Composition Returns', desc: 'CMP-08 Quarterly Filing Unit' },
-      'compliance-gstr4': { label: 'GSTR-4 Annual', desc: 'Composition Annual Return Audit' },
-      'compliance-gstr9': { label: 'GSTR-9/9C Audit', desc: 'Statutory Annual Reconciliation Unit' },
-      'compliance-itr': { label: 'ITR Returns', desc: 'Direct Tax Filing Lifecycle' },
-      'compliance-taxaudit': { label: 'Audit & Financials', desc: '3CA/3CD and Balance Sheet Unit' },
-      'lit-notice-pending': { label: 'Pending Notices', desc: 'Live GST Notice Response Tracking' },
-      'lit-notice-filed': { label: 'Filed Notices', desc: 'Archived Submissions Awaiting Orders' },
-      'lit-notice-drop': { label: 'Closed Notices', desc: 'Notices Dropped or Relief Granted' },
-      'lit-notice-demand': { label: 'Confirmed Demands', desc: 'Notices Resulting in Tax Demands' },
-      'lit-appeal-pending': { label: 'Pending Appeals', desc: 'First Appeals Drafting and Advisory' },
-      'lit-appeal-filed': { label: 'Filed Appeals', desc: 'Appeals Awaiting Adjudication' },
-      'lit-appeal-drop': { label: 'Relief Appeals', desc: 'Appeals Decided in Taxpayer Favor' },
-      'lit-appeal-demand': { label: 'Sustained Appeals', desc: 'Appeals resulting in Confirmed Liabilities' },
-      'lit-tribunal-pending': { label: 'Pending Tribunal', desc: 'GSTAT Preparation and Advisory' },
-      'lit-tribunal-filed': { label: 'Filed Tribunal', desc: 'GSTAT Matters Awaiting Bench Hearing' },
-      'lit-tribunal-drop': { label: 'Relief Tribunal', desc: 'Favorable Tribunal Orders Archived' },
-      'lit-tribunal-demand': { label: 'Sustained Tribunal', desc: 'Confirmed Tribunal Assessment Demands' },
-      'lit-hc-pending': { label: 'Pending High Court', desc: 'Writ Petition and Counsel Drafting' },
-      'lit-hc-filed': { label: 'Filed High Court', desc: 'HC Matters Awaiting Adjudication' },
-      'lit-hc-drop': { label: 'Relief High Court', desc: 'Favorable HC Judgments Archived' },
-      'lit-hc-demand': { label: 'Sustained High Court', desc: 'Confirmed High Court Tax Liabilities' },
-      'misc-gst-reg': { label: 'GST Registration', desc: 'New Enrollment and Amendment Tracking' },
-      'misc-food-lic': { label: 'Food License', desc: 'FSSAI Registration and Renewal Hub' },
-      'misc-msme': { label: 'MSME Registration', desc: 'Udyam Registration and Certificate Tracking' },
-      'misc-work': { label: 'Work Log', desc: 'Miscellaneous Staff Task Management' },
-      'messenger': { label: 'Vault Messenger', desc: 'Secure Internal Practice Communication' },
-      'reminders': { label: 'Reminders', desc: 'Statutory Compliance Deadline Monitor' },
-      'admin-invoices': { label: 'Invoices', desc: 'Professional Billing and Receivables' },
-      'admin-add-invoice': { label: 'Draft Invoice', desc: 'New Professional Bill Preparation' },
-      'admin-payments': { label: 'Payments', desc: 'Collection Realization and History' },
-      'admin-duedates': { label: 'Due Dates', desc: 'Global Compliance Calendar Matrix' },
-      'settings': { label: 'Vault Settings', desc: 'Firm Configuration and Security Protocols' },
-      'trash': { label: 'Vault Audit', desc: 'Permanent Record and Activity Logs' }
+      'gst-view-detail': { label: 'Client Insight', desc: 'Detailed Statutory Review' },
+      'it-view-detail': { label: 'Tax Profile', desc: 'Direct Tax Vault Snapshot' },
+      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' }
     };
-    return mappings[activeView] || { label: 'Module Access', desc: 'Authorized Vault Module Sync' };
+    return mappings[activeView] || { label: 'Vault Access', desc: 'Authorized Practice Management' };
   }, [activeView]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#fcfdfe] relative">
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={handleViewChange} 
-        isCollapsed={isSidebarCollapsed} 
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-      />
-      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-20' : 'ml-80'}`}>
-        <Header 
-          isConnected={isOnline} 
-          currentUser={user} 
-          onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-          activeViewLabel={headerInfo.label} 
-          activeViewDescription={headerInfo.desc}
-          onViewChange={handleViewChange}
-        />
+      {isSidebarOpen && (
+        <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-md transition-opacity duration-500 animate-in fade-in" />
+      )}
+      <Sidebar activeView={activeView} onViewChange={handleViewChange} isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <main className="flex flex-1 flex-col overflow-hidden relative">
+        <Header isConnected={isOnline} currentUser={user} onMenuClick={() => setIsSidebarOpen(true)} activeViewLabel={headerInfo.label} activeViewDescription={headerInfo.desc} onViewChange={handleViewChange} />
         <div className="flex-1 flex flex-col min-h-0 px-4 md:px-10 lg:px-16 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
@@ -418,7 +335,6 @@ const Dashboard: React.FC = () => {
         </div>
       </main>
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
-      
       <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
       <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />
     </div>

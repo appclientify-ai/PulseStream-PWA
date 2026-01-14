@@ -32,7 +32,8 @@ export interface User {
 
 export type ActiveView = string;
 
-export type ClientStatus = 'Active' | 'Litigation' | 'Inactive' | 'Active Filing';
+// Added 'Active' to ClientStatus to support both GST and IT specific status designations
+export type ClientStatus = 'Active Filing' | 'Active' | 'Litigation' | 'Inactive';
 export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
@@ -66,6 +67,10 @@ export interface GSTProfile {
   jurisdictionType?: JurisdictionType;
   sector?: string;
   range?: string;
+  ewayUsername?: string;
+  ewayPassword?: string;
+  gstatUsername?: string;
+  gstatPassword?: string;
 }
 
 export type NatureOfWork = 'Salaried' | 'Business' | 'Profession' | 'House Property' | 'Capital Gain' | 'Others';
@@ -80,6 +85,7 @@ export interface ITProfile {
   natureOfWork?: NatureOfWork;
   employmentType?: string;
   businessName?: string;
+  constitution?: ConstitutionType;
   advisoryWork?: {
     itrFiling: boolean;
     taxAudit: boolean;
@@ -191,7 +197,6 @@ export interface LitigationRecord {
   hearingDate?: string;
 }
 
-/* Fix: Adding GST Registration related types */
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
@@ -207,7 +212,6 @@ export interface GSTRegistrationRecord {
   remarks?: string;
 }
 
-/* Fix: Adding Food License related types */
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
 export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected';
 
@@ -223,7 +227,6 @@ export interface FoodLicenseRecord {
   remarks?: string;
 }
 
-/* Fix: Adding MSME Registration related types */
 export type MSMERegistrationStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
@@ -237,7 +240,6 @@ export interface MSMERegistrationRecord {
   remarks?: string;
 }
 
-/* Fix: Adding Miscellaneous Work related types */
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {

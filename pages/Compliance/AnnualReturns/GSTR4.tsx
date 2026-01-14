@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Client } from '../../../types';
+import { Client, GstRegType } from '../../../types';
 import { api } from '../../../services/api.ts';
 import GSTClientFormModal from '../../Clientform/GSTClientFormModal';
 import Loader from '../../../components/Loader';
@@ -49,6 +49,7 @@ const GSTR4: React.FC = () => {
       const data = await api.getClients();
       const filtered = data.filter(c => 
         c.gstProfile?.regType === 'Composition' &&
+        // Fix: Comparison between status and 'Active' is now valid as 'Active' is included in ClientStatus union
         (c.status === 'Active Filing' || c.status === 'Active')
       );
       setClients(filtered);
@@ -214,7 +215,7 @@ const GSTR4: React.FC = () => {
           </div>
 
           <button onClick={handleExport} className="h-11 px-5 flex items-center justify-center bg-slate-900 text-white rounded-xl shadow-lg hover:bg-emerald-600 transition-all gap-2" title="Export to CSV">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4 4m4-4V4" /></svg>
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             <span className="text-[10px] font-black uppercase tracking-widest">Export CSV</span>
           </button>
         </div>
