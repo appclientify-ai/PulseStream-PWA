@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType, Client } from '../../types';
+import { GSTRegistrationRecord, GstRegistrationStatus, GSTRegistrationType, Client } from '../../types';
 import { api } from '../../services/api.ts';
 import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
 import Loader from '../../components/Loader';
@@ -60,8 +61,8 @@ const GSTRegistration: React.FC = () => {
   const stats = useMemo(() => {
     return {
       total: registrations.length,
-      completed: registrations.filter(r => r.status === 'Completed').length,
-      inProgress: registrations.filter(r => ['In Progress', 'ARN Generated'].includes(r.status)).length
+      completed: registrations.filter(r => r.status === GstRegistrationStatus.COMPLETED).length,
+      inProgress: registrations.filter(r => [GstRegistrationStatus.IN_PROGRESS, GstRegistrationStatus.ARN_GENERATED].includes(r.status)).length
     };
   }, [registrations]);
 
@@ -76,7 +77,8 @@ const GSTRegistration: React.FC = () => {
     }
   };
 
-  const formatDateDisplay = (dateStr?: string) => {
+  // Fix: Renamed function to match the usage in the table below (line 192)
+  const formatDisplayDate = (dateStr?: string) => {
     if (!dateStr) return '---';
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
@@ -84,13 +86,13 @@ const GSTRegistration: React.FC = () => {
     return `${d}-${m}-${y}`;
   };
 
-  const getStatusColor = (st: GSTRegistrationStatus) => {
+  const getStatusColor = (st: GstRegistrationStatus) => {
     switch (st) {
-      case 'Completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
-      case 'Rejected': return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'In Progress': return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'ARN Generated': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      case 'Data Requested': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case GstRegistrationStatus.COMPLETED: return 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
+      case GstRegistrationStatus.REJECTED: return 'bg-rose-50 text-rose-700 border-rose-200';
+      case GstRegistrationStatus.IN_PROGRESS: return 'bg-amber-50 text-amber-700 border-amber-200';
+      case GstRegistrationStatus.ARN_GENERATED: return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case GstRegistrationStatus.DATA_REQUESTED: return 'bg-blue-50 text-blue-700 border-blue-200';
       default: return 'bg-slate-50 text-slate-500 border-slate-200';
     }
   };
@@ -146,7 +148,7 @@ const GSTRegistration: React.FC = () => {
                   </button>
                   {isStatusFilterOpen && (
                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
-                       {['All', 'Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
+                       {['All', GstRegistrationStatus.PENDING, GstRegistrationStatus.DATA_REQUESTED, GstRegistrationStatus.IN_PROGRESS, GstRegistrationStatus.ARN_GENERATED, GstRegistrationStatus.COMPLETED, GstRegistrationStatus.REJECTED].map(st => (
                          <button key={st} onClick={() => { setStatusFilter(st); setIsStatusFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                        ))}
                     </div>
@@ -182,13 +184,13 @@ const GSTRegistration: React.FC = () => {
                         </button>
                         {activeStatusRowId === rec.id && (
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 p-1 animate-in zoom-in-95 text-left">
-                             {['Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
+                             {[GstRegistrationStatus.PENDING, GstRegistrationStatus.DATA_REQUESTED, GstRegistrationStatus.IN_PROGRESS, GstRegistrationStatus.ARN_GENERATED, GstRegistrationStatus.COMPLETED, GstRegistrationStatus.REJECTED].map(st => (
                                <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
                              ))}
                           </div>
                         )}
                     </td>
-                    <td className="px-6 py-5 font-black text-slate-500 uppercase">{formatDateDisplay(rec.appDate)}</td>
+                    <td className="px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.appDate)}</td>
                     <td className="px-6 py-5">
                        <input 
                          type="text" 

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { MSMERegistrationRecord, MSMERegistrationStatus, Client } from '../../types';
+import { MSMERegistrationRecord, MsmeRegistrationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
 
 interface MSMEFormProps {
@@ -14,7 +15,7 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
     clientName: '',
     mobile: '',
     regType: 'Udyam Registration',
-    status: 'Pending',
+    status: MsmeRegistrationStatus.PENDING,
     appDate: '',
     udyamNumber: '',
     remarks: ''
@@ -37,7 +38,7 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
         clientName: '',
         mobile: '',
         regType: 'Udyam Registration',
-        status: 'Pending',
+        status: MsmeRegistrationStatus.PENDING,
         appDate: new Date().toISOString().split('T')[0],
         udyamNumber: '',
         remarks: ''
@@ -99,11 +100,11 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
-                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as MSMERegistrationStatus})}>
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Failed">Failed</option>
+                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as MsmeRegistrationStatus})}>
+                <option value={MsmeRegistrationStatus.PENDING}>Pending</option>
+                <option value={MsmeRegistrationStatus.IN_PROGRESS}>In Progress</option>
+                <option value={MsmeRegistrationStatus.COMPLETED}>Completed</option>
+                <option value={MsmeRegistrationStatus.FAILED}>Failed</option>
               </select>
             </div>
             <div>

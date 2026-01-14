@@ -19,12 +19,11 @@ export const useClientData = () => {
   const [miscellaneousWork, setMiscellaneousWork] = useState<MiscWorkRecord[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [gstRegistrations, setGstRegistrations] = useState<GSTRegistrationRecord[]>([]);
-  const [foodLicenses, setFoodLicenses] = useState<FoodLicenseRecord[]>([]);
-  const [msmeRegistrations, setMsmeRegistrations] = useState<MSMERegistrationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchData = useCallback(async () => {
+    setIsSyncing(true);
     try {
       const summary = await api.getDashboardSummary();
       setClients(summary.clients || []);
@@ -32,21 +31,15 @@ export const useClientData = () => {
       setLitigationRecords(summary.litigation || []);
       setMiscellaneousWork(summary.work || []);
 
-      const [gstRegs, foodLics, msmeRegs, pays] = await Promise.all([
-        api.getGSTRegistrations(),
-        api.getFoodLicenses(),
-        api.getMSMERegistrations(),
+      const [pays] = await Promise.all([
         api.getPayments()
       ]);
-      
-      setGstRegistrations(gstRegs || []);
-      setFoodLicenses(foodLics || []);
-      setMsmeRegistrations(msmeRegs || []);
       setPayments(pays || []);
     } catch (err) {
-      console.error("Vault Data Sync Error:", err);
+      console.error("Vault Sync Failure:", err);
     } finally {
       setIsLoading(false);
+      setIsSyncing(false);
     }
   }, []);
 
@@ -59,28 +52,28 @@ export const useClientData = () => {
     };
   }, [fetchData]);
 
-  const updateClient = async (client: Client) => {
+  const updateClient = async (client: Partial<Client>) => {
     await api.saveClient(client);
     fetchData();
   };
 
-  // Derived exports for Dashboard/Litigation modules
   return {
     clients,
     invoices,
     litigationRecords,
     miscellaneousWork,
-    gstRegistrations,
-    foodLicenses,
-    msmeRegistrations,
     payments,
     isLoading,
+    isSyncing,
     fetchData,
     updateClient,
     gstNotices: litigationRecords.filter(r => r.category === 'Notice'),
     gstAppeals: litigationRecords.filter(r => r.category === 'Appeal'),
     gstTribunalAppeals: litigationRecords.filter(r => r.category === 'Tribunal'),
     highCourtAppeals: litigationRecords.filter(r => r.category === 'HighCourt'),
-    reminders: [] // Reminders can be computed from deadlines
+    gstRegistrations: [], 
+    foodLicenses: [],
+    msmeRegistrations: [],
+    reminders: []
   };
 };

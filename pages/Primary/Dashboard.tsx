@@ -2,10 +2,30 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useClientData } from '../../hooks/useClientData.ts';
 import { useDueDate } from '../../hooks/useDueDate.ts';
-import { View, ClientStatus, AuditStatus, BalanceSheetStatus, Client, TaxpayerType, FilingFrequency } from '../../types.ts';
 import { 
-    ClientIcon, GstReturnIcon, IncomeTaxIcon, GstNoticeIcon, GstAppealIcon, 
-    AuditIcon, PaymentIcon, ReminderIcon, SettingsIcon, ReminderMessagesIcon 
+    View, 
+    ClientStatus, 
+    GstReturnStatus, 
+    ItrFilingStatus, 
+    FilingFrequency, 
+    TaxpayerType, 
+    AppealStatus, 
+    TribunalStatus, 
+    HighCourtStatus, 
+    GstRegistrationStatus, 
+    FoodLicenseStatus, 
+    MsmeRegistrationStatus, 
+    MiscWorkStatus, 
+    AuditStatus, 
+    BalanceSheetStatus, 
+    Client, 
+    OrderStatus, 
+    AppealDecisionStatus, 
+    TribunalDecisionStatus, 
+    HighCourtDecisionStatus 
+} from '../../types.ts';
+import { 
+    ClientIcon, GstReturnIcon, IncomeTaxIcon, GstNoticeIcon, GstAppealIcon, AuditIcon
 } from './icons.tsx';
 
 interface DashboardProps {
@@ -44,6 +64,7 @@ const getCurrentQuarter = () => {
     return 'Q4';
 };
 
+
 // --- UI Components ---
 const DonutChart: React.FC<{ value: number; total: number; size?: number; strokeWidth?: number }> = ({ value, total, size = 80, strokeWidth = 10 }) => {
     if (total === 0) {
@@ -56,17 +77,31 @@ const DonutChart: React.FC<{ value: number; total: number; size?: number; stroke
             </div>
         );
     }
+
     const percentage = Math.round((value / total) * 100);
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
+
     return (
         <div className="relative" style={{ width: size, height: size }}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
                 <circle cx={size / 2} cy={size / 2} r={radius} fill="none" className="stroke-gray-200 dark:stroke-gray-700" strokeWidth={strokeWidth} />
-                <circle cx={size / 2} cy={size / 2} r={radius} fill="none" className="stroke-indigo-600 dark:stroke-indigo-500 transition-all duration-500" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="none"
+                    className="stroke-indigo-600 dark:stroke-indigo-500 transition-all duration-500"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{percentage}%</div>
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-indigo-600 dark:text-indigo-400">
+                {percentage}%
+            </div>
         </div>
     );
 };
@@ -78,7 +113,15 @@ const StatDisplay: React.FC<{ label: string, value: string | number, color?: str
     </div>
 );
 
-const ClientStatCard: React.FC<{ title: string; view: View; setActiveView: (v: View) => void; stats: {label: string; value: number}[]; icon: React.ReactNode; chartData?: { value: number, total: number }; }> = ({ title, view, setActiveView, stats, icon, chartData }) => (
+
+const ClientStatCard: React.FC<{ 
+    title: string; 
+    view: View; 
+    setActiveView: (v: View) => void; 
+    stats: {label: string; value: number}[]; 
+    icon: React.ReactNode; 
+    chartData?: { value: number, total: number };
+}> = ({ title, view, setActiveView, stats, icon, chartData }) => (
      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col justify-between">
         <div>
             <div className="flex items-center gap-3 mb-3">
@@ -86,15 +129,29 @@ const ClientStatCard: React.FC<{ title: string; view: View; setActiveView: (v: V
                 <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
             </div>
             <div className={`flex items-center gap-4 ${!chartData ? 'justify-center' : ''}`}>
-                 <div className={`flex-grow space-y-1 ${chartData ? 'pr-2 border-r dark:border-gray-600' : ''}`}>{stats.map(stat => <StatDisplay key={stat.label} label={stat.label} value={stat.value} />)}</div>
-                {chartData && <div className="flex-shrink-0"><DonutChart value={chartData.value} total={chartData.total} /></div>}
+                 <div className={`flex-grow space-y-1 ${chartData ? 'pr-2 border-r dark:border-gray-600' : ''}`}>
+                    {stats.map(stat => <StatDisplay key={stat.label} label={stat.label} value={stat.value} />)}
+                </div>
+                {chartData && (
+                     <div className="flex-shrink-0">
+                        <DonutChart value={chartData.value} total={chartData.total} />
+                    </div>
+                )}
             </div>
         </div>
-        <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">View Details</button>
+        <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">
+            View Details
+        </button>
     </div>
 );
 
-const ModuleStatCard: React.FC<{ title: string; view: View; setActiveView: (v: View) => void; icon: React.ReactNode; filters: React.ReactNode; stats: { label: string; value: string | number; color?: string; }[]; chartData: { value: number; total: number; }; dueDate?: string; }> = ({ title, view, setActiveView, icon, filters, stats, chartData, dueDate }) => (
+const ModuleStatCard: React.FC<{
+    title: string; view: View; setActiveView: (v: View) => void; icon: React.ReactNode;
+    filters: React.ReactNode;
+    stats: { label: string; value: string | number; color?: string; }[];
+    chartData: { value: number; total: number; };
+    dueDate?: string;
+}> = ({ title, view, setActiveView, icon, filters, stats, chartData, dueDate }) => (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col justify-between">
         <div>
             <div className="flex items-center justify-between gap-3 mb-2">
@@ -102,23 +159,35 @@ const ModuleStatCard: React.FC<{ title: string; view: View; setActiveView: (v: V
                     <div className="text-2xl">{icon}</div>
                     <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
                 </div>
-                {dueDate && <div className="text-xs text-gray-500 dark:text-gray-400 text-right"><span className="font-semibold block">Due Date:</span> <span>{dueDate}</span></div>}
+                {dueDate && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        <span className="font-semibold block">Due Date:</span> <span>{dueDate}</span>
+                    </div>
+                )}
             </div>
             <div className="my-3">{filters}</div>
             <div className="flex items-center gap-4">
-                <div className="flex-grow space-y-1 pr-2 border-r dark:border-gray-600">{stats.map(stat => <StatDisplay key={stat.label} {...stat} />)}</div>
-                <div className="flex-shrink-0"><DonutChart value={chartData.value} total={chartData.total} /></div>
+                <div className="flex-grow space-y-1 pr-2 border-r dark:border-gray-600">
+                    {stats.map(stat => <StatDisplay key={stat.label} {...stat} />)}
+                </div>
+                <div className="flex-shrink-0">
+                    <DonutChart value={chartData.value} total={chartData.total} />
+                </div>
             </div>
         </div>
-         <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">View Details</button>
+         <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">
+            View Details
+        </button>
     </div>
 );
+
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
     const { clients, reminders, payments, gstNotices, gstAppeals, gstTribunalAppeals, highCourtAppeals, gstRegistrations, foodLicenses, msmeRegistrations, miscellaneousWork } = useClientData();
     const { getDueDate } = useDueDate();
     const [financialYears, setFinancialYears] = useState<string[]>([]);
     
+    // States for each card's filters
     const [monthlyPeriod, setMonthlyPeriod] = useState({ fy: '', month: '' });
     const [quarterlyPeriod, setQuarterlyPeriod] = useState({ fy: '', quarter: '' });
     const [compositionPeriod, setCompositionPeriod] = useState({ fy: '', quarter: '' });
@@ -139,19 +208,27 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
         const { month: initialMonth, financialYear: initialFy } = getGstFilingPeriod();
         const initialQuarter = getCurrentQuarter();
         let initialFys: string[];
+
         if (storedFys) {
             try {
                 initialFys = JSON.parse(storedFys);
                 if (!initialFys.includes(initialFy)) initialFys.push(initialFy);
-            } catch { initialFys = [initialFy]; }
-        } else { initialFys = [initialFy]; }
+            } catch (e) {
+                initialFys = [initialFy];
+            }
+        } else {
+            initialFys = [initialFy];
+        }
+        
         const sortedFys = [...new Set(initialFys)].sort().reverse();
         setFinancialYears(sortedFys);
+
+        // Set initial periods for all cards
         setMonthlyPeriod({ fy: initialFy, month: initialMonth });
         setQuarterlyPeriod({ fy: initialFy, quarter: initialQuarter });
         setCompositionPeriod({ fy: initialFy, quarter: initialQuarter });
         setGstr4Fy(initialFy);
-        setGstr9Fy(sortedFys.length > 1 ? sortedFys[1] : initialFy);
+        setGstr9Fy(sortedFys.length > 1 ? sortedFys[1] : initialFy); 
         setItAuditFy(initialFy);
         setAuditFy(initialFy);
         setBsFy(initialFy);
@@ -164,45 +241,78 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
             totalGst: gstClients.length,
             activeGst: gstClients.filter(c => c.status === 'Active Filing').length,
             totalIt: itClients.length,
-            activeIt: itClients.filter(c => c.status === 'Active Filing' || c.status === 'Active').length,
+            activeIt: itClients.filter(c => c.status === 'Active Filing').length,
         };
     }, [clients]);
 
     const renderFilters = (period: any, setPeriod: Function, type: 'monthly' | 'quarterly' | 'yearly', yearLabel: 'F.Y.' | 'A.Y.' = 'F.Y.') => (
         <div className="flex items-center gap-2 flex-wrap">
-            <select value={period.fy || period} onChange={e => type === 'yearly' ? setPeriod(e.target.value) : setPeriod((p:any) => ({...p, fy: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+            <select
+                value={period.fy || period}
+                onChange={e => type === 'yearly' ? setPeriod(e.target.value) : setPeriod((p:any) => ({...p, fy: e.target.value}))}
+                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onClick={e => e.stopPropagation()}
+            >
                 {financialYears.map(fy => <option key={fy} value={fy}>{yearLabel}: {yearLabel === 'A.Y.' ? fyToAy(fy) : fy}</option>)}
             </select>
-            {type === 'monthly' && <select value={period.month} onChange={e => setPeriod((p:any) => ({...p, month: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+            {type === 'monthly' && <select
+                value={period.month}
+                onChange={e => setPeriod((p:any) => ({...p, month: e.target.value}))}
+                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onClick={e => e.stopPropagation()}
+            >
                 {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>}
-             {type === 'quarterly' && <select value={period.quarter} onChange={e => setPeriod((p:any) => ({...p, quarter: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+             {type === 'quarterly' && <select
+                value={period.quarter}
+                onChange={e => setPeriod((p:any) => ({...p, quarter: e.target.value}))}
+                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onClick={e => e.stopPropagation()}
+            >
                 {Object.entries(QUARTERS).map(([qKey, qValue]) => <option key={qKey} value={qKey}>{qValue}</option>)}
             </select>}
         </div>
     );
 
     return (
-        <div className="space-y-8 p-6 md:p-10">
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Practice Dashboard</h1>
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ClientStatCard title="GST Clients" view={View.GstClientDetails} setActiveView={setActiveView} icon={<ClientIcon />} stats={[
-                    { label: 'Total Portfolio', value: clientStats.totalGst },
-                    { label: 'Active Filing', value: clientStats.activeGst },
-                ]} chartData={{ value: clientStats.activeGst, total: clientStats.totalGst }} />
-                <ClientStatCard title="Income Tax" view={View.ItClientDetails} setActiveView={setActiveView} icon={<IncomeTaxIcon />} stats={[
-                    { label: 'Total Clients', value: clientStats.totalIt },
-                    { label: 'Active Status', value: clientStats.activeIt },
-                ]} chartData={{ value: clientStats.activeIt, total: clientStats.totalIt }} />
+            <div>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-3"><span className="text-2xl">👥</span> Client Management</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ClientStatCard title="GST Clients" view={View.GstClientDetails} setActiveView={setActiveView} icon={<span className="text-2xl">🧾</span>} stats={[
+                        { label: 'Total Portfolio', value: clientStats.totalGst },
+                        { label: 'Active Filing', value: clientStats.activeGst },
+                    ]} chartData={{ value: clientStats.activeGst, total: clientStats.totalGst }} />
+                    <ClientStatCard title="Income Tax" view={View.ItClientDetails} setActiveView={setActiveView} icon={<span className="text-2xl">💻</span>} stats={[
+                        { label: 'Total Records', value: clientStats.totalIt },
+                        { label: 'Active Status', value: clientStats.activeIt },
+                    ]} chartData={{ value: clientStats.activeIt, total: clientStats.totalIt }} />
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <ModuleStatCard title="Monthly Compliance" view={View.GstRegularMonthly} setActiveView={setActiveView} icon={<GstReturnIcon />} filters={renderFilters(monthlyPeriod, setMonthlyPeriod, 'monthly')}
-                    stats={[{label: 'In Progress', value: 'Syncing...', color: 'text-indigo-600'}]}
-                    chartData={{value: 0, total: 100 }}
-                    dueDate={formatDate(getDueDate('GSTR-1 Monthly', monthlyPeriod.fy, monthlyPeriod.month))}
-                />
+             <div>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-3"><span className="text-2xl">📊</span> Tax & Compliance</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <ModuleStatCard title="Monthly Compliance" view={View.GstRegularMonthly} setActiveView={setActiveView} icon={<GstReturnIcon />} filters={renderFilters(monthlyPeriod, setMonthlyPeriod, 'monthly')}
+                        stats={[{label: 'In Progress', value: 'Syncing...', color: 'text-indigo-600'}]}
+                        chartData={{value: 0, total: 100 }}
+                        dueDate={formatDate(getDueDate('GSTR-1 Monthly', monthlyPeriod.fy, monthlyPeriod.month))}
+                    />
+                </div>
+            </div>
+
+            <div>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-3"><span className="text-2xl">⚖️</span> Legal Operations</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ClientStatCard title="GST Notices" view={View.GstNoticePendingReply} setActiveView={setActiveView} icon={<GstNoticeIcon />} stats={[
+                        {label: 'Open Cases', value: gstNotices.length},
+                    ]} />
+                    <ClientStatCard title="GST Appeals" view={View.GstAppealPending} setActiveView={setActiveView} icon={<GstAppealIcon />} stats={[
+                        {label: 'Active Appeals', value: gstAppeals.length},
+                    ]} />
+                </div>
             </div>
         </div>
     );

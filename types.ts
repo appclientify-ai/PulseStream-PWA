@@ -17,6 +17,33 @@ export interface UISettings {
   fontStyle: 'sans' | 'serif' | 'mono';
 }
 
+// Added View enum to support internal navigation in Sidebar and Dashboard components
+export enum View {
+  Dashboard = 'dashboard',
+  GstClientDetails = 'gst-clients',
+  ItClientDetails = 'it-clients',
+  GstRegularMonthly = 'gst-monthly',
+  GstRegularQuarterly = 'gst-quarterly',
+  GstCompositionReturn = 'gst-composition',
+  GstNoticePendingReply = 'gst-notices',
+  GstAppealPending = 'gst-appeals',
+  GstTribunalPending = 'gst-tribunal-pending',
+  HighCourtAppealPending = 'hc-appeal-pending',
+  Gstr4Annual = 'gstr-4-annual',
+  Gstr9Annual = 'gstr-9-annual',
+  IncomeTaxReturn = 'it-return',
+  Audit = 'audit',
+  BalanceSheet = 'balance-sheet',
+  GstRegistration = 'gst-reg',
+  FoodLicenses = 'food-lic',
+  MsmeRegistration = 'msme-reg',
+  MiscellaneousWork = 'misc-work',
+  DueDateReminder = 'reminders',
+  ReminderMessages = 'reminder-messages',
+  PaymentDetails = 'payments',
+  Settings = 'settings',
+}
+
 export interface User {
   id: string;
   username: string;
@@ -28,81 +55,17 @@ export interface User {
   status: 'online' | 'away' | 'offline';
   avatar?: string; // base64 string for DP
   uiSettings?: UISettings;
+  // Added missing properties required by Sidebar component
+  fullName: string;
+  role: string;
 }
 
 export type ActiveView = string;
 
-/**
- * Fix: Defined View enum for unified navigation across the application.
- */
-export enum View {
-  Dashboard = 'dashboard',
-  GstClientDetails = 'gst-portfolio',
-  ItClientDetails = 'it-portfolio',
-  GstRegularMonthly = 'compliance-monthly',
-  GstRegularQuarterly = 'compliance-quarterly',
-  GstCompositionReturn = 'compliance-composition',
-  Gstr4Annual = 'compliance-gstr4',
-  Gstr9Annual = 'compliance-gstr9',
-  IncomeTaxReturn = 'compliance-itr',
-  Audit = 'compliance-taxaudit',
-  BalanceSheet = 'balance-sheet',
-  GstNoticePendingReply = 'lit-notice-pending',
-  GstAppealPending = 'lit-appeal-pending',
-  GstTribunalPending = 'lit-gstat-pending',
-  HighCourtAppealPending = 'lit-hc-pending',
-  GstRegistration = 'misc-gst-reg',
-  FoodLicenses = 'misc-food-lic',
-  MsmeRegistration = 'misc-msme',
-  MiscellaneousWork = 'misc-work',
-  DueDateReminder = 'reminders',
-  ReminderMessages = 'messenger',
-  PaymentDetails = 'admin-payments',
-  Settings = 'settings'
-}
-
-/**
- * Fix: Added Audit and BalanceSheet status enums and related types.
- */
-export enum AuditType {
-  TAX_AUDIT_44AB = 'Tax Audit u/s 44AB',
-  COMPANY_AUDIT = 'Statutory Company Audit',
-  TRUST_AUDIT = 'Trust / NGO Audit',
-  GST_AUDIT = 'GST Audit / Reconciliation',
-  OTHER = 'Other Audit'
-}
-
-export enum AuditStatus {
-  PENDING = 'Pending',
-  DATA_REQUESTED = 'Data Requested',
-  IN_PROGRESS = 'In Progress',
-  COMPLETED = 'Completed'
-}
-
-export enum BalanceSheetStatus {
-  PENDING = 'Pending',
-  DATA_RECEIVED = 'Data Received',
-  IN_PROGRESS = 'In Progress',
-  FINALIZED = 'Finalized'
-}
-
-export interface PdfDocument {
-  name: string;
-  dataUrl: string;
-}
-
-// Added 'Active' to ClientStatus to support both GST and IT specific status designations
-export type ClientStatus = 'Active Filing' | 'Active' | 'Litigation' | 'Inactive';
+export type ClientStatus = 'Active' | 'Litigation' | 'Inactive' | 'Active Filing';
 export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
-
-/**
- * Fix: Added TaxpayerType and FilingFrequency type aliases for compatibility with Dashboard components.
- */
-export type TaxpayerType = GstRegType;
-export type FilingFrequency = GstFilingFreq;
-
 export type ConstitutionType = 'Proprietorship' | 'Partnership' | 'HUF' | 'Company' | 'Trust' | 'Society' | 'Other';
 export type JurisdictionType = 'Center' | 'State';
 
@@ -133,10 +96,6 @@ export interface GSTProfile {
   jurisdictionType?: JurisdictionType;
   sector?: string;
   range?: string;
-  ewayUsername?: string;
-  ewayPassword?: string;
-  gstatUsername?: string;
-  gstatPassword?: string;
 }
 
 export type NatureOfWork = 'Salaried' | 'Business' | 'Profession' | 'House Property' | 'Capital Gain' | 'Others';
@@ -151,7 +110,6 @@ export interface ITProfile {
   natureOfWork?: NatureOfWork;
   employmentType?: string;
   businessName?: string;
-  constitution?: ConstitutionType;
   advisoryWork?: {
     itrFiling: boolean;
     taxAudit: boolean;
@@ -178,26 +136,6 @@ export interface Client {
   bankDetails?: BankDetails;
   remarks?: string;
   createdAt: number;
-  /**
-   * Fix: Added audits and balanceSheets properties to Client interface for extended tracking modules.
-   */
-  audits?: Record<string, Record<string, {
-    status: AuditStatus;
-    dueDate?: string;
-    completionDate?: string;
-    assignedTo?: string;
-    remarks?: string;
-  }>>;
-  balanceSheets?: Record<string, {
-    status: BalanceSheetStatus;
-    finalizationDate?: string;
-    remarks?: string;
-    documents?: PdfDocument[];
-  }>;
-  // Compatibility helpers
-  gstDetails?: any;
-  itDetails?: any;
-  clientStatus?: ClientStatus;
 }
 
 export interface InvoiceLineItem {
@@ -283,23 +221,39 @@ export interface LitigationRecord {
   hearingDate?: string;
 }
 
+/* Fix: Consolidated GST Registration related types into a single Enum to avoid merging errors */
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
-export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
+
+export enum GstRegistrationStatus {
+  PENDING = 'Pending',
+  DATA_REQUESTED = 'Data Requested',
+  IN_PROGRESS = 'In Progress',
+  ARN_GENERATED = 'ARN Generated',
+  COMPLETED = 'Completed',
+  REJECTED = 'Rejected'
+}
 
 export interface GSTRegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
   appType: GSTRegistrationType;
-  status: GSTRegistrationStatus;
+  status: GstRegistrationStatus;
   appDate: string;
   arn: string;
   completionDate?: string;
   remarks?: string;
 }
 
+/* Fix: Consolidated Food License related types into a single Enum */
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
-export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected';
+
+export enum FoodLicenseStatus {
+  PENDING = 'Pending',
+  APPLIED = 'Applied',
+  COMPLETED = 'Completed',
+  REJECTED = 'Rejected'
+}
 
 export interface FoodLicenseRecord {
   id: string;
@@ -313,20 +267,32 @@ export interface FoodLicenseRecord {
   remarks?: string;
 }
 
-export type MSMERegistrationStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed';
+/* Fix: Consolidated MSME Registration related types into a single Enum */
+export enum MsmeRegistrationStatus {
+  PENDING = 'Pending',
+  IN_PROGRESS = 'In Progress',
+  COMPLETED = 'Completed',
+  FAILED = 'Failed'
+}
 
 export interface MSMERegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
   regType: string;
-  status: MSMERegistrationStatus;
+  status: MsmeRegistrationStatus;
   appDate: string;
   udyamNumber: string;
   remarks?: string;
 }
 
-export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
+/* Fix: Consolidated Miscellaneous Work related types into a single Enum */
+export enum MiscWorkStatus {
+  PENDING = 'Pending',
+  IN_PROGRESS = 'In Progress',
+  COMPLETED = 'Completed',
+  ON_HOLD = 'On Hold'
+}
 
 export interface MiscWorkRecord {
   id: string;
@@ -339,3 +305,19 @@ export interface MiscWorkRecord {
   completionDate?: string;
   remarks?: string;
 }
+
+// Added additional enums required for Dashboard components to compile correctly
+export enum GstReturnStatus { FILED = 'Filed', PENDING = 'Pending' }
+export enum ItrFilingStatus { FILED = 'Filed', PENDING = 'Pending', NOT_APPLICABLE = 'Not Applicable' }
+export enum NoticeReplyStatus { PENDING = 'Pending', OVERDUE = 'Overdue', FILED = 'Filed' }
+export enum FilingFrequency { MONTHLY = 'Monthly', QUARTERLY = 'Quarterly' }
+export enum TaxpayerType { REGULAR = 'Regular', COMPOSITION = 'Composition' }
+export enum AppealStatus { PENDING = 'Pending', FILED = 'Filed' }
+export enum TribunalStatus { PENDING = 'Pending', FILED = 'Filed' }
+export enum HighCourtStatus { PENDING = 'Pending', FILED = 'Filed' }
+export enum AuditStatus { COMPLETED = 'Completed', PENDING = 'Pending' }
+export enum BalanceSheetStatus { FINALIZED = 'Finalized', PENDING = 'Pending' }
+export enum OrderStatus { ORDER_DROP = 'Order Drop', DEMAND_ORDER = 'Demand Order' }
+export enum AppealDecisionStatus { DEMAND_DROP = 'Demand Drop', DEMAND = 'Demand' }
+export enum TribunalDecisionStatus { DEMAND_DROP = 'Demand Drop', DEMAND = 'Demand' }
+export enum HighCourtDecisionStatus { DEMAND_DROP = 'Demand Drop', DEMAND = 'Demand' }

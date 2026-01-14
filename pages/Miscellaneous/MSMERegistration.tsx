@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { MSMERegistrationRecord, MSMERegistrationStatus } from '../../types';
+import { MSMERegistrationRecord, MsmeRegistrationStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import MSMEForm from '../Clientform/MSMEForm';
 import Loader from '../../components/Loader';
@@ -38,8 +39,8 @@ const MSMERegistration: React.FC = () => {
   const stats = useMemo(() => {
     return {
       total: records.length,
-      completed: records.filter(r => r.status === 'Completed').length,
-      failed: records.filter(r => r.status === 'Failed').length
+      completed: records.filter(r => r.status === MsmeRegistrationStatus.COMPLETED).length,
+      failed: records.filter(r => r.status === MsmeRegistrationStatus.FAILED).length
     };
   }, [records]);
 
@@ -54,11 +55,11 @@ const MSMERegistration: React.FC = () => {
     }
   };
 
-  const getStatusColor = (st: MSMERegistrationStatus) => {
+  const getStatusColor = (st: MsmeRegistrationStatus) => {
     switch (st) {
-      case 'Completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
-      case 'Failed': return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'In Progress': return 'bg-amber-50 text-amber-700 border-amber-200';
+      case MsmeRegistrationStatus.COMPLETED: return 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm';
+      case MsmeRegistrationStatus.FAILED: return 'bg-rose-50 text-rose-700 border-rose-200';
+      case MsmeRegistrationStatus.IN_PROGRESS: return 'bg-amber-50 text-amber-700 border-amber-200';
       default: return 'bg-slate-50 text-slate-500 border-slate-200';
     }
   };
@@ -133,7 +134,7 @@ const MSMERegistration: React.FC = () => {
                          <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                          </button>
-                         <button onClick={() => handleDelete(rec.id)} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
+                         <button onClick={() => handleDelete(rec.id)} className="h-8 w-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                          </button>
                       </div>

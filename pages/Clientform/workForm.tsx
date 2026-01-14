@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { MiscWorkRecord, MiscWorkStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
@@ -14,7 +15,8 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
     clientName: '',
     mobile: '',
     description: '',
-    status: 'Pending',
+    // Fix: Using enum value instead of string literal
+    status: MiscWorkStatus.PENDING,
     assignedTo: '',
     startDate: '',
     completionDate: '',
@@ -38,7 +40,8 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
         clientName: '',
         mobile: '',
         description: '',
-        status: 'Pending',
+        // Fix: Using enum value instead of string literal
+        status: MiscWorkStatus.PENDING,
         assignedTo: '',
         startDate: new Date().toISOString().split('T')[0],
         completionDate: '',
@@ -108,10 +111,10 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
                 value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as MiscWorkStatus})}>
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="On Hold">On Hold</option>
+                <option value={MiscWorkStatus.PENDING}>Pending</option>
+                <option value={MiscWorkStatus.IN_PROGRESS}>In Progress</option>
+                <option value={MiscWorkStatus.COMPLETED}>Completed</option>
+                <option value={MiscWorkStatus.ON_HOLD}>On Hold</option>
               </select>
             </div>
             <div>
