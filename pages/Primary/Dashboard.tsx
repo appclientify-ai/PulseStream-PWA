@@ -39,7 +39,7 @@ const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFil
 const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop.tsx'));
 const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand.tsx'));
 const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending.tsx'));
-const CourtFiled = lazy(() => import('../LitigationCourt/CourtFiled.tsx'));
+const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled.tsx'));
 const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop.tsx'));
 const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand.tsx'));
 const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration.tsx'));
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
             </section>
           </div>
         );
-      case 'gst-portfolio': return <GSTPortfolio />;
+      case 'gst-portfolio': return <GSTPortfolio onViewChange={handleViewChange} />;
       case 'it-portfolio': return <ITPortfolio />;
       case 'compliance-monthly': return <MonthlyFiling onViewChange={handleViewChange} />;
       case 'compliance-quarterly': return <QuarterlyFiling />;
@@ -304,6 +304,22 @@ const Dashboard: React.FC = () => {
       case 'misc-food-lic': return <FoodLicenses />;
       case 'misc-msme': return <MSMERegistration />;
       case 'misc-work': return <Miscellaneouswork />;
+      case 'lit-notice-pending': return <NoticePending />;
+      case 'lit-notice-filed': return <NoticeFiled />;
+      case 'lit-notice-drop': return <NoticeDrop />;
+      case 'lit-notice-demand': return <NoticeDemand />;
+      case 'lit-appeal-pending': return <AppealPending />;
+      case 'lit-appeal-filed': return <AppealFiled />;
+      case 'lit-appeal-drop': return <AppealDrop />;
+      case 'lit-appeal-demand': return <AppealDemand />;
+      case 'lit-tribunal-pending': return <TribunalPending />;
+      case 'lit-tribunal-filed': return <TribunalFiled />;
+      case 'lit-tribunal-drop': return <TribunalDrop />;
+      case 'lit-tribunal-demand': return <TribunalDemand />;
+      case 'lit-hc-pending': return <CourtPending />;
+      case 'lit-hc-filed': return <CourtFiled />;
+      case 'lit-hc-drop': return <CourtDrop />;
+      case 'lit-hc-demand': return <CourtDemand />;
       default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Syncing module...</div>;
     }
   };
