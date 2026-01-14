@@ -56,6 +56,13 @@ const MonthlyFiling: React.FC<MonthlyFilingProps> = ({ onViewChange }) => {
     return list;
   }, [clients, search, r1Filter, r3Filter, getStatus]);
 
+  const stats = useMemo(() => {
+    const total = filteredClients.length;
+    const r1Filed = filteredClients.filter(c => getStatus(c.id).r1).length;
+    const r3bFiled = filteredClients.filter(c => getStatus(c.id).r3b).length;
+    return { total, r1Filed, r3bFiled };
+  }, [filteredClients, getStatus]);
+
   const copyAndOpen = (id: string, username: string) => {
     navigator.clipboard.writeText(username);
     window.open(`https://services.gst.gov.in/services/login`, '_blank');
@@ -78,14 +85,41 @@ const MonthlyFiling: React.FC<MonthlyFilingProps> = ({ onViewChange }) => {
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 overflow-hidden">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        
+        <div className="flex items-center gap-4 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+          <div className="text-center">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-4">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">R1 Filed</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1Filed}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-4">
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">3B Filed</p>
+            <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3bFiled}</p>
+          </div>
+        </div>
+
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search entity in monthly matrix..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-4 focus:ring-indigo-50 outline-none" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
+
         <div className="flex gap-2 shrink-0">
-           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 cursor-pointer outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 cursor-pointer outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 rounded-xl px-3 py-3 text-[10px] font-black uppercase text-slate-600 cursor-pointer outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 rounded-xl px-3 py-3 text-[10px] font-black uppercase text-slate-600 cursor-pointer outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+           
+           <div className="flex items-center bg-indigo-50 rounded-xl px-3 py-3 gap-2 border border-indigo-100">
+             <span className="text-[8px] font-black text-indigo-400 uppercase whitespace-nowrap leading-none">R1 Due</span>
+             <input type="date" value={getDueDate('r1')} onChange={e => updateDueDate('r1', e.target.value)} className="bg-transparent border-none p-0 text-[10px] font-black text-indigo-600 outline-none cursor-pointer uppercase w-[95px]" />
+           </div>
+
+           <div className="flex items-center bg-emerald-50 rounded-xl px-3 py-3 gap-2 border border-emerald-100">
+             <span className="text-[8px] font-black text-emerald-400 uppercase whitespace-nowrap leading-none">3B Due</span>
+             <input type="date" value={getDueDate('r3b')} onChange={e => updateDueDate('r3b', e.target.value)} className="bg-transparent border-none p-0 text-[10px] font-black text-emerald-600 outline-none cursor-pointer uppercase w-[95px]" />
+           </div>
         </div>
       </div>
 

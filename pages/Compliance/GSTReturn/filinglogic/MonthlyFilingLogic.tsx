@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 
 export interface FilingStatus {
@@ -6,7 +7,7 @@ export interface FilingStatus {
 }
 
 const STORAGE_KEY = 'clientify_monthly_filing_v3';
-const STORAGE_KEY_DATES = 'clientify_monthly_due_dates_v1';
+const STORAGE_KEY_DATES = 'clientify_global_compliance_dates_v1';
 
 export const FULL_YEAR_VAL = 'Full Year (Summary)';
 
@@ -28,17 +29,13 @@ const getDynamicYears = () => {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  // India FY starts in April. If current month is April or later, 
-  // current year is the 'start' of the latest FY (e.g. 2025 -> 2025-26).
-  // If Jan-Mar, current year is the 'end' of the latest FY (e.g. 2025 -> 2024-25).
   const latestStartYear = currentMonth >= 3 ? currentYear : currentYear - 1;
   
   const list = [];
-  // Generate list up to latest available start year
   for (let y = startYear; y <= latestStartYear; y++) {
     list.push(`${y}-${(y + 1).toString().slice(-2)}`);
   }
-  return list.reverse(); // Latest first
+  return list.reverse();
 };
 
 export const YEARS = getDynamicYears();
@@ -124,14 +121,18 @@ export const useMonthlyFilingLogic = (selectedYear: string, selectedMonth: strin
     return (allData[periodKey] || {})[clientId] || { r1: false, r3b: false };
   }, [allData, selectedYear, selectedMonth]);
 
-  const updateDueDate = (val: string) => {
-    const key = `${selectedYear}_${selectedMonth}`;
+  const updateDueDate = (type: 'r1' | 'r3b', val: string) => {
+    const moduleId = type === 'r1' ? 'monthly_r1' : 'monthly_r3b';
+    const key = `${moduleId}_${selectedYear}_${selectedMonth}`;
     const next = { ...dueDates, [key]: val };
     setDueDates(next);
     localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
   };
 
-  const getDueDate = () => dueDates[`${selectedYear}_${selectedMonth}`] || '';
+  const getDueDate = (type: 'r1' | 'r3b') => {
+    const moduleId = type === 'r1' ? 'monthly_r1' : 'monthly_r3b';
+    return dueDates[`${moduleId}_${selectedYear}_${selectedMonth}`] || '';
+  };
 
   return { getStatus, toggleStatus, updateDueDate, getDueDate };
 };

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo, useRef } from 'react';
 import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { useOffline } from '../../hooks/useOffline.ts';
@@ -67,6 +67,11 @@ const Dashboard: React.FC = () => {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
+  // Detail Modal States
+  const [showGstDetail, setShowGstDetail] = useState(false);
+  const [showItDetail, setShowItDetail] = useState(false);
+  const [detailClient, setDetailClient] = useState<Client | null>(null);
+
   // Data State
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
@@ -101,9 +106,25 @@ const Dashboard: React.FC = () => {
   }, [isOnline, loadData]);
 
   const handleViewChange = (view: ActiveView, extra?: any) => {
+    if (view === 'gst-view-detail') {
+      setDetailClient(extra);
+      setShowGstDetail(true);
+      return;
+    }
+    if (view === 'it-view-detail') {
+      setDetailClient(extra);
+      setShowItDetail(true);
+      return;
+    }
     setActiveView(view);
     setViewExtra(extra || null);
     window.scrollTo(0, 0);
+  };
+
+  const closeDetailModals = () => {
+    setShowGstDetail(false);
+    setShowItDetail(false);
+    setDetailClient(null);
   };
 
   const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
@@ -282,16 +303,14 @@ const Dashboard: React.FC = () => {
           </div>
         );
       case 'gst-portfolio': return <GSTPortfolio onViewChange={handleViewChange} />;
-      case 'it-portfolio': return <ITPortfolio />;
+      case 'it-portfolio': return <ITPortfolio onViewChange={handleViewChange} />;
       case 'compliance-monthly': return <MonthlyFiling onViewChange={handleViewChange} />;
-      case 'compliance-quarterly': return <QuarterlyFiling />;
+      case 'compliance-quarterly': return <QuarterlyFiling onViewChange={handleViewChange} />;
       case 'compliance-composition': return <CompositionFiling />;
       case 'compliance-gstr4': return <GSTR4 />;
       case 'compliance-gstr9': return <GSTR9_9C />;
       case 'compliance-itr': return <ITRReturn />;
       case 'compliance-taxaudit': return <TAXAudit />;
-      case 'gst-view-detail': return <GSTviewicon client={viewExtra} onBack={() => handleViewChange('gst-portfolio')} />;
-      case 'it-view-detail': return <ITviewicon client={viewExtra} onBack={() => handleViewChange('it-portfolio')} />;
       case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
@@ -329,9 +348,34 @@ const Dashboard: React.FC = () => {
       'dashboard': { label: 'Dashboard', desc: 'Practice Intelligence Operating System' },
       'gst-portfolio': { label: 'GST Portfolio', desc: 'Master GST Client Vault' },
       'it-portfolio': { label: 'IT Portfolio', desc: 'Master Income Tax Client Vault' },
-      'gst-view-detail': { label: 'Client Insight', desc: 'Detailed Statutory Review' },
-      'it-view-detail': { label: 'Tax Profile', desc: 'Direct Tax Vault Snapshot' },
-      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' }
+      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' },
+      'compliance-quarterly': { label: 'Quarterly Returns', desc: 'QRMP IFF and GSTR-1/3B Monitoring' },
+      'compliance-composition': { label: 'Composition Filing', desc: 'CMP-08 Quarterly Compliance' },
+      'compliance-gstr4': { label: 'GSTR-4 Annual', desc: 'Composition Annual Return Matrix' },
+      'compliance-gstr9': { label: 'GSTR-9/9C Audit', desc: 'Annual Return and Audit Reconciliation' },
+      'compliance-itr': { label: 'ITR Returns', desc: 'Assessment Year Tax Submissions' },
+      'compliance-taxaudit': { label: 'Audit & B/S', desc: 'Tax Audit and Financial Preparation' },
+      'admin-invoices': { label: 'Invoices', desc: 'Professional Fee Management' },
+      'admin-payments': { label: 'Collections', desc: 'Real-time Payment Reconciliation' },
+      'admin-duedates': { label: 'Due Dates', desc: 'Statutory Deadline Configuration' },
+      'settings': { label: 'Firm Settings', desc: 'Configuration and Practitioner Profile' },
+      'trash': { label: 'System Audit', desc: 'Record Lifecycle and Operation Logs' },
+      'messenger': { label: 'Messenger', desc: 'WhatsApp Broadcast and Communication' },
+      'reminders': { label: 'Deadlines', desc: 'Priority Reminders and Tracking' },
+      'misc-gst-reg': { label: 'GST Reg.', desc: 'Registration and Amendment Tracking' },
+      'misc-food-lic': { label: 'FSSAI Vault', desc: 'Food License Application Management' },
+      'misc-msme': { label: 'MSME Hub', desc: 'Udyam Registration Repository' },
+      'misc-work': { label: 'Misc Work', desc: 'General Professional Task Tracking' },
+      'lit-notice-pending': { label: 'Notice Pending', desc: 'Active GST Notice Response Queue' },
+      'lit-notice-filed': { label: 'Notice Filed', desc: 'Archived Submissions Awaiting Order' },
+      'lit-notice-drop': { label: 'Notice Dropped', desc: 'Closed Matters with No Demand' },
+      'lit-notice-demand': { label: 'Notice Demand', desc: 'Sustained Demands Awaiting Payment' },
+      'lit-appeal-pending': { label: 'Appeal Pending', desc: 'First Appellate Preparation Queue' },
+      'lit-appeal-filed': { label: 'Appeal Filed', desc: 'Active Appeal Hearing Status' },
+      'lit-appeal-drop': { label: 'Appeal Relief', desc: 'Favorable Appellate Orders' },
+      'lit-appeal-demand': { label: 'Appeal Demand', desc: 'Confirmed Demands Post-Appeal' },
+      'lit-tribunal-pending': { label: 'GSTAT Pending', desc: 'Tribunal Appeal Preparation' },
+      'lit-hc-pending': { label: 'HC Pending', desc: 'High Court Writ and Appeal Queue' }
     };
     return mappings[activeView] || { label: 'Vault Access', desc: 'Authorized Practice Management' };
   }, [activeView]);
@@ -350,6 +394,23 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* OVERLAY MODALS FOR VIEW DETAIL */}
+      {showGstDetail && detailClient && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeDetailModals}>
+           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+              <GSTviewicon client={detailClient} onBack={closeDetailModals} />
+           </div>
+        </div>
+      )}
+      {showItDetail && detailClient && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeDetailModals}>
+           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+              <ITviewicon client={detailClient} onBack={closeDetailModals} />
+           </div>
+        </div>
+      )}
+
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
       <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
       <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />

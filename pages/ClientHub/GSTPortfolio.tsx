@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
@@ -15,6 +15,7 @@ const GSTPortfolio: React.FC<GSTPortfolioProps> = ({ onViewChange }) => {
   const [search, setSearch] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   const handleRefresh = useCallback(() => {
     setRefreshTrigger(p => p + 1);
@@ -42,33 +43,94 @@ const GSTPortfolio: React.FC<GSTPortfolioProps> = ({ onViewChange }) => {
   }, [clients]);
 
   const handleExportCSV = () => {
-    const headers = ["Trade Name", "Legal Name", "Mobile", "GSTIN", "User ID", "Password", "Status"].join(",");
-    const rows = clients.map(c => [c.tradeName, c.legalName, c.mobile, c.gstProfile?.gstin, c.gstProfile?.username, c.gstProfile?.password, c.status].map(v => `"${v || ''}"`).join(",")).join("\n");
+    const headers = ["Trade Name", "Legal Name", "Mobile", "Email", "GSTIN", "User ID", "Password", "Status", "Constitution", "Reg Date", "Bank Name", "Account No", "IFSC"].join(",");
+    const rows = clients.map(c => [
+      c.tradeName, c.legalName, c.mobile, c.email, c.gstProfile?.gstin, 
+      c.gstProfile?.username, c.gstProfile?.password, c.status, 
+      c.gstProfile?.constitution, c.gstProfile?.regDate,
+      c.bankDetails?.bankName, c.bankDetails?.accountNo, c.bankDetails?.ifsc
+    ].map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+    
     const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `GST_Portfolio_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `GST_Portfolio_Export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setIsUtilityOpen(false);
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(l => l.trim() !== '');
+      if (lines.length < 2) return;
+      
+      const importedClients: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        // Simple CSV parser for demonstration
+        const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+        if (cols.length < 5) continue;
+        
+        importedClients.push({
+          tradeName: cols[0],
+          legalName: cols[1],
+          mobile: cols[2],
+          email: cols[3],
+          status: cols[7] || 'Active Filing',
+          gstProfile: {
+            gstin: cols[4],
+            username: cols[5],
+            password: cols[6],
+            constitution: cols[8] || 'Proprietorship',
+            regDate: cols[9],
+            gstStatus: 'Active',
+            stakeholders: []
+          },
+          bankDetails: {
+            bankName: cols[10],
+            accountNo: cols[11],
+            ifsc: cols[12]
+          }
+        });
+      }
+
+      if (confirm(`Attempting to import ${importedClients.length} clients. Proceed?`)) {
+        for (const c of importedClients) {
+          await api.saveClient(c);
+        }
+        handleRefresh();
+        alert('Bulk import completed.');
+      }
+    };
+    reader.readAsText(file);
+    if (importFileRef.current) importFileRef.current.value = '';
+    setIsUtilityOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4 pb-4 overflow-hidden animate-in fade-in duration-500">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center gap-4 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Vault</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Filing</p>
+          <div className="text-center border-l border-slate-100 pl-4">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Active</p>
             <p className="text-xl font-black text-indigo-600 leading-none">{stats.active}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Litigation</p>
+          <div className="text-center border-l border-slate-100 pl-4">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Cases</p>
             <p className="text-xl font-black text-rose-600 leading-none">{stats.litigation}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-4">
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Inact.</p>
+            <p className="text-xl font-black text-slate-400 leading-none">{stats.inactive}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
@@ -78,15 +140,23 @@ const GSTPortfolio: React.FC<GSTPortfolioProps> = ({ onViewChange }) => {
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <button onClick={() => setIsUtilityOpen(!isUtilityOpen)} className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm"><svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></button>
+            <button onClick={() => setIsUtilityOpen(!isUtilityOpen)} className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm transition-all hover:bg-white"><svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></button>
             {isUtilityOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 animate-in zoom-in-95 origin-top-right">
-                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Export CSV</span>
-                 </button>
-              </div>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsUtilityOpen(false)} />
+                <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 animate-in zoom-in-95 origin-top-right overflow-hidden">
+                   <button onClick={() => importFileRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
+                      <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Bulk Import (CSV)</span>
+                   </button>
+                   <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group border-t border-slate-50 mt-1">
+                      <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Export All (CSV)</span>
+                   </button>
+                </div>
+              </>
             )}
+            <input type="file" ref={importFileRef} className="hidden" accept=".csv" onChange={handleImport} />
           </div>
           <button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-12 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs shrink-0 flex items-center gap-2"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>Add GST Client</button>
         </div>
