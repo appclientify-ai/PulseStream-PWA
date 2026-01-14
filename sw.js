@@ -1,6 +1,6 @@
 
-const CACHE_NAME = 'clientify-v3-prod';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'clientify-v4-prod';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
@@ -9,7 +9,7 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
@@ -26,43 +26,33 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-only for Auth to prevent stale tokens
-  if (url.pathname.includes('/auth/')) {
+  // Sensitive paths: Network only
+  if (url.pathname.includes('/api/auth/') || url.pathname.includes('/socket.io')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network-first for API
+  // API calls: Network first
   if (url.pathname.includes('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first for large static scripts and images
-  if (url.hostname.includes('esm.sh') || event.request.destination === 'image') {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Default: Stale-while-revalidate for everything else
+  // App Shell & Static Assets: Stale-while-revalidate
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networked = fetch(event.request).then((response) => {
-        const resClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-        return response;
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse.ok && event.request.method === 'GET') {
+          const cacheCopy = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, cacheCopy));
+        }
+        return networkResponse;
       }).catch(() => null);
-      return cached || networked;
+      
+      return cachedResponse || fetchPromise;
     })
   );
 });

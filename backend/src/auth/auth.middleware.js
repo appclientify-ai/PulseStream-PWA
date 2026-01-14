@@ -1,35 +1,24 @@
 
-import { verifyToken } from './jwt.js';
-import { getCollection } from '../db/mongo.js';
+import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
+import { getCollection } from '../db/mongo.js';
 
 export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: No token' });
   }
 
   const token = authHeader.split(' ')[1];
-  const decoded = verifyToken(token);
-
-  if (!decoded) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
-  }
-
   try {
-    const user = await getCollection('users').findOne(
-      { _id: new ObjectId(decoded.id) },
-      { projection: { password: 0 } }
-    );
-
-    if (!user) {
-      return res.status(401).json({ error: 'Unauthorized: User no longer exists' });
-    }
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await getCollection('users').findOne({ _id: new ObjectId(decoded.id) });
+    
+    if (!user) return res.status(401).json({ error: 'Practitioner not found' });
+    
     req.user = user;
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(401).json({ error: 'Invalid or expired vault session' });
   }
 };

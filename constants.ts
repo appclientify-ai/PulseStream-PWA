@@ -1,20 +1,24 @@
 
-// Detect current environment
-const isProd = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
-
 /**
- * Production environment variables for Cloud Vault.
+ * Production environment detection and API URL resolution.
  */
-const BACKEND_URL_ENV = (import.meta as any).env?.VITE_BACKEND_URL;
+const getBackendUrl = () => {
+  const envUrl = (import.meta as any).env?.VITE_BACKEND_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  
+  // Default fallback for development
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  
+  return window.location.origin;
+};
 
-// Use empty string to rely on Vite proxy in development, or the env var in production
-export const API_BASE_URL = BACKEND_URL_ENV 
-  ? BACKEND_URL_ENV.replace(/\/$/, '') 
-  : '';
+export const API_BASE_URL = getBackendUrl();
 
-export const SOCKET_URL = BACKEND_URL_ENV
-  ? BACKEND_URL_ENV.replace(/^http/, 'ws')
-  : (isProd ? `wss://${window.location.host}` : 'ws://localhost:3001');
+export const SOCKET_URL = API_BASE_URL.replace(/^http/, 'ws');
+
+export const APP_NAME = 'Clientify';
 
 export const INITIAL_METRICS = [
   { label: 'Total Clients', value: 0, trend: 'stable' as const },

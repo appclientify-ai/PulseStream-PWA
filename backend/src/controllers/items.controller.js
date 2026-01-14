@@ -1,95 +1,44 @@
+
 import { getCollection } from '../db/mongo.js';
 import { ObjectId } from 'mongodb';
 
-export const createItem = async (req, res) => {
-  const { name, data } = req.body;
-
-  if (!name) {
-    return res.status(400).json({ error: 'Item category name is required' });
-  }
-
-  try {
-    const items = getCollection('items');
-    const newItem = {
-      name, // e.g., 'client', 'litigation', 'invoice'
-      data: data || {},
-      createdBy: req.user._id,
-      creatorName: req.user.username,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const result = await items.insertOne(newItem);
-    res.status(201).json({ ...newItem, _id: result.insertedId });
-  } catch (err) {
-    console.error('Create Item Error:', err);
-    res.status(500).json({ error: 'Failed to archive record in vault' });
-  }
-};
-
 export const getItems = async (req, res) => {
   try {
-    // Return all items belonging to the authenticated user
     const items = await getCollection('items')
-      .find({ createdBy: req.user._id })
+      .find({ createdBy: req.user._id }) // CRITICAL: Strict ownership
       .sort({ updatedAt: -1 })
       .toArray();
     res.json(items);
   } catch (err) {
-    console.error('Get Items Error:', err);
     res.status(500).json({ error: 'Failed to retrieve vault records' });
   }
 };
 
-export const updateItem = async (req, res) => {
-  const { id } = req.params;
-  const { name, data } = req.body;
-
+export const createItem = async (req, res) => {
   try {
-    const items = getCollection('items');
-    const result = await items.findOneAndUpdate(
-      { 
-        _id: new ObjectId(id), 
-        createdBy: req.user._id 
-      },
-      { 
-        $set: { 
-          name, 
-          data, 
-          updatedAt: new Date() 
-        } 
-      },
-      { returnDocument: 'after' }
-    );
-
-    if (!result) {
-      return res.status(404).json({ error: 'Record not found or unauthorized' });
-    }
-
-    res.json(result);
+    const newItem = {
+      ...req.body,
+      createdBy: req.user._id, // Auto-attach owner
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    const result = await getCollection('items').insertOne(newItem);
+    res.status(201).json({ ...newItem, _id: result.insertedId });
   } catch (err) {
-    console.error('Update Item Error:', err);
-    res.status(500).json({ error: 'Failed to update vault record' });
+    res.status(500).json({ error: 'Failed to archive record' });
   }
 };
 
-export const deleteItem = async (req, res) => {
-  const { id } = req.params;
-
+export const updateItem = async (req, res) => {
   try {
-    const items = getCollection('items');
-    const result = await items.deleteOne({ 
-      _id: new ObjectId(id), 
-      createdBy: req.user._id 
-    });
-
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Record not found or unauthorized' });
-    }
-
-    res.json({ message: 'Record permanently removed from vault' });
+    const { id } = req.params;
+    const result = await getCollection('items').findOneAndUpdate(
+      { _id: new ObjectId(id), createdBy: req.user._id },
+      { $set: { ...req.body, updatedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+    res.json(result);
   } catch (err) {
-    console.error('Delete Item Error:', err);
-    res.status(500).json({ error: 'Failed to delete vault record' });
+    res.status(500).json({ error: 'Update failed' });
   }
 };

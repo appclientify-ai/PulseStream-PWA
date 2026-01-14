@@ -1,421 +1,211 @@
 
-import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo, useRef } from 'react';
-import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
-import { useAuth } from '../../auth/AuthContext.tsx';
-import { useOffline } from '../../hooks/useOffline.ts';
-import { usePWA } from '../../hooks/usePWA.ts';
-import { api } from '../../services/api.ts';
-import { socketService } from '../../services/socket.ts';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useClientData } from '../../hooks/useClientData';
+import { useDueDate } from '../../hooks/useDueDate';
+import { View, ClientStatus, AuditStatus, BalanceSheetStatus, Client, TaxpayerType, FilingFrequency } from '../../types';
+import { 
+    ClientIcon, GstReturnIcon, IncomeTaxIcon, GstNoticeIcon, GstAppealIcon, 
+    AuditIcon, PaymentIcon, ReminderIcon, SettingsIcon, ReminderMessagesIcon 
+} from './icons';
 
-import Sidebar from '../../components/Sidebar.tsx';
-import Header from '../../components/Header.tsx';
-import Loader from '../../components/Loader.tsx';
-import InstallBanner from '../../components/InstallBanner.tsx';
-import CommandPalette from '../../components/CommandPalette.tsx';
-import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
-import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
-import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
+interface DashboardProps {
+    setActiveView: (view: View) => void;
+}
 
-// Lazy loading sub-pages
-const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
-const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio.tsx'));
-const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling.tsx'));
-const QuarterlyFiling = lazy(() => import('../Compliance/GSTReturn/QuarterlyFiling.tsx'));
-const CompositionFiling = lazy(() => import('../Compliance/GSTReturn/CompositionFiling.tsx'));
-const GSTR4 = lazy(() => import('../Compliance/AnnualReturns/GSTR4.tsx'));
-const GSTR9_9C = lazy(() => import('../Compliance/AnnualReturns/GSTR9_9C.tsx'));
-const ITRReturn = lazy(() => import('../Compliance/ITAudit/ITRReturn.tsx'));
-const TAXAudit = lazy(() => import('../Compliance/ITAudit/TAXAudit.tsx'));
-const NoticePending = lazy(() => import('../LitigationSuite/GSTNotices/NoticePending.tsx'));
-const NoticeFiled = lazy(() => import('../LitigationSuite/GSTNotices/NoticeFiled.tsx'));
-const NoticeDrop = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDrop.tsx'));
-const NoticeDemand = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDemand.tsx'));
-const AppealPending = lazy(() => import('../LitigationSuite/GSTAppeals/AppealPending.tsx'));
-const AppealFiled = lazy(() => import('../LitigationSuite/GSTAppeals/AppealFiled.tsx'));
-const AppealDrop = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDrop.tsx'));
-const AppealDemand = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDemand.tsx'));
-const TribunalPending = lazy(() => import('../LitigationSuite/Tribunal/TribunalPending.tsx'));
-const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFiled.tsx'));
-const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop.tsx'));
-const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand.tsx'));
-const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending.tsx'));
-const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled.tsx'));
-const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop.tsx'));
-const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand.tsx'));
-const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration.tsx'));
-const FoodLicenses = lazy(() => import('../Miscellaneous/FoodLicenses.tsx'));
-const MSMERegistration = lazy(() => import('../Miscellaneous/MSMERegistration.tsx'));
-const Miscellaneouswork = lazy(() => import('../Miscellaneous/Miscellaneouswork.tsx'));
-const Reminders = lazy(() => import('../Administration/Reminders.tsx'));
-const Messenger = lazy(() => import('../Administration/Messenger.tsx'));
-const Invoices = lazy(() => import('../Administration/invoice/Invoices.tsx'));
-const AddInvoice = lazy(() => import('../Administration/invoice/addinvoice.tsx'));
-const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentReceived.tsx'));
-const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
-const Setting = lazy(() => import('../Administration/Setting.tsx'));
-const Trash = lazy(() => import('../Administration/Trash.tsx'));
-const GSTviewicon = lazy(() => import('./GSTviewicon.tsx'));
-const ITviewicon = lazy(() => import('./ITviewicon.tsx'));
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const QUARTERS: Record<string, string> = { 'Q1': 'Q1 (Apr-Jun)', 'Q2': 'Q2 (Jul-Sep)', 'Q3': 'Q3 (Oct-Dec)', 'Q4': 'Q4 (Jan-Mar)' };
 
-const Dashboard: React.FC = () => {
-  const { user, token } = useAuth();
-  const isOnline = useOffline();
-  const { installPrompt, triggerInstall } = usePWA();
-  const [activeView, setActiveView] = useState<ActiveView>('dashboard');
-  const [viewExtra, setViewExtra] = useState<any>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Detail Modal States
-  const [showGstDetail, setShowGstDetail] = useState(false);
-  const [showItDetail, setShowItDetail] = useState(false);
-  const [detailClient, setDetailClient] = useState<Client | null>(null);
-
-  // Data State
-  const [clients, setClients] = useState<Client[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
-  const [miscWork, setMiscWork] = useState<any[]>([]);
-
-  // Form Modals
-  const [isGstModalOpen, setIsGstModalOpen] = useState(false);
-  const [isItModalOpen, setIsItModalOpen] = useState(false);
-
-  // Period Filters for Dashboard Boxes
-  const def = getDefaultPeriod();
-  const [monthlyFilter, setMonthlyFilter] = useState({ year: def.year, month: def.month });
-  const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.year, quarter: def.quarter });
-  const [compositionFilter, setCompositionFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
-  const [itrFilter, setItrFilter] = useState({ ay: def.year });
-
-  const loadData = useCallback(async () => {
-    if (!token) return;
-    try {
-      const summary = await api.getDashboardSummary();
-      setClients(summary.clients);
-      setInvoices(summary.invoices);
-      setLitigation(summary.litigation);
-      setMiscWork(summary.work);
-    } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
-  }, [token]);
-
-  useEffect(() => {
-    if (isOnline) { loadData(); socketService.connect(); }
-    return () => socketService.disconnect();
-  }, [isOnline, loadData]);
-
-  const handleViewChange = (view: ActiveView, extra?: any) => {
-    if (view === 'gst-view-detail') {
-      setDetailClient(extra);
-      setShowGstDetail(true);
-      return;
-    }
-    if (view === 'it-view-detail') {
-      setDetailClient(extra);
-      setShowItDetail(true);
-      return;
-    }
-    setActiveView(view);
-    setViewExtra(extra || null);
-    window.scrollTo(0, 0);
-  };
-
-  const closeDetailModals = () => {
-    setShowGstDetail(false);
-    setShowItDetail(false);
-    setDetailClient(null);
-  };
-
-  const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
-    const keys: Record<string, string> = {
-      monthly: 'clientify_monthly_filing_v3',
-      quarterly: 'clientify_quarterly_filing_v3',
-      composition: 'clientify_composition_filing_v3',
-      gstr4: 'clientify_gstr4_filing_v1',
-      gstr9: 'clientify_gstr9_filing_data_v2',
-      itr: 'clientify_itr_filing_data_v2',
-      audit: 'clientify_audit_fin_data_v3'
-    };
-    const storageKey = keys[type];
-    const saved = localStorage.getItem(storageKey);
-    const data = saved ? JSON.parse(saved) : {};
-    const periodData = data[periodKey] || {};
-    
-    let total = 0;
-    let filed = 0;
-    
-    if (type === 'monthly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'quarterly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'composition') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.cmp08).length;
-    } else if (type === 'itr') {
-      const applicable = clients.filter(c => !!c.itProfile);
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.filed).length;
+// --- Helper Functions ---
+const getGstFilingPeriod = (date = new Date()) => {
+    const aDate = new Date(date);
+    aDate.setMonth(aDate.getMonth() - 1);
+    const month = aDate.toLocaleString('default', { month: 'long' });
+    const year = aDate.getFullYear();
+    let financialYear;
+    if (aDate.getMonth() < 3) {
+        financialYear = `${year - 1}-${String(year).slice(-2)}`;
     } else {
-      filed = Object.values(periodData).filter((v: any) => v.filed || v.auditFiled).length;
-      total = Object.keys(periodData).length || clients.filter(c => type === 'gstr4' ? c.gstProfile?.regType === 'Composition' : !!c.gstProfile).length;
+        financialYear = `${year}-${String(year + 1).slice(-2)}`;
     }
+    return { month, financialYear };
+};
 
-    return { total, filed, pending: Math.max(0, total - filed) };
-  };
+const fyToAy = (fy: string) => {
+    if (!fy || !fy.includes('-')) return '';
+    const startYear = parseInt(fy.split('-')[0]);
+    return `${startYear + 1}-${String(startYear + 2).slice(-2)}`;
+};
 
-  const getLitCounts = (forum: 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt', stage: 'Pending' | 'Filed' | 'Drop' | 'Demand') => {
-    return litigation.filter(r => r.category === forum && r.status === stage).length;
-  };
+const getCurrentQuarter = () => {
+    const month = new Date().getMonth();
+    if (month >= 3 && month <= 5) return 'Q1';
+    if (month >= 6 && month <= 8) return 'Q2';
+    if (month >= 9 && month <= 11) return 'Q3';
+    return 'Q4';
+};
 
-  const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-    <div className="mb-6 border-l-4 border-indigo-600 pl-4">
-      <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-none">{title}</h2>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1.5">{subtitle}</p>
-    </div>
-  );
-
-  const SubSectionTitle = ({ title }: { title: string }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 px-2">{title}</h3>
-  );
-
-  const CompactCard = ({ label, count, viewId, icon, color }: any) => (
-    <div 
-      onClick={() => handleViewChange(viewId)}
-      className="group bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer overflow-hidden relative"
-    >
-      <div className={`absolute top-0 right-0 h-12 w-12 -mr-4 -mt-4 opacity-5 rounded-full ${color}`} />
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center text-white shadow-sm`}>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
-          </div>
-          <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight group-hover:text-indigo-600 truncate max-w-[120px]">{label}</span>
-        </div>
-        <span className="text-base font-black text-slate-900">{count}</span>
-      </div>
-    </div>
-  );
-
-  const LitigationBlock = ({ forum, label, icon }: any) => {
-    const forums: Record<string, string> = { 'Notice': 'lit-notice', 'Appeal': 'lit-appeal', 'Tribunal': 'lit-tribunal', 'HighCourt': 'lit-hc' };
-    const prefix = forums[forum];
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 px-2">
-           <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
-           <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{label}</h4>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <CompactCard label="Pending" count={getLitCounts(forum, 'Pending')} viewId={`${prefix}-pending`} color="bg-rose-500" icon={<path d="M12 8v4l3 3" />} />
-          <CompactCard label="Filed" count={getLitCounts(forum, 'Filed')} viewId={`${prefix}-filed`} color="bg-indigo-500" icon={<path d="M5 13l4 4L19 7" />} />
-          <CompactCard label="Dropped" count={getLitCounts(forum, 'Drop')} viewId={`${prefix}-drop`} color="bg-emerald-500" icon={<path d="M9 12l2 2 4-4" />} />
-          <CompactCard label="Demand" count={getLitCounts(forum, 'Demand')} viewId={`${prefix}-demand`} color="bg-orange-500" icon={<path d="M12 9v2m0 4h.01" />} />
-        </div>
-      </div>
-    );
-  };
-
-  const renderContent = () => {
-    switch (activeView) {
-      case 'dashboard':
+// --- UI Components ---
+const DonutChart: React.FC<{ value: number; total: number; size?: number; strokeWidth?: number }> = ({ value, total, size = 80, strokeWidth = 10 }) => {
+    if (total === 0) {
         return (
-          <div className="max-w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
-            {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            <section>
-              <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">GST Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Regular & Comp. Entities</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.gstProfile).length}</p>
-                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-                <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-emerald-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">IT Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Personal & Corporate Direct Tax</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.itProfile).length}</p>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-              </div>
-            </section>
-            <section>
-              <SectionHeader title="Compliance Matrix" subtitle="Statutory Filing Lifecycle" />
-              <div className="space-y-10">
-                 <div>
-                    <SubSectionTitle title="Filing Cycles" />
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                       <CompactCard label="Monthly" count={getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).total} viewId="compliance-monthly" color="bg-indigo-600" icon={<path d="M8 7V3m8 4V3m-9 8h10" />} />
-                       <CompactCard label="Quarterly" count={getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`).total} viewId="compliance-quarterly" color="bg-blue-600" icon={<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />} />
-                       <CompactCard label="Composition" count={getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`).total} viewId="compliance-composition" color="bg-amber-600" icon={<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5" />} />
-                    </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="Annual Returns" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="GSTR-04 Annual" count={clients.filter(c => c.gstProfile?.regType === 'Composition').length} viewId="compliance-gstr4" color="bg-indigo-400" icon={<path d="M12 8v4l3 3" />} />
-                       <CompactCard label="GSTR-9/9C Audit" count={clients.filter(c => c.gstProfile?.regType === 'Regular').length} viewId="compliance-gstr9" color="bg-indigo-800" icon={<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7" />} />
-                    </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="IT & Audit" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="ITR Returns" count={getFilingCounts('itr', itrFilter.ay).total} viewId="compliance-itr" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2H5" />} />
-                       <CompactCard label="Audit & B/S" count={clients.filter(c => c.itProfile?.advisoryWork?.taxAudit).length} viewId="compliance-taxaudit" color="bg-emerald-400" icon={<path d="M9 12h6m-6 4h6" />} />
-                    </div>
-                 </div>
-              </div>
-            </section>
-            <section>
-              <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
-              <div className="grid grid-cols-1 gap-12">
-                 <LitigationBlock forum="Notice" label="GST Notices" icon={<path d="M12 9v2m0 4h.01" />} />
-                 <LitigationBlock forum="Appeal" label="GST Appeals" icon={<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2" />} />
-                 <LitigationBlock forum="Tribunal" label="GSTAT (Tribunal)" icon={<path d="M3 6l3 1m0 0l-3 9" />} />
-                 <LitigationBlock forum="HighCourt" label="High Court Matters" icon={<path d="M8 14v20c0 4.418 7.163 8 16 8" />} />
-              </div>
-            </section>
-          </div>
+             <div className="relative" style={{ width: size, height: size }}>
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    <circle cx={size / 2} cy={size / 2} r={(size - strokeWidth) / 2} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-500">N/A</div>
+            </div>
         );
-      case 'gst-portfolio': return <GSTPortfolio onViewChange={handleViewChange} />;
-      case 'it-portfolio': return <ITPortfolio onViewChange={handleViewChange} />;
-      case 'compliance-monthly': return <MonthlyFiling onViewChange={handleViewChange} />;
-      case 'compliance-quarterly': return <QuarterlyFiling onViewChange={handleViewChange} />;
-      case 'compliance-composition': return <CompositionFiling />;
-      case 'compliance-gstr4': return <GSTR4 />;
-      case 'compliance-gstr9': return <GSTR9_9C />;
-      case 'compliance-itr': return <ITRReturn />;
-      case 'compliance-taxaudit': return <TAXAudit />;
-      case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
-      case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
-      case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
-      case 'admin-duedates': return <DueDateSetting />;
-      case 'settings': return <Setting />;
-      case 'trash': return <Trash />;
-      case 'messenger': return <Messenger />;
-      case 'reminders': return <Reminders />;
-      case 'misc-gst-reg': return <GSTRegistration />;
-      case 'misc-food-lic': return <FoodLicenses />;
-      case 'misc-msme': return <MSMERegistration />;
-      case 'misc-work': return <Miscellaneouswork />;
-      case 'lit-notice-pending': return <NoticePending />;
-      case 'lit-notice-filed': return <NoticeFiled />;
-      case 'lit-notice-drop': return <NoticeDrop />;
-      case 'lit-notice-demand': return <NoticeDemand />;
-      case 'lit-appeal-pending': return <AppealPending />;
-      case 'lit-appeal-filed': return <AppealFiled />;
-      case 'lit-appeal-drop': return <AppealDrop />;
-      case 'lit-appeal-demand': return <AppealDemand />;
-      case 'lit-tribunal-pending': return <TribunalPending />;
-      case 'lit-tribunal-filed': return <TribunalFiled />;
-      case 'lit-tribunal-drop': return <TribunalDrop />;
-      case 'lit-tribunal-demand': return <TribunalDemand />;
-      case 'lit-hc-pending': return <CourtPending />;
-      case 'lit-hc-filed': return <CourtFiled />;
-      case 'lit-hc-drop': return <CourtDrop />;
-      case 'lit-hc-demand': return <CourtDemand />;
-      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Syncing module...</div>;
     }
-  };
-
-  const headerInfo = useMemo(() => {
-    const mappings: Record<string, { label: string; desc: string }> = {
-      'dashboard': { label: 'Dashboard', desc: 'Practice Intelligence Operating System' },
-      'gst-portfolio': { label: 'GST Portfolio', desc: 'Master GST Client Vault' },
-      'it-portfolio': { label: 'IT Portfolio', desc: 'Master Income Tax Client Vault' },
-      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' },
-      'compliance-quarterly': { label: 'Quarterly Returns', desc: 'QRMP IFF and GSTR-1/3B Monitoring' },
-      'compliance-composition': { label: 'Composition Filing', desc: 'CMP-08 Quarterly Compliance' },
-      'compliance-gstr4': { label: 'GSTR-4 Annual', desc: 'Composition Annual Return Matrix' },
-      'compliance-gstr9': { label: 'GSTR-9/9C Audit', desc: 'Annual Return and Audit Reconciliation' },
-      'compliance-itr': { label: 'ITR Returns', desc: 'Assessment Year Tax Submissions' },
-      'compliance-taxaudit': { label: 'Audit & B/S', desc: 'Tax Audit and Financial Preparation' },
-      'admin-invoices': { label: 'Invoices', desc: 'Professional Fee Management' },
-      'admin-payments': { label: 'Collections', desc: 'Real-time Payment Reconciliation' },
-      'admin-duedates': { label: 'Due Dates', desc: 'Statutory Deadline Configuration' },
-      'settings': { label: 'Firm Settings', desc: 'Configuration and Practitioner Profile' },
-      'trash': { label: 'System Audit', desc: 'Record Lifecycle and Operation Logs' },
-      'messenger': { label: 'Messenger', desc: 'WhatsApp Broadcast and Communication' },
-      'reminders': { label: 'Deadlines', desc: 'Priority Reminders and Tracking' },
-      'misc-gst-reg': { label: 'GST Reg.', desc: 'Registration and Amendment Tracking' },
-      'misc-food-lic': { label: 'FSSAI Vault', desc: 'Food License Application Management' },
-      'misc-msme': { label: 'MSME Hub', desc: 'Udyam Registration Repository' },
-      'misc-work': { label: 'Misc Work', desc: 'General Professional Task Tracking' },
-      'lit-notice-pending': { label: 'Notice Pending', desc: 'Active GST Notice Response Queue' },
-      'lit-notice-filed': { label: 'Notice Filed', desc: 'Archived Submissions Awaiting Order' },
-      'lit-notice-drop': { label: 'Notice Dropped', desc: 'Closed Matters with No Demand' },
-      'lit-notice-demand': { label: 'Notice Demand', desc: 'Sustained Demands Awaiting Payment' },
-      'lit-appeal-pending': { label: 'Appeal Pending', desc: 'First Appellate Preparation Queue' },
-      'lit-appeal-filed': { label: 'Appeal Filed', desc: 'Active Appeal Hearing Status' },
-      'lit-appeal-drop': { label: 'Appeal Relief', desc: 'Favorable Appellate Orders' },
-      'lit-appeal-demand': { label: 'Appeal Demand', desc: 'Confirmed Demands Post-Appeal' },
-      'lit-tribunal-pending': { label: 'GSTAT Pending', desc: 'Tribunal Appeal Preparation' },
-      'lit-hc-pending': { label: 'HC Pending', desc: 'High Court Writ and Appeal Queue' }
-    };
-    return mappings[activeView] || { label: 'Vault Access', desc: 'Authorized Practice Management' };
-  }, [activeView]);
-
-  return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#fcfdfe] relative">
-      {isSidebarOpen && (
-        <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-md transition-opacity duration-500 animate-in fade-in" />
-      )}
-      <Sidebar activeView={activeView} onViewChange={handleViewChange} isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <main className="flex flex-1 flex-col overflow-hidden relative">
-        <Header isConnected={isOnline} currentUser={user} onMenuClick={() => setIsSidebarOpen(true)} activeViewLabel={headerInfo.label} activeViewDescription={headerInfo.desc} onViewChange={handleViewChange} />
-        <div className="flex-1 flex flex-col min-h-0 px-4 md:px-10 lg:px-16 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
-          {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
-            <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
-          )}
+    const percentage = Math.round((value / total) * 100);
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+    return (
+        <div className="relative" style={{ width: size, height: size }}>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+                <circle cx={size / 2} cy={size / 2} r={radius} fill="none" className="stroke-gray-200 dark:stroke-gray-700" strokeWidth={strokeWidth} />
+                <circle cx={size / 2} cy={size / 2} r={radius} fill="none" className="stroke-indigo-600 dark:stroke-indigo-500 transition-all duration-500" strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{percentage}%</div>
         </div>
-      </main>
+    );
+};
 
-      {/* OVERLAY MODALS FOR VIEW DETAIL */}
-      {showGstDetail && detailClient && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeDetailModals}>
-           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-              <GSTviewicon client={detailClient} onBack={closeDetailModals} />
-           </div>
-        </div>
-      )}
-      {showItDetail && detailClient && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={closeDetailModals}>
-           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-              <ITviewicon client={detailClient} onBack={closeDetailModals} />
-           </div>
-        </div>
-      )}
-
-      <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
-      <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
-      <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />
+const StatDisplay: React.FC<{ label: string, value: string | number, color?: string }> = ({ label, value, color = 'text-gray-900 dark:text-white' }) => (
+    <div className="flex justify-between items-center py-1.5">
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</span>
+        <span className={`text-lg font-bold ${color}`}>{value}</span>
     </div>
-  );
+);
+
+const ClientStatCard: React.FC<{ title: string; view: View; setActiveView: (v: View) => void; stats: {label: string; value: number}[]; icon: React.ReactNode; chartData?: { value: number, total: number }; }> = ({ title, view, setActiveView, stats, icon, chartData }) => (
+     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col justify-between">
+        <div>
+            <div className="flex items-center gap-3 mb-3">
+                <div className="text-2xl">{icon}</div>
+                <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
+            </div>
+            <div className={`flex items-center gap-4 ${!chartData ? 'justify-center' : ''}`}>
+                 <div className={`flex-grow space-y-1 ${chartData ? 'pr-2 border-r dark:border-gray-600' : ''}`}>{stats.map(stat => <StatDisplay key={stat.label} label={stat.label} value={stat.value} />)}</div>
+                {chartData && <div className="flex-shrink-0"><DonutChart value={chartData.value} total={chartData.total} /></div>}
+            </div>
+        </div>
+        <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">View Details</button>
+    </div>
+);
+
+const ModuleStatCard: React.FC<{ title: string; view: View; setActiveView: (v: View) => void; icon: React.ReactNode; filters: React.ReactNode; stats: { label: string; value: string | number; color?: string; }[]; chartData: { value: number; total: number; }; dueDate?: string; }> = ({ title, view, setActiveView, icon, filters, stats, chartData, dueDate }) => (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col justify-between">
+        <div>
+            <div className="flex items-center justify-between gap-3 mb-2">
+                 <div className="flex items-center gap-3">
+                    <div className="text-2xl">{icon}</div>
+                    <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
+                </div>
+                {dueDate && <div className="text-xs text-gray-500 dark:text-gray-400 text-right"><span className="font-semibold block">Due Date:</span> <span>{dueDate}</span></div>}
+            </div>
+            <div className="my-3">{filters}</div>
+            <div className="flex items-center gap-4">
+                <div className="flex-grow space-y-1 pr-2 border-r dark:border-gray-600">{stats.map(stat => <StatDisplay key={stat.label} {...stat} />)}</div>
+                <div className="flex-shrink-0"><DonutChart value={chartData.value} total={chartData.total} /></div>
+            </div>
+        </div>
+         <button onClick={() => setActiveView(view)} className="mt-4 w-full text-center py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-gray-600 transition">View Details</button>
+    </div>
+);
+
+const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
+    const { clients, reminders, payments, gstNotices, gstAppeals, gstTribunalAppeals, highCourtAppeals, gstRegistrations, foodLicenses, msmeRegistrations, miscellaneousWork } = useClientData();
+    const { getDueDate } = useDueDate();
+    const [financialYears, setFinancialYears] = useState<string[]>([]);
+    
+    const [monthlyPeriod, setMonthlyPeriod] = useState({ fy: '', month: '' });
+    const [quarterlyPeriod, setQuarterlyPeriod] = useState({ fy: '', quarter: '' });
+    const [compositionPeriod, setCompositionPeriod] = useState({ fy: '', quarter: '' });
+    const [gstr4Fy, setGstr4Fy] = useState('');
+    const [gstr9Fy, setGstr9Fy] = useState('');
+    const [itAuditFy, setItAuditFy] = useState('');
+    const [auditFy, setAuditFy] = useState('');
+    const [bsFy, setBsFy] = useState('');
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('en-GB');
+    };
+
+    useEffect(() => {
+        const storedFys = localStorage.getItem('financialYears');
+        const { month: initialMonth, financialYear: initialFy } = getGstFilingPeriod();
+        const initialQuarter = getCurrentQuarter();
+        let initialFys: string[];
+        if (storedFys) {
+            try {
+                initialFys = JSON.parse(storedFys);
+                if (!initialFys.includes(initialFy)) initialFys.push(initialFy);
+            } catch { initialFys = [initialFy]; }
+        } else { initialFys = [initialFy]; }
+        const sortedFys = [...new Set(initialFys)].sort().reverse();
+        setFinancialYears(sortedFys);
+        setMonthlyPeriod({ fy: initialFy, month: initialMonth });
+        setQuarterlyPeriod({ fy: initialFy, quarter: initialQuarter });
+        setCompositionPeriod({ fy: initialFy, quarter: initialQuarter });
+        setGstr4Fy(initialFy);
+        setGstr9Fy(sortedFys.length > 1 ? sortedFys[1] : initialFy);
+        setItAuditFy(initialFy);
+        setAuditFy(initialFy);
+        setBsFy(initialFy);
+    }, []);
+
+    const clientStats = useMemo(() => {
+        const gstClients = clients.filter(c => !!c.gstProfile);
+        const itClients = clients.filter(c => !!c.itProfile);
+        return {
+            totalGst: gstClients.length,
+            activeGst: gstClients.filter(c => c.status === 'Active Filing').length,
+            totalIt: itClients.length,
+            activeIt: itClients.filter(c => c.status === 'Active Filing' || c.status === 'Active').length,
+        };
+    }, [clients]);
+
+    const renderFilters = (period: any, setPeriod: Function, type: 'monthly' | 'quarterly' | 'yearly', yearLabel: 'F.Y.' | 'A.Y.' = 'F.Y.') => (
+        <div className="flex items-center gap-2 flex-wrap">
+            <select value={period.fy || period} onChange={e => type === 'yearly' ? setPeriod(e.target.value) : setPeriod((p:any) => ({...p, fy: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+                {financialYears.map(fy => <option key={fy} value={fy}>{yearLabel}: {yearLabel === 'A.Y.' ? fyToAy(fy) : fy}</option>)}
+            </select>
+            {type === 'monthly' && <select value={period.month} onChange={e => setPeriod((p:any) => ({...p, month: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>}
+             {type === 'quarterly' && <select value={period.quarter} onChange={e => setPeriod((p:any) => ({...p, quarter: e.target.value}))} className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500" onClick={e => e.stopPropagation()}>
+                {Object.entries(QUARTERS).map(([qKey, qValue]) => <option key={qKey} value={qKey}>{qValue}</option>)}
+            </select>}
+        </div>
+    );
+
+    return (
+        <div className="space-y-8 p-6 md:p-10">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Practice Dashboard</h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ClientStatCard title="GST Clients" view={View.GstClientDetails} setActiveView={setActiveView} icon={<ClientIcon />} stats={[
+                    { label: 'Total Portfolio', value: clientStats.totalGst },
+                    { label: 'Active Filing', value: clientStats.activeGst },
+                ]} chartData={{ value: clientStats.activeGst, total: clientStats.totalGst }} />
+                <ClientStatCard title="Income Tax" view={View.ItClientDetails} setActiveView={setActiveView} icon={<IncomeTaxIcon />} stats={[
+                    { label: 'Total Clients', value: clientStats.totalIt },
+                    { label: 'Active Status', value: clientStats.activeIt },
+                ]} chartData={{ value: clientStats.activeIt, total: clientStats.totalIt }} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <ModuleStatCard title="Monthly Compliance" view={View.GstRegularMonthly} setActiveView={setActiveView} icon={<GstReturnIcon />} filters={renderFilters(monthlyPeriod, setMonthlyPeriod, 'monthly')}
+                    stats={[{label: 'In Progress', value: 'Syncing...', color: 'text-indigo-600'}]}
+                    chartData={{value: 0, total: 100 }}
+                    dueDate={formatDate(getDueDate('GSTR-1 Monthly', monthlyPeriod.fy, monthlyPeriod.month))}
+                />
+            </div>
+        </div>
+    );
 };
 
 export default Dashboard;

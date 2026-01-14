@@ -32,11 +32,77 @@ export interface User {
 
 export type ActiveView = string;
 
+/**
+ * Fix: Defined View enum for unified navigation across the application.
+ */
+export enum View {
+  Dashboard = 'dashboard',
+  GstClientDetails = 'gst-portfolio',
+  ItClientDetails = 'it-portfolio',
+  GstRegularMonthly = 'compliance-monthly',
+  GstRegularQuarterly = 'compliance-quarterly',
+  GstCompositionReturn = 'compliance-composition',
+  Gstr4Annual = 'compliance-gstr4',
+  Gstr9Annual = 'compliance-gstr9',
+  IncomeTaxReturn = 'compliance-itr',
+  Audit = 'compliance-taxaudit',
+  BalanceSheet = 'balance-sheet',
+  GstNoticePendingReply = 'lit-notice-pending',
+  GstAppealPending = 'lit-appeal-pending',
+  GstTribunalPending = 'lit-gstat-pending',
+  HighCourtAppealPending = 'lit-hc-pending',
+  GstRegistration = 'misc-gst-reg',
+  FoodLicenses = 'misc-food-lic',
+  MsmeRegistration = 'misc-msme',
+  MiscellaneousWork = 'misc-work',
+  DueDateReminder = 'reminders',
+  ReminderMessages = 'messenger',
+  PaymentDetails = 'admin-payments',
+  Settings = 'settings'
+}
+
+/**
+ * Fix: Added Audit and BalanceSheet status enums and related types.
+ */
+export enum AuditType {
+  TAX_AUDIT_44AB = 'Tax Audit u/s 44AB',
+  COMPANY_AUDIT = 'Statutory Company Audit',
+  TRUST_AUDIT = 'Trust / NGO Audit',
+  GST_AUDIT = 'GST Audit / Reconciliation',
+  OTHER = 'Other Audit'
+}
+
+export enum AuditStatus {
+  PENDING = 'Pending',
+  DATA_REQUESTED = 'Data Requested',
+  IN_PROGRESS = 'In Progress',
+  COMPLETED = 'Completed'
+}
+
+export enum BalanceSheetStatus {
+  PENDING = 'Pending',
+  DATA_RECEIVED = 'Data Received',
+  IN_PROGRESS = 'In Progress',
+  FINALIZED = 'Finalized'
+}
+
+export interface PdfDocument {
+  name: string;
+  dataUrl: string;
+}
+
 // Added 'Active' to ClientStatus to support both GST and IT specific status designations
 export type ClientStatus = 'Active Filing' | 'Active' | 'Litigation' | 'Inactive';
 export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
+
+/**
+ * Fix: Added TaxpayerType and FilingFrequency type aliases for compatibility with Dashboard components.
+ */
+export type TaxpayerType = GstRegType;
+export type FilingFrequency = GstFilingFreq;
+
 export type ConstitutionType = 'Proprietorship' | 'Partnership' | 'HUF' | 'Company' | 'Trust' | 'Society' | 'Other';
 export type JurisdictionType = 'Center' | 'State';
 
@@ -112,6 +178,26 @@ export interface Client {
   bankDetails?: BankDetails;
   remarks?: string;
   createdAt: number;
+  /**
+   * Fix: Added audits and balanceSheets properties to Client interface for extended tracking modules.
+   */
+  audits?: Record<string, Record<string, {
+    status: AuditStatus;
+    dueDate?: string;
+    completionDate?: string;
+    assignedTo?: string;
+    remarks?: string;
+  }>>;
+  balanceSheets?: Record<string, {
+    status: BalanceSheetStatus;
+    finalizationDate?: string;
+    remarks?: string;
+    documents?: PdfDocument[];
+  }>;
+  // Compatibility helpers
+  gstDetails?: any;
+  itDetails?: any;
+  clientStatus?: ClientStatus;
 }
 
 export interface InvoiceLineItem {

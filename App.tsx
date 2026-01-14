@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
@@ -50,7 +51,8 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
-            <Dashboard />
+            {/* Fix: Passed dummy setActiveView prop to satisfy Dashboard component requirements */}
+            <Dashboard setActiveView={() => {}} />
           </ProtectedRoute>
         );
       default:
