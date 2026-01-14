@@ -16,7 +16,7 @@ import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
 import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
 
-// Lazy loading sub-pages
+// Lazy components
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
 const ITPortfolio = lazy(() => import('../ClientHub/ITPortfolio.tsx'));
 const MonthlyFiling = lazy(() => import('../Compliance/GSTReturn/MonthlyFiling.tsx'));
@@ -54,6 +54,8 @@ const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentRece
 const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
 const Setting = lazy(() => import('../Administration/Setting.tsx'));
 const Trash = lazy(() => import('../Administration/Trash.tsx'));
+
+// Modals as Windows
 const GSTviewicon = lazy(() => import('./GSTviewicon.tsx'));
 const ITviewicon = lazy(() => import('./ITviewicon.tsx'));
 
@@ -71,18 +73,14 @@ const Dashboard: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
-  const [miscWork, setMiscWork] = useState<any[]>([]);
 
-  // Form Modals
-  const [isGstModalOpen, setIsGstModalOpen] = useState(false);
-  const [isItModalOpen, setIsItModalOpen] = useState(false);
+  // Window states (Sub-Modals)
+  const [isGstWindowOpen, setIsGstWindowOpen] = useState(false);
+  const [isItWindowOpen, setIsItWindowOpen] = useState(false);
+  const [selectedClientForWindow, setSelectedClientForWindow] = useState<Client | null>(null);
 
-  // Period Filters for Dashboard Boxes
   const def = getDefaultPeriod();
-  const [monthlyFilter, setMonthlyFilter] = useState({ year: def.year, month: def.month });
-  const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.year, quarter: def.quarter });
-  const [compositionFilter, setCompositionFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
-  const [itrFilter, setItrFilter] = useState({ ay: def.year });
+  const [monthlyFilter] = useState({ year: def.year, month: def.month });
 
   const loadData = useCallback(async () => {
     if (!token) return;
@@ -91,7 +89,6 @@ const Dashboard: React.FC = () => {
       setClients(summary.clients);
       setInvoices(summary.invoices);
       setLitigation(summary.litigation);
-      setMiscWork(summary.work);
     } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
   }, [token]);
 
@@ -101,182 +98,93 @@ const Dashboard: React.FC = () => {
   }, [isOnline, loadData]);
 
   const handleViewChange = (view: ActiveView, extra?: any) => {
+    if (view === 'gst-view-detail') {
+      setSelectedClientForWindow(extra);
+      setIsGstWindowOpen(true);
+      return;
+    }
+    if (view === 'it-view-detail') {
+      setSelectedClientForWindow(extra);
+      setIsItWindowOpen(true);
+      return;
+    }
     setActiveView(view);
     setViewExtra(extra || null);
     window.scrollTo(0, 0);
   };
 
-  const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
+  const getFilingCounts = (type: string, periodKey: string) => {
     const keys: Record<string, string> = {
       monthly: 'clientify_monthly_filing_v3',
       quarterly: 'clientify_quarterly_filing_v3',
       composition: 'clientify_composition_filing_v3',
-      gstr4: 'clientify_gstr4_filing_v1',
-      gstr9: 'clientify_gstr9_filing_data_v2',
-      itr: 'clientify_itr_filing_data_v2',
-      audit: 'clientify_audit_fin_data_v3'
     };
     const storageKey = keys[type];
-    const saved = localStorage.getItem(storageKey);
+    const saved = localStorage.getItem(storageKey || '');
     const data = saved ? JSON.parse(saved) : {};
     const periodData = data[periodKey] || {};
     
-    let total = 0;
-    let filed = 0;
-    
-    if (type === 'monthly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'quarterly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'composition') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.cmp08).length;
-    } else if (type === 'itr') {
-      const applicable = clients.filter(c => !!c.itProfile);
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.filed).length;
-    } else {
-      filed = Object.values(periodData).filter((v: any) => v.filed || v.auditFiled).length;
-      total = Object.keys(periodData).length || clients.filter(c => type === 'gstr4' ? c.gstProfile?.regType === 'Composition' : !!c.gstProfile).length;
-    }
-
-    return { total, filed, pending: Math.max(0, total - filed) };
+    const applicable = clients.filter(c => {
+      if (type === 'monthly') return c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly';
+      if (type === 'quarterly') return c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly';
+      if (type === 'composition') return c.gstProfile?.regType === 'Composition';
+      return false;
+    });
+    const filed = applicable.filter(c => type === 'composition' ? periodData[c.id]?.cmp08 : (periodData[c.id]?.r1 && periodData[c.id]?.r3b)).length;
+    return { total: applicable.length, filed };
   };
 
-  const getLitCounts = (forum: 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt', stage: 'Pending' | 'Filed' | 'Drop' | 'Demand') => {
-    return litigation.filter(r => r.category === forum && r.status === stage).length;
-  };
-
-  const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-    <div className="mb-6 border-l-4 border-indigo-600 pl-4">
-      <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-none">{title}</h2>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1.5">{subtitle}</p>
-    </div>
-  );
-
-  const SubSectionTitle = ({ title }: { title: string }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 px-2">{title}</h3>
-  );
-
-  const CompactCard = ({ label, count, viewId, icon, color }: any) => (
-    <div 
-      onClick={() => handleViewChange(viewId)}
-      className="group bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer overflow-hidden relative"
-    >
-      <div className={`absolute top-0 right-0 h-12 w-12 -mr-4 -mt-4 opacity-5 rounded-full ${color}`} />
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center text-white shadow-sm`}>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
-          </div>
-          <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight group-hover:text-indigo-600 truncate max-w-[120px]">{label}</span>
-        </div>
-        <span className="text-base font-black text-slate-900">{count}</span>
-      </div>
-    </div>
-  );
-
-  const LitigationBlock = ({ forum, label, icon }: any) => {
-    const forums: Record<string, string> = { 'Notice': 'lit-notice', 'Appeal': 'lit-appeal', 'Tribunal': 'lit-tribunal', 'HighCourt': 'lit-hc' };
-    const prefix = forums[forum];
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 px-2">
-           <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
-           <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{label}</h4>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <CompactCard label="Pending" count={getLitCounts(forum, 'Pending')} viewId={`${prefix}-pending`} color="bg-rose-500" icon={<path d="M12 8v4l3 3" />} />
-          <CompactCard label="Filed" count={getLitCounts(forum, 'Filed')} viewId={`${prefix}-filed`} color="bg-indigo-500" icon={<path d="M5 13l4 4L19 7" />} />
-          <CompactCard label="Dropped" count={getLitCounts(forum, 'Drop')} viewId={`${prefix}-drop`} color="bg-emerald-500" icon={<path d="M9 12l2 2 4-4" />} />
-          <CompactCard label="Demand" count={getLitCounts(forum, 'Demand')} viewId={`${prefix}-demand`} color="bg-orange-500" icon={<path d="M12 9v2m0 4h.01" />} />
-        </div>
-      </div>
-    );
-  };
+  const getLitCounts = (forum: string, stage: string) => litigation.filter(r => r.category === forum && r.status === stage).length;
 
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="max-w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
+          <div className="max-w-full mx-auto space-y-12 animate-in fade-in duration-700 pb-32">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            <section>
-              <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">GST Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Regular & Comp. Entities</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.gstProfile).length}</p>
-                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-                <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-emerald-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">IT Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Personal & Corporate Direct Tax</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.itProfile).length}</p>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-              </div>
-            </section>
-            <section>
-              <SectionHeader title="Compliance Matrix" subtitle="Statutory Filing Lifecycle" />
-              <div className="space-y-10">
-                 <div>
-                    <SubSectionTitle title="Filing Cycles" />
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                       <CompactCard label="Monthly" count={getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).total} viewId="compliance-monthly" color="bg-indigo-600" icon={<path d="M8 7V3m8 4V3m-9 8h10" />} />
-                       <CompactCard label="Quarterly" count={getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`).total} viewId="compliance-quarterly" color="bg-blue-600" icon={<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />} />
-                       <CompactCard label="Composition" count={getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`).total} viewId="compliance-composition" color="bg-amber-600" icon={<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5" />} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer overflow-hidden relative">
+                 <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-indigo-600/10" />
+                 <div className="flex items-start justify-between relative z-10">
+                    <div>
+                      <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform"><svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg></div>
+                      <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">GST Portfolio</h3>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Active Entities</p>
                     </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="Annual Returns" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="GSTR-04 Annual" count={clients.filter(c => c.gstProfile?.regType === 'Composition').length} viewId="compliance-gstr4" color="bg-indigo-400" icon={<path d="M12 8v4l3 3" />} />
-                       <CompactCard label="GSTR-9/9C Audit" count={clients.filter(c => c.gstProfile?.regType === 'Regular').length} viewId="compliance-gstr9" color="bg-indigo-800" icon={<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7" />} />
-                    </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="IT & Audit" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="ITR Returns" count={getFilingCounts('itr', itrFilter.ay).total} viewId="compliance-itr" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2H5" />} />
-                       <CompactCard label="Audit & B/S" count={clients.filter(c => c.itProfile?.advisoryWork?.taxAudit).length} viewId="compliance-taxaudit" color="bg-emerald-400" icon={<path d="M9 12h6m-6 4h6" />} />
+                    <div className="text-right">
+                      <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.gstProfile).length}</p>
+                      <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
                     </div>
                  </div>
               </div>
-            </section>
-            <section>
-              <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
-              <div className="grid grid-cols-1 gap-12">
-                 <LitigationBlock forum="Notice" label="GST Notices" icon={<path d="M12 9v2m0 4h.01" />} />
-                 <LitigationBlock forum="Appeal" label="GST Appeals" icon={<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2" />} />
-                 <LitigationBlock forum="Tribunal" label="GSTAT (Tribunal)" icon={<path d="M3 6l3 1m0 0l-3 9" />} />
-                 <LitigationBlock forum="HighCourt" label="High Court Matters" icon={<path d="M8 14v20c0 4.418 7.163 8 16 8" />} />
+              <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer overflow-hidden relative">
+                 <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-emerald-600/10" />
+                 <div className="flex items-start justify-between relative z-10">
+                    <div>
+                      <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform"><svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857" /></svg></div>
+                      <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">IT Portfolio</h3>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Direct Tax Profile</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.itProfile).length}</p>
+                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
+                    </div>
+                 </div>
+              </div>
+            </div>
+            {/* Quick Summary Section */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Monthly Filing</p>
+                <div className="flex items-baseline gap-2"><h4 className="text-3xl font-black text-slate-900">{getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).filed}</h4><span className="text-xs font-bold text-slate-400">/ {getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).total}</span></div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Pending Notices</p>
+                <div className="flex items-baseline gap-2"><h4 className="text-3xl font-black text-rose-600">{getLitCounts('Notice', 'Pending')}</h4><span className="text-xs font-bold text-slate-400">Cases</span></div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Outstanding Bills</p>
+                <div className="flex items-baseline gap-2"><h4 className="text-3xl font-black text-amber-600">{invoices.filter(i=>i.status!=='Paid').length}</h4><span className="text-xs font-bold text-slate-400">Draft/Sent</span></div>
               </div>
             </section>
           </div>
@@ -290,8 +198,6 @@ const Dashboard: React.FC = () => {
       case 'compliance-gstr9': return <GSTR9_9C />;
       case 'compliance-itr': return <ITRReturn />;
       case 'compliance-taxaudit': return <TAXAudit />;
-      case 'gst-view-detail': return <GSTviewicon client={viewExtra} onBack={() => handleViewChange('gst-portfolio')} />;
-      case 'it-view-detail': return <ITviewicon client={viewExtra} onBack={() => handleViewChange('it-portfolio')} />;
       case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
@@ -320,39 +226,66 @@ const Dashboard: React.FC = () => {
       case 'lit-hc-filed': return <CourtFiled />;
       case 'lit-hc-drop': return <CourtDrop />;
       case 'lit-hc-demand': return <CourtDemand />;
-      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Syncing module...</div>;
+      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Vault Error: Module Not Found</div>;
     }
   };
 
   const headerInfo = useMemo(() => {
     const mappings: Record<string, { label: string; desc: string }> = {
-      'dashboard': { label: 'Dashboard', desc: 'Practice Intelligence Operating System' },
-      'gst-portfolio': { label: 'GST Portfolio', desc: 'Master GST Client Vault' },
-      'it-portfolio': { label: 'IT Portfolio', desc: 'Master Income Tax Client Vault' },
-      'gst-view-detail': { label: 'Client Insight', desc: 'Detailed Statutory Review' },
-      'it-view-detail': { label: 'Tax Profile', desc: 'Direct Tax Vault Snapshot' },
-      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' }
+      'dashboard': { label: 'Console', desc: 'Firm Intelligence Overview' },
+      'gst-portfolio': { label: 'GST Vault', desc: 'Entity Master Repository' },
+      'it-portfolio': { label: 'IT Vault', desc: 'Direct Tax Master List' },
+      'compliance-monthly': { label: 'Filing Matrix', desc: 'Return Lifecycle Tracking' }
     };
-    return mappings[activeView] || { label: 'Vault Access', desc: 'Authorized Practice Management' };
+    return mappings[activeView] || { label: 'Practice Hub', desc: 'Authorized Compliance Access' };
   }, [activeView]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#fcfdfe] relative">
-      {isSidebarOpen && (
-        <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-md transition-opacity duration-500 animate-in fade-in" />
-      )}
       <Sidebar activeView={activeView} onViewChange={handleViewChange} isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <main className="flex flex-1 flex-col overflow-hidden relative">
+      
+      {/* Backdrop for Mobile Sidebar */}
+      {isSidebarOpen && (
+        <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-md lg:hidden" />
+      )}
+
+      {/* Dynamic Content Wrapper with transitions for desktop sidebar state */}
+      <main className="flex flex-1 flex-col overflow-hidden relative transition-all duration-500">
         <Header isConnected={isOnline} currentUser={user} onMenuClick={() => setIsSidebarOpen(true)} activeViewLabel={headerInfo.label} activeViewDescription={headerInfo.desc} onViewChange={handleViewChange} />
-        <div className="flex-1 flex flex-col min-h-0 px-4 md:px-10 lg:px-16 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
-          {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
-            <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
-          )}
+        
+        {/* Main Content Scroll Area - Adjusting based on Sidebar - Logic for padding handled by CSS variable or fixed class if sidebar is absolute */}
+        <div className="flex-1 flex flex-col min-h-0 px-4 md:px-10 lg:pl-[280px] pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth transition-all duration-500" style={{ paddingLeft: isSidebarOpen || window.innerWidth >= 1024 ? '' : '1rem' }}>
+          {/* Note: In standard desktop mode Sidebar is 72px (collapsed) or 280px (expanded) */}
+          <div className={`transition-all duration-500 ${isSidebarOpen ? 'lg:pl-0' : 'lg:pl-[-200px]'}`}>
+             {isInitialLoad ? <Loader /> : <Suspense fallback={<Loader />}>{renderContent()}</Suspense>}
+          </div>
         </div>
       </main>
+
+      {/* Global Command Palette */}
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
-      <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
-      <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />
+      
+      {/* WINDOW MODALS (Transformed View Components) */}
+      {isGstWindowOpen && selectedClientForWindow && (
+         <Suspense fallback={<Loader />}>
+            <GSTviewicon 
+               client={selectedClientForWindow} 
+               onBack={() => setIsGstWindowOpen(false)} 
+               onDataChange={() => { loadData(); setIsGstWindowOpen(false); }}
+            />
+         </Suspense>
+      )}
+      {isItWindowOpen && selectedClientForWindow && (
+         <Suspense fallback={<Loader />}>
+            <ITviewicon 
+               client={selectedClientForWindow} 
+               onBack={() => setIsItWindowOpen(false)} 
+               onDataChange={() => { loadData(); setIsItWindowOpen(false); }}
+            />
+         </Suspense>
+      )}
+      
+      <GSTClientFormModal isOpen={false} onClose={() => {}} onSave={() => {}} /> {/* Handled inside View components now */}
     </div>
   );
 };
