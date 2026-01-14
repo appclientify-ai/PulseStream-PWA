@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
-import { socketService } from '../services/socket';
+import { api } from '../services/api.ts';
+import { socketService } from '../services/socket.ts';
 import { 
   Client, 
   LitigationRecord, 
@@ -11,7 +11,7 @@ import {
   FoodLicenseRecord, 
   MSMERegistrationRecord, 
   InvoiceRecord 
-} from '../types';
+} from '../types.ts';
 
 export const useClientData = () => {
   const [clients, setClients] = useState<Client[]>([]);

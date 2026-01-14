@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Client } from '../../../types';
+import { Client } from '../../../types.ts';
 import { api } from '../../../services/api.ts';
-import Loader from '../../../components/Loader';
-import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod } from './filinglogic/MonthlyFilingLogic';
+import Loader from '../../../components/Loader.tsx';
+import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod } from './filinglogic/MonthlyFilingLogic.tsx';
 
 interface MonthlyFilingProps {
   onViewChange?: (view: string, extra?: any) => void;

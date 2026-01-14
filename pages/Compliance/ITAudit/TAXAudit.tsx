@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Client, AuditType, AuditStatus, View } from '../../../types';
-import { useClientData } from '../../../hooks/useClientData';
-import { PlusIcon, EyeIcon, TrashIcon, FilterIcon, BellIcon, SettingsIcon, CalendarIcon } from './icons';
-import { useDueDate } from '../../../hooks/useDueDate';
-import { FullDetailsModal } from './FullDetailsModal';
+import { Client, AuditType, AuditStatus, View } from '../../../types.ts';
+import { useClientData } from '../../../hooks/useClientData.ts';
+import { PlusIcon, EyeIcon, TrashIcon, FilterIcon, BellIcon, SettingsIcon, CalendarIcon } from './icons.tsx';
+import { useDueDate } from '../../../hooks/useDueDate.ts';
+import { FullDetailsModal } from './FullDetailsModal.tsx';
 
 const getCurrentFinancialYear = () => {
     const today = new Date();
@@ -406,3 +406,5 @@ export const Audit: React.FC<AuditProps> = ({ setActiveView }) => {
         </div>
     );
 };
+
+export default Audit;

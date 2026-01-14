@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Client, BalanceSheetStatus, View, PdfDocument } from '../../../types';
-import { useClientData } from '../../../hooks/useClientData';
-import { PlusIcon, EyeIcon, TrashIcon, FilterIcon, BellIcon, SettingsIcon, CloudUploadIcon, XIcon } from './icons';
-import { useDueDate } from '../../../hooks/useDueDate';
-import { FullDetailsModal } from './FullDetailsModal';
-import { PdfUploadWidget } from './PdfUploadWidget';
+import { Client, BalanceSheetStatus, View, PdfDocument } from '../../../types.ts';
+import { useClientData } from '../../../hooks/useClientData.ts';
+import { PlusIcon, EyeIcon, TrashIcon, FilterIcon, BellIcon, SettingsIcon, CloudUploadIcon, XIcon } from './icons.tsx';
+import { useDueDate } from '../../../hooks/useDueDate.ts';
+import { FullDetailsModal } from './FullDetailsModal.tsx';
+import { PdfUploadWidget } from './PdfUploadWidget.tsx';
 
 const getCurrentFinancialYear = () => {
     const today = new Date();
@@ -434,3 +434,5 @@ export const BalanceSheet: React.FC<BalanceSheetProps> = ({ setActiveView }) => 
         </div>
     );
 };
+
+export default BalanceSheet;

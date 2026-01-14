@@ -1,12 +1,12 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { useClientData } from '../../hooks/useClientData';
-import { useDueDate } from '../../hooks/useDueDate';
-import { View, ClientStatus, AuditStatus, BalanceSheetStatus, Client, TaxpayerType, FilingFrequency } from '../../types';
+import { useClientData } from '../../hooks/useClientData.ts';
+import { useDueDate } from '../../hooks/useDueDate.ts';
+import { View, ClientStatus, AuditStatus, BalanceSheetStatus, Client, TaxpayerType, FilingFrequency } from '../../types.ts';
 import { 
     ClientIcon, GstReturnIcon, IncomeTaxIcon, GstNoticeIcon, GstAppealIcon, 
     AuditIcon, PaymentIcon, ReminderIcon, SettingsIcon, ReminderMessagesIcon 
-} from './icons';
+} from './icons.tsx';
 
 interface DashboardProps {
     setActiveView: (view: View) => void;

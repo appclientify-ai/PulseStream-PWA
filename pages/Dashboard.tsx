@@ -1,3 +1,3 @@
 
-import Dashboard from './Primary/Dashboard';
+import Dashboard from './Primary/Dashboard.tsx';
 export default Dashboard;
