@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
@@ -11,14 +10,12 @@ import Loader from './components/Loader.tsx';
 import OfflineBanner from './components/OfflineBanner.tsx';
 import { api } from './services/api.ts';
 import { useOffline } from './hooks/useOffline.ts';
-import { View } from './types.ts';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [activeView, setActiveView] = useState<View>(View.Dashboard);
   
   const handleReconnect = useCallback(() => {
     if (token) api.get('/auth/me').catch(() => {});
@@ -33,7 +30,7 @@ const AppContent: React.FC = () => {
     } else {
       if (currentPage === 'dashboard') setCurrentPage('home');
     }
-  }, [isAuthenticated, hasCheckedAuth, currentPage]);
+  }, [isAuthenticated, hasCheckedAuth]);
 
   if (!hasCheckedAuth) return <Loader />;
 
@@ -53,7 +50,7 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
-            <Dashboard setActiveView={setActiveView} />
+            <Dashboard />
           </ProtectedRoute>
         );
       default:

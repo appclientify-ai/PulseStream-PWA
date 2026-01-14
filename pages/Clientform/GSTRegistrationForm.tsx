@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { GSTRegistrationRecord, GSTRegistrationType, GstRegistrationStatus, Client } from '../../types';
+import { GSTRegistrationRecord, GSTRegistrationType, GSTRegistrationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
 
 interface GSTRegistrationFormProps {
@@ -15,7 +14,7 @@ const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClo
     clientName: '',
     mobile: '',
     appType: 'New Registration',
-    status: GstRegistrationStatus.PENDING,
+    status: 'Pending',
     appDate: '',
     arn: '',
     completionDate: '',
@@ -39,7 +38,7 @@ const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClo
         clientName: '',
         mobile: '',
         appType: 'New Registration',
-        status: GstRegistrationStatus.PENDING,
+        status: 'Pending',
         appDate: new Date().toISOString().split('T')[0],
         arn: '',
         completionDate: '',
@@ -113,13 +112,13 @@ const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClo
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Current Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-50"
-                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as GstRegistrationStatus})}>
-                <option value={GstRegistrationStatus.PENDING}>Pending</option>
-                <option value={GstRegistrationStatus.DATA_REQUESTED}>Data Requested</option>
-                <option value={GstRegistrationStatus.IN_PROGRESS}>In Progress</option>
-                <option value={GstRegistrationStatus.ARN_GENERATED}>ARN Generated</option>
-                <option value={GstRegistrationStatus.COMPLETED}>Completed</option>
-                <option value={GstRegistrationStatus.REJECTED}>Rejected</option>
+                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as GSTRegistrationStatus})}>
+                <option value="Pending">Pending</option>
+                <option value="Data Requested">Data Requested</option>
+                <option value="In Progress">In Progress</option>
+                <option value="ARN Generated">ARN Generated</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
               </select>
             </div>
           </div>

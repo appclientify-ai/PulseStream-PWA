@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { FoodLicenseRecord, FoodLicenseType, FoodLicenseStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
@@ -15,8 +14,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
     clientName: '',
     mobile: '',
     licenseType: 'FSSAI Basic Registration',
-    // Fix: Using enum value instead of string literal
-    status: FoodLicenseStatus.PENDING,
+    status: 'Pending',
     appDate: '',
     licenseNo: '',
     expiryDate: '',
@@ -40,8 +38,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
         clientName: '',
         mobile: '',
         licenseType: 'FSSAI Basic Registration',
-        // Fix: Using enum value instead of string literal
-        status: FoodLicenseStatus.PENDING,
+        status: 'Pending',
         appDate: new Date().toISOString().split('T')[0],
         licenseNo: '',
         expiryDate: '',
@@ -115,10 +112,10 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Application Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
                 value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as FoodLicenseStatus})}>
-                <option value={FoodLicenseStatus.PENDING}>Pending</option>
-                <option value={FoodLicenseStatus.APPLIED}>Applied</option>
-                <option value={FoodLicenseStatus.COMPLETED}>Completed</option>
-                <option value={FoodLicenseStatus.REJECTED}>Rejected</option>
+                <option value="Pending">Pending</option>
+                <option value="Applied">Applied</option>
+                <option value="Completed">Completed</option>
+                <option value="Rejected">Rejected</option>
               </select>
             </div>
             <div>
