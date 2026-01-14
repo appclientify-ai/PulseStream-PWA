@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" class="font-sans text-base">
   <head>
@@ -67,20 +66,17 @@
       .app-font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
       .app-font-mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
       
-      /* Priority indicators */
       .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
       .traffic-amber { background-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
       .traffic-green { background-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
     </style>
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.0.0",
-    "react-dom": "https://esm.sh/react-dom@^19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@^19.0.0/client",
-    "socket.io-client": "https://esm.sh/socket.io-client@^4.8.1",
+    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
+    "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
     "dotenv/": "https://esm.sh/dotenv@^17.2.3/",
     "http": "https://esm.sh/http@^0.0.1-security",
     "express": "https://esm.sh/express@^5.2.1",
@@ -92,12 +88,12 @@
     "jsonwebtoken": "https://esm.sh/jsonwebtoken@^9.0.3",
     "vite": "https://esm.sh/vite@^7.3.1",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0"
   }
 }
 </script>
-  </head>
+</head>
   <body class="app-font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

@@ -1,10 +1,8 @@
-
-const CACHE_NAME = 'clientify-v3-prod';
+const CACHE_NAME = 'clientify-v4-prod';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
-  'https://cdn.tailwindcss.com'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,13 +24,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-only for Auth to prevent stale tokens
+  // Skip chrome-extension or non-http requests
+  if (!url.protocol.startsWith('http')) return;
+
+  // Network-only for Auth
   if (url.pathname.includes('/auth/')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network-first for API
+  // API calls: Network first, then cache
   if (url.pathname.includes('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
@@ -40,29 +41,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for large static scripts and images
-  if (url.hostname.includes('esm.sh') || event.request.destination === 'image') {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Default: Stale-while-revalidate for everything else
+  // Static Assets: Cache first
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const networked = fetch(event.request).then((response) => {
+      return cached || fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
         const resClone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
         return response;
       }).catch(() => null);
-      return cached || networked;
     })
   );
 });
