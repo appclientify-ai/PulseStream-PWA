@@ -11,7 +11,6 @@ import Loader from './components/Loader.tsx';
 import OfflineBanner from './components/OfflineBanner.tsx';
 import { api } from './services/api.ts';
 import { useOffline } from './hooks/useOffline.ts';
-// Imported View enum from types to handle navigation state
 import { View } from './types.ts';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
@@ -19,7 +18,6 @@ type Page = 'home' | 'login' | 'signup' | 'dashboard';
 const AppContent: React.FC = () => {
   const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  // Added local state to track active dashboard module view
   const [activeView, setActiveView] = useState<View>(View.Dashboard);
   
   const handleReconnect = useCallback(() => {
@@ -55,7 +53,6 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
-            {/* Provided required setActiveView prop to fix component initialization error */}
             <Dashboard setActiveView={setActiveView} />
           </ProtectedRoute>
         );

@@ -35,7 +35,6 @@ interface DashboardProps {
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const QUARTERS: Record<string, string> = { 'Q1': 'Q1 (Apr-Jun)', 'Q2': 'Q2 (Jul-Sep)', 'Q3': 'Q3 (Oct-Dec)', 'Q4': 'Q4 (Jan-Mar)' };
 
-// --- Helper Functions ---
 const getGstFilingPeriod = (date = new Date()) => {
     const aDate = new Date(date);
     aDate.setMonth(aDate.getMonth() - 1);
@@ -64,8 +63,6 @@ const getCurrentQuarter = () => {
     return 'Q4';
 };
 
-
-// --- UI Components ---
 const DonutChart: React.FC<{ value: number; total: number; size?: number; strokeWidth?: number }> = ({ value, total, size = 80, strokeWidth = 10 }) => {
     if (total === 0) {
         return (
@@ -77,7 +74,6 @@ const DonutChart: React.FC<{ value: number; total: number; size?: number; stroke
             </div>
         );
     }
-
     const percentage = Math.round((value / total) * 100);
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
@@ -112,7 +108,6 @@ const StatDisplay: React.FC<{ label: string, value: string | number, color?: str
         <span className={`text-lg font-bold ${color}`}>{value}</span>
     </div>
 );
-
 
 const ClientStatCard: React.FC<{ 
     title: string; 
@@ -181,21 +176,12 @@ const ModuleStatCard: React.FC<{
     </div>
 );
 
-
 const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
-    const { clients, reminders, payments, gstNotices, gstAppeals, gstTribunalAppeals, highCourtAppeals, gstRegistrations, foodLicenses, msmeRegistrations, miscellaneousWork } = useClientData();
+    const { clients, gstNotices, gstAppeals } = useClientData();
     const { getDueDate } = useDueDate();
     const [financialYears, setFinancialYears] = useState<string[]>([]);
     
-    // States for each card's filters
     const [monthlyPeriod, setMonthlyPeriod] = useState({ fy: '', month: '' });
-    const [quarterlyPeriod, setQuarterlyPeriod] = useState({ fy: '', quarter: '' });
-    const [compositionPeriod, setCompositionPeriod] = useState({ fy: '', quarter: '' });
-    const [gstr4Fy, setGstr4Fy] = useState('');
-    const [gstr9Fy, setGstr9Fy] = useState('');
-    const [itAuditFy, setItAuditFy] = useState('');
-    const [auditFy, setAuditFy] = useState('');
-    const [bsFy, setBsFy] = useState('');
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '-';
@@ -204,34 +190,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
     };
 
     useEffect(() => {
-        const storedFys = localStorage.getItem('financialYears');
         const { month: initialMonth, financialYear: initialFy } = getGstFilingPeriod();
-        const initialQuarter = getCurrentQuarter();
-        let initialFys: string[];
-
-        if (storedFys) {
-            try {
-                initialFys = JSON.parse(storedFys);
-                if (!initialFys.includes(initialFy)) initialFys.push(initialFy);
-            } catch (e) {
-                initialFys = [initialFy];
-            }
-        } else {
-            initialFys = [initialFy];
-        }
-        
-        const sortedFys = [...new Set(initialFys)].sort().reverse();
-        setFinancialYears(sortedFys);
-
-        // Set initial periods for all cards
+        const initialFys = [initialFy];
+        setFinancialYears(initialFys);
         setMonthlyPeriod({ fy: initialFy, month: initialMonth });
-        setQuarterlyPeriod({ fy: initialFy, quarter: initialQuarter });
-        setCompositionPeriod({ fy: initialFy, quarter: initialQuarter });
-        setGstr4Fy(initialFy);
-        setGstr9Fy(sortedFys.length > 1 ? sortedFys[1] : initialFy); 
-        setItAuditFy(initialFy);
-        setAuditFy(initialFy);
-        setBsFy(initialFy);
     }, []);
 
     const clientStats = useMemo(() => {
@@ -245,37 +207,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
         };
     }, [clients]);
 
-    const renderFilters = (period: any, setPeriod: Function, type: 'monthly' | 'quarterly' | 'yearly', yearLabel: 'F.Y.' | 'A.Y.' = 'F.Y.') => (
-        <div className="flex items-center gap-2 flex-wrap">
-            <select
-                value={period.fy || period}
-                onChange={e => type === 'yearly' ? setPeriod(e.target.value) : setPeriod((p:any) => ({...p, fy: e.target.value}))}
-                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                onClick={e => e.stopPropagation()}
-            >
-                {financialYears.map(fy => <option key={fy} value={fy}>{yearLabel}: {yearLabel === 'A.Y.' ? fyToAy(fy) : fy}</option>)}
-            </select>
-            {type === 'monthly' && <select
-                value={period.month}
-                onChange={e => setPeriod((p:any) => ({...p, month: e.target.value}))}
-                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                onClick={e => e.stopPropagation()}
-            >
-                {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>}
-             {type === 'quarterly' && <select
-                value={period.quarter}
-                onChange={e => setPeriod((p:any) => ({...p, quarter: e.target.value}))}
-                className="px-2 py-1 text-xs border rounded-md bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                onClick={e => e.stopPropagation()}
-            >
-                {Object.entries(QUARTERS).map(([qKey, qValue]) => <option key={qKey} value={qKey}>{qValue}</option>)}
-            </select>}
-        </div>
-    );
-
     return (
-        <div className="space-y-8">
+        <div className="p-8 space-y-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             
             <div>
@@ -295,7 +228,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveView }) => {
              <div>
                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-3"><span className="text-2xl">📊</span> Tax & Compliance</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <ModuleStatCard title="Monthly Compliance" view={View.GstRegularMonthly} setActiveView={setActiveView} icon={<GstReturnIcon />} filters={renderFilters(monthlyPeriod, setMonthlyPeriod, 'monthly')}
+                    <ModuleStatCard 
+                        title="Monthly Compliance" 
+                        view={View.GstRegularMonthly} 
+                        setActiveView={setActiveView} 
+                        icon={<GstReturnIcon />} 
+                        filters={<span className="text-xs font-bold text-slate-400">FY {monthlyPeriod.fy} | {monthlyPeriod.month}</span>}
                         stats={[{label: 'In Progress', value: 'Syncing...', color: 'text-indigo-600'}]}
                         chartData={{value: 0, total: 100 }}
                         dueDate={formatDate(getDueDate('GSTR-1 Monthly', monthlyPeriod.fy, monthlyPeriod.month))}

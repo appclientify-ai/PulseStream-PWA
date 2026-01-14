@@ -1,20 +1,17 @@
 
 import { io, Socket } from 'socket.io-client';
-import { SOCKET_URL } from '../constants';
-// Removed SocketEvent import as it is not exported from types.ts and not used here
+import { SOCKET_URL } from '../constants.ts';
 
 class SocketService {
   private socket: Socket | null = null;
 
   connect() {
-    // If it's a mock or example URL, we just log it for the demo
     if (SOCKET_URL.includes('example.com')) {
         console.warn('SocketService: Using simulated real-time events.');
         return;
     }
 
     try {
-      // Fix: Added 'as any' to io options to bypass the transports type error
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         reconnectionAttempts: 5,

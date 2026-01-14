@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/AuthContext.tsx';
 
 interface Message {
   role: 'user' | 'model';
@@ -22,26 +22,13 @@ const GeminiAssistant: React.FC<{ activeView: string }> = ({ activeView }) => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isTyping]);
 
-  // Command Listener for AI Priming
-  useEffect(() => {
-    const handlePrime = (e: any) => {
-      const { prompt } = e.detail;
-      setIsOpen(true);
-      performAIAction(prompt);
-    };
-    window.addEventListener('vault_ai_prime', handlePrime);
-    return () => window.removeEventListener('vault_ai_prime', handlePrime);
-  }, [user]);
-
   const performAIAction = async (promptText: string) => {
     setMessages(prev => [...prev, { role: 'user', text: "Generating context-aware draft..." }]);
     setIsTyping(true);
     try {
-      // Fix: Follow guidelines to create instance right before call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        // Fix: Use recommended string-based contents for simple text prompts
         contents: promptText,
         config: {
           systemInstruction: `You are a world-class tax and legal assistant. The user is ${user?.username}. 
@@ -65,11 +52,9 @@ const GeminiAssistant: React.FC<{ activeView: string }> = ({ activeView }) => {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsTyping(true);
     try {
-      // Fix: Follow guidelines to create instance right before call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        // Fix: Use recommended string-based contents for simple text prompts
         contents: userMsg,
         config: {
           systemInstruction: `You are a world-class tax and legal assistant for a practitioner named ${user?.username}. 

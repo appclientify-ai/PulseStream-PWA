@@ -1,6 +1,6 @@
 
 import { io, Socket } from 'socket.io-client';
-import { SOCKET_URL } from '../constants';
+import { SOCKET_URL } from '../constants.ts';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -10,7 +10,6 @@ class SocketService {
     if (this.socket) return;
     
     try {
-      // Fix: Added 'as any' to io options to bypass the transports type error
       this.socket = io(SOCKET_URL, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
