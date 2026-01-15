@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
-import { Client, LitigationRecord } from '../../types.ts';
+import { Client } from '../../types.ts';
 
 const GSTPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,21 +37,53 @@ const GSTPortfolio: React.FC = () => {
     };
   }, [clients]);
 
-  const handleExport = () => {
-    const data = JSON.stringify(clients, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `GST_Portfolio_Export_${new Date().toISOString().split('T')[0]}.json`;
+  const handleExportCSV = () => {
+    const headers = [
+      "Trade Name", "Legal Name", "Mobile", "Email", "GSTIN", "PAN", 
+      "Portal User ID", "Portal Password", "Constitution", "Registration Date", 
+      "Category", "Filing Frequency", "Status"
+    ].join(",");
+
+    const rows = clients.map(c => [
+      c.tradeName, c.legalName, c.mobile, c.email, 
+      c.gstProfile?.gstin, c.gstProfile?.pan, c.gstProfile?.username, c.gstProfile?.password,
+      c.gstProfile?.constitution, c.gstProfile?.regDate, c.gstProfile?.regType,
+      c.gstProfile?.filingFreq, c.status
+    ].map(v => `"${v || ''}"`).join(",")).join("\n");
+
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `GST_Portfolio_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    setIsUtilityOpen(false);
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "Trade Name", "Legal Name", "Mobile", "Email", "GSTIN", "Portal User ID", "Portal Password", 
+      "Constitution (Proprietorship/Partnership/Company/HUF/Trust/Society/Other)", 
+      "Registration Date (YYYY-MM-DD)", "Category (Regular/Composition)", 
+      "Filing Frequency (Monthly/Quarterly)", "Status (Active/Inactive)"
+    ].join(",");
+    
+    const csvContent = "data:text/csv;charset=utf-8," + headers;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Clientify_GST_Import_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     setIsUtilityOpen(false);
   };
 
   return (
     <div className="flex flex-col h-full space-y-4 pb-4 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Dynamic Command Strip */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
@@ -95,13 +127,13 @@ const GSTPortfolio: React.FC = () => {
             
             {isUtilityOpen && (
               <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 animate-in zoom-in-95 origin-top-right">
-                 <button onClick={handleExport} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
+                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
                     <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Export Excel/CSV</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Export Portfolio (CSV)</span>
                  </button>
-                 <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Import Template</span>
+                 <button onClick={handleDownloadTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Download Template</span>
                  </button>
               </div>
             )}

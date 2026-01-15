@@ -67,6 +67,12 @@
       .app-font-serif { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
       .app-font-mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
       
+      /* Production High Density Tables */
+      table { border-collapse: separate; border-spacing: 0; }
+      tr { transition: background-color 0.15s ease; border-bottom: 1px solid #f1f5f9; }
+      th, td { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+      thead tr { border-bottom: 2px solid #e2e8f0; }
+
       /* Priority indicators */
       .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
       .traffic-amber { background-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }

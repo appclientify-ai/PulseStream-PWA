@@ -106,7 +106,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     setError(null);
   };
 
-  // Logic to auto-fetch Legal Name and PAN based on Constitution and Stakeholder 0
   const syncEntityDetails = (constitution: ConstitutionType, firstStakeholder: Stakeholder) => {
     if (!firstStakeholder) return;
     
@@ -115,7 +114,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
 
     if (constitution === 'Proprietorship') {
       derivedName = firstStakeholder.name;
-      derivedPan = firstStakeholder.pan;
+      // Requirement: Proprietorship PAN matches proprietor PAN
+      if (firstStakeholder.pan) derivedPan = firstStakeholder.pan;
     } else if (constitution === 'HUF') {
       derivedName = firstStakeholder.name.includes('HUF') ? firstStakeholder.name : `${firstStakeholder.name} HUF`;
     }
@@ -134,20 +134,35 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     const gstin = val.toUpperCase().trim().slice(0, 15);
     let pan = formData.gstProfile?.pan || '';
     
-    // Auto extract PAN from GSTIN (chars 3 to 12)
     if (gstin.length >= 12) {
       pan = gstin.substring(2, 12);
     }
 
-    setFormData(prev => ({
-      ...prev,
-      gstProfile: {
-        ...prev.gstProfile!,
-        gstin,
-        pan,
-        // Manual User ID preference - don't auto-set username to gstin anymore as per request
+    setFormData(prev => {
+      const nextGst = { ...prev.gstProfile!, gstin, pan };
+      
+      // Auto-sync stakeholder 0 PAN if proprietorship
+      if (nextGst.constitution === 'Proprietorship' && nextGst.stakeholders.length > 0) {
+        nextGst.stakeholders[0] = { ...nextGst.stakeholders[0], pan };
       }
-    }));
+
+      return {
+        ...prev,
+        gstProfile: nextGst
+      };
+    });
+  };
+
+  const handleEntityPanChange = (val: string) => {
+    const pan = val.toUpperCase().slice(0, 10);
+    setFormData(prev => {
+      const nextGst = { ...prev.gstProfile!, pan };
+      // Requirement: Auto-fill proprietor PAN if proprietorship
+      if (nextGst.constitution === 'Proprietorship' && nextGst.stakeholders.length > 0) {
+        nextGst.stakeholders[0] = { ...nextGst.stakeholders[0], pan };
+      }
+      return { ...prev, gstProfile: nextGst };
+    });
   };
 
   const handleRegTypeChange = (type: GstRegType) => {
@@ -156,18 +171,21 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
       gstProfile: {
         ...prev.gstProfile!,
         regType: type,
-        // Auto-select Quarterly for Composition taxpayers
         filingFreq: type === 'Composition' ? 'Quarterly' : prev.gstProfile?.filingFreq || 'Monthly'
       }
     }));
   };
 
   const handleConstitutionChange = (val: ConstitutionType) => {
+    setFormData(prev => {
+      const nextGst = { ...prev.gstProfile!, constitution: val };
+      // Requirement: Proprietorship pan no of proprietor auto filled same as entity pan no
+      if (val === 'Proprietorship' && nextGst.pan && nextGst.stakeholders.length > 0) {
+        nextGst.stakeholders[0] = { ...nextGst.stakeholders[0], pan: nextGst.pan };
+      }
+      return { ...prev, gstProfile: nextGst };
+    });
     const firstStakeholder = formData.gstProfile?.stakeholders[0];
-    setFormData(prev => ({
-      ...prev,
-      gstProfile: { ...prev.gstProfile!, constitution: val }
-    }));
     if (firstStakeholder) syncEntityDetails(val, firstStakeholder);
   };
 
@@ -177,7 +195,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
         s.id === id ? { ...s, [field]: val } : s
       );
       
-      // If updating first member name/pan and constitution is Proprietorship/HUF, sync Entity Details
       if (updatedStakeholders[0].id === id) {
         setTimeout(() => syncEntityDetails(prev.gstProfile!.constitution, updatedStakeholders[0]), 0);
       }
@@ -224,7 +241,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     if (formData.gstProfile?.pan && !panRegex.test(formData.gstProfile.pan)) return "Invalid PAN format (e.g. ABCDE1234F).";
     if (formData.gstProfile?.gstin && !gstinRegex.test(formData.gstProfile.gstin)) return "Invalid GSTIN format.";
     
-    // Validate stakeholders
     for (const s of formData.gstProfile?.stakeholders || []) {
       if (s.pan && !panRegex.test(s.pan)) return `Invalid PAN format for member: ${s.name || 'Member'}`;
       if (s.mobile && !mobileRegex.test(s.mobile)) return `Invalid 10-digit mobile for member: ${s.name || 'Member'}`;
@@ -283,7 +299,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
             </div>
           )}
 
-          {/* 1. Administrative Status */}
           <section className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Administrative Status <div className="h-px flex-1 bg-slate-100" /></h4>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -327,7 +342,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
           </section>
 
-          {/* 2. GST Credentials */}
           <section className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Portal Credentials <div className="h-px flex-1 bg-slate-100" /></h4>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-indigo-50/20 p-8 rounded-[2rem] border border-indigo-100/50">
@@ -340,7 +354,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                         onChange={e => handleGstinChange(e.target.value)} 
                         placeholder="GSTIN NO" 
                       />
-                      <button type="button" onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${formData.gstProfile?.gstin}`, '_blank')} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600 transition-colors"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
                    </div>
                 </div>
                 <div className="space-y-2">
@@ -348,16 +361,13 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                    <input 
                      className="w-full bg-white border border-indigo-100 p-4 rounded-2xl font-black uppercase font-mono tracking-[0.2em] outline-none focus:border-indigo-600 transition-all text-indigo-600" 
                      value={formData.gstProfile?.pan} 
-                     onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, pan: e.target.value.toUpperCase().slice(0, 10)}})} 
+                     onChange={e => handleEntityPanChange(e.target.value)} 
                      placeholder="ABCDE1234F" 
                    />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-indigo-400 tracking-widest ml-1">Portal User ID</label>
-                   <div className="relative">
-                      <input className="w-full bg-white border border-indigo-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-600" value={formData.gstProfile?.username} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, username: e.target.value}})} placeholder="Login ID" />
-                      <button type="button" onClick={() => { navigator.clipboard.writeText(formData.gstProfile?.username || ''); alert('ID Copied'); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1" /></svg></button>
-                   </div>
+                   <input className="w-full bg-white border border-indigo-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-600" value={formData.gstProfile?.username} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, username: e.target.value}})} placeholder="Login ID" />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-indigo-400 tracking-widest ml-1">Secret Password</label>
@@ -369,7 +379,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
           </section>
 
-          {/* 3. Filing Metadata */}
           <section className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Statutory Configuration <div className="h-px flex-1 bg-slate-100" /></h4>
              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -415,7 +424,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
           </section>
 
-          {/* 5. Stakeholders */}
           <section className="space-y-6">
              <div className="flex items-center justify-between">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600">Personnel / Members</h4>
@@ -450,7 +458,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
           </section>
 
-          {/* 4. Contact Details */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-10">
              <div className="space-y-6">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Accountant Contact <div className="h-px flex-1 bg-slate-100" /></h4>
@@ -468,7 +475,6 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
              </div>
           </section>
 
-          {/* 6. Banking */}
           <section className="space-y-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Banking Sync <div className="h-px flex-1 bg-slate-100" /></h4>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
@@ -494,13 +500,13 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
         </div>
 
         <footer className="px-10 py-8 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-4 shrink-0">
-           <button onClick={onClose} className="px-10 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] hover:text-slate-900 transition-colors">Discard</button>
+           <button onClick={onClose} className="px-10 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] hover:text-slate-900 transition-colors uppercase">Cancel</button>
            <button 
              onClick={handleSave} 
              disabled={isSaving}
              className="bg-indigo-600 text-white font-black uppercase tracking-[0.2em] text-[10px] px-14 py-5 rounded-2xl shadow-2xl hover:bg-slate-900 transition-all active:scale-[0.98] disabled:opacity-50"
            >
-             {isSaving ? 'Synchronizing...' : (initialData ? 'Update Vault Record' : 'Commit To Archive')}
+             {isSaving ? 'Synchronizing...' : (initialData ? 'Update Client' : 'Save Client')}
            </button>
         </footer>
       </div>
