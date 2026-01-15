@@ -1,4 +1,3 @@
-
 import { API_BASE_URL } from '../constants.ts';
 import { 
   Client, LitigationRecord, InvoiceRecord, PaymentRecord, 
@@ -14,9 +13,7 @@ class ApiService {
   }
 
   private getFullUrl(endpoint: string): string {
-    // Ensure the endpoint is clean
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    // The backend routes are prefixed with /api, so we ensure /api is in the final string
     const apiPath = cleanEndpoint.startsWith('/api') ? cleanEndpoint : `/api${cleanEndpoint}`;
     return `${API_BASE_URL}${apiPath}`;
   }
@@ -27,21 +24,30 @@ class ApiService {
       window.location.reload();
       return;
     }
+    
     const responseText = await response.text();
     let result;
     try {
       result = responseText ? JSON.parse(responseText) : {};
     } catch (e) {
-      throw new Error(`Cloud Error: ${response.status}`);
+      throw new Error(`Cloud Error ${response.status}: Failed to parse response from ${response.url}`);
     }
-    if (!response.ok) throw new Error(result.message || result.error || 'Vault Access Failed');
+    
+    if (!response.ok) {
+      throw new Error(result.message || result.error || `Vault Access Failed (${response.status}) at ${response.url}`);
+    }
     return result;
   }
 
   async get(endpoint: string) {
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
-    const res = await fetch(this.getFullUrl(endpoint), { method: 'GET', headers });
-    return this.handleResponse(res);
+    const url = this.getFullUrl(endpoint);
+    try {
+      const res = await fetch(url, { method: 'GET', headers });
+      return this.handleResponse(res);
+    } catch (err: any) {
+      throw new Error(`Connection Failed: Could not reach ${url}. Check VITE_BACKEND_URL.`);
+    }
   }
 
   async post(endpoint: string, data: any) {
@@ -49,12 +55,17 @@ class ApiService {
       'Content-Type': 'application/json',
       ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
     };
-    const res = await fetch(this.getFullUrl(endpoint), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(data),
-    });
-    return this.handleResponse(res);
+    const url = this.getFullUrl(endpoint);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+      return this.handleResponse(res);
+    } catch (err: any) {
+      throw new Error(`Connection Failed: Could not reach ${url}.`);
+    }
   }
 
   async put(endpoint: string, data: any) {
@@ -62,7 +73,8 @@ class ApiService {
       'Content-Type': 'application/json',
       ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
     };
-    const res = await fetch(this.getFullUrl(endpoint), {
+    const url = this.getFullUrl(endpoint);
+    const res = await fetch(url, {
       method: 'PUT',
       headers,
       body: JSON.stringify(data),
@@ -72,7 +84,8 @@ class ApiService {
 
   async delete(endpoint: string) {
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
-    const res = await fetch(this.getFullUrl(endpoint), { method: 'DELETE', headers });
+    const url = this.getFullUrl(endpoint);
+    const res = await fetch(url, { method: 'DELETE', headers });
     return this.handleResponse(res);
   }
 

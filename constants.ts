@@ -1,13 +1,16 @@
-
 // Detect current environment
-const isProd = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+// Fix: Use optional chaining to prevent crash if env is undefined
+const isProd = (import.meta as any).env?.PROD || false;
 
 /**
  * Production environment variables for Cloud Vault.
+ * Vite requires 'import.meta.env' for variables starting with VITE_
  */
+// Fix: Use optional chaining to prevent crash if env is undefined
 const BACKEND_URL_ENV = (import.meta as any).env?.VITE_BACKEND_URL;
 
-// Use empty string to rely on Vite proxy in development, or the env var in production
+// If the user hasn't configured a backend, we default to relative paths
+// On Netlify, this requires VITE_BACKEND_URL to be set to your actual server
 export const API_BASE_URL = BACKEND_URL_ENV 
   ? BACKEND_URL_ENV.replace(/\/$/, '') 
   : '';
