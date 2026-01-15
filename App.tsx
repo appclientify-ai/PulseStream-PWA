@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext.tsx';
 import ProtectedRoute from './components/ProtectedRoute.tsx';
 import Navbar from './components/Navbar.tsx';
@@ -9,15 +8,20 @@ import Login from './auth/Login.tsx';
 import Signup from './auth/Signup.tsx';
 import Loader from './components/Loader.tsx';
 import OfflineBanner from './components/OfflineBanner.tsx';
+import { api } from './services/api.ts';
 import { useOffline } from './hooks/useOffline.ts';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, hasCheckedAuth, isLoading } = useAuth();
+  const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('home');
   
-  const isOnline = useOffline();
+  const handleReconnect = useCallback(() => {
+    if (token) api.get('/auth/me').catch(() => {});
+  }, [token]);
+
+  const isOnline = useOffline(handleReconnect);
 
   useEffect(() => {
     if (!hasCheckedAuth) return;
@@ -31,8 +35,6 @@ const AppContent: React.FC = () => {
   if (!hasCheckedAuth) return <Loader />;
 
   const renderPage = () => {
-    if (isAuthenticated) return <Dashboard />;
-
     switch (currentPage) {
       case 'home':
         return (
@@ -45,6 +47,12 @@ const AppContent: React.FC = () => {
         return <Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />;
       case 'signup':
         return <Signup onSwitch={() => setCurrentPage('login')} onBackToHome={() => setCurrentPage('home')} />;
+      case 'dashboard':
+        return (
+          <ProtectedRoute fallback={<Login onSwitch={() => setCurrentPage('signup')} onBackToHome={() => setCurrentPage('home')} />}>
+            <Dashboard />
+          </ProtectedRoute>
+        );
       default:
         return <Home onGetStarted={() => setCurrentPage('signup')} />;
     }

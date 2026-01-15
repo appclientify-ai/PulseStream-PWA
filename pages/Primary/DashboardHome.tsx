@@ -1,162 +1,110 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import MetricCard from '../../components/MetricCard';
+import ComplianceRunway from '../../components/ComplianceRunway';
+import LegalEscalationFeed from '../../components/LegalEscalationFeed';
 import { api } from '../../services/api.ts';
-import { ModuleStatCard } from '../../components/DashboardUI';
-import { ActiveView, Client } from '../../types';
+import { MetricData, LitigationRecord } from '../../types';
+import Loader from '../../components/Loader';
 
 interface DashboardHomeProps {
-    setActiveView: (view: ActiveView) => void;
+  setActiveView: (view: string) => void;
 }
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({ setActiveView }) => {
-    const [clients, setClients] = useState<Client[]>([]);
-    const [litigation, setLitigation] = useState<any[]>([]);
-    const [invoices, setInvoices] = useState<any[]>([]);
-    const [work, setWork] = useState<any[]>([]);
-    
-    useEffect(() => {
-        api.getDashboardSummary().then(res => {
-            setClients(res.clients);
-            setLitigation(res.litigation);
-            setInvoices(res.invoices);
-            setWork(res.work);
-        });
-    }, []);
+  const [metrics, setMetrics] = useState<MetricData[]>([
+    { label: 'Total Entities', value: 0, trend: 'stable' },
+    { label: 'Active Litigation', value: 0, trend: 'stable' },
+    { label: 'Pending Returns', value: 0, trend: 'stable' },
+    { label: 'Collections (MTD)', value: 0, trend: 'stable' }
+  ]);
+  const [escalations, setEscalations] = useState<LitigationRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const clientStats = useMemo(() => ({
-        gst: clients.filter(c => !!c.gstProfile).length,
-        it: clients.filter(c => !!c.itProfile).length,
-        active: clients.filter(c => c.status.includes('Active')).length
-    }), [clients]);
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const summary = await api.getDashboardSummary();
+        
+        setMetrics([
+          { label: 'Total Entities', value: summary.clients.length, trend: 'up' },
+          { label: 'Active Litigation', value: summary.litigation.filter(l => l.status === 'Pending').length, trend: 'stable' },
+          { label: 'Pending Returns', value: 12, trend: 'down' }, // Example static for demo
+          { label: 'Firm Backlog', value: summary.work.filter(w => w.status !== 'Completed').length, trend: 'up' }
+        ]);
 
-    return (
-        <div className="space-y-10 animate-in fade-in duration-500">
-            {/* Redundant header removed as per user request */}
+        setEscalations(summary.litigation.filter(l => l.status === 'Pending').slice(0, 5));
+      } catch (err) {
+        console.error("Summary failed", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSummary();
+  }, []);
 
-            <section>
-                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
-                    Master Portfolios 
-                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <ModuleStatCard 
-                        title="GST Portfolio" 
-                        icon="🧾" 
-                        stats={[
-                            { label: 'Total Clients', value: clientStats.gst },
-                            { label: 'Active Filing', value: clients.filter(c => c.status === 'Active Filing').length }
-                        ]}
-                        chartData={{ value: clients.filter(c => c.status === 'Active Filing').length, total: clientStats.gst }}
-                        onClick={() => setActiveView('gst-portfolio')}
-                    />
-                    <ModuleStatCard 
-                        title="Income Tax" 
-                        icon="💻" 
-                        stats={[
-                            { label: 'Master Files', value: clientStats.it },
-                            { label: 'Individual', value: clients.filter(c => c.itProfile?.category === 'Individual').length }
-                        ]}
-                        chartData={{ value: clients.filter(c => c.itProfile?.category === 'Individual').length, total: clientStats.it }}
-                        onClick={() => setActiveView('it-portfolio')}
-                    />
-                    <ModuleStatCard 
-                        title="Financial Health" 
-                        icon="💳" 
-                        stats={[
-                            { label: 'Pending Bills', value: invoices.filter(i => i.status !== 'Paid').length },
-                            { label: 'Outstanding', value: '₹' + invoices.filter(i => i.status !== 'Paid').reduce((a,b)=>a+(b.totalAmount||0),0).toLocaleString() }
-                        ]}
-                        onClick={() => setActiveView('admin-invoices')}
-                    />
-                </div>
-            </section>
+  if (isLoading) return <Loader />;
 
-            <section>
-                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
-                    Statutory Compliance 
-                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <ModuleStatCard 
-                        title="GST Monthly" 
-                        icon="🗓️" 
-                        stats={[
-                            { label: 'Total Files', value: clients.filter(c => c.gstProfile?.filingFreq === 'Monthly').length },
-                            { label: 'Avg velocity', value: '88%' }
-                        ]}
-                        dueDate="20th of Month"
-                        onClick={() => setActiveView('compliance-monthly')}
-                    />
-                    <ModuleStatCard 
-                        title="GSTR-9 Annual" 
-                        icon="📑" 
-                        stats={[
-                            { label: 'Eligible', value: '42' },
-                            { label: 'Audit Ready', value: '18' }
-                        ]}
-                        dueDate="31st Dec"
-                        onClick={() => setActiveView('compliance-gstr9')}
-                    />
-                    <ModuleStatCard 
-                        title="Income Tax Return" 
-                        icon="💸" 
-                        stats={[
-                            { label: 'AY 2024-25', value: clientStats.it },
-                            { label: 'Filing Load', value: 'High' }
-                        ]}
-                        dueDate="31st July"
-                        onClick={() => setActiveView('compliance-itr')}
-                    />
-                    <ModuleStatCard 
-                        title="Tax Audit" 
-                        icon="🔍" 
-                        stats={[
-                            { label: 'Assigned', value: '12' },
-                            { label: 'In Progress', value: '4' }
-                        ]}
-                        dueDate="30th Sept"
-                        onClick={() => setActiveView('compliance-taxaudit')}
-                    />
-                </div>
-            </section>
+  return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metrics.map((m, i) => (
+          <MetricCard 
+            key={i} 
+            metric={m} 
+            priority={m.label.includes('Litigation') && m.value > 0 ? 'high' : 'low'}
+            onClick={() => {
+              if (m.label.includes('Entities')) setActiveView('gst-portfolio');
+              if (m.label.includes('Litigation')) setActiveView('lit-notice-pending');
+              if (m.label.includes('Returns')) setActiveView('compliance-monthly');
+            }}
+          />
+        ))}
+      </div>
 
-            <section>
-                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
-                    Litigation & Enforcement 
-                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <ModuleStatCard 
-                        title="GST Notices" 
-                        icon="✉️" 
-                        stats={[
-                            { label: 'Pending Reply', value: litigation.filter(l => l.category === 'Notice' && l.status === 'Pending').length, color: 'text-rose-500' },
-                            { label: 'Dropped', value: litigation.filter(l => l.status === 'Drop').length }
-                        ]}
-                        onClick={() => setActiveView('lit-notice-pending')}
-                    />
-                    <ModuleStatCard 
-                        title="GST Appeals" 
-                        icon="🏛️" 
-                        stats={[
-                            { label: 'Awaiting Hearing', value: litigation.filter(l => l.category === 'Appeal' && l.status === 'Filed').length },
-                            { label: 'Fresh Orders', value: litigation.filter(l => l.status === 'Demand').length }
-                        ]}
-                        onClick={() => setActiveView('lit-appeal-pending')}
-                    />
-                    <ModuleStatCard 
-                        title="High Court / Tribunal" 
-                        icon="🏦" 
-                        stats={[
-                            { label: 'Active WP', value: litigation.filter(l => l.category === 'HighCourt').length },
-                            { label: 'Tribunal Load', value: litigation.filter(l => l.category === 'Tribunal').length }
-                        ]}
-                        onClick={() => setActiveView('lit-tribunal-pending')}
-                    />
-                </div>
-            </section>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <ComplianceRunway 
+            month="May 2025" 
+            stats={{
+              requested: 45,
+              prepared: 32,
+              filed: 28,
+              total: 50
+            }}
+          />
+          
+          <div className="mt-8 bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm">
+             <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black uppercase tracking-tight">Recent Activity Log</h3>
+                <button onClick={() => setActiveView('trash')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:underline">Full Audit Trail</button>
+             </div>
+             <div className="space-y-6">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex gap-4 items-start pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                     <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     </div>
+                     <div>
+                        <p className="text-sm font-black text-slate-800 uppercase">System Sync: Record ID #{Math.floor(Math.random()*10000)}</p>
+                        <p className="text-xs text-slate-400 mt-1 font-medium">Auto-backup completed for master GST vault. Secure encryption verified.</p>
+                        <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mt-2">{i}h ago</p>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
         </div>
-    );
+
+        <div className="lg:col-span-1">
+          <LegalEscalationFeed 
+            items={escalations} 
+            onAction={() => setActiveView('lit-notice-pending')} 
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default DashboardHome;

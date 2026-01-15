@@ -106,12 +106,11 @@ const Dashboard: React.FC = () => {
 
   const getHeaderInfo = () => {
     const map: Record<string, { label: string, desc: string }> = {
-      dashboard: { label: 'Executive Nerve Center', desc: 'Real-time practice intelligence.' },
+      dashboard: { label: 'Practice Intelligence', desc: 'Real-time firm metrics and health.' },
       'gst-portfolio': { label: 'GST Master Vault', desc: 'Secure repository for GST registered entities.' },
       'it-portfolio': { label: 'IT Master Vault', desc: 'Direct tax profile management.' },
-      'compliance-monthly': { label: 'Monthly Filing', desc: 'Statutory GSTR-1 and GSTR-3B execution.' },
-      'lit-notice-pending': { label: 'GST Notices', desc: 'Pending response tracking.' },
-      'settings': { label: 'Vault Configuration', desc: 'Firm settings.' },
+      'compliance-monthly': { label: 'Monthly Returns', desc: 'Statutory GSTR-1 and GSTR-3B execution.' },
+      'lit-notice-pending': { label: 'Pending Notices', desc: 'Active litigation response queue.' },
     };
     return map[activeView] || { label: activeView.toUpperCase().replace(/-/g, ' '), desc: 'Authorized Vault Module' };
   };
@@ -119,7 +118,7 @@ const Dashboard: React.FC = () => {
   const headerInfo = getHeaderInfo();
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar 
         activeView={activeView} 
         onViewChange={setActiveView} 
@@ -137,7 +136,7 @@ const Dashboard: React.FC = () => {
           onViewChange={setActiveView}
         />
         
-        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-8 bg-gray-50 dark:bg-gray-950">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-6 bg-slate-50">
           <div className="max-w-[1600px] mx-auto h-full">
             {renderContent()}
           </div>

@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
-import { ModuleStatCard } from '../../../components/DashboardUI';
 import NoticeForm from '../../Clientform/NoticeForm';
 
 const NoticePending: React.FC = () => {
@@ -94,40 +93,16 @@ const NoticePending: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col space-y-8 overflow-hidden">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col space-y-4 overflow-hidden">
       
-      {/* Summary Section - Dashboard UI Style */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ModuleStatCard 
-              title="Litigation Load" 
-              icon="✉️" 
-              stats={[
-                  { label: 'Pending Reply', value: records.length, color: 'text-rose-600' },
-                  { label: 'Avg Aging', value: '14 Days' }
-              ]}
-              chartData={{ value: records.length, total: records.length + 10 }}
-          />
-          <ModuleStatCard 
-              title="Critical Notices" 
-              icon="🔥" 
-              stats={[
-                  { label: '7-Day Window', value: records.filter(r => getDaysLeft(r.dueDate) <= 7).length, color: 'text-rose-500' },
-                  { label: 'Action Required', value: 'High' }
-              ]}
-              chartData={{ value: records.filter(r => getDaysLeft(r.dueDate) <= 7).length, total: records.length }}
-          />
-          <ModuleStatCard 
-              title="Vault Capacity" 
-              icon="🛡️" 
-              stats={[
-                  { label: 'Archived', value: '412' },
-                  { label: 'Sync Status', value: 'Healthy' }
-              ]}
-          />
-      </section>
-
-      {/* Control Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+          <div className="text-center">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Notices</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
+          </div>
+        </div>
+
         <div className="relative flex-1 w-full group">
           <input 
             type="text" 

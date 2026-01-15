@@ -228,7 +228,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
              <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
              </div>
-             <span className="text-xl font-black tracking-tighter">Vault<span className="text-indigo-600">Core</span></span>
+             <span className="text-xl font-black tracking-tighter text-slate-900 uppercase">Vault<span className="text-indigo-600">Core</span></span>
            </div>
          )}
          {isCollapsed && (
@@ -238,19 +238,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
          )}
       </div>
 
-      <div className="px-4 py-3 border-b border-slate-50">
-          <div className="flex items-center justify-center gap-2 bg-slate-50 py-2 rounded-xl border border-slate-100">
-             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-             {!isCollapsed && <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Cloud Vault Encrypted</span>}
-          </div>
-      </div>
-
       <nav className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-1">
         {navStructure.map(item => <NavItemComponent key={item.id} item={item} level={0} />)}
       </nav>
 
-      <div className="p-4 border-t border-slate-100">
-         <button onClick={onToggle} className="w-full flex items-center justify-center h-12 rounded-2xl bg-slate-50 text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 group">
+      <div className="p-4 border-t border-slate-100 shrink-0">
+         <button onClick={onToggle} className="w-full flex items-center justify-center h-12 rounded-2xl bg-slate-50 text-slate-400 hover:text-indigo-600 transition-all border border-slate-100">
            <svg className={`h-5 w-5 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7m0 0l7-7m-7 7h16" /></svg>
            {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest ml-3">Minimize Sidebar</span>}
          </button>
