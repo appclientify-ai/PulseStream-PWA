@@ -4,6 +4,7 @@ import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
 import { Client } from '../../types.ts';
+import { ModuleStatCard } from '../../components/DashboardUI';
 
 const GSTPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,28 +83,40 @@ const GSTPortfolio: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4 pb-4 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-8 pb-4 overflow-hidden animate-in fade-in duration-500">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Active</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.active}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Litigation</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.litigation}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Inactive</p>
-            <p className="text-xl font-black text-slate-400 leading-none">{stats.inactive}</p>
-          </div>
-        </div>
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ModuleStatCard 
+              title="GST Reach" 
+              icon="🧾" 
+              stats={[
+                  { label: 'Total Vault', value: stats.total },
+                  { label: 'Active', value: stats.active, color: 'text-emerald-600' }
+              ]}
+              chartData={{ value: stats.active, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="Risk Profile" 
+              icon="⚖️" 
+              stats={[
+                  { label: 'In Litigation', value: stats.litigation, color: 'text-rose-500' },
+                  { label: 'Compliance Rate', value: '94%' }
+              ]}
+              chartData={{ value: stats.litigation, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="Vault Churn" 
+              icon="📉" 
+              stats={[
+                  { label: 'Inactive', value: stats.inactive, color: 'text-gray-400' },
+                  { label: 'Closed Cases', value: '12' }
+              ]}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 group w-full">
           <input 
             type="text" 

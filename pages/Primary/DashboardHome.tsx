@@ -1,26 +1,19 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { api } from '../../services/api.ts';
 import { ModuleStatCard } from '../../components/DashboardUI';
-// Fix: Removed unused and non-existent type imports that were causing module member errors
 import { ActiveView, Client } from '../../types';
 
 interface DashboardHomeProps {
     setActiveView: (view: ActiveView) => void;
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const QUARTERS: Record<string, string> = { 'Q1': 'Q1 (Apr-Jun)', 'Q2': 'Q2 (Jul-Sep)', 'Q3': 'Q3 (Oct-Dec)', 'Q4': 'Q4 (Jan-Mar)' };
-
 const DashboardHome: React.FC<DashboardHomeProps> = ({ setActiveView }) => {
     const [clients, setClients] = useState<Client[]>([]);
     const [litigation, setLitigation] = useState<any[]>([]);
     const [invoices, setInvoices] = useState<any[]>([]);
     const [work, setWork] = useState<any[]>([]);
-    const [financialYears, setFinancialYears] = useState<string[]>(['2024-25', '2023-24']);
     
-    // Summary data for charts
-    const [stats, setStats] = useState<any>({});
-
     useEffect(() => {
         api.getDashboardSummary().then(res => {
             setClients(res.clients);
@@ -37,23 +30,14 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setActiveView }) => {
     }), [clients]);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Practice Executive Pulse</h1>
-                    <p className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em] mt-2">Authorized Intelligence Snapshot</p>
-                </div>
-                <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Server Status</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-xs font-black text-gray-900 dark:text-white">ENCRYPTED SYNC ACTIVE</span>
-                    </div>
-                </div>
-            </header>
+        <div className="space-y-10 animate-in fade-in duration-500">
+            {/* Redundant header removed as per user request */}
 
             <section>
-                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 mb-4 uppercase tracking-[0.3em] flex items-center gap-3">Master Portfolios <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" /></h2>
+                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
+                    Master Portfolios 
+                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <ModuleStatCard 
                         title="GST Portfolio" 
@@ -88,7 +72,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setActiveView }) => {
             </section>
 
             <section>
-                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 mb-4 uppercase tracking-[0.3em] flex items-center gap-3">Statutory Compliance <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" /></h2>
+                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
+                    Statutory Compliance 
+                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <ModuleStatCard 
                         title="GST Monthly" 
@@ -134,7 +121,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setActiveView }) => {
             </section>
 
             <section>
-                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 mb-4 uppercase tracking-[0.3em] flex items-center gap-3">Litigation & Enforcement <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" /></h2>
+                <h2 className="text-[10px] font-black text-gray-400 dark:text-gray-500 mb-5 uppercase tracking-[0.4em] flex items-center gap-4">
+                    Litigation & Enforcement 
+                    <div className="h-px flex-1 bg-gray-100 dark:bg-gray-800" />
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <ModuleStatCard 
                         title="GST Notices" 

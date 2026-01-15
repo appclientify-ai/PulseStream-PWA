@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod } from './filinglogic/MonthlyFilingLogic';
 
 const MonthlyFiling: React.FC = () => {
@@ -56,24 +57,41 @@ const MonthlyFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">GSTR-1</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1Filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">GSTR-3B</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3bFiled}</p>
-          </div>
-        </div>
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ModuleStatCard 
+              title="Execution Load" 
+              icon="🗓️" 
+              stats={[
+                  { label: 'Total Entities', value: stats.total },
+                  { label: 'Period', value: `${selectedMonth} ${selectedYear}` }
+              ]}
+              dueDate={`Target: ${getDueDate() || 'Not Set'}`}
+          />
+          <ModuleStatCard 
+              title="GSTR-1 Status" 
+              icon="📤" 
+              stats={[
+                  { label: 'Filed', value: stats.r1Filed, color: 'text-indigo-600' },
+                  { label: 'Pending', value: stats.total - stats.r1Filed, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.r1Filed, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="GSTR-3B Status" 
+              icon="💰" 
+              stats={[
+                  { label: 'Filed', value: stats.r3bFiled, color: 'text-emerald-600' },
+                  { label: 'Pending', value: stats.total - stats.r3bFiled, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.r3bFiled, total: stats.total }}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search entity in monthly vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
@@ -90,6 +108,7 @@ const MonthlyFiling: React.FC = () => {
         </div>
       </div>
 
+      {/* Main Content Table */}
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
           <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
