@@ -53,10 +53,6 @@ export interface GSTProfile {
   pan?: string;
   username: string;
   password?: string;
-  ewayBillUsername?: string;
-  ewayBillPassword?: string;
-  gstatUsername?: string;
-  gstatPassword?: string;
   gstStatus: GstStatus;
   regDate: string;
   cancelDate?: string;
@@ -195,6 +191,7 @@ export interface LitigationRecord {
   hearingDate?: string;
 }
 
+/* Fix: Adding GST Registration related types */
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
@@ -210,6 +207,7 @@ export interface GSTRegistrationRecord {
   remarks?: string;
 }
 
+/* Fix: Adding Food License related types */
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
 export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected';
 
@@ -225,6 +223,7 @@ export interface FoodLicenseRecord {
   remarks?: string;
 }
 
+/* Fix: Adding MSME Registration related types */
 export type MSMERegistrationStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
@@ -238,6 +237,7 @@ export interface MSMERegistrationRecord {
   remarks?: string;
 }
 
+/* Fix: Adding Miscellaneous Work related types */
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {
