@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import ITClientFormModal from '../../Clientform/ITClientFormModal';
 import Loader from '../../../components/Loader';
+import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useITRReturnLogic } from './ITRReturnlogic';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 
@@ -36,7 +38,6 @@ const ITRReturn: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      // Filter for clients with IT profiles who are active
       setClients(data.filter(c => !!c.itProfile && (c.status === 'Active' || c.status === 'Active Filing')));
     } catch (err) {
       console.error("ITR Sync Error:", err);
@@ -89,25 +90,42 @@ const ITRReturn: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <div className="flex items-center gap-1 mb-1">
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AY {selectedAY}</p>
-               <span className="text-[8px] font-bold text-indigo-400 bg-indigo-50 px-1 rounded">FY {financialYearDisplay}</span>
-            </div>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">ITR Filed</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.filed}</p>
-          </div>
-        </div>
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ModuleStatCard 
+              title="ITR Reach" 
+              icon="💸" 
+              stats={[
+                  { label: 'Assigned Entities', value: stats.total },
+                  { label: 'AY Cycle', value: selectedAY }
+              ]}
+              dueDate={`FY: ${financialYearDisplay}`}
+          />
+          <ModuleStatCard 
+              title="Filing Done" 
+              icon="✅" 
+              stats={[
+                  { label: 'Completed', value: stats.filed, color: 'text-emerald-600' },
+                  { label: 'Pending', value: stats.total - stats.filed, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.filed, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="Deadline Pressure" 
+              icon="🔥" 
+              stats={[
+                  { label: 'Target Date', value: getDueDate() || 'Set Target' },
+                  { label: 'Severity', value: 'Medium' }
+              ]}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search active IT client, PAN, or Father Name..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search active IT vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
@@ -225,7 +243,7 @@ const ITRReturn: React.FC = () => {
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                  <div>
                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{selectedClient.legalName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">IT Profile Detail • AY {selectedAY}</p>
+                    <p className="text-[10px] font-bold text-slate-50 uppercase tracking-widest mt-1">IT Profile Detail • AY {selectedAY}</p>
                  </div>
                  <button onClick={() => setIsDetailModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-all"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>

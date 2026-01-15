@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS } from './filinglogic/MonthlyFilingLogic';
 
@@ -53,21 +54,34 @@ const CompositionFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Comp. Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">CMP-08 Filed</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.filed}</p>
-          </div>
-        </div>
+    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+      
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ModuleStatCard 
+              title="Composition Registry" 
+              icon="📦" 
+              stats={[
+                  { label: 'Total Entities', value: stats.total },
+                  { label: 'Period', value: selectedQuarter }
+              ]}
+              dueDate={`FY: ${selectedYear}`}
+          />
+          <ModuleStatCard 
+              title="CMP-08 Velocity" 
+              icon="💸" 
+              stats={[
+                  { label: 'Filed', value: stats.filed, color: 'text-emerald-600' },
+                  { label: 'Pending', value: stats.total - stats.filed, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.filed, total: stats.total }}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search composition client..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search composition vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>

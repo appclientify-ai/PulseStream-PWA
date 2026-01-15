@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { MiscWorkRecord, MiscWorkStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import WorkForm from '../Clientform/workForm';
 import Loader from '../../components/Loader';
+import { ModuleStatCard } from '../../components/DashboardUI';
 
 const Miscellaneouswork: React.FC = () => {
   const [records, setRecords] = useState<MiscWorkRecord[]>([]);
@@ -72,24 +74,39 @@ const Miscellaneouswork: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Queue</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Pending</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.pending}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Done</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.completed}</p>
-          </div>
-        </div>
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ModuleStatCard 
+              title="Work Pipeline" 
+              icon="💼" 
+              stats={[
+                  { label: 'Assigned Tasks', value: stats.total },
+                  { label: 'Queue Load', value: 'Moderate' }
+              ]}
+          />
+          <ModuleStatCard 
+              title="Task Velocity" 
+              icon="⚡" 
+              stats={[
+                  { label: 'Done', value: stats.completed, color: 'text-emerald-600' },
+                  { label: 'Ratio', value: `${Math.round((stats.completed/stats.total)*100 || 0)}%` }
+              ]}
+              chartData={{ value: stats.completed, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="Active Load" 
+              icon="⏳" 
+              stats={[
+                  { label: 'In Process', value: stats.pending, color: 'text-amber-600' },
+                  { label: 'Sync Status', value: 'Active' }
+              ]}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search by Client, Task Description or Staff Assigned..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3.5 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-4 focus:ring-indigo-50 outline-none transition-all" />

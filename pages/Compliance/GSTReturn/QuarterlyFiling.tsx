@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useQuarterlyFilingLogic } from './filinglogic/QuarterlyFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS } from './filinglogic/MonthlyFilingLogic';
 
@@ -55,25 +56,43 @@ const QuarterlyFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">QRMP Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">IFF/R1</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1Filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Q-3B</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3bFiled}</p>
-          </div>
-        </div>
+    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+      
+      {/* Summary Section - Dashboard UI Style */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ModuleStatCard 
+              title="QRMP Load" 
+              icon="🏢" 
+              stats={[
+                  { label: 'Total Entities', value: stats.total },
+                  { label: 'Quarter', value: selectedQuarter }
+              ]}
+              dueDate={`FY: ${selectedYear}`}
+          />
+          <ModuleStatCard 
+              title="IFF / GSTR-1" 
+              icon="📤" 
+              stats={[
+                  { label: 'Filed', value: stats.r1Filed, color: 'text-indigo-600' },
+                  { label: 'Pending', value: stats.total - stats.r1Filed, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.r1Filed, total: stats.total }}
+          />
+          <ModuleStatCard 
+              title="Quarterly 3B" 
+              icon="💰" 
+              stats={[
+                  { label: 'Filed', value: stats.r3bFiled, color: 'text-emerald-600' },
+                  { label: 'Pending', value: stats.total - stats.r3bFiled, color: 'text-rose-500' }
+              ]}
+              chartData={{ value: stats.r3bFiled, total: stats.total }}
+          />
+      </section>
 
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search QRMP client..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search QRMP vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
