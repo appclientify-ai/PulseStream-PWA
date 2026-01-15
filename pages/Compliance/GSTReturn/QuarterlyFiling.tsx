@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
-import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useQuarterlyFilingLogic } from './filinglogic/QuarterlyFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS } from './filinglogic/MonthlyFilingLogic';
 
@@ -41,13 +40,6 @@ const QuarterlyFiling: React.FC = () => {
     );
   }, [clients, search]);
 
-  const stats = useMemo(() => {
-    const total = filteredClients.length;
-    const r1Filed = filteredClients.filter(c => getStatus(c.id).r1).length;
-    const r3bFiled = filteredClients.filter(c => getStatus(c.id).r3b).length;
-    return { total, r1Filed, r3bFiled };
-  }, [filteredClients, getStatus]);
-
   const copyAndOpen = (username: string) => {
     navigator.clipboard.writeText(username);
     window.open('https://services.gst.gov.in/services/login', '_blank');
@@ -56,41 +48,15 @@ const QuarterlyFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      {/* Summary Section - Dashboard UI Style */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ModuleStatCard 
-              title="QRMP Load" 
-              icon="🏢" 
-              stats={[
-                  { label: 'Total Entities', value: stats.total },
-                  { label: 'Quarter', value: selectedQuarter }
-              ]}
-              dueDate={`FY: ${selectedYear}`}
-          />
-          <ModuleStatCard 
-              title="IFF / GSTR-1" 
-              icon="📤" 
-              stats={[
-                  { label: 'Filed', value: stats.r1Filed, color: 'text-indigo-600' },
-                  { label: 'Pending', value: stats.total - stats.r1Filed, color: 'text-rose-500' }
-              ]}
-              chartData={{ value: stats.r1Filed, total: stats.total }}
-          />
-          <ModuleStatCard 
-              title="Quarterly 3B" 
-              icon="💰" 
-              stats={[
-                  { label: 'Filed', value: stats.r3bFiled, color: 'text-emerald-600' },
-                  { label: 'Pending', value: stats.total - stats.r3bFiled, color: 'text-rose-500' }
-              ]}
-              chartData={{ value: stats.r3bFiled, total: stats.total }}
-          />
-      </section>
-
       {/* Control Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-3 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+            <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+              {filteredClients.length} Records
+            </span>
+        </div>
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search QRMP vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />

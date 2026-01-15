@@ -12,6 +12,7 @@ import GSTR4 from '../Compliance/AnnualReturns/GSTR4';
 import GSTR9_9C from '../Compliance/AnnualReturns/GSTR9_9C';
 import ITRReturn from '../Compliance/ITAudit/ITRReturn';
 import TAXAudit from '../Compliance/ITAudit/TAXAudit';
+import Balancesheet from '../Compliance/ITAudit/Balancesheet';
 import NoticePending from '../LitigationSuite/GSTNotices/NoticePending';
 import NoticeFiled from '../LitigationSuite/GSTNotices/NoticeFiled';
 import NoticeDrop from '../LitigationSuite/GSTNotices/NoticeDrop';
@@ -20,6 +21,14 @@ import AppealPending from '../LitigationSuite/GSTAppeals/AppealPending';
 import AppealFiled from '../LitigationSuite/GSTAppeals/AppealFiled';
 import AppealDrop from '../LitigationSuite/GSTAppeals/AppealDrop';
 import AppealDemand from '../LitigationSuite/GSTAppeals/AppealDemand';
+import TribunalPending from '../LitigationSuite/Tribunal/TribunalPending';
+import TribunalFiled from '../LitigationSuite/Tribunal/TribunalFiled';
+import TribunalDrop from '../LitigationSuite/Tribunal/TribunalDrop';
+import TribunalDemand from '../LitigationSuite/Tribunal/TribunalDemand';
+import CourtPending from '../LitigationSuite/HighCourt/CourtPending';
+import CourtFiled from '../LitigationSuite/HighCourt/CourtFiled';
+import CourtDrop from '../LitigationSuite/HighCourt/CourtDrop';
+import CourtDemand from '../LitigationSuite/HighCourt/CourtDemand';
 import Messenger from '../Administration/Messenger';
 import Reminders from '../Administration/Reminders';
 import Invoices from '../Administration/invoice/Invoices';
@@ -28,6 +37,10 @@ import Setting from '../Administration/Setting';
 import Trash from '../Administration/Trash';
 import AddInvoice from '../Administration/invoice/addinvoice';
 import DueDateSetting from '../Administration/DueDateSetting';
+import GSTRegistration from '../Miscellaneous/GSTRegistration';
+import FoodLicenses from '../Miscellaneous/FoodLicenses';
+import MSMERegistration from '../Miscellaneous/MSMERegistration';
+import Miscellaneouswork from '../Miscellaneous/Miscellaneouswork';
 
 import { useAuth } from '../../auth/AuthContext';
 import { socketService } from '../../services/socketService';
@@ -58,6 +71,7 @@ const Dashboard: React.FC = () => {
       case 'compliance-gstr9': return <GSTR9_9C />;
       case 'compliance-itr': return <ITRReturn />;
       case 'compliance-taxaudit': return <TAXAudit />;
+      case 'balance-sheet': return <Balancesheet />;
       case 'lit-notice-pending': return <NoticePending />;
       case 'lit-notice-filed': return <NoticeFiled />;
       case 'lit-notice-drop': return <NoticeDrop />;
@@ -66,6 +80,18 @@ const Dashboard: React.FC = () => {
       case 'lit-appeal-filed': return <AppealFiled />;
       case 'lit-appeal-drop': return <AppealDrop />;
       case 'lit-appeal-demand': return <AppealDemand />;
+      case 'lit-tribunal-pending': return <TribunalPending />;
+      case 'lit-tribunal-filed': return <TribunalFiled />;
+      case 'lit-tribunal-drop': return <TribunalDrop />;
+      case 'lit-tribunal-demand': return <TribunalDemand />;
+      case 'lit-hc-pending': return <CourtPending />;
+      case 'lit-hc-filed': return <CourtFiled />;
+      case 'lit-hc-drop': return <CourtDrop />;
+      case 'lit-hc-demand': return <CourtDemand />;
+      case 'misc-gst-reg': return <GSTRegistration />;
+      case 'food-licenses': return <FoodLicenses />;
+      case 'msme-registration': return <MSMERegistration />;
+      case 'misc-work': return <Miscellaneouswork />;
       case 'messenger': return <Messenger />;
       case 'reminders': return <Reminders />;
       case 'admin-invoices': return <Invoices onViewChange={(v) => setActiveView(v as ActiveView)} />;
@@ -80,13 +106,12 @@ const Dashboard: React.FC = () => {
 
   const getHeaderInfo = () => {
     const map: Record<string, { label: string, desc: string }> = {
-      dashboard: { label: 'Executive Nerve Center', desc: 'Real-time practice intelligence and filing velocity.' },
+      dashboard: { label: 'Executive Nerve Center', desc: 'Real-time practice intelligence.' },
       'gst-portfolio': { label: 'GST Master Vault', desc: 'Secure repository for GST registered entities.' },
-      'it-portfolio': { label: 'IT Master Vault', desc: 'Direct tax profile management and PAN hub.' },
+      'it-portfolio': { label: 'IT Master Vault', desc: 'Direct tax profile management.' },
       'compliance-monthly': { label: 'Monthly Filing', desc: 'Statutory GSTR-1 and GSTR-3B execution.' },
-      'compliance-taxaudit': { label: 'Audit & Financials', desc: 'Tax audit lifecycle and balance sheet preparation.' },
-      'lit-notice-pending': { label: 'GST Notices', desc: 'Critical response tracking for departmental notices.' },
-      'settings': { label: 'Vault Configuration', desc: 'Practitioner profile and professional settings.' },
+      'lit-notice-pending': { label: 'GST Notices', desc: 'Pending response tracking.' },
+      'settings': { label: 'Vault Configuration', desc: 'Firm settings.' },
     };
     return map[activeView] || { label: activeView.toUpperCase().replace(/-/g, ' '), desc: 'Authorized Vault Module' };
   };

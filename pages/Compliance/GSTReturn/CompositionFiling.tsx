@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
-import { ModuleStatCard } from '../../../components/DashboardUI';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS } from './filinglogic/MonthlyFilingLogic';
 
@@ -40,12 +39,6 @@ const CompositionFiling: React.FC = () => {
     );
   }, [clients, search]);
 
-  const stats = useMemo(() => {
-    const total = filteredClients.length;
-    const filed = filteredClients.filter(c => getStatus(c.id).cmp08).length;
-    return { total, filed };
-  }, [filteredClients, getStatus]);
-
   const copyAndOpen = (username: string) => {
     navigator.clipboard.writeText(username);
     window.open('https://services.gst.gov.in/services/login', '_blank');
@@ -54,32 +47,15 @@ const CompositionFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-8 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      {/* Summary Section - Dashboard UI Style */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ModuleStatCard 
-              title="Composition Registry" 
-              icon="📦" 
-              stats={[
-                  { label: 'Total Entities', value: stats.total },
-                  { label: 'Period', value: selectedQuarter }
-              ]}
-              dueDate={`FY: ${selectedYear}`}
-          />
-          <ModuleStatCard 
-              title="CMP-08 Velocity" 
-              icon="💸" 
-              stats={[
-                  { label: 'Filed', value: stats.filed, color: 'text-emerald-600' },
-                  { label: 'Pending', value: stats.total - stats.filed, color: 'text-rose-500' }
-              ]}
-              chartData={{ value: stats.filed, total: stats.total }}
-          />
-      </section>
-
       {/* Control Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-3 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+            <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+              {filteredClients.length} Records
+            </span>
+        </div>
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Search composition vault..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />

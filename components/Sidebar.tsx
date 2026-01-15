@@ -5,7 +5,7 @@ import { ActiveView } from '../types';
 interface NavItem {
   id: string;
   label: string;
-  icon: string | React.ReactNode;
+  icon: string;
   view?: ActiveView;
   subItems?: NavItem[];
 }
@@ -24,8 +24,8 @@ const navStructure: NavItem[] = [
         label: 'Client Management', 
         icon: '👥',
         subItems: [
-            { id: 'gst-portfolio', label: 'GST Portfolio', icon: '🧾', view: 'gst-portfolio' },
-            { id: 'it-portfolio', label: 'IT Portfolio', icon: '💻', view: 'it-portfolio' },
+            { id: 'gst-clients', label: 'GST Client Details', icon: '🧾', view: 'gst-portfolio' },
+            { id: 'it-clients', label: 'Income Tax Client Details', icon: '💻', view: 'it-portfolio' },
         ]
     },
     { 
@@ -33,20 +33,67 @@ const navStructure: NavItem[] = [
         label: 'Tax & Compliance', 
         icon: '📊',
         subItems: [
-            { id: 'compliance-monthly', label: 'Monthly Filing', icon: '🗓️', view: 'compliance-monthly' },
-            { id: 'compliance-quarterly', label: 'Quarterly (QRMP)', icon: '🏢', view: 'compliance-quarterly' },
-            { id: 'compliance-composition', label: 'Composition', icon: '📦', view: 'compliance-composition' },
+            { 
+                id: 'gst-regular',
+                label: 'GST REGULAR Return', 
+                icon: '🗓️',
+                subItems: [
+                    { id: 'gst-monthly', label: 'Monthly', icon: '›', view: 'compliance-monthly' },
+                    { id: 'gst-quarterly', label: 'Quarterly', icon: '›', view: 'compliance-quarterly' },
+                ]
+            },
+            { id: 'gst-composition', label: 'GST COMPOSITION Return', icon: '📦', view: 'compliance-composition' },
         ]
     },
     { 
         id: 'legal',
-        label: 'Litigation Suite', 
+        label: 'Legal', 
         icon: '⚖️',
         subItems: [
-            { id: 'lit-notices', label: 'GST Notices', icon: '✉️', view: 'lit-notice-pending' },
-            { id: 'lit-appeals', label: 'GST Appeals', icon: '🏛️', view: 'lit-appeal-pending' },
-            { id: 'lit-tribunal', label: 'GSTAT Tribunal', icon: '🏤', view: 'lit-tribunal-pending' },
-            { id: 'lit-court', label: 'High Court', icon: '🏦', view: 'lit-hc-pending' },
+            { 
+                id: 'gst-notices', 
+                label: 'GST Notices', 
+                icon: '✉️', 
+                subItems: [
+                    { id: 'gst-notice-pending', label: 'Pending Reply', icon: '›', view: 'lit-notice-pending' },
+                    { id: 'gst-notice-reply', label: 'Notice Reply Filed', icon: '›', view: 'lit-notice-filed' },
+                    { id: 'gst-notice-drop', label: 'Notice Drop Order', icon: '›', view: 'lit-notice-drop' },
+                    { id: 'gst-notice-demand', label: 'Notice Demand Order', icon: '›', view: 'lit-notice-demand' },
+                ]
+            },
+            { 
+                id: 'gst-appeals', 
+                label: 'GST Appeals', 
+                icon: '🏛️',
+                subItems: [
+                    { id: 'gst-appeal-pending', label: 'Appeal Pending', icon: '›', view: 'lit-appeal-pending' },
+                    { id: 'gst-appeal-filed', label: 'Appeal Filed', icon: '›', view: 'lit-appeal-filed' },
+                    { id: 'gst-appeal-drop', label: 'Appeal Drop Order', icon: '›', view: 'lit-appeal-drop' },
+                    { id: 'gst-appeal-demand', label: 'Appeal Demand Order', icon: '›', view: 'lit-appeal-demand' },
+                ]
+            },
+            {
+                id: 'gst-tribunal',
+                label: 'GST Tribunal',
+                icon: '🏤',
+                subItems: [
+                    { id: 'gstat-pending', label: 'GSTAT Pending', icon: '›', view: 'lit-tribunal-pending' },
+                    { id: 'gstat-filed', label: 'GSTAT Filed', icon: '›', view: 'lit-tribunal-filed' },
+                    { id: 'gstat-drop', label: 'GSTAT Drop Order', icon: '›', view: 'lit-tribunal-drop' },
+                    { id: 'gstat-demand', label: 'GSTAT Demand Order', icon: '›', view: 'lit-tribunal-demand' },
+                ]
+            },
+            {
+                id: 'high-court',
+                label: 'High Court',
+                icon: '🏦',
+                subItems: [
+                    { id: 'hc-pending', label: 'HC Appeal Pending', icon: '›', view: 'lit-hc-pending' },
+                    { id: 'hc-filed', label: 'HC Appeal Filed', icon: '›', view: 'lit-hc-filed' },
+                    { id: 'hc-drop', label: 'HC Drop Order', icon: '›', view: 'lit-hc-drop' },
+                    { id: 'hc-demand', label: 'HC Demand Order', icon: '›', view: 'lit-hc-demand' },
+                ]
+            }
         ]
     },
     {
@@ -54,8 +101,8 @@ const navStructure: NavItem[] = [
         label: 'Annual Returns',
         icon: '📆',
         subItems: [
-             { id: 'compliance-gstr4', label: 'GSTR-4 Annual', icon: '📄', view: 'compliance-gstr4' },
-             { id: 'compliance-gstr9', label: 'GSTR-9/9C Audit', icon: '📑', view: 'compliance-gstr9' },
+             { id: 'gstr4-annual', label: 'GSTR-4 Annual Return', icon: '📄', view: 'compliance-gstr4' },
+             { id: 'gstr9-annual', label: 'GSTR-9/9C Annual Return', icon: '📑', view: 'compliance-gstr9' },
         ]
     },
     { 
@@ -63,19 +110,20 @@ const navStructure: NavItem[] = [
         label: 'Income Tax & Audit', 
         icon: '📈',
         subItems: [
-            { id: 'compliance-itr', label: 'ITR Returns', icon: '💸', view: 'compliance-itr' },
-            { id: 'compliance-taxaudit', label: 'Audit & B/S', icon: '🔍', view: 'compliance-taxaudit' },
+            { id: 'it-return', label: 'Income Tax Return', icon: '💸', view: 'compliance-itr' },
+            { id: 'audit', label: 'Audit', icon: '🔍', view: 'compliance-taxaudit' },
+            { id: 'balance-sheet', label: 'Balance Sheet', icon: '📋', view: 'balance-sheet' },
         ]
     },
     { 
         id: 'misc-work',
-        label: 'Services Hub', 
+        label: 'Miscellaneous Work', 
         icon: '📁',
         subItems: [
-            { id: 'misc-gst-reg', label: 'GST Reg.', icon: '📝', view: 'misc-gst-reg' },
-            { id: 'misc-food-lic', label: 'Food License', icon: '🍔', view: 'misc-food-lic' },
-            { id: 'misc-msme', label: 'MSME Reg.', icon: '🏢', view: 'misc-msme' },
-            { id: 'misc-work', label: 'Work Log', icon: '💼', view: 'misc-work' },
+            { id: 'gst-registration', label: 'GST Registration', icon: '📝', view: 'misc-gst-reg' },
+            { id: 'food-licenses', label: 'Food Licenses', icon: '🍔', view: 'food-licenses' },
+            { id: 'msme-registration', label: 'MSME Registration', icon: '🏢', view: 'msme-registration' },
+            { id: 'misc-work-general', label: 'Miscellaneous Work', icon: '💼', view: 'misc-work' },
         ]
     },
     { 
@@ -83,11 +131,11 @@ const navStructure: NavItem[] = [
         label: 'Administrative', 
         icon: '⚙️',
         subItems: [
-            { id: 'reminders', label: 'Due Reminders', icon: '⏰', view: 'reminders' },
-            { id: 'messenger', label: 'Messenger', icon: '💬', view: 'messenger' },
-            { id: 'admin-invoices', label: 'Invoices', icon: '💳', view: 'admin-invoices' },
-            { id: 'admin-payments', label: 'Payments', icon: '✅', view: 'admin-payments' },
-            { id: 'admin-duedates', label: 'Calendar Settings', icon: '🗓️', view: 'admin-duedates' },
+            { id: 'reminders', label: 'Due Date Reminder', icon: '⏰', view: 'reminders' },
+            { id: 'reminder-messages', label: 'Reminder Messages', icon: '💬', view: 'messenger' },
+            { id: 'payments', label: 'Payment Details', icon: '💳', view: 'admin-invoices' },
+            { id: 'payments-received', label: 'Payment Received', icon: '✅', view: 'admin-payments' },
+            { id: 'due-date-settings', label: 'Due Date Settings', icon: '🗓️', view: 'admin-duedates' },
             { id: 'settings', label: 'Settings', icon: '🔧', view: 'settings' },
         ]
     },
@@ -97,39 +145,57 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Auto-expand current active view folder
-    const findPath = (items: NavItem[]): string | null => {
+    const findPath = (items: NavItem[], targetView: ActiveView): string[] => {
         for (const item of items) {
-            if (item.view === activeView) return item.id;
+            if (item.view === targetView) return [item.id];
             if (item.subItems) {
-                const sub = findPath(item.subItems);
-                if (sub) return item.id;
+                const sub = findPath(item.subItems, targetView);
+                if (sub.length > 0) return [item.id, ...sub];
             }
         }
-        return null;
+        return [];
     };
-    const parentId = findPath(navStructure);
-    if (parentId) setOpenSections(prev => ({ ...prev, [parentId]: true }));
+    const path = findPath(navStructure, activeView);
+    if (path.length > 0) {
+        setOpenSections(prev => {
+            const next = { ...prev };
+            path.forEach(id => next[id] = true);
+            return next;
+        });
+    }
   }, [activeView]);
 
   const toggleSection = (id: string) => {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const renderNavItem = (item: NavItem, level = 0) => {
+  const NavItemComponent: React.FC<{ item: NavItem; level: number }> = ({ item, level }) => {
     const hasSubItems = !!item.subItems?.length;
     const isOpen = openSections[item.id];
     const isActive = activeView === item.view;
-    const isChildActive = item.subItems?.some(s => s.view === activeView);
+    
+    const isChildActive = (nodes: NavItem[]): boolean => {
+        return nodes.some(node => node.view === activeView || (node.subItems && isChildActive(node.subItems)));
+    };
+    const childActive = hasSubItems && isChildActive(item.subItems!);
+
+    const handleClick = () => {
+      if (hasSubItems) {
+        toggleSection(item.id);
+      } else if (item.view) {
+        onViewChange(item.view);
+      }
+    };
 
     return (
-      <div key={item.id} className="w-full">
+      <div className="w-full">
         <button
-          onClick={() => hasSubItems ? toggleSection(item.id) : item.view && onViewChange(item.view)}
-          className={`flex w-full items-center gap-4 rounded-xl transition-all duration-300 ${
+          onClick={handleClick}
+          style={{ paddingLeft: isCollapsed ? '0' : `${16 + level * 12}px` }}
+          className={`flex w-full items-center gap-3 rounded-xl transition-all duration-300 ${
             isCollapsed ? 'justify-center py-4' : 'px-4 py-3'
           } ${
-            isActive ? 'bg-indigo-600 text-white shadow-lg' : isChildActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+            isActive ? 'bg-indigo-600 text-white shadow-lg' : childActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
           <span className={`${isCollapsed ? 'text-2xl' : 'text-xl'} shrink-0`}>{item.icon}</span>
@@ -146,8 +212,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         </button>
 
         {hasSubItems && isOpen && !isCollapsed && (
-          <div className="mt-1 space-y-1 ml-6 border-l-2 border-slate-100 pl-2 animate-in slide-in-from-top-2">
-            {item.subItems?.map(sub => renderNavItem(sub, level + 1))}
+          <div className="mt-1 space-y-1">
+            {item.subItems?.map(sub => <NavItemComponent key={sub.id} item={sub} level={level + 1} />)}
           </div>
         )}
       </div>
@@ -180,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
       </div>
 
       <nav className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-1">
-        {navStructure.map(item => renderNavItem(item))}
+        {navStructure.map(item => <NavItemComponent key={item.id} item={item} level={0} />)}
       </nav>
 
       <div className="p-4 border-t border-slate-100">
