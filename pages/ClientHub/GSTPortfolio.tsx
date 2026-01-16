@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
-import { Client } from '../../types.ts';
+import { Client, GstRegType, GstFilingFreq, ConstitutionType, ClientStatus } from '../../types.ts';
 
 const GSTPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +11,9 @@ const GSTPortfolio: React.FC = () => {
   const [search, setSearch] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRefresh = useCallback(() => {
     setRefreshTrigger(p => p + 1);
@@ -81,6 +84,68 @@ const GSTPortfolio: React.FC = () => {
     setIsUtilityOpen(false);
   };
 
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n');
+      const header = lines[0].split(',');
+      const rows = lines.slice(1);
+      
+      setIsImporting(true);
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const row of rows) {
+        if (!row.trim()) continue;
+        const values = row.split(',').map(v => v.replace(/^"|"$/g, '').trim());
+        
+        try {
+          // Minimal column mapping based on template
+          const clientData: Partial<Client> = {
+            tradeName: values[0] || 'Unknown Client',
+            legalName: values[1] || values[0] || 'Unknown Entity',
+            mobile: values[2] || '',
+            email: values[3] || '',
+            status: (values[11] as ClientStatus) || 'Active',
+            gstProfile: {
+              gstin: values[4] || '',
+              pan: values[4]?.substring(2, 12) || '',
+              username: values[5] || values[4] || '',
+              password: values[6] || '',
+              constitution: (values[7] as ConstitutionType) || 'Proprietorship',
+              regDate: values[8] || '',
+              regType: (values[9] as GstRegType) || 'Regular',
+              filingFreq: (values[10] as GstFilingFreq) || 'Monthly',
+              gstStatus: 'Active',
+              stakeholders: []
+            }
+          };
+
+          if (clientData.gstProfile?.gstin) {
+            await api.saveClient(clientData);
+            successCount++;
+          }
+        } catch (err) {
+          console.error("Import row failed:", row, err);
+          errorCount++;
+        }
+      }
+
+      setIsImporting(false);
+      alert(`Import sequence finished.\nSuccess: ${successCount}\nErrors: ${errorCount}`);
+      handleRefresh();
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setIsUtilityOpen(false);
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4 pb-4 overflow-hidden animate-in fade-in duration-500">
       
@@ -119,24 +184,44 @@ const GSTPortfolio: React.FC = () => {
           <div className="relative">
             <button 
               onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+              className={`h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ${isImporting ? 'animate-pulse' : ''}`}
               title="Bulk Utilities"
+              disabled={isImporting}
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              {isImporting ? (
+                <div className="h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              )}
             </button>
             
             {isUtilityOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 animate-in zoom-in-95 origin-top-right">
-                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Export Portfolio (CSV)</span>
+              <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[100] p-2 animate-in zoom-in-95 origin-top-right">
+                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
+                    <div className="flex flex-col">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import Clients (CSV)</span>
+                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Bulk onboarding sequence</span>
+                    </div>
                  </button>
+                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
+                    <div className="flex flex-col">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Export Portfolio</span>
+                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Vault snapshot download</span>
+                    </div>
+                 </button>
+                 <div className="h-px bg-slate-100 my-1 mx-2" />
                  <button onClick={handleDownloadTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Download Template</span>
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                    <div className="flex flex-col">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import Template</span>
+                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Excel-ready formatting</span>
+                    </div>
                  </button>
               </div>
             )}
+            <input type="file" ref={fileInputRef} onChange={handleImportCSV} className="hidden" accept=".csv" />
           </div>
 
           <button 

@@ -153,33 +153,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           
           {!isCollapsed && hasChildren && (
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" />
             </svg>
           )}
         </button>
 
         {isCollapsed && (
-          <div className="fixed left-20 ml-2 pointer-events-auto opacity-0 group-hover/item:opacity-100 transition-all z-[999] translate-x-2 group-hover/item:translate-x-0 invisible group-hover/item:visible shadow-2xl">
-             {!hasChildren ? (
-                <div className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg whitespace-nowrap">
-                   {item.label}
-                </div>
-             ) : (
-                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden min-w-[220px] py-2 shadow-2xl">
-                   <div className="px-4 py-2 border-b border-slate-100 mb-1 bg-slate-50">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.label}</p>
-                   </div>
-                   {item.children?.map(child => (
-                     <button 
-                       key={child.id}
-                       onClick={() => { onViewChange(child.id as ActiveView); }}
-                       className={`w-full text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${activeView === child.id ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:bg-slate-50'}`}
-                     >
-                        {child.label}
-                     </button>
-                   ))}
-                </div>
-             )}
+          <div className="fixed left-[72px] pointer-events-auto opacity-0 group-hover/item:opacity-100 transition-all z-[1000] translate-x-2 group-hover/item:translate-x-0 invisible group-hover/item:visible">
+             <div className="flex items-center">
+                {/* Visual Connector / Bridge */}
+                <div className="w-2 h-full absolute -left-2" />
+                
+                {!hasChildren ? (
+                  <div className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl whitespace-nowrap shadow-2xl border border-slate-800">
+                    {item.label}
+                  </div>
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-[1.25rem] overflow-hidden min-w-[220px] py-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl bg-white/95">
+                    <div className="px-4 py-2 border-b border-slate-100 mb-1 bg-slate-50/50">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                    </div>
+                    {item.children?.map(child => (
+                      <button 
+                        key={child.id}
+                        onClick={() => { onViewChange(child.id as ActiveView); }}
+                        className={`w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeView === child.id ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                          {child.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+             </div>
           </div>
         )}
 
