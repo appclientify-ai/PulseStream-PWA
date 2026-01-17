@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Client } from '../../../../types';
 
@@ -146,11 +145,19 @@ export const useMonthlyFilingLogic = (selectedYear: string, selectedMonth: strin
   const storageKeyDates = customKey ? `${customKey}_dates` : STORAGE_KEY_DATES_DEFAULT;
   const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(() => {
     const saved = localStorage.getItem(storageKey);
-    return saved ? JSON.parse(saved) : {};
+    try {
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
   });
   const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(storageKeyDates);
-    return saved ? JSON.parse(saved) : {};
+    try {
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
   });
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b' | 'cmp08', customPeriod?: string) => {
     const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;
