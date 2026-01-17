@@ -1,20 +1,11 @@
 
-import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
-import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import { ActiveView, LitigationRecord, Client } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
-import { useOffline } from '../../hooks/useOffline.ts';
-import { usePWA } from '../../hooks/usePWA.ts';
 import { api } from '../../services/api.ts';
-import { socketService } from '../../services/socket.ts';
-
-import Sidebar, { NavItem } from '../../components/Sidebar.tsx';
+import Sidebar from '../../components/Sidebar.tsx';
 import Header from '../../components/Header.tsx';
 import Loader from '../../components/Loader.tsx';
-import InstallBanner from '../../components/InstallBanner.tsx';
-import CommandPalette from '../../components/CommandPalette.tsx';
-import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
-import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
-import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
 
 // Lazy loading sub-pages
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
@@ -28,448 +19,279 @@ const ITRReturn = lazy(() => import('../Compliance/ITAudit/ITRReturn.tsx'));
 const TAXAudit = lazy(() => import('../Compliance/ITAudit/TAXAudit.tsx'));
 const NoticePending = lazy(() => import('../LitigationSuite/GSTNotices/NoticePending.tsx'));
 const NoticeFiled = lazy(() => import('../LitigationSuite/GSTNotices/NoticeFiled.tsx'));
-const NoticeDrop = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDrop.tsx'));
-const NoticeDemand = lazy(() => import('../LitigationSuite/GSTNotices/NoticeDemand.tsx'));
 const AppealPending = lazy(() => import('../LitigationSuite/GSTAppeals/AppealPending.tsx'));
-const AppealFiled = lazy(() => import('../LitigationSuite/GSTAppeals/AppealFiled.tsx'));
-const AppealDrop = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDrop.tsx'));
-const AppealDemand = lazy(() => import('../LitigationSuite/GSTAppeals/AppealDemand.tsx'));
-const TribunalPending = lazy(() => import('../LitigationSuite/Tribunal/TribunalPending.tsx'));
-const TribunalFiled = lazy(() => import('../LitigationSuite/Tribunal/TribunalFiled.tsx'));
-const TribunalDrop = lazy(() => import('../LitigationSuite/Tribunal/TribunalDrop.tsx'));
-const TribunalDemand = lazy(() => import('../LitigationSuite/Tribunal/TribunalDemand.tsx'));
-const CourtPending = lazy(() => import('../LitigationSuite/HighCourt/CourtPending.tsx'));
-const CourtFiled = lazy(() => import('../LitigationSuite/HighCourt/CourtFiled.tsx'));
-const CourtDrop = lazy(() => import('../LitigationSuite/HighCourt/CourtDrop.tsx'));
-const CourtDemand = lazy(() => import('../LitigationSuite/HighCourt/CourtDemand.tsx'));
-const GSTRegistration = lazy(() => import('../Miscellaneous/GSTRegistration.tsx'));
-const FoodLicenses = lazy(() => import('../Miscellaneous/FoodLicenses.tsx'));
 const MSMERegistration = lazy(() => import('../Miscellaneous/MSMERegistration.tsx'));
-const Miscellaneouswork = lazy(() => import('../Miscellaneous/Miscellaneouswork.tsx'));
-const Reminders = lazy(() => import('../Administration/Reminders.tsx'));
-const Messenger = lazy(() => import('../Administration/Messenger.tsx'));
 const Invoices = lazy(() => import('../Administration/invoice/Invoices.tsx'));
-const AddInvoice = lazy(() => import('../Administration/invoice/addinvoice.tsx'));
-const PaymentReceived = lazy(() => import('../Administration/invoice/PaymentReceived.tsx'));
 const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx'));
 const Setting = lazy(() => import('../Administration/Setting.tsx'));
-const Trash = lazy(() => import('../Administration/Trash.tsx'));
+const Reminders = lazy(() => import('../Administration/Reminders.tsx'));
 
 const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
-  const isOnline = useOffline();
-  const { installPrompt, triggerInstall } = usePWA();
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
-  const [viewExtra, setViewExtra] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Quick Nav Modal State
-  const [navigationFolder, setNavigationFolder] = useState<NavItem | null>(null);
-
-  // Data State
   const [clients, setClients] = useState<Client[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
-  const [miscWork, setMiscWork] = useState<any[]>([]);
-
-  // Form Modals
-  const [isGstModalOpen, setIsGstModalOpen] = useState(false);
-  const [isItModalOpen, setIsItModalOpen] = useState(false);
-
-  // Period Filters for Dashboard Boxes
-  const def = getDefaultPeriod();
-  const [monthlyFilter, setMonthlyFilter] = useState({ year: def.year, month: def.month });
-  const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.year, quarter: def.quarter });
-  const [compositionFilter, setCompositionFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
-  const [itrFilter, setItrFilter] = useState({ ay: def.year });
 
   const loadData = useCallback(async () => {
     if (!token) return;
     try {
       const summary = await api.getDashboardSummary();
       setClients(summary.clients);
-      setInvoices(summary.invoices);
       setLitigation(summary.litigation);
-      setMiscWork(summary.work);
-    } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
+    } catch (e) {
+      console.error("Dashboard sync error");
+    }
   }, [token]);
 
-  useEffect(() => {
-    if (isOnline) { loadData(); socketService.connect(); }
-    return () => socketService.disconnect();
-  }, [isOnline, loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const handleViewChange = (view: ActiveView, extra?: any) => {
+  const handleViewChange = (view: ActiveView) => {
     setActiveView(view);
-    setViewExtra(extra || null);
-    setNavigationFolder(null); // Close navigation modal if open
     window.scrollTo(0, 0);
   };
 
-  const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
-    const keys: Record<string, string> = {
-      monthly: 'clientify_monthly_filing_v3',
-      quarterly: 'clientify_quarterly_filing_v3',
-      composition: 'clientify_composition_filing_v3',
-      gstr4: 'clientify_gstr4_filing_v1',
-      gstr9: 'clientify_gstr9_filing_data_v2',
-      itr: 'clientify_itr_filing_data_v2',
-      audit: 'clientify_audit_fin_data_v3'
-    };
-    const storageKey = keys[type];
-    const saved = localStorage.getItem(storageKey);
-    const data = saved ? JSON.parse(saved) : {};
-    const periodData = data[periodKey] || {};
-    
-    let total = 0;
-    let filed = 0;
-    
-    if (type === 'monthly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'quarterly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
-    } else if (type === 'composition') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.cmp08).length;
-    } else if (type === 'itr') {
-      const applicable = clients.filter(c => !!c.itProfile);
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.filed).length;
-    } else {
-      filed = Object.values(periodData).filter((v: any) => v.filed || v.auditFiled).length;
-      total = Object.keys(periodData).length || clients.filter(c => type === 'gstr4' ? c.gstProfile?.regType === 'Composition' : !!c.gstProfile).length;
-    }
-
-    return { total, filed, pending: Math.max(0, total - filed) };
-  };
-
-  const getLitCounts = (forum: 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt', stage: 'Pending' | 'Filed' | 'Drop' | 'Demand') => {
-    return litigation.filter(r => r.category === forum && r.status === stage).length;
-  };
-
-  const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-    <div className="mb-6 border-l-4 border-indigo-600 pl-4">
-      <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 leading-none">{title}</h2>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1.5">{subtitle}</p>
+  const SectionHeader = ({ title, icon }: { title: string; icon: string }) => (
+    <div className="flex items-center gap-3 mb-6 mt-12 first:mt-0 px-2">
+      <span className="text-xl">{icon}</span>
+      <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{title}</h3>
     </div>
   );
 
-  const SubSectionTitle = ({ title }: { title: string }) => (
-    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 px-2">{title}</h3>
-  );
-
-  const CompactCard = ({ label, count, viewId, icon, color }: any) => (
-    <div 
-      onClick={() => handleViewChange(viewId)}
-      className="group bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer overflow-hidden relative"
-    >
-      <div className={`absolute top-0 right-0 h-12 w-12 -mr-4 -mt-4 opacity-5 rounded-full ${color}`} />
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center text-white shadow-sm`}>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
+  const DashboardCard = ({ 
+    title, 
+    viewId, 
+    stats, 
+    icon, 
+    dueDate, 
+    selector, 
+    statusCircle = "N/A" 
+  }: { 
+    title: string; 
+    viewId: string; 
+    stats: { label: string; value: number | string; color?: string }[]; 
+    icon: React.ReactNode;
+    dueDate?: string;
+    selector?: React.ReactNode;
+    statusCircle?: string;
+  }) => (
+    <div className="bg-white rounded-[1rem] border border-slate-100 shadow-sm flex flex-col hover:border-indigo-200 hover:shadow-md transition-all group h-full">
+      <div className="p-6 flex-1">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 text-slate-400 group-hover:text-indigo-600 transition-colors">{icon}</div>
+            <h4 className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{title}</h4>
           </div>
-          <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight group-hover:text-indigo-600 truncate max-w-[120px]">{label}</span>
-        </div>
-        <span className="text-base font-black text-slate-900">{count}</span>
-      </div>
-    </div>
-  );
-
-  const LitigationBlock = ({ forum, label, icon }: any) => {
-    const forums: Record<string, string> = { 'Notice': 'lit-notice', 'Appeal': 'lit-appeal', 'Tribunal': 'lit-tribunal', 'HighCourt': 'lit-hc' };
-    const prefix = forums[forum];
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 px-2">
-           <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
-           <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{label}</h4>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <CompactCard label="Pending" count={getLitCounts(forum, 'Pending')} viewId={`${prefix}-pending`} color="bg-rose-500" icon={<path d="M12 8v4l3 3" />} />
-          <CompactCard label="Filed" count={getLitCounts(forum, 'Filed')} viewId={`${prefix}-filed`} color="bg-indigo-500" icon={<path d="M5 13l4 4L19 7" />} />
-          <CompactCard label="Dropped" count={getLitCounts(forum, 'Drop')} viewId={`${prefix}-drop`} color="bg-emerald-500" icon={<path d="M9 12l2 2 4-4" />} />
-          <CompactCard label="Demand" count={getLitCounts(forum, 'Demand')} viewId={`${prefix}-demand`} color="bg-orange-500" icon={<path d="M12 9v2m0 4h.01" />} />
-        </div>
-      </div>
-    );
-  };
-
-  const renderContent = () => {
-    switch (activeView) {
-      case 'dashboard':
-        return (
-          <div className="w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32 px-4 md:px-6">
-            {installPrompt && <InstallBanner onInstall={triggerInstall} />}
-            
-            {/* Sector 1: Client Hub */}
-            <section>
-              <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">GST Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Regular & Comp. Entities</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.gstProfile).length}</p>
-                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-                <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
-                   <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-emerald-600/10 transition-colors" />
-                   <div className="flex items-start justify-between relative z-10">
-                      <div>
-                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                           <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857" /></svg>
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">IT Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Personal & Corporate Direct Tax</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.itProfile).length}</p>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
-                      </div>
-                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Sector 2: Compliance */}
-            <section>
-              <SectionHeader title="Compliance Matrix" subtitle="Statutory Filing Lifecycle" />
-              <div className="space-y-10">
-                 <div>
-                    <SubSectionTitle title="Filing Cycles" />
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                       <CompactCard label="Monthly" count={getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).total} viewId="compliance-monthly" color="bg-indigo-600" icon={<path d="M8 7V3m8 4V3m-9 8h10" />} />
-                       <CompactCard label="Quarterly" count={getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`).total} viewId="compliance-quarterly" color="bg-blue-600" icon={<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />} />
-                       <CompactCard label="Composition" count={getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`).total} viewId="compliance-composition" color="bg-amber-600" icon={<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5" />} />
-                    </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="Annual Returns" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="GSTR-04 Annual" count={clients.filter(c => c.gstProfile?.regType === 'Composition').length} viewId="compliance-gstr4" color="bg-indigo-400" icon={<path d="M12 8v4l3 3" />} />
-                       <CompactCard label="GSTR-9/9C Audit" count={clients.filter(c => c.gstProfile?.regType === 'Regular').length} viewId="compliance-gstr9" color="bg-indigo-800" icon={<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7" />} />
-                    </div>
-                 </div>
-                 <div>
-                    <SubSectionTitle title="IT & Audit" />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="ITR Returns" count={getFilingCounts('itr', itrFilter.ay).total} viewId="compliance-itr" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2H5" />} />
-                       <CompactCard label="Audit & B/S" count={clients.filter(c => c.itProfile?.advisoryWork?.taxAudit).length} viewId="compliance-taxaudit" color="bg-emerald-400" icon={<path d="M9 12h6m-6 4h6" />} />
-                    </div>
-                 </div>
-              </div>
-            </section>
-
-            {/* Sector 3: Litigation */}
-            <section>
-              <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
-              <div className="grid grid-cols-1 gap-12">
-                 <LitigationBlock forum="Notice" label="GST Notices" icon={<path d="M12 9v2m0 4h.01" />} />
-                 <LitigationBlock forum="Appeal" label="GST Appeals" icon={<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2" />} />
-                 <LitigationBlock forum="Tribunal" label="GSTAT (Tribunal)" icon={<path d="M3 6l3 1m0 0l-3 9" />} />
-                 <LitigationBlock forum="HighCourt" label="High Court Matters" icon={<path d="M8 14v20c0 4.418 7.163 8 16 8" />} />
-              </div>
-            </section>
-
-            {/* Sector 4: Services */}
-            <section>
-              <SectionHeader title="Service Desk" subtitle="New Enrollments & Work Logs" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                 <CompactCard label="GST Reg." count={clients.filter(c => c.status === 'Active').length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
-                 <CompactCard label="Food License" count={0} viewId="misc-food-lic" color="bg-emerald-500" icon={<path d="M3 3h2l.4 2" />} />
-                 <CompactCard label="MSME Reg." count={0} viewId="misc-msme" color="bg-blue-500" icon={<path d="M21 13.255A23.931 23.931 0 0112 15" />} />
-                 <CompactCard label="Work Log" count={miscWork.length} viewId="misc-work" color="bg-slate-700" icon={<path d="M12 8v4l3 3" />} />
-              </div>
-            </section>
-
-            {/* Sector 5: Admin */}
-            <section>
-              <SectionHeader title="Administration" subtitle="Back-Office Controls" />
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                 <CompactCard label="Message" count={0} viewId="messenger" color="bg-indigo-600" icon={<path d="M8 10h.01M12 10h.01" />} />
-                 <CompactCard label="Reminders" count={0} viewId="reminders" color="bg-rose-500" icon={<path d="M15 17h5l-1.405-1.405" />} />
-                 <CompactCard label="Invoices" count={invoices.length} viewId="admin-invoices" color="bg-slate-900" icon={<path d="M9 14l6-6" />} />
-                 <CompactCard label="Payments" count={0} viewId="admin-payments" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2" />} />
-                 <CompactCard label="Due Date" count={0} viewId="admin-duedates" color="bg-amber-600" icon={<path d="M8 7V3m8 4V3" />} />
-                 <CompactCard label="Trash" count={0} viewId="trash" color="bg-slate-400" icon={<path d="M19 7l-.867 12.142" />} />
-              </div>
-            </section>
-          </div>
-        );
-      case 'gst-portfolio': return <GSTPortfolio />;
-      case 'it-portfolio': return <ITPortfolio />;
-      case 'compliance-monthly': return <MonthlyFiling />;
-      case 'compliance-quarterly': return <QuarterlyFiling />;
-      case 'compliance-composition': return <CompositionFiling />;
-      case 'compliance-gstr4': return <GSTR4 />;
-      case 'compliance-gstr9': return <GSTR9_9C />;
-      case 'compliance-itr': return <ITRReturn />;
-      case 'compliance-taxaudit': return <TAXAudit />;
-      case 'lit-notice-pending': return <NoticePending />;
-      case 'lit-notice-filed': return <NoticeFiled />;
-      case 'lit-notice-drop': return <NoticeDrop />;
-      case 'lit-notice-demand': return <NoticeDemand />;
-      case 'lit-appeal-pending': return <AppealPending />;
-      case 'lit-appeal-filed': return <AppealFiled />;
-      case 'lit-appeal-drop': return <AppealDrop />;
-      case 'lit-appeal-demand': return <AppealDemand />;
-      case 'lit-tribunal-pending': return <TribunalPending />;
-      case 'lit-tribunal-filed': return <TribunalFiled />;
-      case 'lit-tribunal-drop': return <TribunalDrop />;
-      case 'lit-tribunal-demand': return <TribunalDemand />;
-      case 'lit-hc-pending': return <CourtPending />;
-      case 'lit-hc-filed': return <CourtFiled />;
-      case 'lit-hc-drop': return <CourtDrop />;
-      case 'lit-hc-demand': return <CourtDemand />;
-      case 'misc-gst-reg': return <GSTRegistration />;
-      case 'misc-food-lic': return <FoodLicenses />;
-      case 'misc-msme': return <MSMERegistration />;
-      case 'misc-work': return <Miscellaneouswork />;
-      case 'reminders': return <Reminders />;
-      case 'messenger': return <Messenger />;
-      case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
-      case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
-      case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
-      case 'admin-duedates': return <DueDateSetting />;
-      case 'settings': return <Setting />;
-      case 'trash': return <Trash />;
-      default: return <div className="p-20 text-center text-slate-300 font-black uppercase tracking-widest text-sm">Synchronizing Secure Module...</div>;
-    }
-  };
-
-  const headerInfo = useMemo(() => {
-    const mappings: Record<string, { label: string; desc: string }> = {
-      'dashboard': { label: 'Dashboard', desc: 'Practice Intelligence Operating System' },
-      'gst-portfolio': { label: 'GST Portfolio', desc: 'Master GST Client Vault' },
-      'it-portfolio': { label: 'IT Portfolio', desc: 'Master Income Tax Client Vault' },
-      'compliance-monthly': { label: 'Monthly Returns', desc: 'GSTR-1 and GSTR-3B Lifecycle' },
-      'compliance-quarterly': { label: 'Quarterly Returns', desc: 'QRMP and IFF Compliance Hub' },
-      'compliance-composition': { label: 'Composition Returns', desc: 'CMP-08 Quarterly Filing Unit' },
-      'compliance-gstr4': { label: 'GSTR-4 Annual', desc: 'Composition Annual Return Audit' },
-      'compliance-gstr9': { label: 'GSTR-9/9C Audit', desc: 'Statutory Annual Reconciliation Unit' },
-      'compliance-itr': { label: 'ITR Returns', desc: 'Direct Tax Filing Lifecycle' },
-      'compliance-taxaudit': { label: 'Audit & Financials', desc: '3CA/3CD and Balance Sheet Unit' },
-      'lit-notice-pending': { label: 'Pending Notices', desc: 'Live GST Notice Response Tracking' },
-      'lit-notice-filed': { label: 'Filed Notices', desc: 'Archived Submissions Awaiting Orders' },
-      'lit-notice-drop': { label: 'Closed Notices', desc: 'Notices Dropped or Relief Granted' },
-      'lit-notice-demand': { label: 'Confirmed Demands', desc: 'Notices Resulting in Tax Demands' },
-      'lit-appeal-pending': { label: 'Pending Appeals', desc: 'First Appeals Drafting and Advisory' },
-      'lit-appeal-filed': { label: 'Filed Appeals', desc: 'Appeals Awaiting Adjudication' },
-      'lit-appeal-drop': { label: 'Relief Appeals', desc: 'Appeals Decided in Taxpayer Favor' },
-      'lit-appeal-demand': { label: 'Sustained Appeals', desc: 'Appeals resulting in Confirmed Liabilities' },
-      'lit-tribunal-pending': { label: 'Pending Tribunal', desc: 'GSTAT Preparation and Advisory' },
-      'lit-tribunal-filed': { label: 'Filed Tribunal', desc: 'GSTAT Matters Awaiting Bench Hearing' },
-      'lit-tribunal-drop': { label: 'Relief Tribunal', desc: 'Favorable Tribunal Orders Archived' },
-      'lit-tribunal-demand': { label: 'Sustained Tribunal', desc: 'Confirmed Tribunal Assessment Demands' },
-      'lit-hc-pending': { label: 'Pending High Court', desc: 'Writ Petition and Counsel Drafting' },
-      'lit-hc-filed': { label: 'Filed High Court', desc: 'HC Matters Awaiting Adjudication' },
-      'lit-hc-drop': { label: 'Relief High Court', desc: 'Favorable HC Judgments Archived' },
-      'lit-hc-demand': { label: 'Sustained High Court', desc: 'Confirmed High Court Tax Liabilities' },
-      'misc-gst-reg': { label: 'GST Registration', desc: 'New Enrollment and Amendment Tracking' },
-      'misc-food-lic': { label: 'Food License', desc: 'FSSAI Registration and Renewal Hub' },
-      'misc-msme': { label: 'MSME Registration', desc: 'Udyam Registration and Certificate Tracking' },
-      'misc-work': { label: 'Work Log', desc: 'Miscellaneous Staff Task Management' },
-      'messenger': { label: 'Vault Messenger', desc: 'Secure Internal Practice Communication' },
-      'reminders': { label: 'Reminders', desc: 'Statutory Compliance Deadline Monitor' },
-      'admin-invoices': { label: 'Invoices', desc: 'Professional Billing and Receivables' },
-      'admin-add-invoice': { label: 'Draft Invoice', desc: 'New Professional Bill Preparation' },
-      'admin-payments': { label: 'Payments', desc: 'Collection Realization and History' },
-      'admin-duedates': { label: 'Due Dates', desc: 'Global Compliance Calendar Matrix' },
-      'settings': { label: 'Vault Settings', desc: 'Firm Configuration and Security Protocols' },
-      'trash': { label: 'Vault Audit', desc: 'Permanent Record and Activity Logs' }
-    };
-    return mappings[activeView] || { label: 'Module Access', desc: 'Authorized Vault Module Sync' };
-  }, [activeView]);
-
-  return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#fcfdfe] relative">
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={handleViewChange} 
-        isCollapsed={isSidebarCollapsed} 
-        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-        onOpenFolder={setNavigationFolder}
-      />
-      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-20' : 'ml-80'}`}>
-        <Header 
-          isConnected={isOnline} 
-          currentUser={user} 
-          onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-          activeViewLabel={headerInfo.label} 
-          activeViewDescription={headerInfo.desc}
-          onViewChange={handleViewChange}
-        />
-        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
-          {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
-            <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
+          {dueDate && (
+            <div className="text-right">
+              <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Due Date:</p>
+              <p className="text-[9px] font-black text-slate-500">{dueDate}</p>
+            </div>
           )}
         </div>
-      </main>
 
-      {/* Central Navigation Modal */}
-      {navigationFolder && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-           <div className="fixed inset-0" onClick={() => setNavigationFolder(null)} />
-           <div className="relative w-full max-w-lg bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 border border-slate-200">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         {navigationFolder.icon}
-                       </svg>
-                    </div>
-                    <div>
-                       <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{navigationFolder.label}</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Select Module Target</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setNavigationFolder(null)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
-                    <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
-                 </button>
+        {selector && <div className="mb-6">{selector}</div>}
+
+        <div className="flex items-center gap-6">
+          <div className="flex-1 space-y-4">
+            {stats.map((s, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{s.label}</span>
+                <span className={`text-[13px] font-black ${s.color || 'text-slate-900'}`}>{s.value}</span>
               </div>
-              <div className="p-4 grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">
-                 {navigationFolder.children?.map(child => (
-                   <button 
-                     key={child.id}
-                     onClick={() => handleViewChange(child.id as ActiveView)}
-                     className="w-full text-left px-6 py-5 hover:bg-indigo-600 rounded-[1.5rem] transition-all group flex items-center justify-between"
-                   >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-900 group-hover:text-white uppercase tracking-wider">{child.label}</span>
-                        <span className="text-[9px] font-bold text-slate-400 group-hover:text-indigo-200 uppercase mt-1">Authorized Vault Access</span>
-                      </div>
-                      <svg className="h-5 w-5 text-slate-200 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" /></svg>
-                   </button>
-                 ))}
-              </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Clientify Navigation Hub</p>
-              </div>
-           </div>
+            ))}
+          </div>
+          <div className="h-16 w-16 rounded-full border-4 border-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 shrink-0">
+            {statusCircle}
+          </div>
         </div>
-      )}
+      </div>
+      <button 
+        onClick={() => handleViewChange(viewId)}
+        className="w-full py-3 bg-indigo-50/50 text-indigo-600 rounded-b-[1rem] font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 hover:text-white transition-all border-t border-slate-50"
+      >
+        View Details
+      </button>
+    </div>
+  );
 
-      <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
+  const renderDashboard = () => (
+    <div className="max-w-full mx-auto px-6 py-6 pb-40 animate-in fade-in duration-700">
       
-      <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
-      <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />
+      <SectionHeader title="Client Management" icon="👥" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <DashboardCard 
+          title="GST Clients" 
+          viewId="gst-portfolio"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+          stats={[
+            { label: 'Total Clients', value: clients.filter(c => !!c.gstProfile).length },
+            { label: 'Active Filing', value: clients.filter(c => c.status === 'Active').length },
+            { label: 'Inactive/Other', value: clients.filter(c => c.status !== 'Active').length }
+          ]}
+        />
+        <DashboardCard 
+          title="Income Tax Clients" 
+          viewId="it-portfolio"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857" /></svg>}
+          stats={[
+            { label: 'Total Clients', value: clients.filter(c => !!c.itProfile).length },
+            { label: 'Active Filing', value: clients.filter(c => !!c.itProfile && c.status === 'Active').length },
+            { label: 'Inactive/Other', value: clients.filter(c => !!c.itProfile && c.status !== 'Active').length }
+          ]}
+        />
+      </div>
+
+      <SectionHeader title="Tax & Compliance" icon="📈" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <DashboardCard 
+          title="Monthly Returns" 
+          viewId="compliance-monthly"
+          dueDate="20/01/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+          selector={
+            <div className="flex gap-2">
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>December</option></select>
+            </div>
+          }
+          stats={[
+            { label: 'Pending GSTR-1', value: 0, color: 'text-rose-500' },
+            { label: 'Pending GSTR-3B', value: 0, color: 'text-rose-500' },
+            { label: 'Total Filed', value: 0, color: 'text-emerald-500' }
+          ]}
+        />
+        <DashboardCard 
+          title="Quarterly Returns" 
+          viewId="compliance-quarterly"
+          dueDate="21/04/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>}
+          selector={
+            <div className="flex gap-2">
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>Q4 (Jan-Mar)</option></select>
+            </div>
+          }
+          stats={[
+            { label: 'Pending GSTR-1', value: 0, color: 'text-rose-500' },
+            { label: 'Pending GSTR-3B', value: 0, color: 'text-rose-500' },
+            { label: 'Total Filed', value: 0, color: 'text-emerald-500' }
+          ]}
+        />
+        <DashboardCard 
+          title="Composition Returns" 
+          viewId="compliance-composition"
+          dueDate="17/04/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>}
+          selector={
+            <div className="flex gap-2">
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>
+              <select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>Q4 (Jan-Mar)</option></select>
+            </div>
+          }
+          stats={[
+            { label: 'Pending CMP-08', value: 0, color: 'text-rose-500' },
+            { label: 'Filed CMP-08', value: 0, color: 'text-emerald-500' }
+          ]}
+        />
+      </div>
+
+      <SectionHeader title="Annual Returns" icon="📅" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <DashboardCard 
+          title="GSTR-4 Annual" 
+          viewId="compliance-gstr4"
+          dueDate="30/04/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+          selector={<select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>}
+          stats={[{ label: 'Pending', value: 0, color: 'text-rose-500' }, { label: 'Filed', value: 0, color: 'text-emerald-500' }]}
+        />
+        <DashboardCard 
+          title="GSTR-9/9C Annual" 
+          viewId="compliance-gstr9"
+          dueDate="31/12/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586" /></svg>}
+          selector={<select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>}
+          stats={[{ label: 'Pending GSTR-9', value: 0, color: 'text-rose-500' }, { label: 'Pending GSTR-9C', value: 0, color: 'text-rose-500' }]}
+        />
+      </div>
+
+      <SectionHeader title="Income Tax & Audit" icon="💼" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <DashboardCard 
+          title="Income Tax Returns" 
+          viewId="compliance-itr"
+          dueDate="31/07/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          selector={<select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>A.Y.: 2026-27</option></select>}
+          stats={[{ label: 'Pending', value: 0, color: 'text-rose-500' }, { label: 'Filed', value: 0, color: 'text-emerald-500' }]}
+        />
+        <DashboardCard 
+          title="Audit" 
+          viewId="compliance-taxaudit"
+          dueDate="31/10/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>}
+          selector={<select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>}
+          stats={[{ label: 'Pending', value: 0, color: 'text-rose-500' }, { label: 'Completed', value: 0, color: 'text-emerald-500' }]}
+        />
+        <DashboardCard 
+          title="Balance Sheet" 
+          viewId="compliance-taxaudit"
+          dueDate="31/10/2026"
+          icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
+          selector={<select className="bg-slate-50 border-none rounded-lg px-2 py-1 text-[9px] font-black uppercase text-slate-500"><option>F.Y.: 2025-26</option></select>}
+          stats={[{ label: 'Pending', value: 0, color: 'text-rose-500' }, { label: 'Finalized', value: 0, color: 'text-emerald-500' }]}
+        />
+      </div>
+
+      <SectionHeader title="Miscellaneous Work" icon="📁" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard title="GST Registrations" viewId="misc-gst-reg" icon="📝" statusCircle="0" stats={[{ label: 'In Progress', value: 0 }]} />
+        <DashboardCard title="Food Licenses" viewId="misc-food-lic" icon="🍔" statusCircle="0" stats={[{ label: 'In Progress', value: 0 }]} />
+        <DashboardCard title="MSME Registrations" viewId="misc-msme" icon="🏢" statusCircle="0" stats={[{ label: 'In Progress', value: 0 }]} />
+        <DashboardCard title="Other Work" viewId="misc-work" icon="💼" statusCircle="0" stats={[{ label: 'In Progress', value: 0 }]} />
+      </div>
+
+      <SectionHeader title="Administrative" icon="⚙️" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <DashboardCard title="Due Date Reminders" viewId="admin-duedates" icon="⏰" statusCircle="0" stats={[{ label: 'Total Active', value: 0 }]} />
+        <DashboardCard title="Reminder Messages" viewId="reminders" icon="💬" statusCircle="0" stats={[{ label: 'Clients to Remind', value: 0 }]} />
+        <DashboardCard title="Payment Details" viewId="admin-payments" icon="💳" statusCircle="0" stats={[{ label: 'Invoices Pending', value: 0 }]} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
+      <Sidebar activeView={activeView} onViewChange={handleViewChange} isCollapsed={isSidebarCollapsed} onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} onOpenFolder={() => {}} />
+      <main className={`flex flex-1 flex-col overflow-hidden transition-all duration-500 ${isSidebarCollapsed ? 'ml-20' : 'ml-80'}`}>
+        <Header isConnected={true} currentUser={user} onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} activeViewLabel={activeView} activeViewDescription="" onViewChange={handleViewChange} />
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <Suspense fallback={<Loader />}>
+            {activeView === 'dashboard' ? renderDashboard() : (
+              <div className="p-4 h-full">
+                {activeView === 'gst-portfolio' && <GSTPortfolio />}
+                {activeView === 'it-portfolio' && <ITPortfolio />}
+                {activeView === 'compliance-monthly' && <MonthlyFiling />}
+                {activeView === 'compliance-quarterly' && <QuarterlyFiling />}
+                {activeView === 'compliance-composition' && <CompositionFiling />}
+                {activeView === 'compliance-gstr4' && <GSTR4 />}
+                {activeView === 'compliance-gstr9' && <GSTR9_9C />}
+                {activeView === 'compliance-itr' && <ITRReturn />}
+                {activeView === 'compliance-taxaudit' && <TAXAudit />}
+                {activeView === 'lit-notice-pending' && <NoticePending />}
+                {activeView === 'lit-notice-filed' && <NoticeFiled />}
+                {activeView === 'lit-appeal-pending' && <AppealPending />}
+                {activeView === 'misc-msme' && <MSMERegistration />}
+                {activeView === 'admin-invoices' && <Invoices onViewChange={handleViewChange} />}
+                {activeView === 'admin-duedates' && <DueDateSetting />}
+                {activeView === 'settings' && <Setting />}
+                {activeView === 'reminders' && <Reminders />}
+              </div>
+            )}
+          </Suspense>
+        </div>
+      </main>
     </div>
   );
 };
