@@ -32,7 +32,7 @@ export interface User {
 
 export type ActiveView = string;
 
-export type ClientStatus = 'Active' | 'Litigation' | 'Inactive';
+export type ClientStatus = 'Active' | 'Litigation' | 'Inactive' | 'Active Filing';
 export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
@@ -112,10 +112,6 @@ export interface Client {
   createdAt: number;
 }
 
-/* 
- * Fix: Exporting InvoiceLineItem and updated InvoiceRecord 
- * to handle structured billing items.
- */
 export interface InvoiceLineItem {
   id: string;
   description: string;
@@ -132,7 +128,6 @@ export interface InvoiceRecord {
   invoiceNo: string;
   date: string;
   dueDate: string;
-  // Fix: Using InvoiceLineItem instead of any[]
   items: InvoiceLineItem[];
   subTotal: number;
   totalTax: number;
@@ -145,42 +140,37 @@ export interface InvoiceRecord {
   isMiscClient?: boolean;
 }
 
-/* 
- * Fix: Exporting InvoiceSettings for configuration management.
- */
 export interface InvoiceSettings {
   firmName: string;
   firmAddress: string;
   firmMobile: string;
   firmEmail: string;
   firmGstin: string;
-  invoicePrefix: string;
   bankName: string;
   accountNo: string;
   ifsc: string;
   upiId: string;
+  invoicePrefix: string;
   terms: string;
   isGstEnabled: boolean;
+  firmLogo?: string;
+  firmSignature?: string;
 }
 
-/* 
- * Fix: Exporting PaymentRecord for unified collections tracking.
- */
 export interface PaymentRecord {
   id: string;
   clientId: string;
   clientName: string;
   invoiceNo?: string;
+  invoiceDate?: string;
   date: string;
   amount: number;
-  mode: 'Cash' | 'Online' | 'Cheque' | 'UPI';
-  chequeNo?: string;
+  mode: 'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI' | 'Online';
   referenceNo?: string;
+  originalItems?: InvoiceLineItem[];
+  chequeNo?: string;
 }
 
-/* 
- * Fix: Exporting Litigation types for modular notice/appeal views.
- */
 export type LitigationCategory = 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt';
 export type LitigationStatus = 'Pending' | 'Filed' | 'Drop' | 'Demand';
 
@@ -199,13 +189,12 @@ export interface LitigationRecord {
   orderDate?: string;
   remarks?: string;
   isReissued?: boolean;
+  previousNoticeRef?: string;
+  previousNoticeSection?: string;
   isDemandPaid?: boolean;
   hearingDate?: string;
 }
 
-/* 
- * Fix: Exporting GST Registration tracking types.
- */
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
 export type GSTRegistrationStatus = 'Pending' | 'Data Requested' | 'In Progress' | 'ARN Generated' | 'Completed' | 'Rejected';
 
@@ -216,14 +205,11 @@ export interface GSTRegistrationRecord {
   appType: GSTRegistrationType;
   status: GSTRegistrationStatus;
   appDate: string;
-  arn?: string;
+  arn: string;
   completionDate?: string;
   remarks?: string;
 }
 
-/* 
- * Fix: Exporting FSSAI / Food License tracking types.
- */
 export type FoodLicenseType = 'FSSAI Basic Registration' | 'State License' | 'Central License';
 export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected';
 
@@ -234,30 +220,24 @@ export interface FoodLicenseRecord {
   licenseType: FoodLicenseType;
   status: FoodLicenseStatus;
   appDate: string;
-  licenseNo?: string;
+  licenseNo: string;
   expiryDate?: string;
   remarks?: string;
 }
 
-/* 
- * Fix: Exporting MSME Registration types.
- */
 export type MSMERegistrationStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed';
 
 export interface MSMERegistrationRecord {
   id: string;
   clientName: string;
   mobile: string;
-  regType: 'Udyam Registration';
+  regType: string;
   status: MSMERegistrationStatus;
   appDate: string;
-  udyamNumber?: string;
+  udyamNumber: string;
   remarks?: string;
 }
 
-/* 
- * Fix: Exporting Miscellaneous Work Log types.
- */
 export type MiscWorkStatus = 'Pending' | 'In Progress' | 'Completed' | 'On Hold';
 
 export interface MiscWorkRecord {
