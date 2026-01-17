@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Client, GstRegType } from '../../../types';
+
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
-import GSTClientFormModal from '../../Clientform/GSTClientFormModal';
 import Loader from '../../../components/Loader';
 import { useGSTR9Logic } from './GSTR9_9Clogic';
-import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
+import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 
 const GSTR9_9C: React.FC = () => {
   const getPreviousFY = () => {
@@ -20,26 +20,33 @@ const GSTR9_9C: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
-  const [gstr9Filter, setGstr9Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addSearch, setAddSearch] = useState('');
-  
+  // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+  const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditApplicabilityOpen, setIsEditApplicabilityOpen] = useState(false);
+  const [addSearch, setAddSearch] = useState('');
+  const [is9CApplicableState, setIs9CApplicableState] = useState(true);
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [newPassVal, setNewPassVal] = useState('');
+
+  // Filters
+  const [gstr9Filter, setGstr9Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [gstr9cFilter, setGstr9cFilter] = useState<'All' | 'Filed' | 'Pending' | 'N/A'>('All');
+  const [is9FilterOpen, setIs9FilterOpen] = useState(false);
+  const [is9cFilterOpen, setIs9cFilterOpen] = useState(false);
+
+  // Actions Menu State
+  const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const actionsRef = useRef<HTMLDivElement>(null);
+
   const { 
-    getStatus, 
-    toggleStatus, 
-    watchlist, 
-    addToWatchlist, 
-    removeFromWatchlist,
-    hasFilingInYear,
-    is9CApplicable,
-    updateDueDate,
-    getDueDate
+    getStatus, toggleStatus, watchlist, addToWatchlist, 
+    removeFromWatchlist, is9CApplicable, update9CApplicability,
+    getDueDate, updateDueDate 
   } = useGSTR9Logic(selectedYear);
 
   const fetchClients = async () => {
@@ -47,250 +54,356 @@ const GSTR9_9C: React.FC = () => {
     try {
       const data = await api.getClients();
       setAllClients(data);
-    } catch (err) {
-      console.error("GSTR-9/9C Sync Failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   };
 
+  useEffect(() => { fetchClients(); }, []);
+
   useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const trackedClients = useMemo(() => {
-    const selectedStartYear = parseInt(selectedYear.split('-')[0]);
-    const activeIds = new Set<string>();
-
-    Object.keys(watchlist).forEach(fy => {
-      const ids = watchlist[fy] as string[];
-      const fyStart = parseInt(fy.split('-')[0]);
-      if (fyStart <= selectedStartYear) {
-        ids.forEach(id => activeIds.add(id));
+    const handleClose = (event: any) => {
+      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) {
+        setActiveActionsId(null);
       }
-    });
+    };
+    if (activeActionsId) document.addEventListener('mousedown', handleClose);
+    return () => document.removeEventListener('mousedown', handleClose);
+  }, [activeActionsId]);
 
-    return allClients.filter(c => {
-      const isRegular = c.gstProfile?.regType === 'Regular';
-      if (!isRegular) return false;
-      const inWatchlistRecord = activeIds.has(c.id);
-      const hasHistory = hasFilingInYear(c.id, selectedYear);
-      return inWatchlistRecord || hasHistory;
-    });
-  }, [allClients, watchlist, selectedYear, hasFilingInYear]);
+  const getClientDisplayId = useCallback((client: Client) => {
+    if (!client.gstProfile) return '---';
+    const isState = client.gstProfile.jurisdictionType === 'State';
+    const val = isState ? client.gstProfile.sector : client.gstProfile.range;
+    const prefix = isState ? 'S' : 'C';
+    const sameGroup = allClients.filter(c => 
+      c.gstProfile?.jurisdictionType === client.gstProfile?.jurisdictionType &&
+      (isState ? c.gstProfile?.sector === val : c.gstProfile?.range === val)
+    ).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const rank = sameGroup.findIndex(c => c.id === client.id) + 1;
+    return `${prefix}/${val || '?'}/${rank}`;
+  }, [allClients]);
 
   const filteredDisplayList = useMemo(() => {
     const s = search.toLowerCase();
-    let list = trackedClients.filter(c => 
-      (c.legalName || '').toLowerCase().includes(s) || 
-      (c.tradeName || '').toLowerCase().includes(s) || 
-      (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
-    );
+    const currentWatchlist = watchlist[selectedYear] || [];
+    
+    return allClients.filter(c => {
+      const inWatchlist = currentWatchlist.includes(c.id);
+      const isPersistent = c.status === 'Inactive' || c.status === 'Litigation';
+      const visibleNormally = isClientVisibleInFY(c, selectedYear);
+      
+      // LOGIC: Show if in watchlist OR if visible normally. 
+      // Persistent (Inactive/Litigation) logic: If in watchlist, they are never removed until delete.
+      if (!inWatchlist && !visibleNormally) return false;
+      
+      return (c.legalName || '').toLowerCase().includes(s) || 
+             (c.tradeName || '').toLowerCase().includes(s) || 
+             (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s));
+    }).filter(c => {
+      if (gstr9Filter !== 'All') {
+        const filed = getStatus(c.id).gstr9;
+        if (gstr9Filter === 'Filed' && !filed) return false;
+        if (gstr9Filter === 'Pending' && filed) return false;
+      }
+      if (gstr9cFilter !== 'All') {
+        const isApp = is9CApplicable(c.id);
+        if (gstr9cFilter === 'N/A' && isApp) return false;
+        if (gstr9cFilter !== 'N/A' && !isApp) return false;
+        if (gstr9cFilter === 'Filed' && !getStatus(c.id).gstr9c) return false;
+        if (gstr9cFilter === 'Pending' && getStatus(c.id).gstr9c) return false;
+      }
+      return true;
+    });
+  }, [allClients, search, selectedYear, watchlist, gstr9Filter, gstr9cFilter, getStatus, is9CApplicable]);
 
-    if (gstr9Filter !== 'All') {
-      list = list.filter(c => gstr9Filter === 'Filed' ? getStatus(c.id).gstr9 : !getStatus(c.id).gstr9);
-    }
-    return list;
-  }, [trackedClients, search, gstr9Filter, getStatus]);
+  const handleExport = () => {
+    const headers = ["ID", "Trader Name", "Legal Name", "GSTIN", "GSTR-9", "GSTR-9C", "User ID", "Password"].join(",");
+    const rows = filteredDisplayList.map(c => {
+      const st = getStatus(c.id);
+      return [
+        getClientDisplayId(c),
+        c.tradeName || '---',
+        c.legalName,
+        c.gstProfile?.gstin,
+        st.gstr9 ? 'Filed' : 'Pending',
+        is9CApplicable(c.id) ? (st.gstr9c ? 'Filed' : 'Pending') : 'N/A',
+        c.gstProfile?.username,
+        c.gstProfile?.password
+      ].map(v => `"${v || ''}"`).join(",");
+    }).join("\n");
+    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `GSTR9_Audit_${selectedYear}.csv`; a.click();
+  };
 
-  const availableToAdd = useMemo(() => {
-    const s = addSearch.toLowerCase();
-    const trackedIds = new Set(trackedClients.map(c => c.id));
-    return allClients.filter(c => 
-      c.gstProfile?.regType === 'Regular' && 
-      !trackedIds.has(c.id) &&
-      ((c.legalName || '').toLowerCase().includes(s) || 
-       (c.tradeName || '').toLowerCase().includes(s) || 
-       (c.gstProfile?.gstin || '').toLowerCase().includes(s))
-    ).slice(0, 8);
-  }, [allClients, trackedClients, addSearch]);
+  const openActionsMenu = (e: React.MouseEvent, client: Client) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPosition({ top: rect.bottom + window.scrollY + 8, left: rect.right - 256 });
+    setActiveActionsId(client.id);
+    setSelectedClient(client);
+  };
 
-  const stats = useMemo(() => {
-    const list = trackedClients; 
-    const gstr9Filed = list.filter(c => getStatus(c.id).gstr9).length;
-    const gstr9cFiled = list.filter(c => getStatus(c.id).gstr9c).length;
-    return { total: list.length, gstr9Filed, gstr9cFiled };
-  }, [trackedClients, getStatus]);
+  const handleUpdatePassword = async () => {
+    if (!selectedClient || !newPassVal.trim()) return;
+    try {
+      const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
+      await api.saveClient(updated);
+      setAllClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
+      setEditingPasswordId(null);
+    } catch (err) { alert("Update failed."); }
+  };
+
+  const shareViaWhatsApp = (text: string) => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-4 px-2 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">FY {selectedYear}</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">9 Filed</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.gstr9Filed}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Audit Vault</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{filteredDisplayList.length}</p>
           </div>
         </div>
-
-        <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search regular entity or GSTIN..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
+        <div className="relative flex-1 group w-full">
+          <input type="text" placeholder="Search entity in audit list..." value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} 
-            className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">
-            {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
-          </select>
-          <button onClick={() => setIsAddModalOpen(true)} className="bg-indigo-600 text-white font-black uppercase tracking-tight px-6 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all flex items-center gap-2 text-xs">
+          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="Export CSV"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
+          <button onClick={() => { setSelectedClient(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-11 px-6 bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all flex items-center gap-2">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            Add Client
+            Track Entity
           </button>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
+          <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
+            <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">Due:</span>
+            <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
+          </div>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1300px]">
+        <div className="overflow-x-auto no-scrollbar flex-1 w-full">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1550px]">
             <thead className="sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No</th>
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[200px]">GSTIN</th>
-                
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px] relative">
-                   <button onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)} className="flex items-center justify-center gap-1 w-full uppercase">
-                    GSTR-9 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {isFilterMenuOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1">
-                      {['All', 'Filed', 'Pending'].map(f => (
-                        <button key={f} onClick={() => { setGstr9Filter(f as any); setIsFilterMenuOpen(false); }} 
-                          className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>
-                          {f}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">ID no.</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Trader Name</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Legal Name</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[190px]">GSTIN</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
+                   <div className="flex items-center justify-center gap-1">GSTR-9 <button onClick={() => setIs9FilterOpen(!is9FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
+                   {is9FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setGstr9Filter(f as any); setIs9FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
                 </th>
-
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px]">GSTR-9C</th>
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Portal Login</th>
-                <th className="px-4 py-5 text-[12px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
+                   <div className="flex items-center justify-center gap-1">GSTR-9C <button onClick={() => setIs9cFilterOpen(!is9cFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
+                   {is9cFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending', 'N/A'].map(f => <button key={f} onClick={() => { setGstr9cFilter(f as any); setIs9cFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9cFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
+                </th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[130px]">User ID</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Password</th>
+                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredDisplayList.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-24 text-center">
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-300">No regular taxpayers tracked for this period</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredDisplayList.map((client, idx) => {
-                  const st = getStatus(client.id);
-                  const is9CReq = is9CApplicable(client.id);
-                  return (
-                    <tr key={client.id} className="hover:bg-slate-50/50 transition-all">
-                      <td className="px-4 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="px-4 py-5">
-                        <p className="text-[12px] font-black text-slate-900 uppercase truncate" title={client.tradeName}>{client.tradeName || client.legalName}</p>
-                      </td>
-                      <td className="px-4 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase text-[11px]">{client.gstProfile?.gstin}</td>
-                      <td className="px-4 py-5 text-center">
-                        <button onClick={() => toggleStatus(client.id, 'gstr9')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${st.gstr9 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'}`}>
-                          {st.gstr9 ? 'Filed' : 'Pending'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                         <button disabled={!is9CReq} onClick={() => toggleStatus(client.id, 'gstr9c')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${!is9CReq ? 'opacity-20 cursor-not-allowed' : st.gstr9c ? 'bg-indigo-100 text-indigo-700 border-indigo-200 shadow-sm' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'}`}>
-                          {!is9CReq ? 'Exempt' : st.gstr9c ? 'Filed' : 'Pending'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-5">
-                        <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-slate-700 truncate">{client.gstProfile?.username}</span>
-                           <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest">Secured Credentials</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap">
-                         <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
-                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg>
-                            </button>
-                            <button onClick={() => { setSelectedClient(client); setIsDetailModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
-                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                            </button>
-                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+              {filteredDisplayList.map((client) => {
+                const st = getStatus(client.id);
+                const app9c = is9CApplicable(client.id);
+                const isPassVisible = visiblePasswords.has(client.id);
+                const isEditingPass = editingPasswordId === client.id;
+                return (
+                  <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
+                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{getClientDisplayId(client)}</td>
+                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate">{client.tradeName || '---'}</td>
+                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
+                    <td className="px-4 py-[2px]">
+                       <div className="flex items-center gap-2 group/gstin">
+                          <span className="font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</span>
+                          <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')} className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
+                       </div>
+                    </td>
+                    <td className="px-4 py-[2px] text-center">
+                       <button onClick={() => toggleStatus(client.id, 'gstr9')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.gstr9 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{st.gstr9 ? 'Filed' : 'Pending'}</button>
+                    </td>
+                    <td className="px-4 py-[2px] text-center">
+                       {app9c ? (
+                         <button onClick={() => toggleStatus(client.id, 'gstr9c')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.gstr9c ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{st.gstr9c ? 'Filed' : 'Pending'}</button>
+                       ) : (
+                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">N/A</span>
+                       )}
+                    </td>
+                    <td className="px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
+                    <td className="px-4 py-[2px]">
+                       <div className="flex items-center gap-2 group/pass">
+                          {isEditingPass ? (
+                            <div className="flex items-center gap-1">
+                               <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
+                            </div>
+                          ) : (
+                            <>
+                               <span className="font-black text-indigo-400 tracking-wider truncate">{isPassVisible ? client.gstProfile?.password : '••••••••'}</span>
+                               <button onClick={() => setVisiblePasswords(p => { const n = new Set(p); n.has(client.id) ? n.delete(client.id) : n.add(client.id); return n; })} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all">{isPassVisible ? '🙈' : '👁️'}</button>
+                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                            </>
+                          )}
+                       </div>
+                    </td>
+                    <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
+                       <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white flex items-center justify-center shadow-sm" title="Login Tool"><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
+                          <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
+                       </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Detail Modal */}
-      {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
-              <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                 <div>
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{selectedClient.tradeName || selectedClient.legalName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">GSTR-9/9C Audit Profile • FY {selectedYear}</p>
-                 </div>
-                 <button onClick={() => setIsDetailModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-all"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+      {/* MODALS */}
+      {activeActionsId && selectedClient && (
+        <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-hidden text-left">
+          <button onClick={() => { shareViaWhatsApp(`*Audit Credentials*\n*Entity:* ${selectedClient.tradeName}\n*GSTIN:* ${selectedClient.gstProfile?.gstin}\n*User ID:* ${selectedClient.gstProfile?.username}\n*Password:* ${selectedClient.gstProfile?.password}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
+              <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Share Credentials</span>
+          </button>
+          <button onClick={() => { shareViaWhatsApp(`*Audit Dossier*\nEntity: ${selectedClient.legalName}\nGSTIN: ${selectedClient.gstProfile?.gstin}\n9C Applies: ${is9CApplicable(selectedClient.id) ? 'YES' : 'NO'}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
+              <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Share Full Detail</span>
+          </button>
+          <div className="my-1 border-t border-slate-100" />
+          <button onClick={() => { setIsDetailModalOpen(true); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors text-left group">
+              <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Full Profile View</span>
+          </button>
+          <button onClick={() => { setIsEditApplicabilityOpen(true); setIs9CApplicableState(is9CApplicable(selectedClient!.id)); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group border-t border-slate-50">
+              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700">Edit Applicability</span>
+          </button>
+          <button onClick={() => { if(confirm('Remove from audit list?')) removeFromWatchlist(selectedClient!.id); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 rounded-xl transition-colors text-left group border-t border-slate-50">
+              <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete from List</span>
+          </button>
+        </div>
+      )}
+
+      {/* TRACK CLIENT MODAL (WITH FULL DETAILS & 9C TOGGLE) */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+              <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
+                 <h3 className="text-xl font-black uppercase tracking-tight">Audit Enrollment • FY {selectedYear}</h3>
+                 <button onClick={() => setIsAddModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
-              <div className="p-10 space-y-8">
-                 <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">GSTIN Identifier</p><p className="text-base font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
-                    <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">Portal User ID</p><p className="text-base font-black text-slate-900">{selectedClient.gstProfile?.username}</p></div>
-                    <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">GSTR-9 Date</p><p className="text-base font-black text-slate-700">{getStatus(selectedClient.id).gstr9Date || '---'}</p></div>
-                    <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">GSTR-9C Date</p><p className="text-base font-black text-slate-700">{getStatus(selectedClient.id).gstr9cDate || '---'}</p></div>
+              <div className="flex-1 flex flex-col md:flex-row h-[500px]">
+                 <div className="w-full md:w-1/2 border-r border-slate-100 flex flex-col">
+                    <div className="p-4 bg-slate-50 border-b border-slate-100"><input type="text" placeholder="Lookup Master Vault..." value={addSearch} onChange={e => setAddSearch(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-600/10" /></div>
+                    <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1 bg-white">
+                       {allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
+                         <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
+                            <p className="text-sm font-black uppercase truncate">{c.tradeName || c.legalName}</p>
+                            <p className={`text-[10px] font-mono mt-1 ${selectedClient?.id === c.id ? 'text-indigo-200' : 'text-slate-400'}`}>{c.gstProfile?.gstin || 'NO GSTIN'}</p>
+                         </button>
+                       ))}
+                    </div>
                  </div>
-                 <div className="pt-4 border-t border-slate-100">
-                    <button onClick={() => { if(confirm('Remove client from tracking?')) { removeFromWatchlist(selectedClient.id); setIsDetailModalOpen(false); } }} 
-                      className="text-[10px] font-black uppercase text-red-500 hover:underline tracking-widest">Untrack for FY {selectedYear}</button>
+                 <div className="flex-1 bg-slate-50/50 p-8 overflow-y-auto no-scrollbar">
+                    {selectedClient ? (
+                      <div className="space-y-10 animate-in slide-in-from-right-4">
+                         <section className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between">
+                               <div><p className="text-sm font-black text-slate-900 uppercase">GSTR-9C Applicable?</p><p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Include reconciliation audit</p></div>
+                               <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} /></button>
+                            </div>
+                         </section>
+                         <section className="grid grid-cols-1 gap-6">
+                            <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Principal Legal Identity</p><p className="text-lg font-black text-slate-900 uppercase truncate leading-none">{selectedClient.legalName}</p></div>
+                            <div className="grid grid-cols-2 gap-4">
+                               <div><p className="text-[9px] font-black uppercase text-slate-400">GSTIN No</p><p className="text-sm font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
+                               <div><p className="text-[9px] font-black uppercase text-slate-400">Status</p><p className="text-sm font-black text-emerald-600 uppercase">{selectedClient.status}</p></div>
+                            </div>
+                         </section>
+                         <button onClick={() => { addToWatchlist(selectedClient.id, is9CApplicableState); setIsAddModalOpen(false); setSelectedClient(null); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:bg-slate-900 transition-all">Synchronize for Audit</button>
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-60"><svg className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg><p className="text-sm font-black uppercase tracking-widest">Select Entity To Track</p></div>
+                    )}
                  </div>
-              </div>
-              <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                 <button onClick={() => setIsDetailModalOpen(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Dismiss</button>
               </div>
            </div>
         </div>
       )}
 
-      {/* Add to Watchlist Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95">
-              <div className="flex items-center justify-between shrink-0">
-                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Add to FY {selectedYear} Audit</h3>
-                 <button onClick={() => setIsAddModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+      {/* EDIT APPLICABILITY MODAL */}
+      {isEditApplicabilityOpen && selectedClient && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 space-y-8 animate-in zoom-in-95 border border-slate-200">
+              <div><h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Audit Applicability</h3><p className="text-sm font-bold text-slate-400 uppercase mt-1 truncate">{selectedClient.legalName}</p></div>
+              <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between">
+                 <span className="text-sm font-black text-slate-700 uppercase">GSTR-9C Requirement</span>
+                 <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} /></button>
               </div>
-              <div className="relative shrink-0">
-                 <input type="text" placeholder="Search Regular GST portfolio..." value={addSearch} onChange={e => setAddSearch(e.target.value)}
-                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3.5 px-5 font-bold text-sm outline-none focus:ring-4 focus:ring-indigo-50 transition-all" />
-              </div>
-              <div className="flex-1 max-h-[400px] overflow-y-auto space-y-2 no-scrollbar">
-                 {availableToAdd.length === 0 ? (
-                    <p className="text-center py-10 text-slate-400 font-bold uppercase text-xs tracking-widest">No untracked regular entities found</p>
-                 ) : (
-                    availableToAdd.map(c => (
-                      <button key={c.id} onClick={() => { addToWatchlist(c.id, true); setIsAddModalOpen(false); setAddSearch(''); }} 
-                        className="w-full text-left p-4 rounded-2xl border border-slate-100 hover:border-indigo-600 hover:bg-indigo-50/50 transition-all group flex items-center justify-between">
-                         <div className="min-w-0">
-                            <p className="text-sm font-black text-slate-900 uppercase group-hover:text-indigo-600 truncate">{c.tradeName || c.legalName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono tracking-tight mt-1 uppercase">{c.gstProfile?.gstin}</p>
-                         </div>
-                         <svg className="h-5 w-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-                      </button>
-                    ))
-                 )}
+              <div className="flex gap-3">
+                 <button onClick={() => setIsEditApplicabilityOpen(false)} className="flex-1 py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest">Discard</button>
+                 <button onClick={() => { update9CApplicability(selectedClient.id, is9CApplicableState); setIsEditApplicabilityOpen(false); }} className="flex-[2] py-4 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-slate-900 transition-all">Save Config</button>
               </div>
            </div>
         </div>
       )}
+
+      {/* LOGIN TOOL MODAL */}
+      {isLoginBoxOpen && selectedClient && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-lg bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+              <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                 <div><p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Audit Portal Bridge</p><h3 className="text-xl font-black uppercase truncate">{selectedClient.tradeName}</h3></div>
+                 <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+              </div>
+              <div className="p-10 space-y-8">
+                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col gap-4">
+                    <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">GSTIN Identity</p><p className="text-lg font-black text-indigo-600 font-mono uppercase tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900">{selectedClient.gstProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.gstProfile?.password}</p></div>
+                    </div>
+                 </div>
+              </div>
+              <div className="p-8 bg-slate-50 border-t border-slate-100"><button onClick={() => { navigator.clipboard.writeText(selectedClient.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">Launch Portal & Sync ID</button></div>
+           </div>
+        </div>
+      )}
+
+      {/* FULL CLIENT DETAIL VIEW MODAL */}
+      {isDetailModalOpen && selectedClient && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div className="min-w-0"><h2 className="text-2xl font-black text-slate-900 uppercase truncate">{selectedClient.tradeName || selectedClient.legalName}</h2><p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Full Dossier • FY {selectedYear}</p></div>
+              <button onClick={() => setIsDetailModalOpen(false)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+            </div>
+            <div className="p-10 overflow-y-auto no-scrollbar flex-1 space-y-12">
+               <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">GSTIN Identification</p><p className="text-base font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
+                  <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">Relationship Status</p><p className="text-base font-black text-emerald-600 uppercase">{selectedClient.status}</p></div>
+               </div>
+               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Registration</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.gstProfile?.regType}</p></div>
+                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Audit Mode</p><p className="text-sm font-black text-indigo-600 uppercase">{is9CApplicable(selectedClient.id) ? '9 + 9C' : '9 ONLY'}</p></div>
+                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Mobile</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.mobile}</p></div>
+                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Email</p><p className="text-sm font-black text-slate-900 lowercase truncate">{selectedClient.email}</p></div>
+               </div>
+            </div>
+            <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsDetailModalOpen(false)} className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-2xl hover:bg-slate-900 transition-all">Close Dossier</button></footer>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

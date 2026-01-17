@@ -1,8 +1,12 @@
+
 import { useState, useCallback } from 'react';
+
+export type RefundStatus = 'Pending' | 'Processed' | 'Issued' | 'Adjusted' | 'Rejected' | 'N/A';
 
 export interface ITRFilingStatus {
   filed: boolean;
   date?: string;
+  refundStatus?: RefundStatus;
   itrFile?: string; // Base64 or Blob URL
   compFile?: string; // Base64 or Blob URL
 }
@@ -24,14 +28,46 @@ export const useITRReturnLogic = (selectedAY: string) => {
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {
       const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false }) };
+      const clientData = { ...(yearData[clientId] || { filed: false, refundStatus: 'N/A' }) };
       
       clientData.filed = !clientData.filed;
       if (clientData.filed) {
         clientData.date = new Date().toISOString().split('T')[0];
+        if (!clientData.refundStatus || clientData.refundStatus === 'N/A') {
+          clientData.refundStatus = 'Pending';
+        }
       } else {
         delete clientData.date;
+        clientData.refundStatus = 'N/A';
       }
+      
+      yearData[clientId] = clientData;
+      const next = { ...prev, [selectedAY]: yearData };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [selectedAY]);
+
+  const updateFilingDate = useCallback((clientId: string, date: string) => {
+    setAllData(prev => {
+      const yearData = { ...(prev[selectedAY] || {}) };
+      const clientData = { ...(yearData[clientId] || { filed: true, refundStatus: 'Pending' }) };
+      clientData.date = date;
+      yearData[clientId] = clientData;
+      const next = { ...prev, [selectedAY]: yearData };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [selectedAY]);
+
+  const cycleRefundStatus = useCallback((clientId: string) => {
+    const statusFlow: RefundStatus[] = ['Pending', 'Processed', 'Issued', 'Adjusted', 'Rejected', 'N/A'];
+    setAllData(prev => {
+      const yearData = { ...(prev[selectedAY] || {}) };
+      const clientData = { ...(yearData[clientId] || { filed: false, refundStatus: 'N/A' }) };
+      const currentIdx = statusFlow.indexOf(clientData.refundStatus || 'N/A');
+      const nextIdx = (currentIdx + 1) % statusFlow.length;
+      clientData.refundStatus = statusFlow[nextIdx];
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
@@ -59,7 +95,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
   }, [selectedAY]);
 
   const getStatus = useCallback((clientId: string): ITRFilingStatus => {
-    return (allData[selectedAY] || {})[clientId] || { filed: false };
+    return (allData[selectedAY] || {})[clientId] || { filed: false, refundStatus: 'N/A' };
   }, [allData, selectedAY]);
 
   const updateDueDate = (val: string) => {
@@ -70,5 +106,5 @@ export const useITRReturnLogic = (selectedAY: string) => {
 
   const getDueDate = () => dueDates[selectedAY] || '';
 
-  return { getStatus, toggleStatus, updateFileData, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateFileData, updateDueDate, getDueDate };
 };

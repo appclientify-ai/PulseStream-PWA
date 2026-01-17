@@ -42,6 +42,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
             { id: 'compliance-monthly', label: 'Monthly Filing' },
             { id: 'compliance-quarterly', label: 'Quarterly Filing' },
             { id: 'compliance-composition', label: 'Composition' },
+          ]
+        },
+        {
+          id: 'annual-ret-f', label: 'Annual Returns', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+          children: [
             { id: 'compliance-gstr4', label: 'GSTR-4 Annual' },
             { id: 'compliance-gstr9', label: 'GSTR-9/9C Audit' },
           ]

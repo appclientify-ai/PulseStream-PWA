@@ -455,7 +455,7 @@ const Dashboard: React.FC = () => {
                         <span className="text-sm font-black text-slate-900 group-hover:text-white uppercase tracking-wider">{child.label}</span>
                         <span className="text-[9px] font-bold text-slate-400 group-hover:text-indigo-200 uppercase mt-1">Authorized Vault Access</span>
                       </div>
-                      <svg className="h-5 w-5 text-slate-200 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                      <svg className="h-5 w-5 text-slate-200 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" /></svg>
                    </button>
                  ))}
               </div>

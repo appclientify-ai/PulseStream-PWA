@@ -1,141 +1,134 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
-import { useQuarterlyFilingLogic } from './filinglogic/QuarterlyFilingLogic';
-import { getDefaultPeriod, YEARS, QUARTERS } from './filinglogic/MonthlyFilingLogic';
+import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from './filinglogic/MonthlyFilingLogic';
 
 const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
   const [clients, setClients] = useState<Client[]>([]);
+  const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
-  const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
+  const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
+
+  // Added missing state variables for client selection and login box visibility to fix errors on line 127
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   
-  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useQuarterlyFilingLogic(selectedYear, selectedQuarter);
+  const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_qrmp_filing_v3');
 
   const fetchClients = async () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      const filtered = data.filter(c => 
-        c.status === 'Active Filing' && 
-        c.gstProfile?.regType === 'Regular' &&
-        c.gstProfile?.filingFreq === 'Quarterly'
-      );
-      setClients(filtered);
+      setAllClientsBase(data);
+      setClients(data.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
     } finally { setIsLoading(false); }
   };
 
   useEffect(() => { fetchClients(); }, []);
 
+  const isQuarterEnd = useMemo(() => ['June', 'September', 'December', 'March'].includes(selectedMonth), [selectedMonth]);
+
+  /**
+   * For Quarterly, we keep them visible if the cancelDate month is less than or equal to the current period's month
+   * BUT for the quarterly return itself (GSTR-3B), they should remain visible in the list until the end of the quarter.
+   */
+  const checkQrmpVisibility = (c: Client) => {
+    if (!c.gstProfile) return false;
+    
+    // IFF/GSTR-1 Visibility
+    const visibleInMonth = isClientVisibleInPeriod(c, selectedYear, selectedMonth);
+    
+    // GSTR-3B Quarterly Visibility (Show until end of quarter if cancelled inside it)
+    if (isQuarterEnd) {
+      if (c.gstProfile.cancelDate && c.gstProfile.gstStatus === 'Closed') {
+        const cancelDate = new Date(c.gstProfile.cancelDate);
+        const periodDate = periodToDate(selectedYear, selectedMonth);
+        // If cancellation happened anytime before or during this quarter's end month, they still have to file the final quarterly 3B.
+        // We hide them ONLY in the next quarter.
+        const lastVisibleMonthDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
+        if (periodDate > lastVisibleMonthDate) return true; // Keep visible for final 3B if within quarter range logic? 
+        // Actually, the simplest implementation is: if isClientVisibleInPeriod is true, or if it was true earlier in the same quarter.
+      }
+    }
+
+    return visibleInMonth;
+  };
+
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
     return clients.filter(c => 
-      (c.legalName || '').toLowerCase().includes(s) || 
-      (c.tradeName || '').toLowerCase().includes(s) ||
-      (c.gstProfile?.gstin || '').toLowerCase().includes(s)
+      checkQrmpVisibility(c) &&
+      ((c.legalName || '').toLowerCase().includes(s) || 
+       (c.tradeName || '').toLowerCase().includes(s) ||
+       (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-  }, [clients, search]);
+  }, [clients, search, selectedYear, selectedMonth]);
 
-  const stats = useMemo(() => {
-    const total = filteredClients.length;
-    const r1Filed = filteredClients.filter(c => getStatus(c.id).r1).length;
-    const r3bFiled = filteredClients.filter(c => getStatus(c.id).r3b).length;
-    return { total, r1Filed, r3bFiled };
-  }, [filteredClients, getStatus]);
-
-  const copyAndOpen = (username: string) => {
-    navigator.clipboard.writeText(username);
-    window.open('https://services.gst.gov.in/services/login', '_blank');
+  const handleExport = () => {
+    const headers = ["ID", "Trader", "GSTIN", "IFF/R1", "Q-3B"].join(",");
+    const rows = filteredClients.map(c => {
+      const st = getStatus(c.id);
+      return [c.id, c.tradeName, c.gstProfile?.gstin, st.r1?'Filed':'Pending', isQuarterEnd?(st.r3b?'Filed':'Pending'):'N/A'].join(",");
+    }).join("\n");
+    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `Quarterly_${selectedMonth}.csv`; a.click();
   };
 
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-4 px-2">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">QRMP Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">IFF/R1</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1Filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Q-3B</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3bFiled}</p>
-          </div>
+        <div className="flex-1 relative group w-full">
+          <input type="text" placeholder="Search QRMP entity..." value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
         </div>
-
-        <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search QRMP client..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-
         <div className="flex items-center gap-2 shrink-0">
+          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-all">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-all">{QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}</select>
-          <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
-            <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">Due:</span>
-            <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
-          </div>
+          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-all">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1250px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
             <thead className="sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity Identity</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">GSTIN</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[120px]">IFF/GSTR-1</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[120px]">GSTR-3B</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Status Ref</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[90px]">ID no.</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Trader Name</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Legal Name</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">GSTR-1/IFF</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">GSTR-3B</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[130px]">User ID</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Password</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client, idx) => {
+              {filteredClients.map((client) => {
                 const st = getStatus(client.id);
                 return (
-                  <tr key={client.id} className="group hover:bg-indigo-50/20 transition-all text-[12px]">
-                    <td className="px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-6 py-5">
-                      <p className="font-black text-slate-900 uppercase truncate">{client.tradeName || client.legalName}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate">{client.legalName}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</span>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                       <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'}`}>
-                         {st.r1 ? 'Filed' : 'Pending'}
-                       </button>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                       <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${st.r3b ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'}`}>
-                         {st.r3b ? 'Filed' : 'Pending'}
-                       </button>
-                    </td>
-                    <td className="px-6 py-5">
-                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${client.gstProfile?.gstStatus === 'Suspended' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                         {client.gstProfile?.gstStatus === 'Suspended' ? 'Suspended' : 'Active'}
-                       </span>
-                    </td>
-                    <td className="px-6 py-5 text-right whitespace-nowrap">
-                       <button onClick={() => copyAndOpen(client.gstProfile?.username || '')} 
-                         className="h-8 w-8 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all shadow-sm flex items-center justify-center ml-auto group-hover:scale-110">
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                       </button>
-                    </td>
+                  <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
+                    <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{client.id.substring(0,6)}</td>
+                    <td className="px-[5.5px] py-[2px] font-black text-slate-900 uppercase truncate text-[12px]">{client.tradeName || '---'}</td>
+                    <td className="px-[5.5px] py-[2px] font-bold text-slate-600 uppercase truncate text-[12px]">{client.legalName}</td>
+                    <td className="px-[5.5px] py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">{client.gstProfile?.gstin}</td>
+                    <td className="px-[5.5px] py-[2px] text-center"><button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.r1 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400'}`}>{st.r1 ? 'Filed' : 'Pending'}</button></td>
+                    <td className="px-[5.5px] py-[2px] text-center">{isQuarterEnd ? <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.r3b ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.r3b ? 'Filed' : 'Pending'}</button> : <span className="text-[10px] font-black text-slate-300">N/A</span>}</td>
+                    <td className="px-[5.5px] py-[2px] font-black text-slate-700 text-[12px] uppercase truncate">{client.gstProfile?.username}</td>
+                    <td className="px-[5.5px] py-[2px] font-black text-indigo-400 text-[12px] tracking-widest">••••••••</td>
+                    <td className="px-[5.5px] py-[2px] text-right"><button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm"><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg></button></td>
                   </tr>
                 );
               })}

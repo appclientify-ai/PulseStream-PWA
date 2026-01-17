@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Client, ITProfile, NatureOfWork, ClientStatus } from '../../types.ts';
+import { Client, NatureOfWork, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 
 interface ITClientFormModalProps {
@@ -20,6 +20,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
   const [formData, setFormData] = useState<Partial<Client>>({
     legalName: '',
+    tradeName: '',
     mobile: '',
     email: '',
     status: 'Active',
@@ -33,12 +34,6 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       natureOfWork: 'Salaried',
       employmentType: 'Private',
       businessName: '',
-      advisoryWork: {
-        itrFiling: true,
-        taxAudit: false,
-        balanceSheet: false,
-        appeals: false
-      }
     },
     bankDetails: { bankName: '', accountNo: '', ifsc: '' },
     remarks: ''
@@ -58,12 +53,11 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
   const resetForm = () => {
     setFormData({
-      legalName: '', mobile: '', email: '', status: 'Active',
+      legalName: '', tradeName: '', mobile: '', email: '', status: 'Active',
       itProfile: {
         pan: '', username: '', password: '', category: 'Individual',
         fatherName: '', dob: '', natureOfWork: 'Salaried',
         employmentType: 'Private', businessName: '',
-        advisoryWork: { itrFiling: true, taxAudit: false, balanceSheet: false, appeals: false }
       },
       bankDetails: { bankName: '', accountNo: '', ifsc: '' },
       remarks: ''
@@ -79,19 +73,21 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       itProfile: { ...prev.itProfile!, pan, username: pan }
     }));
 
-    // Smart Linkage: Auto-populate if PAN matches a GST profile
+    // Smart Linkage: Auto-populate if PAN matches a profile in the vault (e.g. from GST)
     if (!initialData && pan.length === 10) {
-      const gstMatch = existingClients.find(c => 
-        (c.gstProfile?.pan === pan || c.gstProfile?.gstin?.substring(2, 12) === pan)
+      const match = existingClients.find(c => 
+        (c.gstProfile?.pan === pan || c.gstProfile?.gstin?.substring(2, 12) === pan || c.itProfile?.pan === pan)
       );
 
-      if (gstMatch) {
+      if (match) {
         setFormData(prev => ({
           ...prev,
-          legalName: gstMatch.legalName,
-          mobile: gstMatch.mobile,
-          email: gstMatch.email,
-          bankDetails: gstMatch.bankDetails || prev.bankDetails
+          legalName: match.legalName || prev.legalName,
+          tradeName: match.tradeName || prev.tradeName,
+          mobile: match.mobile || prev.mobile,
+          email: match.email || prev.email,
+          bankDetails: match.bankDetails || prev.bankDetails,
+          remarks: match.remarks || prev.remarks
         }));
         setIsDataLinked(true);
       } else {
@@ -135,7 +131,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
         <header className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
           <div className="flex items-center gap-4">
              <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 002 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
              </div>
              <div>
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
@@ -159,7 +155,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
           {isDataLinked && (
             <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2">
                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Data Linked from GST Profile</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Data Synchronized from Vault Reference</span>
             </div>
           )}
 
@@ -226,19 +222,23 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
           <fieldset className="space-y-6">
              <div className="col-span-full border-l-4 border-indigo-600 pl-4 mb-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">3. Personal / Entity Information</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">3. Entity Information</h3>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Full Name (As per PAN)</label>
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Legal Name (As per PAN)</label>
                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value.toUpperCase()})} placeholder="E.G. JOHN DOE" />
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Trade Name (Optional)</label>
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value.toUpperCase()})} placeholder="BUSINESS NAME" />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">DOB / Incorporation</label>
                    <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:bg-white transition-all uppercase" value={formData.itProfile?.dob} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, dob: e.target.value}})} />
                 </div>
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Father's Name (Required for Individual)</label>
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Father's Name</label>
                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:bg-white transition-all" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value.toUpperCase()}})} placeholder="Father's Full Name" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -256,7 +256,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
           <fieldset className="space-y-6">
              <div className="col-span-full border-l-4 border-indigo-600 pl-4 mb-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">4. Professional Information</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">4. Professional Profile</h3>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
@@ -302,36 +302,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
           <fieldset className="space-y-6">
              <div className="col-span-full border-l-4 border-indigo-600 pl-4 mb-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">5. Advisory Work</h3>
-             </div>
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                {[
-                   { id: 'itrFiling', label: 'ITR Filing' },
-                   { id: 'taxAudit', label: 'Tax Audit (44AB)' },
-                   { id: 'balanceSheet', label: 'B/S Preparation' },
-                   { id: 'appeals', label: 'Appeals' }
-                ].map((item) => (
-                  <label key={item.id} className="flex items-center gap-3 cursor-pointer group">
-                     <div className={`h-6 w-6 rounded-lg border-2 transition-all flex items-center justify-center ${formData.itProfile?.advisoryWork?.[item.id as keyof typeof formData.itProfile.advisoryWork] ? 'bg-indigo-600 border-indigo-600 shadow-md shadow-indigo-100' : 'bg-white border-slate-200 group-hover:border-indigo-400'}`}>
-                        {formData.itProfile?.advisoryWork?.[item.id as keyof typeof formData.itProfile.advisoryWork] && (
-                           <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>
-                        )}
-                     </div>
-                     <input 
-                       type="checkbox" 
-                       className="hidden" 
-                       checked={formData.itProfile?.advisoryWork?.[item.id as keyof typeof formData.itProfile.advisoryWork]} 
-                       onChange={() => setFormData({...formData, itProfile: {...formData.itProfile!, advisoryWork: {...formData.itProfile!.advisoryWork!, [item.id]: !formData.itProfile!.advisoryWork![item.id as keyof typeof formData.itProfile.advisoryWork]}}})} 
-                     />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">{item.label}</span>
-                  </label>
-                ))}
-             </div>
-          </fieldset>
-
-          <fieldset className="space-y-6">
-             <div className="col-span-full border-l-4 border-indigo-600 pl-4 mb-4">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">6. Bank Details</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">5. Bank Details</h3>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-2">
@@ -346,6 +317,21 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">IFSC Code</label>
                    <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black font-mono tracking-widest outline-none uppercase" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value.toUpperCase()}})} placeholder="HDFC0000123" />
                 </div>
+             </div>
+          </fieldset>
+
+          <fieldset className="space-y-6">
+             <div className="col-span-full border-l-4 border-indigo-600 pl-4 mb-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">6. Vault Remarks</h3>
+             </div>
+             <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Internal History / Notes</label>
+                <textarea 
+                  className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-medium outline-none focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all min-h-[120px] resize-none" 
+                  value={formData.remarks} 
+                  onChange={e => setFormData({...formData, remarks: e.target.value})} 
+                  placeholder="Archive internal case notes, status updates, or historical context here..." 
+                />
              </div>
           </fieldset>
         </div>
