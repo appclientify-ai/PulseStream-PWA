@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ActiveView } from '../types';
 
-interface NavItem {
+export interface NavItem {
   id: ActiveView | string;
   label: string;
   icon?: React.ReactNode;
@@ -14,10 +14,10 @@ interface SidebarProps {
   onViewChange: (view: ActiveView) => void;
   isCollapsed: boolean;
   onToggle: () => void;
+  onOpenFolder: (item: NavItem) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed, onToggle }) => {
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed, onToggle, onOpenFolder }) => {
 
   const navigation: { group: string; items: NavItem[] }[] = [
     {
@@ -39,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         { 
           id: 'gst-ret-f', label: 'GST Returns', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
           children: [
-            { id: 'compliance-monthly', label: 'Monthly' },
-            { id: 'compliance-quarterly', label: 'Quarterly' },
+            { id: 'compliance-monthly', label: 'Monthly Filing' },
+            { id: 'compliance-quarterly', label: 'Quarterly Filing' },
             { id: 'compliance-composition', label: 'Composition' },
-            { id: 'compliance-gstr4', label: 'GSTR-4' },
-            { id: 'compliance-gstr9', label: 'GSTR-9/9C' },
+            { id: 'compliance-gstr4', label: 'GSTR-4 Annual' },
+            { id: 'compliance-gstr9', label: 'GSTR-9/9C Audit' },
           ]
         },
         { 
@@ -61,19 +61,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         {
           id: 'l-notices', label: 'GST Notices', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
           children: [
-            { id: 'lit-notice-pending', label: 'Pending' },
-            { id: 'lit-notice-filed', label: 'Filed' },
-            { id: 'lit-notice-drop', label: 'Dropped' },
-            { id: 'lit-notice-demand', label: 'Demand' },
+            { id: 'lit-notice-pending', label: 'Pending Notices' },
+            { id: 'lit-notice-filed', label: 'Filed Notices' },
+            { id: 'lit-notice-drop', label: 'Closed/Relief' },
+            { id: 'lit-notice-demand', label: 'Confirmed Demand' },
           ]
         },
         {
           id: 'l-appeals', label: 'GST Appeals', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
           children: [
-            { id: 'lit-appeal-pending', label: 'Pending' },
-            { id: 'lit-appeal-filed', label: 'Filed' },
-            { id: 'lit-appeal-drop', label: 'Dropped' },
-            { id: 'lit-appeal-demand', label: 'Demand' },
+            { id: 'lit-appeal-pending', label: 'Pending Appeals' },
+            { id: 'lit-appeal-filed', label: 'Filed Appeals' },
+            { id: 'lit-appeal-drop', label: 'Closed/Relief' },
+            { id: 'lit-appeal-demand', label: 'Sustained' },
           ]
         },
         {
@@ -81,8 +81,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           children: [
             { id: 'lit-tribunal-pending', label: 'Pending' },
             { id: 'lit-tribunal-filed', label: 'Filed' },
-            { id: 'lit-tribunal-drop', label: 'Dropped' },
-            { id: 'lit-tribunal-demand', label: 'Demand' },
+            { id: 'lit-tribunal-drop', label: 'Closed/Relief' },
+            { id: 'lit-tribunal-demand', label: 'Sustained' },
           ]
         },
         {
@@ -90,8 +90,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           children: [
             { id: 'lit-hc-pending', label: 'Pending' },
             { id: 'lit-hc-filed', label: 'Filed' },
-            { id: 'lit-hc-drop', label: 'Dropped' },
-            { id: 'lit-hc-demand', label: 'Demand' },
+            { id: 'lit-hc-drop', label: 'Closed/Relief' },
+            { id: 'lit-hc-demand', label: 'Sustained' },
           ]
         },
       ]
@@ -120,28 +120,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
   ];
 
   const handleItemClick = (item: NavItem) => {
-    const hasChildren = !!item.children?.length;
-    if (hasChildren) {
-      setExpandedFolders(prev => prev.includes(item.id) ? prev.filter(f => f !== item.id) : [...prev, item.id]);
+    if (item.children?.length) {
+      onOpenFolder(item);
     } else {
       onViewChange(item.id as ActiveView);
     }
   };
 
-  const renderItem = (item: NavItem, level = 0) => {
-    const isExpanded = expandedFolders.includes(item.id);
+  const renderItem = (item: NavItem) => {
     const isActive = activeView === item.id || item.children?.some(c => c.id === activeView);
     const hasChildren = !!item.children?.length;
 
     return (
-      <div key={item.id} className="w-full group/item relative">
+      <div key={item.id} className="w-full relative px-2">
         <button
           onClick={() => handleItemClick(item)}
-          className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 ${
+          className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 group/item ${
             isCollapsed ? 'justify-center py-4' : 'px-4 py-3'
           } ${
             isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          } ${!isCollapsed && level > 0 ? 'ml-6' : ''}`}
+          }`}
         >
           {item.icon && (
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 shrink-0 transition-transform group-hover/item:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover/item:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,60 +147,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
             </svg>
           )}
           
-          {!isCollapsed && <span className="flex-1 text-left truncate font-black text-[11px] uppercase tracking-wider">{item.label}</span>}
+          {!isCollapsed && (
+            <span className="flex-1 text-left truncate font-black text-[11px] uppercase tracking-wider">
+              {item.label}
+            </span>
+          )}
           
           {!isCollapsed && hasChildren && (
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" />
             </svg>
           )}
         </button>
-
-        {isCollapsed && (
-          <div className="fixed left-[72px] pointer-events-auto opacity-0 group-hover/item:opacity-100 transition-all z-[1000] translate-x-2 group-hover/item:translate-x-0 invisible group-hover/item:visible">
-             <div className="flex items-center">
-                {/* Visual Connector / Bridge */}
-                <div className="w-2 h-full absolute -left-2" />
-                
-                {!hasChildren ? (
-                  <div className="bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl whitespace-nowrap shadow-2xl border border-slate-800">
-                    {item.label}
-                  </div>
-                ) : (
-                  <div className="bg-white border border-slate-200 rounded-[1.25rem] overflow-hidden min-w-[220px] py-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl bg-white/95">
-                    <div className="px-4 py-2 border-b border-slate-100 mb-1 bg-slate-50/50">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
-                    </div>
-                    {item.children?.map(child => (
-                      <button 
-                        key={child.id}
-                        onClick={() => { onViewChange(child.id as ActiveView); }}
-                        className={`w-full text-left px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeView === child.id ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-600 hover:bg-slate-50'}`}
-                      >
-                          {child.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-             </div>
-          </div>
-        )}
-
-        {!isCollapsed && hasChildren && isExpanded && (
-          <div className="mt-1 space-y-1 border-l-2 border-slate-100 ml-6 pl-2 animate-in slide-in-from-top-2 duration-200">
-            {item.children?.map(child => (
-              <button
-                key={child.id}
-                onClick={() => onViewChange(child.id as ActiveView)}
-                className={`w-full text-left px-4 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                  activeView === child.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                }`}
-              >
-                {child.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     );
   };
@@ -229,10 +185,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
          )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar scroll-smooth">
+      <nav className="flex-1 overflow-y-auto py-6 space-y-8 no-scrollbar scroll-smooth">
         {navigation.map((group, i) => (
           <div key={i} className="space-y-3">
-            {!isCollapsed && <h5 className="px-4 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">{group.group}</h5>}
+            {!isCollapsed && <h5 className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">{group.group}</h5>}
             <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
           </div>
         ))}
