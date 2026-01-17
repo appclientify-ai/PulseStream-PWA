@@ -13,9 +13,9 @@ const QuarterlyFiling: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
   const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
   
-  // Login Tool Box State
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
 
@@ -23,13 +23,14 @@ const QuarterlyFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
+  const { getStatus, toggleStatus } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
 
   const fetchClients = async () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
       setAllClientsBase(data);
+      // AUTOMATIC ROUTING: Quarterly Return list only shows taxpayers with Quarterly frequency
       setClients(data.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
     } finally { setIsLoading(false); }
   };
@@ -93,17 +94,6 @@ const QuarterlyFiling: React.FC = () => {
     setSelectedClient(client);
   };
 
-  const handleExport = () => {
-    const headers = ["ID", "Trader", "GSTIN", "IFF/R1", "Q-3B"].join(",");
-    const rows = filteredClients.map(c => {
-      const st = getStatus(c.id);
-      return [c.id, c.tradeName, c.gstProfile?.gstin, st.r1?'Filed':'Pending', isQuarterEnd?(st.r3b?'Filed':'Pending'):'N/A'].join(",");
-    }).join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `Quarterly_${selectedMonth}.csv`; a.click();
-  };
-
   if (isLoading) return <Loader />;
 
   return (
@@ -111,45 +101,39 @@ const QuarterlyFiling: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total QRMP</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">QRMP Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">IFF/R1 Filed</p>
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">IFF Filed</p>
             <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Q-3B Filed</p>
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">3B Filed</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{isQuarterEnd ? stats.r3b : '---'}</p>
           </div>
         </div>
         <div className="flex-1 relative group w-full">
-          <input type="text" placeholder="Search QRMP entity..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search QRMP..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-all">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer hover:bg-slate-100 transition-all">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+        <div className="flex gap-2">
+           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
+        <div className="overflow-x-auto no-scrollbar flex-1 w-full">
           <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[90px]">ID no.</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Trader Name</th>
-                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Legal Name</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
-                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">
-                   <div className="flex items-center justify-center gap-1">IFF/R1 <svg className="h-3 w-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></div>
-                </th>
-                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">
-                   <div className="flex items-center justify-center gap-1">GSTR-3B <svg className="h-3 w-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></div>
-                </th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">IFF/R1</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">GSTR-3B</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[130px]">User ID</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Password</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Action</th>
@@ -163,17 +147,16 @@ const QuarterlyFiling: React.FC = () => {
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
                     <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{client.id.substring(0,6)}</td>
                     <td className="px-[5.5px] py-[2px] font-black text-slate-900 uppercase truncate text-[12px]">{client.tradeName || '---'}</td>
-                    <td className="px-[5.5px] py-[2px] font-bold text-slate-600 uppercase truncate text-[12px]">{client.legalName}</td>
                     <td className="px-[5.5px] py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">{client.gstProfile?.gstin}</td>
                     <td className="px-[5.5px] py-[2px] text-center">
-                       <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-400'}`}>
+                       <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
                           {st.r1 ? 'Filed' : 'Pending'}
                           <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                        </button>
                     </td>
                     <td className="px-[5.5px] py-[2px] text-center">
                        {isQuarterEnd ? (
-                         <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r3b ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                         <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r3b ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
                             {st.r3b ? 'Filed' : 'Pending'}
                             <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                          </button>
@@ -186,8 +169,8 @@ const QuarterlyFiling: React.FC = () => {
                             <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
                           ) : (
                             <>
-                               <span className="font-black text-indigo-400 text-[12px] tracking-tight truncate">{client.gstProfile?.password}</span>
-                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                               <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
+                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                             </>
                           )}
                        </div>
@@ -213,15 +196,7 @@ const QuarterlyFiling: React.FC = () => {
       {/* Floating Action Menu */}
       {activeActionsId && selectedClient && (
         <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right text-left">
-           <div className="px-3 py-2 border-b border-slate-50 mb-1">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Quarterly Sync</p>
-              <p className="text-[10px] font-black text-slate-900 truncate uppercase mt-0.5">{selectedClient.tradeName || selectedClient.legalName}</p>
-           </div>
-           <button onClick={() => { setIsLoginBoxOpen(true); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group">
-              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg></div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Open portal box</span>
-           </button>
-           <button onClick={() => { setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors text-left group">
+           <button onClick={() => { setIsDetailModalOpen(true); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors text-left group">
               <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">View dossier</span>
            </button>
@@ -235,7 +210,7 @@ const QuarterlyFiling: React.FC = () => {
       {/* Portal Login Modal */}
       {isLoginBoxOpen && selectedClient && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
+           <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
                  <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access Bridge</p>
@@ -250,14 +225,8 @@ const QuarterlyFiling: React.FC = () => {
                        <p className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{selectedClient.gstProfile?.gstin}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                       <div>
-                          <p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p>
-                          <p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClient.gstProfile?.username}</p>
-                       </div>
-                       <div>
-                          <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p>
-                          <p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.gstProfile?.password}</p>
-                       </div>
+                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClient.gstProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.gstProfile?.password}</p></div>
                     </div>
                  </div>
               </div>
@@ -265,6 +234,31 @@ const QuarterlyFiling: React.FC = () => {
                  <button onClick={() => { navigator.clipboard.writeText(selectedClient.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">
                     Launch Portal & Sync ID
                  </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* Dossier Modal */}
+      {isDetailModalOpen && selectedClient && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+              <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                 <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{selectedClient.tradeName || selectedClient.legalName}</h2>
+                 <button onClick={() => setIsDetailModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <section className="space-y-6">
+                       <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">QRMP Dossier <div className="h-px flex-1 bg-slate-100" /></h4>
+                       <div className="grid grid-cols-2 gap-6">
+                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Legal Name</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClient.legalName}</p></div>
+                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-sm font-black text-indigo-600 font-mono uppercase tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
+                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Filing Cycle</p><p className="text-sm font-black text-slate-900 uppercase">Quarterly Return</p></div>
+                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Tax Scheme</p><p className="text-sm font-black text-slate-900 uppercase">Regular</p></div>
+                       </div>
+                    </section>
+                 </div>
               </div>
            </div>
         </div>
