@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Client, GstStatus, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
+import GSTDetailModal from '../../components/GSTDetailModal';
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -71,23 +72,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     if (onDataChange) onDataChange();
   };
 
-  // Helper to calculate IDs consistently
-  const getClientDisplayId = (client: Client) => {
-    if (!client.gstProfile) return '---';
-    const isState = client.gstProfile.jurisdictionType === 'State';
-    const val = isState ? client.gstProfile.sector : client.gstProfile.range;
-    const prefix = isState ? 'S' : 'C';
-    
-    // Filter all clients in same jurisdiction + sector/range, sorted by creation
-    const sameGroup = clients.filter(c => 
-      c.gstProfile?.jurisdictionType === client.gstProfile?.jurisdictionType &&
-      (isState ? c.gstProfile?.sector === val : c.gstProfile?.range === val)
-    ).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-
-    const rank = sameGroup.findIndex(c => c.id === client.id) + 1;
-    return `${prefix}/${val || '?'}/${rank}`;
-  };
-
   const filteredClients = useMemo(() => {
     const s = externalSearch.toLowerCase();
     let list = clients.filter(c => 
@@ -149,7 +133,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
         <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
           <thead className="sticky top-0 z-20">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">ID</th>
+              <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">S.No.</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Trade Name</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[240px]">Legal Name</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[140px]">Mobile No</th>
@@ -193,8 +177,8 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate" title={getClientDisplayId(client)}>
-                    {getClientDisplayId(client)}
+                  <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
+                    {(idx + 1).toString().padStart(2, '0')}
                   </td>
                   <td className="px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
@@ -300,6 +284,8 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
 
       <GSTClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
 
+      <GSTDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
+
       {/* Login Tool Box Modal */}
       {isLoginBoxOpen && loginToolClient && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
@@ -371,95 +357,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
         </div>
       )}
 
-      {/* Full Detail View Modal */}
-      {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200">
-            <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div className="min-w-0">
-                 <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase truncate">{selectedClient.tradeName || selectedClient.legalName}</h2>
-                 <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest truncate">{selectedClient.legalName}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <button onClick={() => { if(confirm('Permanently wipe record?')) api.deleteClient(selectedClient.id).then(() => { setIsDetailModalOpen(false); fetch(); }); }} className="h-11 px-6 bg-white border border-red-100 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all">Remove</button>
-                <button onClick={() => { setIsEditModalOpen(true); setIsDetailModalOpen(false); }} className="h-11 px-10 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-slate-900 transition-all">Modify</button>
-                <button onClick={() => setIsDetailModalOpen(false)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-              </div>
-            </div>
-            
-            <div className="p-10 overflow-y-auto no-scrollbar flex-1 space-y-12">
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                  <section className="space-y-6 col-span-1 md:col-span-2">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Compliance Overview <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="grid grid-cols-2 gap-8">
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">GSTIN Identity</p><p className={`text-base font-black font-mono tracking-widest ${selectedClient.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{selectedClient.gstProfile?.gstin}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Statutory Status</p><p className={`text-base font-black uppercase ${selectedClient.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-emerald-600'}`}>{selectedClient.gstProfile?.gstStatus || 'Active'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Registration Date</p><p className="text-base font-black text-slate-900">{selectedClient.gstProfile?.regDate || '---'}</p></div>
-                        {selectedClient.gstProfile?.gstStatus === 'Closed' && (
-                           <div><p className="text-[9px] font-black uppercase text-rose-400 mb-1">Cancellation Date</p><p className="text-base font-black text-rose-600">{selectedClient.gstProfile?.cancelDate || '---'}</p></div>
-                        )}
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Constitution</p><p className="text-base font-black text-slate-900 uppercase">{selectedClient.gstProfile?.constitution}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Tax Scheme</p><p className="text-base font-black text-slate-900 uppercase">{selectedClient.gstProfile?.regType} ({selectedClient.gstProfile?.filingFreq})</p></div>
-                     </div>
-                  </section>
-                  
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Financial Hub <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-5">
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Primary Bank</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.bankDetails?.bankName || '---'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">A/C Number</p><p className="text-sm font-black text-slate-900 font-mono tracking-tight">{selectedClient.bankDetails?.accountNo || '---'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">IFSC Code</p><p className="text-sm font-black text-indigo-600 font-mono tracking-widest">{selectedClient.bankDetails?.ifsc || '---'}</p></div>
-                     </div>
-                  </section>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Assigned Personnel <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="space-y-3">
-                        {selectedClient.gstProfile?.stakeholders.map(s => (
-                           <div key={s.id} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
-                              <div>
-                                 <p className="text-sm font-black text-slate-900 uppercase">{s.name}</p>
-                                 <p className="text-[9px] font-bold text-slate-400 font-mono tracking-widest uppercase mt-0.5">{s.pan}</p>
-                              </div>
-                              <div className="text-right">
-                                 <p className="text-[10px] font-black text-slate-700">{s.mobile}</p>
-                              </div>
-                           </div>
-                        ))}
-                     </div>
-                  </section>
-                  
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Contacts & History <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100/50">
-                           <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Firm Accountant</p>
-                           <p className="text-sm font-black text-slate-900 uppercase">{selectedClient.gstProfile?.accountantName || '---'}</p>
-                           <p className="text-[10px] font-bold text-slate-500 mt-1">{selectedClient.gstProfile?.accountantMobile || '---'}</p>
-                        </div>
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Entity Primary</p>
-                           <p className="text-sm font-black text-slate-900">{selectedClient.mobile}</p>
-                           <p className="text-[10px] font-bold text-slate-400 mt-1 lowercase truncate">{selectedClient.email}</p>
-                        </div>
-                     </div>
-                     <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                        <p className="text-[9px] font-black uppercase text-slate-400 mb-2">Internal Office Notes</p>
-                        <p className="text-xs font-medium text-slate-600 leading-relaxed italic">{selectedClient.remarks || 'No legacy history documented.'}</p>
-                     </div>
-                  </section>
-               </div>
-            </div>
-            
-            <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
-               <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Archived on {new Date(selectedClient.createdAt || Date.now()).toLocaleDateString()}</span>
-               <button onClick={() => setIsDetailModalOpen(false)} className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-2xl hover:bg-slate-900 transition-all">Close Review</button>
-            </footer>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

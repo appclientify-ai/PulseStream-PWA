@@ -407,7 +407,7 @@ const Dashboard: React.FC = () => {
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
         onOpenFolder={setNavigationFolder}
       />
-      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-20' : 'ml-80'}`}>
+      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-24' : 'ml-[22rem]'}`}>
         <Header 
           isConnected={isOnline} 
           currentUser={user} 
@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
           activeViewDescription={headerInfo.desc}
           onViewChange={handleViewChange}
         />
-        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 px-6 md:px-10 overflow-y-auto no-scrollbar scroll-smooth">
+        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 px-8 md:px-16 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
           )}

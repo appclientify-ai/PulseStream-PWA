@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import GSTDetailModal from '../../../components/GSTDetailModal';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
 
 const MonthlyFiling: React.FC = () => {
@@ -136,7 +137,7 @@ const MonthlyFiling: React.FC = () => {
           <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[90px]">ID no.</th>
+                <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[90px]">S.No.</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Trader Name</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
                 <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
@@ -158,7 +159,7 @@ const MonthlyFiling: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
-                    <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{getClientDisplayId(client)}</td>
+                    <td className="px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className="px-[5.5px] py-[2px] font-black text-slate-900 uppercase truncate text-[12px]">{client.tradeName || '---'}</td>
                     <td className="px-[5.5px] py-[2px] font-black font-mono uppercase text-[12px] text-indigo-600">{client.gstProfile?.gstin}</td>
                     <td className="px-[5.5px] py-[2px] text-center">
@@ -250,37 +251,9 @@ const MonthlyFiling: React.FC = () => {
         </div>
       )}
 
-      {/* Profile Detail Dossier Modal */}
-      {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-5xl max-h-[90vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-              <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-                 <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{selectedClient.tradeName || selectedClient.legalName}</h2>
-                 <button onClick={() => setIsDetailModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <section className="space-y-6">
-                       <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Core Identity <div className="h-px flex-1 bg-slate-100" /></h4>
-                       <div className="grid grid-cols-2 gap-6">
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Legal Name</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClient.legalName}</p></div>
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-sm font-black text-indigo-600 font-mono uppercase tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Registration Date</p><p className="text-sm font-black text-slate-900">{selectedClient.gstProfile?.regDate || '---'}</p></div>
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Taxpayer Scheme</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.gstProfile?.regType}</p></div>
-                       </div>
-                    </section>
-                    <section className="space-y-6">
-                       <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-3">Contact Details <div className="h-px flex-1 bg-slate-100" /></h4>
-                       <div className="grid grid-cols-2 gap-6">
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Mobile</p><p className="text-sm font-black text-slate-900">{selectedClient.mobile}</p></div>
-                          <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Email</p><p className="text-sm font-black text-slate-900 lowercase truncate">{selectedClient.email}</p></div>
-                       </div>
-                    </section>
-                 </div>
-              </div>
-           </div>
-        </div>
-      )}
+      <GSTDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
+
+      {/* Profile Detail Dossier Modal removed - replaced by GSTDetailModal */}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import GSTDetailModal from '../../../components/GSTDetailModal';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
 
@@ -16,6 +17,7 @@ const CompositionFiling: React.FC = () => {
   const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
   
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const { getStatus, toggleStatus, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
@@ -77,7 +79,7 @@ const CompositionFiling: React.FC = () => {
           <table className="w-full text-left border-collapse min-w-[1400px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[14px]">
-                <th className="px-4 py-3 w-[100px]">ID no.</th>
+                <th className="px-4 py-3 w-[100px]">S.No.</th>
                 <th className="px-4 py-3 w-[200px]">Trader Name</th>
                 <th className="px-4 py-3 w-[240px]">Legal Name</th>
                 <th className="px-4 py-3 w-[180px]">GSTIN</th>
@@ -88,18 +90,25 @@ const CompositionFiling: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client) => {
+              {filteredClients.map((client, idx) => {
                 const st = getStatus(client.id);
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{client.id.substring(0,6)}</td>
+                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className="px-4 py-[2px] font-black uppercase truncate">{client.tradeName || '---'}</td>
                     <td className="px-4 py-[2px] font-bold text-slate-600 uppercase truncate">{client.legalName}</td>
                     <td className="px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">{client.gstProfile?.gstin}</td>
                     <td className="px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
                     <td className="px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
                     <td className="px-4 py-[2px] font-black text-indigo-400 tracking-widest">••••••••</td>
-                    <td className="px-4 py-[2px] text-right"><button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm"><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg></button></td>
+                    <td className="px-4 py-[2px] text-right flex items-center justify-end gap-1">
+                      <button onClick={() => { setSelectedClient(client); setIsDetailModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm" title="View Profile">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
+                      </button>
+                      <button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
+                        <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14" /></svg>
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -107,6 +116,8 @@ const CompositionFiling: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <GSTDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
     </div>
   );
 };

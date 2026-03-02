@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import GSTDetailModal from '../../../components/GSTDetailModal';
 import { useGSTR4Logic } from './GSTR4logic';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 
@@ -136,7 +137,7 @@ const GSTR4: React.FC = () => {
           <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
-                <th className="px-4 py-3 w-[100px]">ID no.</th>
+                <th className="px-4 py-3 w-[100px]">S.No.</th>
                 <th className="px-4 py-3 w-[180px]">Trader Name</th>
                 <th className="px-4 py-3 w-[200px]">Legal Name</th>
                 <th className="px-4 py-3 w-[180px]">GSTIN</th>
@@ -147,11 +148,11 @@ const GSTR4: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client) => {
+              {filteredClients.map((client, idx) => {
                 const status = getStatus(client.id);
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{getClientDisplayId(client)}</td>
+                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className="px-4 py-[2px] font-black uppercase truncate">{client.tradeName || '---'}</td>
                     <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
                     <td className="px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</td>
@@ -215,31 +216,9 @@ const GSTR4: React.FC = () => {
         </div>
       )}
 
-      {/* FULL CLIENT DETAIL VIEW MODAL */}
-      {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-            <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div className="min-w-0"><h2 className="text-2xl font-black text-slate-900 uppercase truncate">{selectedClient.tradeName || selectedClient.legalName}</h2><p className="text-sm font-bold text-slate-500 uppercase tracking-widest truncate">{selectedClient.legalName}</p></div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-            </div>
-            <div className="p-10 overflow-y-auto no-scrollbar flex-1 space-y-12">
-               <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">GSTIN Identification</p><p className="text-base font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
-                  <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400">Relationship Status</p><p className="text-base font-black text-emerald-600 uppercase">{selectedClient.status}</p></div>
-               </div>
-               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-8">
-                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Category</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.gstProfile?.regType}</p></div>
-                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Frequency</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.gstProfile?.filingFreq}</p></div>
-                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Mobile</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.mobile}</p></div>
-                  <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Email</p><p className="text-sm font-black text-slate-900 lowercase truncate">{selectedClient.email}</p></div>
-               </div>
-            </div>
-            <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsDetailModalOpen(false)} className="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-2xl hover:bg-slate-900 transition-all">Close Review</button></footer>
-          </div>
-        </div>
-      )}
+      <GSTDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
 
+      {/* FULL CLIENT DETAIL VIEW MODAL removed - replaced by GSTDetailModal */}
     </div>
   );
 };

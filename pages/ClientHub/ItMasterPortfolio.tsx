@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Client, ClientStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
+import ITDetailModal from '../../components/ITDetailModal';
 
 interface ItMasterPortfolioProps {
   externalSearch?: string;
@@ -69,12 +70,6 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     if (onDataChange) onDataChange();
   };
 
-  const getClientDisplayId = (client: Client) => {
-    const itGroup = clients.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    const rank = itGroup.findIndex(c => c.id === client.id) + 1;
-    return `IT/${rank.toString().padStart(2, '0')}`;
-  };
-
   const filteredClients = useMemo(() => {
     let list = clients;
     if (statusFilter !== 'All') {
@@ -129,7 +124,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
         <table className="w-full text-left border-collapse table-fixed min-w-[1300px]">
           <thead className="sticky top-0 z-20">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">ID no.</th>
+              <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">S.No.</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[240px]">Name</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Father Name</th>
               <th className="px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[140px]">Mobile No.</th>
@@ -159,8 +154,8 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-emerald-50/10 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className="px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate" title={getClientDisplayId(client)}>
-                    {getClientDisplayId(client)}
+                  <td className="px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
+                    {(idx + 1).toString().padStart(2, '0')}
                   </td>
                   <td className="px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-900 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
@@ -268,91 +263,9 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
       <ITClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
 
-      {/* Full Detail View Modal */}
-      {isDetailModalOpen && selectedClient && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200">
-            <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <div className="min-w-0">
-                 <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase truncate">{selectedClient.legalName}</h2>
-                 <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest truncate">IT Portfolio Profile • {getClientDisplayId(selectedClient)}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <button onClick={() => setIsDetailModalOpen(false)} className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-              </div>
-            </div>
-            
-            <div className="p-10 overflow-y-auto no-scrollbar flex-1 space-y-12">
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                  <section className="space-y-6 col-span-1 md:col-span-2">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">Profile Credentials <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="grid grid-cols-2 gap-8">
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">PAN Identity</p><p className="text-base font-black text-emerald-600 font-mono tracking-widest uppercase">{selectedClient.itProfile?.pan}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Administrative Status</p><p className={`text-base font-black uppercase ${selectedClient.status === 'Active' ? 'text-emerald-600' : 'text-slate-400'}`}>{selectedClient.status}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Date of Birth / Inc.</p><p className="text-base font-black text-slate-900">{selectedClient.itProfile?.dob || '---'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Father's Name</p><p className="text-base font-black text-slate-900 uppercase">{selectedClient.itProfile?.fatherName || '---'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Portal User ID</p><p className="text-base font-black text-slate-900 uppercase">{selectedClient.itProfile?.username}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Vault Password</p><p className="text-base font-black text-indigo-600 tracking-wider">{selectedClient.itProfile?.password}</p></div>
-                     </div>
-                  </section>
-                  
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">Financial Context <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-5">
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Nature of Work</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.itProfile?.natureOfWork || '---'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Business Name</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClient.itProfile?.businessName || 'N/A'}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Employment</p><p className="text-sm font-black text-slate-700 uppercase">{selectedClient.itProfile?.employmentType || '---'}</p></div>
-                     </div>
-                  </section>
-               </div>
+      <ITDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">Advisory Scopes <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="grid grid-cols-2 gap-4">
-                        {[
-                           { id: 'itrFiling', label: 'ITR Filing' },
-                           { id: 'taxAudit', label: 'Tax Audit' },
-                           { id: 'balanceSheet', label: 'B/S Preparation' },
-                           { id: 'appeals', label: 'Appeals' }
-                        ].map(item => {
-                           const isActive = selectedClient.itProfile?.advisoryWork?.[item.id as keyof typeof selectedClient.itProfile.advisoryWork];
-                           return (
-                              <div key={item.id} className={`p-4 rounded-2xl border flex items-center gap-3 ${isActive ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-300'}`}>
-                                 <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                                 <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
-                              </div>
-                           );
-                        })}
-                     </div>
-                  </section>
-                  
-                  <section className="space-y-6">
-                     <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">Contact Details <div className="h-px flex-1 bg-slate-100" /></h4>
-                     <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Primary Mobile</p><p className="text-sm font-black text-slate-900">{selectedClient.mobile}</p></div>
-                        <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Email ID</p><p className="text-sm font-black text-slate-900 lowercase truncate">{selectedClient.email}</p></div>
-                     </div>
-                  </section>
-               </div>
-
-               <section className="space-y-6">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 flex items-center gap-3">Banking Sync <div className="h-px flex-1 bg-slate-100" /></h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                     <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Bank Name</p><p className="text-sm font-black text-slate-900 uppercase">{selectedClient.bankDetails?.bankName || '---'}</p></div>
-                     <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">A/C Number</p><p className="text-sm font-black text-slate-900 font-mono">{selectedClient.bankDetails?.accountNo || '---'}</p></div>
-                     <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">IFSC Code</p><p className="text-sm font-black text-indigo-600 font-mono tracking-widest uppercase">{selectedClient.bankDetails?.ifsc || '---'}</p></div>
-                  </div>
-               </section>
-            </div>
-            
-            <footer className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
-               <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Vault Sync Reference: {selectedClient.id}</span>
-               <button onClick={() => setIsDetailModalOpen(false)} className="px-12 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-2xl hover:bg-slate-900 transition-all">Close Dossier</button>
-            </footer>
-          </div>
-        </div>
-      )}
+      {/* Full Detail View Modal removed - replaced by ITDetailModal */}
     </div>
   );
 };
