@@ -206,7 +206,7 @@ const Dashboard: React.FC = () => {
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32 px-4 md:px-6">
+          <div className="w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
             
             {/* Sector 1: Client Hub */}
@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
           activeViewDescription={headerInfo.desc}
           onViewChange={handleViewChange}
         />
-        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 overflow-y-auto no-scrollbar scroll-smooth">
+        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 px-6 md:px-10 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
           )}

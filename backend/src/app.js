@@ -28,6 +28,16 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
+// Vite middleware for development
+if (process.env.NODE_ENV !== 'production') {
+  const { createServer: createViteServer } = await import('vite');
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa',
+  });
+  app.use(vite.middlewares);
+}
+
 // 3. Serve Static Files (Only needed if running as a monolith on Render)
 const distPath = path.resolve(__dirname, '../../dist');
 app.use(express.static(distPath));

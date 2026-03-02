@@ -6,7 +6,7 @@ import { initSocket } from './sockets/socket.js';
 import { connectDB, client } from './db/mongo.js';
 import { initChangeStreams } from './db/streams.js';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 // Initialize Socket.IO

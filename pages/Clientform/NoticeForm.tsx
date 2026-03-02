@@ -22,6 +22,7 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
     issuedDate: '',
     dueDate: '',
     filedDate: '',
+    orderDate: '',
     remarks: '',
     isReissued: false
   });
@@ -41,7 +42,9 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
       setFormData({
         ...initialData,
         category: category,
-        status: initialData.status || 'Pending'
+        status: initialData.status || 'Pending',
+        filedDate: initialData.filedDate || '',
+        orderDate: initialData.orderDate || ''
       });
       setSearchQuery(initialData.clientName || '');
     } else {
@@ -53,6 +56,8 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
         referenceNo: '',
         issuedDate: '',
         dueDate: '',
+        filedDate: '',
+        orderDate: '',
         remarks: '',
         isReissued: false
       });
@@ -138,6 +143,17 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
               <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Filing Date</label>
+              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.filedDate || ''} onChange={e => setFormData({...formData, filedDate: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Order Date</label>
+              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.orderDate || ''} onChange={e => setFormData({...formData, orderDate: e.target.value})} />
             </div>
           </div>
 

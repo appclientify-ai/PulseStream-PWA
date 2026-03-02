@@ -68,6 +68,32 @@ export const login = async (req, res) => {
     return res.status(400).json({ error: 'Credentials required for vault access' });
   }
 
+  // Temporary hardcoded login for development/testing
+  if (user_id === 'id-a' && password === 'password-a') {
+    const tempUser = {
+      _id: new ObjectId('00000000000000000000000a'),
+      username: 'Temporary Admin',
+      user_id: 'id-a',
+      email_id: 'temp@example.com',
+      firm_name: 'Temporary Firm',
+      gstn: 'TEMP00000000000',
+      avatar: null
+    };
+    const token = generateToken(tempUser);
+    return res.json({
+      token,
+      user: { 
+        id: tempUser._id, 
+        username: tempUser.username, 
+        user_id: tempUser.user_id, 
+        email_id: tempUser.email_id,
+        firm_name: tempUser.firm_name,
+        gstn: tempUser.gstn,
+        avatar: tempUser.avatar
+      }
+    });
+  }
+
   try {
     const users = getCollection('users');
     const user = await users.findOne({ user_id: user_id });

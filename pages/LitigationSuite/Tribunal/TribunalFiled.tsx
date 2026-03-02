@@ -48,9 +48,6 @@ const TribunalFiled: React.FC = () => {
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
     try {
       const updated = { ...record, status: newStatus };
-      if (newStatus === 'Drop' || newStatus === 'Demand') {
-        updated.orderDate = new Date().toISOString().split('T')[0];
-      }
       await api.saveLitigationRecord(updated);
       fetchAll();
     } catch (err) { alert("Status update failed."); }
@@ -130,7 +127,20 @@ const TribunalFiled: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="px-6 py-5 font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</td>
-                      <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">{client?.gstProfile?.gstin || 'N/A'}</td>
+                      <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
+                        <div className="flex items-center gap-2">
+                          <span>{client?.gstProfile?.gstin || 'N/A'}</span>
+                          {client?.gstProfile?.gstin && (
+                            <button 
+                              onClick={() => setSearch(client.gstProfile?.gstin || '')}
+                              className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
+                              title="Search by GSTIN"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
                       <td className="px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
                       <td className="px-6 py-5">

@@ -46,9 +46,6 @@ const AppealPending: React.FC = () => {
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
     try {
       const updated = { ...record, status: newStatus };
-      if (newStatus === 'Filed') {
-        updated.filedDate = new Date().toISOString().split('T')[0];
-      }
       await api.saveLitigationRecord(updated);
       fetchAll();
     } catch (err) {
@@ -147,7 +144,20 @@ const AppealPending: React.FC = () => {
                          <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate mt-0.5">{client?.legalName}</p>
                       </td>
-                      <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">{client?.gstProfile?.gstin || 'N/A'}</td>
+                      <td className="px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
+                        <div className="flex items-center gap-2">
+                          <span>{client?.gstProfile?.gstin || 'N/A'}</span>
+                          {client?.gstProfile?.gstin && (
+                            <button 
+                              onClick={() => setSearch(client.gstProfile?.gstin || '')}
+                              className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
+                              title="Search by GSTIN"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
                       <td className="px-6 py-5 font-black text-slate-700 uppercase truncate">{rec.referenceNo}</td>
                       <td className="px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
