@@ -15,7 +15,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       </div>
       
       {/* Hero Section */}
-      <section className="flex flex-col items-center px-6 pb-32 pt-48 text-center max-w-7xl">
+      <section className="flex flex-col items-center px-6 pb-20 pt-32 text-center max-w-7xl">
         <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-1.5 mb-8 border border-indigo-100 animate-in fade-in slide-in-from-top-4 duration-1000">
            <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -46,7 +46,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       </section>
 
       {/* Platform Section */}
-      <section id="platform" className="w-full bg-slate-50 py-32 border-y border-slate-100 px-6">
+      <section id="platform" className="w-full bg-slate-50 py-20 border-y border-slate-100 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-20 text-center">
              <h2 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tight mb-6">The Next-Gen <span className="text-indigo-600">Platform.</span></h2>
@@ -89,12 +89,12 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       </section>
 
       {/* Security Section */}
-      <section id="security" className="py-32 px-6 max-w-7xl w-full">
-         <div className="rounded-[3.5rem] bg-slate-900 p-12 md:p-24 text-white relative overflow-hidden shadow-2xl">
+      <section id="security" className="py-16 px-6 max-w-7xl w-full">
+         <div className="rounded-[3.5rem] bg-indigo-950 p-10 md:p-16 text-white relative overflow-hidden shadow-2xl">
             <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-indigo-600/20 blur-[120px]" />
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                <div>
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Advanced Vault <span className="text-indigo-400">Security.</span></h2>
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8">Advanced Vault Security.</h2>
                   <p className="text-xl text-slate-400 leading-relaxed mb-10">Your client data is protected by the same encryption standards used by global financial institutions. Clientify is architected for total privacy and zero-trust access.</p>
                   <div className="space-y-6">
                      {[
@@ -132,7 +132,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       </section>
 
       {/* Footer */}
-      <footer className="mt-20 w-full border-t border-slate-100 bg-white py-20 px-6">
+      <footer className="mt-10 w-full border-t border-slate-100 bg-white py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
