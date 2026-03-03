@@ -125,8 +125,8 @@ export const getDefaultPeriod = () => {
   let mYear = calYear;
   if (prevMonthIdx < 0) { prevMonthIdx = 11; mYear = calYear - 1; }
   const monthFY = getFY(prevMonthIdx, mYear);
-  let qIdx = (m >= 0 && m <= 2) ? 3 : (m >= 3 && m <= 5) ? 0 : (m >= 6 && m <= 8) ? 1 : 2;
-  let qYear = (m >= 0 && m <= 2) ? calYear - 1 : calYear;
+  const qIdx = (m >= 0 && m <= 2) ? 3 : (m >= 3 && m <= 5) ? 0 : (m >= 6 && m <= 8) ? 1 : 2;
+  const qYear = (m >= 0 && m <= 2) ? calYear - 1 : calYear;
   const qStartMonths = [3, 6, 9, 0];
   const quarterFY = getFY(qStartMonths[qIdx], qYear);
   return { 

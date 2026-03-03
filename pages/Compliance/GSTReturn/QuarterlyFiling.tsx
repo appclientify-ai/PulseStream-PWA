@@ -98,7 +98,7 @@ const QuarterlyFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 px-2">
+    <div className="flex flex-col h-full space-y-4">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">

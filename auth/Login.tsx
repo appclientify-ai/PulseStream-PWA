@@ -26,7 +26,7 @@ const Login: React.FC<{ onSwitch: () => void; onBackToHome: () => void }> = ({ o
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (userId.trim() && password.trim()) {
-      try { await login(userId, password); } catch (err) {}
+      try { await login(userId, password); } catch (err) { /* ignore */ }
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ActiveView } from '../types';
 
 export interface NavItem {
@@ -18,6 +18,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed, onToggle, onOpenFolder }) => {
+  const [hoveredItem, setHoveredItem] = useState<{ id: string; top: number; item: NavItem } | null>(null);
 
   const navigation: { group: string; items: NavItem[] }[] = [
     {
@@ -132,6 +133,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     }
   };
 
+  const handleMouseEnter = (e: React.MouseEvent, item: NavItem) => {
+    if (!isCollapsed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredItem({ id: item.id, top: rect.top, item });
+  };
+
   const renderItem = (item: NavItem) => {
     const isActive = activeView === item.id || item.children?.some(c => c.id === activeView);
     const hasChildren = !!item.children?.length;
@@ -140,6 +147,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
       <div key={item.id} className="w-full relative px-2">
         <button
           onClick={() => handleItemClick(item)}
+          onMouseEnter={(e) => handleMouseEnter(e, item)}
+          onMouseLeave={() => setHoveredItem(null)}
           className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 group/item ${
             isCollapsed ? 'justify-center py-4' : 'px-4 py-3'
           } ${
@@ -169,48 +178,95 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
   };
 
   return (
-    <aside 
-      className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-2xl transition-all duration-500 ease-in-out ${
-        isCollapsed ? 'w-20' : 'w-80'
-      }`}
-    >
-      <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
-         {!isCollapsed && (
-           <div className="flex items-center gap-3 animate-in fade-in duration-500">
-             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md">
+    <>
+      <aside 
+        className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-2xl transition-all duration-500 ease-in-out ${
+          isCollapsed ? 'w-20' : 'w-80'
+        }`}
+      >
+        <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
+           {!isCollapsed && (
+             <div className="flex items-center gap-3 animate-in fade-in duration-500">
+               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md">
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+               </div>
+               <span className="text-xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
+             </div>
+           )}
+           {isCollapsed && (
+             <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
              </div>
-             <span className="text-xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
-           </div>
-         )}
-         {isCollapsed && (
-           <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-           </div>
-         )}
-      </div>
+           )}
+        </div>
 
-      <nav className="flex-1 overflow-y-auto py-6 space-y-8 no-scrollbar scroll-smooth">
-        {navigation.map((group, i) => (
-          <div key={i} className="space-y-3">
-            {!isCollapsed && <h5 className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">{group.group}</h5>}
-            <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
+        <nav className="flex-1 overflow-y-auto py-6 space-y-8 no-scrollbar scroll-smooth">
+          {navigation.map((group, i) => (
+            <div key={i} className="space-y-3">
+              {!isCollapsed && <h5 className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">{group.group}</h5>}
+              <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
+            </div>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-slate-100">
+           <button 
+             onClick={onToggle}
+             className="w-full flex items-center justify-center h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100 group"
+             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+           >
+             {isCollapsed ? (
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+               </svg>
+             ) : (
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+               </svg>
+             )}
+             {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest ml-3">Minimize Vault</span>}
+           </button>
+        </div>
+      </aside>
+
+      {/* Floating Tooltip / Menu */}
+      {isCollapsed && hoveredItem && (
+        <div 
+          className="fixed left-20 ml-4 z-[80] bg-slate-900 text-white rounded-xl shadow-2xl p-3 animate-in fade-in zoom-in-95 duration-200 min-w-[180px] border border-white/10"
+          style={{ top: hoveredItem.top }}
+          onMouseEnter={() => setHoveredItem(hoveredItem)}
+          onMouseLeave={() => setHoveredItem(null)}
+        >
+          <div className="absolute left-0 top-6 -ml-1.5 h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900 border-l border-b border-white/10" />
+          
+          <div className="relative z-10">
+             <div className="mb-2 pb-2 border-b border-white/10">
+               <span className="text-xs font-black uppercase tracking-wider text-white block">{hoveredItem.item.label}</span>
+             </div>
+             
+             {hoveredItem.item.children ? (
+               <div className="space-y-1">
+                 {hoveredItem.item.children.map(child => (
+                   <button
+                     key={child.id}
+                     onClick={() => {
+                        onViewChange(child.id as ActiveView);
+                        setHoveredItem(null);
+                     }}
+                     className="w-full text-left text-[10px] font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-lg px-2 py-1.5 transition-colors flex items-center justify-between group"
+                   >
+                     <span>{child.label}</span>
+                     <svg className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                   </button>
+                 ))}
+               </div>
+             ) : (
+                <div className="text-[9px] text-slate-400 font-medium px-1">Click to open module</div>
+             )}
           </div>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-slate-100">
-         <button 
-           onClick={onToggle}
-           className="w-full flex items-center justify-center h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100"
-         >
-           <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-500 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7m0 0l7-7m-7 7h16" />
-           </svg>
-           {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest ml-3">Minimize Vault</span>}
-         </button>
-      </div>
-    </aside>
+        </div>
+      )}
+    </>
   );
 };
 

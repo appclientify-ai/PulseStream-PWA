@@ -4,7 +4,7 @@ import { SOCKET_URL } from '../constants';
 
 class SocketService {
   private socket: Socket | null = null;
-  private handlers: { [key: string]: Function[] } = {};
+  private handlers: { [key: string]: ((...args: any[]) => void)[] } = {};
 
   connect() {
     if (this.socket) return;

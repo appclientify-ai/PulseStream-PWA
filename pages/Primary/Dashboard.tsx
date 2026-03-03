@@ -125,29 +125,46 @@ const Dashboard: React.FC = () => {
     
     let total = 0;
     let filed = 0;
+    let r1 = 0;
+    let r3b = 0;
+    let cmp08 = 0;
     
     if (type === 'monthly') {
       const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
       total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
+      r1 = applicable.filter(c => periodData[c.id]?.r1).length;
+      r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
+      filed = r3b;
     } else if (type === 'quarterly') {
       const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
       total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.r1 && periodData[c.id]?.r3b).length;
+      r1 = applicable.filter(c => periodData[c.id]?.r1).length;
+      r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
+      filed = r3b;
     } else if (type === 'composition') {
       const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
       total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.cmp08).length;
+      cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
+      filed = cmp08;
     } else if (type === 'itr') {
       const applicable = clients.filter(c => !!c.itProfile);
       total = applicable.length;
       filed = applicable.filter(c => periodData[c.id]?.filed).length;
-    } else {
-      filed = Object.values(periodData).filter((v: any) => v.filed || v.auditFiled).length;
-      total = Object.keys(periodData).length || clients.filter(c => type === 'gstr4' ? c.gstProfile?.regType === 'Composition' : !!c.gstProfile).length;
+    } else if (type === 'gstr4') {
+       const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
+       total = applicable.length;
+       filed = applicable.filter(c => periodData[c.id]?.filed).length;
+    } else if (type === 'gstr9') {
+       const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular');
+       total = applicable.length;
+       filed = applicable.filter(c => periodData[c.id]?.filed).length;
+    } else if (type === 'audit') {
+       const applicable = clients.filter(c => c.itProfile?.advisoryWork?.taxAudit);
+       total = applicable.length;
+       filed = applicable.filter(c => periodData[c.id]?.auditFiled).length;
     }
 
-    return { total, filed, pending: Math.max(0, total - filed) };
+    return { total, filed, pending: Math.max(0, total - filed), r1, r3b, cmp08 };
   };
 
   const getLitCounts = (forum: 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt', stage: 'Pending' | 'Filed' | 'Drop' | 'Demand') => {
@@ -165,6 +182,45 @@ const Dashboard: React.FC = () => {
     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 px-2">{title}</h3>
   );
 
+  const DetailedCard = ({ label, subLabel, stats, viewId, icon, color }: any) => (
+    <div 
+      onClick={() => handleViewChange(viewId)}
+      className="group bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer overflow-hidden relative"
+    >
+      <div className={`absolute top-0 right-0 h-24 w-24 -mr-8 -mt-8 opacity-5 rounded-full ${color}`} />
+      
+      <div className="flex justify-between items-start mb-6 relative z-10">
+        <div className="flex items-center gap-4">
+          <div className={`h-12 w-12 rounded-2xl ${color} flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform`} title={label}>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
+          </div>
+          <div>
+            <h4 className="text-base font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600">{label}</h4>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{subLabel}</p>
+          </div>
+        </div>
+        <div className="text-right">
+           <span className="block text-3xl font-black text-slate-900 leading-none">{stats.total}</span>
+           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+        </div>
+      </div>
+
+      <div className="space-y-3 relative z-10">
+        {stats.items.map((item: any, i: number) => (
+          <div key={i} className="flex items-center justify-between text-xs">
+            <span className="font-bold text-slate-500 uppercase tracking-wide">{item.label}</span>
+            <div className="flex items-center gap-3">
+               <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                 <div className={`h-full rounded-full ${item.color || 'bg-indigo-500'}`} style={{ width: `${(item.value / (stats.total || 1)) * 100}%` }} />
+               </div>
+               <span className="font-black text-slate-700 w-6 text-right">{item.value}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const CompactCard = ({ label, count, viewId, icon, color }: any) => (
     <div 
       onClick={() => handleViewChange(viewId)}
@@ -173,7 +229,7 @@ const Dashboard: React.FC = () => {
       <div className={`absolute top-0 right-0 h-12 w-12 -mr-4 -mt-4 opacity-5 rounded-full ${color}`} />
       <div className="flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
-          <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center text-white shadow-sm`}>
+          <div className={`h-8 w-8 rounded-lg ${color} flex items-center justify-center text-white shadow-sm`} title={label}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
           </div>
           <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight group-hover:text-indigo-600 truncate max-w-[120px]">{label}</span>
@@ -204,7 +260,15 @@ const Dashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeView) {
-      case 'dashboard':
+      case 'dashboard': {
+        const monthlyStats = getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`);
+        const quarterlyStats = getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`);
+        const compStats = getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`);
+        const gstr4Stats = getFilingCounts('gstr4', `${monthlyFilter.year}`); // Using monthly year as default for annual
+        const gstr9Stats = getFilingCounts('gstr9', `${monthlyFilter.year}`);
+        const itrStats = getFilingCounts('itr', itrFilter.ay);
+        const auditStats = getFilingCounts('audit', itrFilter.ay);
+
         return (
           <div className="w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
@@ -255,23 +319,114 @@ const Dashboard: React.FC = () => {
                  <div>
                     <SubSectionTitle title="Filing Cycles" />
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                       <CompactCard label="Monthly" count={getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`).total} viewId="compliance-monthly" color="bg-indigo-600" icon={<path d="M8 7V3m8 4V3m-9 8h10" />} />
-                       <CompactCard label="Quarterly" count={getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`).total} viewId="compliance-quarterly" color="bg-blue-600" icon={<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />} />
-                       <CompactCard label="Composition" count={getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`).total} viewId="compliance-composition" color="bg-amber-600" icon={<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5" />} />
+                       <DetailedCard 
+                         label="Monthly" 
+                         subLabel={`${monthlyFilter.month} ${monthlyFilter.year}`}
+                         stats={{
+                           total: monthlyStats.total,
+                           items: [
+                             { label: 'GSTR-1', value: monthlyStats.r1, color: 'bg-indigo-500' },
+                             { label: 'GSTR-3B', value: monthlyStats.r3b, color: 'bg-emerald-500' }
+                           ]
+                         }}
+                         viewId="compliance-monthly" 
+                         color="bg-indigo-600" 
+                         icon={<path d="M8 7V3m8 4V3m-9 8h10" />} 
+                       />
+                       <DetailedCard 
+                         label="Quarterly" 
+                         subLabel={`${quarterlyFilter.quarter} ${quarterlyFilter.year}`}
+                         stats={{
+                           total: quarterlyStats.total,
+                           items: [
+                             { label: 'IFF/R1', value: quarterlyStats.r1, color: 'bg-blue-500' },
+                             { label: 'GSTR-3B', value: quarterlyStats.r3b, color: 'bg-emerald-500' }
+                           ]
+                         }}
+                         viewId="compliance-quarterly" 
+                         color="bg-blue-600" 
+                         icon={<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />} 
+                       />
+                       <DetailedCard 
+                         label="Composition" 
+                         subLabel={`${compositionFilter.quarter} ${compositionFilter.year}`}
+                         stats={{
+                           total: compStats.total,
+                           items: [
+                             { label: 'CMP-08', value: compStats.cmp08, color: 'bg-amber-500' },
+                             { label: 'Pending', value: compStats.total - compStats.cmp08, color: 'bg-slate-300' }
+                           ]
+                         }}
+                         viewId="compliance-composition" 
+                         color="bg-amber-600" 
+                         icon={<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5" />} 
+                       />
                     </div>
                  </div>
                  <div>
                     <SubSectionTitle title="Annual Returns" />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="GSTR-04 Annual" count={clients.filter(c => c.gstProfile?.regType === 'Composition').length} viewId="compliance-gstr4" color="bg-indigo-400" icon={<path d="M12 8v4l3 3" />} />
-                       <CompactCard label="GSTR-9/9C Audit" count={clients.filter(c => c.gstProfile?.regType === 'Regular').length} viewId="compliance-gstr9" color="bg-indigo-800" icon={<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7" />} />
+                       <DetailedCard 
+                         label="GSTR-04 Annual" 
+                         subLabel={`FY ${monthlyFilter.year}`}
+                         stats={{
+                           total: gstr4Stats.total,
+                           items: [
+                             { label: 'Filed', value: gstr4Stats.filed, color: 'bg-indigo-500' },
+                             { label: 'Pending', value: gstr4Stats.total - gstr4Stats.filed, color: 'bg-slate-300' }
+                           ]
+                         }}
+                         viewId="compliance-gstr4" 
+                         color="bg-indigo-400" 
+                         icon={<path d="M12 8v4l3 3" />} 
+                       />
+                       <DetailedCard 
+                         label="GSTR-9/9C Audit" 
+                         subLabel={`FY ${monthlyFilter.year}`}
+                         stats={{
+                           total: gstr9Stats.total,
+                           items: [
+                             { label: 'Filed', value: gstr9Stats.filed, color: 'bg-indigo-800' },
+                             { label: 'Pending', value: gstr9Stats.total - gstr9Stats.filed, color: 'bg-slate-300' }
+                           ]
+                         }}
+                         viewId="compliance-gstr9" 
+                         color="bg-indigo-800" 
+                         icon={<path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7" />} 
+                       />
                     </div>
                  </div>
                  <div>
                     <SubSectionTitle title="IT & Audit" />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                       <CompactCard label="ITR Returns" count={getFilingCounts('itr', itrFilter.ay).total} viewId="compliance-itr" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2H5" />} />
-                       <CompactCard label="Audit & B/S" count={clients.filter(c => c.itProfile?.advisoryWork?.taxAudit).length} viewId="compliance-taxaudit" color="bg-emerald-400" icon={<path d="M9 12h6m-6 4h6" />} />
+                       <DetailedCard 
+                         label="ITR Returns" 
+                         subLabel={`AY ${itrFilter.ay}`}
+                         stats={{
+                           total: itrStats.total,
+                           items: [
+                             { label: 'Filed', value: itrStats.filed, color: 'bg-emerald-600' },
+                             { label: 'Pending', value: itrStats.total - itrStats.filed, color: 'bg-slate-300' }
+                           ]
+                         }}
+                         viewId="compliance-itr" 
+                         color="bg-emerald-600" 
+                         icon={<path d="M17 9V7a2 2 0 00-2-2H5" />} 
+                       />
+                       <DetailedCard 
+                         label="Audit & B/S" 
+                         subLabel={`AY ${itrFilter.ay}`}
+                         stats={{
+                           total: auditStats.total,
+                           items: [
+                             { label: 'Filed', value: auditStats.filed, color: 'bg-emerald-400' },
+                             { label: 'Pending', value: auditStats.total - auditStats.filed, color: 'bg-slate-300' }
+                           ]
+                         }}
+                         viewId="compliance-taxaudit" 
+                         color="bg-emerald-400" 
+                         icon={<path d="M9 12h6m-6 4h6" />} 
+                       />
                     </div>
                  </div>
               </div>
@@ -313,6 +468,7 @@ const Dashboard: React.FC = () => {
             </section>
           </div>
         );
+      }
       case 'gst-portfolio': return <GSTPortfolio />;
       case 'it-portfolio': return <ITPortfolio />;
       case 'compliance-monthly': return <MonthlyFiling />;
@@ -416,7 +572,7 @@ const Dashboard: React.FC = () => {
           activeViewDescription={headerInfo.desc}
           onViewChange={handleViewChange}
         />
-        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 px-8 md:px-16 overflow-y-auto no-scrollbar scroll-smooth">
+        <div className="flex-1 flex flex-col min-h-0 pt-8 pb-12 px-6 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
           )}
@@ -441,7 +597,7 @@ const Dashboard: React.FC = () => {
                     </div>
                  </div>
                  <button onClick={() => setNavigationFolder(null)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
-                    <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+                    <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                  </button>
               </div>
               <div className="p-4 grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">

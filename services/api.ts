@@ -200,6 +200,10 @@ class ApiService {
     return this.transformItem<InvoiceRecord>(res);
   }
 
+  async deleteInvoice(id: string): Promise<void> {
+    await this.delete(`/items/${id}`);
+  }
+
   async getPayments(): Promise<PaymentRecord[]> {
     const items = await this.get('/items');
     return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
