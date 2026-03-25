@@ -4,6 +4,7 @@ import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
+import GSTViewIcon from '../../../components/GSTViewIcon';
 
 const NoticePending: React.FC = () => {
   const [records, setRecords] = useState<LitigationRecord[]>([]);
@@ -218,7 +219,7 @@ const NoticePending: React.FC = () => {
                          <div className="flex items-center gap-1.5">
                             <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
                             <span className={`text-[12px] font-black ${isOverdue || isCritical ? 'text-red-500' : 'text-slate-700'}`}>
-                              {dl < 0 ? `${Math.abs(dl)} Overdue` : `${dl} Days`}
+                              {dl < 0 ? `${Math.abs(dl)} ${Math.abs(dl) === 1 ? 'Day' : 'Days'} Overdue` : dl === 0 ? 'Today' : `${dl} ${dl === 1 ? 'Day' : 'Days'}`}
                             </span>
                          </div>
                       </td>
@@ -246,10 +247,11 @@ const NoticePending: React.FC = () => {
                             >
                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
+                            {client && <GSTViewIcon client={client} />}
                             <button 
                                onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
                                className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm group/btn"
-                               title="View Details"
+                               title="View Notice Details"
                             >
                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -286,6 +288,21 @@ const NoticePending: React.FC = () => {
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Deadline</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.orderDate)}</p></div>
+                 {viewingRecord.isReissued && (
+                   <div className="col-span-2 bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                      <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-2">Previous Notice History</p>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Old Ref</p>
+                          <p className="text-sm font-black text-slate-600">{viewingRecord.previousNoticeRef}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Old Section</p>
+                          <p className="text-sm font-black text-slate-600">U/s {viewingRecord.previousNoticeSection}</p>
+                        </div>
+                      </div>
+                   </div>
+                 )}
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p>
                     <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p>

@@ -146,16 +146,35 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Filing Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.filedDate || ''} onChange={e => setFormData({...formData, filedDate: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Order Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.orderDate || ''} onChange={e => setFormData({...formData, orderDate: e.target.value})} />
-            </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Status</label>
+            <select 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase"
+              value={formData.status || 'Pending'}
+              onChange={e => setFormData({...formData, status: e.target.value as LitigationStatus})}
+            >
+              <option value="Pending">Pending</option>
+              <option value="Filed">Filed</option>
+              <option value="Dropped">Dropped</option>
+            </select>
           </div>
+
+          {(formData.status === 'Filed' || formData.status === 'Dropped') && (
+            <div className="grid grid-cols-2 gap-4">
+              {formData.status === 'Filed' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reply Filed Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.filedDate || ''} onChange={e => setFormData({...formData, filedDate: e.target.value})} />
+                </div>
+              )}
+              {formData.status === 'Dropped' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Order Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.orderDate || ''} onChange={e => setFormData({...formData, orderDate: e.target.value})} />
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Internal Notes</label>

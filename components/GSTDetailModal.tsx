@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Client } from '../types';
 
 interface GSTDetailModalProps {
@@ -27,10 +27,33 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
     <div className={`space-y-1 ${className}`}>
       <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
       <div className={`min-h-[20px] text-sm font-bold text-slate-900 ${isMono ? 'font-mono tracking-wider' : ''} border-b border-slate-100 pb-1`}>
-        {value}
+        {value || '---'}
       </div>
     </div>
   );
+
+  const PasswordField = ({ label, value, className = '' }: { label: string, value?: string, className?: string }) => {
+    const [show, setShow] = useState(false);
+    return (
+      <div className={`space-y-1 ${className}`}>
+        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+          <div className="min-h-[20px] text-sm font-bold text-slate-900 font-mono tracking-wider">
+            {value ? (show ? value : '••••••••') : '---'}
+          </div>
+          {value && (
+            <button onClick={() => setShow(!show)} className="text-slate-400 hover:text-indigo-600 transition-colors ml-2">
+              {show ? (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
@@ -48,7 +71,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
              </div>
           </div>
           <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
-            <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+            <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
@@ -69,7 +92,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               <Field label="GSTIN" value={client.gstProfile?.gstin} isMono />
               <Field label="PAN No." value={client.gstProfile?.pan} isMono />
               <Field label="GST User ID" value={client.gstProfile?.username} />
-              <Field label="GST Password" value={client.gstProfile?.password} />
+              <PasswordField label="GST Password" value={client.gstProfile?.password} />
             </div>
           </section>
 
@@ -87,12 +110,11 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               <Field label="Jurisdiction" value={client.gstProfile?.jurisdictionType} />
               <Field label="Registration Date" value={client.gstProfile?.regDate} />
               <Field label="GSTN Status" value={client.gstProfile?.gstStatus} />
-              <Field label={client.gstProfile?.jurisdictionType === 'State' ? 'Sector' : 'Range'} value={client.gstProfile?.jurisdictionType === 'State' ? client.gstProfile?.sector : client.gstProfile?.range} />
-              <Field label="Cancellation Date" value={client.gstProfile?.cancelDate} />
+              <Field label="Sector" value={client.gstProfile?.jurisdictionType === 'State' ? client.gstProfile?.sector : client.gstProfile?.range} />
             </div>
           </section>
 
-          {/* 4. Stakeholder Details */}
+          {/* 4. Proprietor Details */}
           <section className="space-y-4">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">4. {getStakeholderLabel(client.gstProfile?.constitution)} Details <div className="h-px flex-1 bg-slate-100" /></h4>
             <div className="grid grid-cols-1 gap-4">
@@ -101,7 +123,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                   <Field label="Name" value={s.name} />
                   <Field label="Mobile" value={s.mobile} isMono />
                   <Field label="PAN" value={s.pan} isMono />
-                  <Field label="Email / IT Password" value={s.itPassword} />
+                  <Field label="Email" value={s.email} />
                 </div>
               ))}
               {(!client.gstProfile?.stakeholders || client.gstProfile.stakeholders.length === 0) && (
@@ -125,14 +147,14 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">6. E-Way Bill <div className="h-px flex-1 bg-slate-100" /></h4>
               <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <Field label="User ID" value={client.gstProfile?.ewayBillId} />
-                <Field label="Password" value={client.gstProfile?.ewayBillPass} />
+                <PasswordField label="Password" value={client.gstProfile?.ewayBillPass} />
               </div>
             </section>
             <section className="space-y-4">
               <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">7. GSTAT Portal <div className="h-px flex-1 bg-slate-100" /></h4>
               <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <Field label="User ID" value={client.gstProfile?.gstatId} />
-                <Field label="Password" value={client.gstProfile?.gstatPass} />
+                <PasswordField label="Password" value={client.gstProfile?.gstatPass} />
               </div>
             </section>
           </div>
@@ -151,7 +173,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
           <section className="space-y-4">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">9. Office Notes <div className="h-px flex-1 bg-slate-100" /></h4>
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 min-h-[100px]">
-              <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap">{client.remarks || ''}</p>
+              <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap">{client.remarks || 'No legacy history documented.'}</p>
             </div>
           </section>
 

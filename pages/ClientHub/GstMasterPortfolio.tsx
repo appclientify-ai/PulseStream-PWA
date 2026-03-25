@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Client, GstStatus, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
-import GSTDetailModal from '../../components/GSTDetailModal';
+import GSTViewIcon from '../../components/GSTViewIcon';
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -18,7 +18,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -221,13 +220,10 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </td>
                   <td className="px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
-                        <button 
-                          onClick={() => { setSelectedClient(client); setIsDetailModalOpen(true); }}
+                        <GSTViewIcon 
+                          client={client}
                           className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                          title="View Profile"
-                        >
-                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                        </button>
+                        />
                         
                         <button 
                           onClick={(e) => openActionsMenu(e, client)}
@@ -283,8 +279,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
       )}
 
       <GSTClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
-
-      <GSTDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
 
       {/* Login Tool Box Modal */}
       {isLoginBoxOpen && loginToolClient && (

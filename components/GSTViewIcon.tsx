@@ -1,0 +1,33 @@
+import React, { useState } from 'react';
+import { Client } from '../types';
+import GSTDetailModal from './GSTDetailModal';
+
+interface GSTViewIconProps {
+  client: Client;
+  className?: string;
+}
+
+const GSTViewIcon: React.FC<GSTViewIconProps> = ({ client, className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
+        className={`h-8 w-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 shadow-sm flex items-center justify-center transition-all ${className}`}
+        title="View GST Profile"
+      >
+        <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '18px', height: '18px' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" />
+        </svg>
+      </button>
+      <GSTDetailModal isOpen={isOpen} onClose={() => setIsOpen(false)} client={client} />
+    </>
+  );
+};
+
+export default GSTViewIcon;

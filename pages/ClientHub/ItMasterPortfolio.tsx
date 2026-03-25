@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Client, ClientStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
-import ITDetailModal from '../../components/ITDetailModal';
+import ITViewIcon from '../../components/ITViewIcon';
+import GSTViewIcon from '../../components/GSTViewIcon';
 
 interface ItMasterPortfolioProps {
   externalSearch?: string;
@@ -197,13 +198,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   </td>
                   <td className="px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
-                        <button 
-                          onClick={() => { setSelectedClient(client); setIsDetailModalOpen(true); }}
+                        <ITViewIcon 
+                          client={client}
                           className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                          title="View Profile"
-                        >
-                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                        </button>
+                        />
+                        {client.gstProfile && <GSTViewIcon client={client} />}
                         
                         <button 
                           onClick={(e) => openActionsMenu(e, client)}
@@ -263,9 +262,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
       <ITClientFormModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleDataChange} initialData={selectedClient} />
 
-      <ITDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} client={selectedClient} />
-
-      {/* Full Detail View Modal removed - replaced by ITDetailModal */}
+      {/* Full Detail View Modal removed - replaced by ITViewIcon */}
     </div>
   );
 };
