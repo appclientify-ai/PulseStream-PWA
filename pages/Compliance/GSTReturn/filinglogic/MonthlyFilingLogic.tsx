@@ -69,16 +69,20 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
   // 1. Check Registration Date - If no date is set, client is always visible
   if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
     const regDate = new Date(client.gstProfile.regDate);
-    regDate.setDate(1); // Floor to 1st
-    regDate.setHours(0,0,0,0);
-    if (periodDate < regDate) return false;
+    if (!isNaN(regDate.getTime())) {
+      regDate.setDate(1); // Floor to 1st
+      regDate.setHours(0,0,0,0);
+      if (periodDate < regDate) return false;
+    }
   }
 
   // 2. Check Cancellation Date
   if (client.gstProfile.cancelDate && client.gstProfile.gstStatus === 'Closed') {
     const cancelDate = new Date(client.gstProfile.cancelDate);
-    const lastVisibleDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
-    if (periodDate > lastVisibleDate) return false;
+    if (!isNaN(cancelDate.getTime())) {
+      const lastVisibleDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
+      if (periodDate > lastVisibleDate) return false;
+    }
   }
 
   // 3. Status Check (Inactive)

@@ -6,9 +6,10 @@ interface GSTDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
+  onEdit?: (client: Client) => void;
 }
 
-const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client }) => {
+const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client, onEdit }) => {
   if (!isOpen || !client) return null;
 
   const getStakeholderLabel = (constitution: string = 'Proprietorship') => {
@@ -23,16 +24,17 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
     }
   };
 
-  const Field = ({ label, value, isMono = false, className = '' }: { label: string, value?: string | number, isMono?: boolean, className?: string }) => (
+  const Field = ({ label, value, isMono = false, className = '', action }: { label: string, value?: string | number, isMono?: boolean, className?: string, action?: React.ReactNode }) => (
     <div className={`space-y-1 ${className}`}>
       <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
-      <div className={`min-h-[20px] text-sm font-bold text-slate-900 ${isMono ? 'font-mono tracking-wider' : ''} border-b border-slate-100 pb-1`}>
-        {value || '---'}
+      <div className={`flex items-center justify-between min-h-[20px] text-sm font-bold text-slate-900 ${isMono ? 'font-mono tracking-wider' : ''} border-b border-slate-100 pb-1`}>
+        <span>{value || '---'}</span>
+        {action && <div className="ml-2">{action}</div>}
       </div>
     </div>
   );
 
-  const PasswordField = ({ label, value, className = '' }: { label: string, value?: string, className?: string }) => {
+  const PasswordField = ({ label, value, className = '', action }: { label: string, value?: string, className?: string, action?: React.ReactNode }) => {
     const [show, setShow] = useState(false);
     return (
       <div className={`space-y-1 ${className}`}>
@@ -41,18 +43,34 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
           <div className="min-h-[20px] text-sm font-bold text-slate-900 font-mono tracking-wider">
             {value ? (show ? value : '••••••••') : '---'}
           </div>
-          {value && (
-            <button onClick={() => setShow(!show)} className="text-slate-400 hover:text-indigo-600 transition-colors ml-2">
-              {show ? (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-              ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              )}
-            </button>
-          )}
+          <div className="flex items-center gap-2 ml-2">
+            {value && (
+              <button onClick={() => setShow(!show)} className="text-slate-400 hover:text-indigo-600 transition-colors">
+                {show ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                )}
+              </button>
+            )}
+            {action && <div>{action}</div>}
+          </div>
         </div>
       </div>
     );
+  };
+
+  const handleSearchTaxpayer = (gstin?: string) => {
+    if (gstin) {
+      window.open(`https://services.gst.gov.in/services/searchtp?gstin=${gstin}`, '_blank');
+    }
+  };
+
+  const handleLogin = (username?: string, password?: string) => {
+    if (username) {
+      navigator.clipboard.writeText(username);
+    }
+    window.open('https://services.gst.gov.in/services/login', '_blank');
   };
 
   return (
@@ -89,10 +107,31 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
           <section className="space-y-4">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">2. GST Credentials <div className="h-px flex-1 bg-slate-100" /></h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Field label="GSTIN" value={client.gstProfile?.gstin} isMono />
+              <Field 
+                label="GSTIN" 
+                value={client.gstProfile?.gstin} 
+                isMono 
+                action={
+                  client.gstProfile?.gstin ? (
+                    <button onClick={() => handleSearchTaxpayer(client.gstProfile?.gstin)} className="text-slate-400 hover:text-indigo-600 transition-colors" title="Search Taxpayer">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </button>
+                  ) : null
+                }
+              />
               <Field label="PAN No." value={client.gstProfile?.pan} isMono />
               <Field label="GST User ID" value={client.gstProfile?.username} />
-              <PasswordField label="GST Password" value={client.gstProfile?.password} />
+              <PasswordField 
+                label="GST Password" 
+                value={client.gstProfile?.password} 
+                action={
+                  client.gstProfile?.username ? (
+                    <button onClick={() => handleLogin(client.gstProfile?.username, client.gstProfile?.password)} className="text-slate-400 hover:text-indigo-600 transition-colors" title="Login to GST Portal">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    </button>
+                  ) : null
+                }
+              />
             </div>
           </section>
 
@@ -118,7 +157,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
           <section className="space-y-4">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">4. {getStakeholderLabel(client.gstProfile?.constitution)} Details <div className="h-px flex-1 bg-slate-100" /></h4>
             <div className="grid grid-cols-1 gap-4">
-              {client.gstProfile?.stakeholders.map((s, idx) => (
+              {client.gstProfile?.stakeholders?.map((s, idx) => (
                 <div key={s.id || idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-6">
                   <Field label="Name" value={s.name} />
                   <Field label="Mobile" value={s.mobile} isMono />
@@ -126,7 +165,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                   <Field label="Email" value={s.email} />
                 </div>
               ))}
-              {(!client.gstProfile?.stakeholders || client.gstProfile.stakeholders.length === 0) && (
+              {(!client.gstProfile?.stakeholders || client.gstProfile.stakeholders?.length === 0) && (
                  <div className="text-xs text-slate-400 italic p-4">No stakeholders recorded.</div>
               )}
             </div>
@@ -179,7 +218,10 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
 
         </div>
 
-        <footer className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
+        <footer className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
+          {onEdit && (
+            <button onClick={() => { onClose(); onEdit(client); }} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-100 transition-all shadow-sm">Modify Profile</button>
+          )}
           <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Close Profile</button>
         </footer>
       </div>
