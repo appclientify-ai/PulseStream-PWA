@@ -4,6 +4,8 @@ import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from './filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
+
 
 const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -86,7 +88,7 @@ const QuarterlyFiling: React.FC = () => {
       await api.saveClient(updated);
       setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
       setEditingPasswordId(null);
-    } catch (err) { alert("Update failed."); }
+    } catch (err) { toast.error("Update failed."); }
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
@@ -132,7 +134,9 @@ const QuarterlyFiling: React.FC = () => {
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[60px]">S.No.</th>
-                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 min-w-[200px]">Trader Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 min-w-[200px]">Trade Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Legal Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[120px]">Mobile No.</th>
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">IFF/R1</th>
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center">GSTR-3B</th>
@@ -148,7 +152,9 @@ const QuarterlyFiling: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
                     <td className="px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]">{client.tradeName || '---'}</td>
+                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className="px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
                     <td className="px-4 py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
@@ -196,7 +202,7 @@ const QuarterlyFiling: React.FC = () => {
                     </td>
                     <td className="px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} />
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>

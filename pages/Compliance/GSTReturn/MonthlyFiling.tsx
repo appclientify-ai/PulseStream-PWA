@@ -4,6 +4,8 @@ import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
+
 
 const MonthlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -90,7 +92,7 @@ const MonthlyFiling: React.FC = () => {
       await api.saveClient(updated);
       setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
       setEditingPasswordId(null);
-    } catch (err) { alert("Update failed."); }
+    } catch (err) { toast.error("Update failed."); }
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
@@ -137,7 +139,9 @@ const MonthlyFiling: React.FC = () => {
             <thead className="sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[60px]">S.No.</th>
-                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 min-w-[200px]">Trader Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 min-w-[200px]">Trade Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Legal Name</th>
+                <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[120px]">Mobile No.</th>
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
                 <th className="px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
                    <div className="flex items-center justify-center gap-1">GSTR-1 <button onClick={() => setIsR1FilterOpen(!isR1FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
@@ -159,7 +163,9 @@ const MonthlyFiling: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
                     <td className="px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]">{client.tradeName || '---'}</td>
+                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className="px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
                     <td className="px-4 py-[2px] font-black font-mono uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
@@ -205,7 +211,7 @@ const MonthlyFiling: React.FC = () => {
                     </td>
                     <td className="px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} />
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>

@@ -3,6 +3,8 @@ import { MSMERegistrationRecord, MSMERegistrationStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import MSMEForm from '../Clientform/MSMEForm';
 import Loader from '../../components/Loader';
+import { toast } from 'sonner';
+
 
 const MSMERegistration: React.FC = () => {
   const [records, setRecords] = useState<MSMERegistrationRecord[]>([]);
@@ -49,7 +51,7 @@ const MSMERegistration: React.FC = () => {
         await api.deleteMSMERegistration(id);
         fetchRecords();
       } catch (err) {
-        alert("Deletion failed.");
+        toast.error("Deletion failed.");
       }
     }
   };

@@ -3,6 +3,8 @@ import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType, Clie
 import { api } from '../../services/api.ts';
 import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
 import Loader from '../../components/Loader';
+import { toast } from 'sonner';
+
 
 const GSTRegistration: React.FC = () => {
   const [registrations, setRegistrations] = useState<GSTRegistrationRecord[]>([]);
@@ -39,7 +41,7 @@ const GSTRegistration: React.FC = () => {
       await api.saveGSTRegistration(newRecord);
       setRegistrations(prev => prev.map(r => r.id === id ? newRecord : r));
     } catch (err) {
-      alert("Cloud update failed.");
+      toast.error("Cloud update failed.");
     }
     setActiveStatusRowId(null);
   };
@@ -71,7 +73,7 @@ const GSTRegistration: React.FC = () => {
         await api.deleteGSTRegistration(id);
         fetchRegistrations();
       } catch (err) {
-        alert("Deletion failed.");
+        toast.error("Deletion failed.");
       }
     }
   };

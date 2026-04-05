@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client, InvoiceRecord, InvoiceLineItem, InvoiceSettings } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { toast } from 'sonner';
+
 
 const TAX_RATES = [0, 5, 12, 18, 28];
 
@@ -108,7 +110,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   };
 
   const handleSave = async () => {
-    if (!clientLegalName) return alert('Specify a billing entity.');
+    if (!clientLegalName) return toast.success('Specify a billing entity.');
     const dDate = new Date(invDate);
     dDate.setDate(dDate.getDate() + 15);
 

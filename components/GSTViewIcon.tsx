@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
 import { Client } from '../types';
 import GSTDetailModal from './GSTDetailModal';
+import GSTClientFormModal from '../pages/Clientform/GSTClientFormModal';
 
 interface GSTViewIconProps {
   client: Client;
   className?: string;
   onEdit?: (client: Client) => void;
+  onDataChange?: () => void;
 }
 
-const GSTViewIcon: React.FC<GSTViewIconProps> = ({ client, className = '', onEdit }) => {
+const GSTViewIcon: React.FC<GSTViewIconProps> = ({ client, className = '', onEdit, onDataChange }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [currentClient, setCurrentClient] = useState(client);
+
+  const handleEditClick = (c: Client) => {
+    if (onEdit) {
+      onEdit(c);
+    } else {
+      setIsEditOpen(true);
+    }
+  };
+
+  const handleSave = (data: Client) => {
+    setCurrentClient(data);
+    setIsEditOpen(false);
+    if (onDataChange) {
+      onDataChange();
+    }
+  };
 
   return (
     <>
@@ -26,7 +46,15 @@ const GSTViewIcon: React.FC<GSTViewIconProps> = ({ client, className = '', onEdi
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" />
         </svg>
       </button>
-      <GSTDetailModal isOpen={isOpen} onClose={() => setIsOpen(false)} client={client} onEdit={onEdit} />
+      <GSTDetailModal isOpen={isOpen} onClose={() => setIsOpen(false)} client={currentClient} onEdit={handleEditClick} />
+      {isEditOpen && (
+        <GSTClientFormModal 
+          isOpen={isEditOpen} 
+          onClose={() => setIsEditOpen(false)} 
+          onSave={handleSave} 
+          initialData={currentClient} 
+        />
+      )}
     </>
   );
 };

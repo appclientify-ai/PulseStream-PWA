@@ -155,6 +155,7 @@ export interface InvoiceSettings {
   isGstEnabled: boolean;
   firmLogo?: string;
   firmSignature?: string;
+  whatsappNumber?: string;
 }
 
 export interface PaymentRecord {

@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
+import { toast } from 'sonner';
+
 
 const DEFAULT_TEMPLATES = [
   { id: 'data', label: 'Data Request', text: "Dear {{LEGAL_NAME}},\n\nPlease provide purchase/sale data for {{TRADE_NAME}} ({{GSTIN}}) for current filing.\n\nRegards,\nVault Team" },
@@ -93,7 +95,7 @@ const Messenger: React.FC = () => {
     window.open(url, '_blank');
     if (queueIndex < selectedClientsList.length - 1) setQueueIndex(queueIndex + 1);
     else {
-      alert("Broadcast Sequence Completed!");
+      toast.success("Broadcast Sequence Completed!");
       setIsQueueActive(false);
       setSelectedIds(new Set());
     }

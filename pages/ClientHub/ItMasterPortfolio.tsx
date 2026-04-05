@@ -71,6 +71,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     if (onDataChange) onDataChange();
   };
 
+  const handleEdit = (client: Client) => {
+    setSelectedClient(client);
+    setIsEditModalOpen(true);
+  };
+
   const filteredClients = useMemo(() => {
     let list = clients;
     if (statusFilter !== 'All') {
@@ -200,9 +205,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                      <div className="flex items-center justify-end gap-1">
                         <ITViewIcon 
                           client={client}
+                          onEdit={handleEdit}
+                          onDataChange={handleDataChange}
                           className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
                         />
-                        {client.gstProfile && <GSTViewIcon client={client} />}
+                        {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
                         
                         <button 
                           onClick={(e) => openActionsMenu(e, client)}

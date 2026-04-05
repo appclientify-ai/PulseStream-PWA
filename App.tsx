@@ -10,6 +10,7 @@ import Loader from './components/Loader.tsx';
 import OfflineBanner from './components/OfflineBanner.tsx';
 import { api } from './services/api.ts';
 import { useOffline } from './hooks/useOffline.ts';
+import { Toaster } from 'sonner';
 
 type Page = 'home' | 'login' | 'signup' | 'dashboard';
 
@@ -60,6 +61,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      <Toaster position="top-right" richColors />
       <OfflineBanner isOnline={isOnline} />
       {renderPage()}
       {isLoading && <div className="fixed inset-0 z-[9999] bg-slate-950/20 backdrop-blur-sm"><Loader /></div>}

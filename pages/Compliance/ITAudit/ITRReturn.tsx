@@ -7,6 +7,8 @@ import ITViewIcon from '../../../components/ITViewIcon';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useITRReturnLogic, RefundStatus } from './ITRReturnlogic';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
+
 
 const ITRReturn: React.FC = () => {
   const getPreviousAY = () => {
@@ -129,7 +131,7 @@ const ITRReturn: React.FC = () => {
       await api.saveClient(updated);
       setClients(prev => prev.map(c => c.id === client.id ? (updated as Client) : c));
       setEditingPasswordId(null);
-    } catch (err) { alert("Update failed."); }
+    } catch (err) { toast.error("Update failed."); }
   };
 
   const getRefundColor = (st?: RefundStatus) => {
@@ -245,8 +247,8 @@ const ITRReturn: React.FC = () => {
                     </td>
                     <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
                        <div className="flex items-center justify-end gap-1">
-                          <ITViewIcon client={client} />
-                          {client.gstProfile && <GSTViewIcon client={client} />}
+                          <ITViewIcon client={client} onDataChange={fetchClients} />
+                          {client.gstProfile && <GSTViewIcon client={client} onDataChange={fetchClients} />}
                           <button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm" title="Login Tool"><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>

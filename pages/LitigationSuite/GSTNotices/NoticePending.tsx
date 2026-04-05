@@ -5,6 +5,8 @@ import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import { toast } from 'sonner';
+
 
 const NoticePending: React.FC = () => {
   const [records, setRecords] = useState<LitigationRecord[]>([]);
@@ -59,7 +61,7 @@ const NoticePending: React.FC = () => {
   }, [clients]);
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    if (!data.clientId || !data.referenceNo) { alert("Missing Client or Reference No."); return; }
+    if (!data.clientId || !data.referenceNo) { toast.error("Missing Client or Reference No."); return; }
     await api.saveLitigationRecord({ ...data, category: 'Notice' });
     setIsModalOpen(false); setIsViewModalOpen(false); fetchAll();
   };
@@ -69,13 +71,13 @@ const NoticePending: React.FC = () => {
       const updated = { ...record, status: newStatus };
       await api.saveLitigationRecord(updated);
       fetchAll();
-    } catch (err) { alert("Status update failed."); }
+    } catch (err) { toast.error("Status update failed."); }
     setActiveStatusMenuId(null);
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Permanently remove this notice record from the secure vault?')) {
-      try { await api.delete(`/items/${id}`); fetchAll(); } catch (err) { alert("Deletion failed."); }
+      try { await api.delete(`/items/${id}`); fetchAll(); } catch (err) { toast.error("Deletion failed."); }
     }
   };
 
@@ -247,7 +249,7 @@ const NoticePending: React.FC = () => {
                             >
                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
-                            {client && <GSTViewIcon client={client} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchData} />}
                             <button 
                                onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
                                className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm group/btn"

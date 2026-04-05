@@ -6,6 +6,8 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useGSTR9Logic } from './GSTR9_9Clogic';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
+
 
 const GSTR9_9C: React.FC = () => {
   const getPreviousFY = () => {
@@ -149,7 +151,7 @@ const GSTR9_9C: React.FC = () => {
       await api.saveClient(updated);
       setAllClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
       setEditingPasswordId(null);
-    } catch (err) { alert("Update failed."); }
+    } catch (err) { toast.error("Update failed."); }
   };
 
   const shareViaWhatsApp = (text: string) => {
@@ -262,7 +264,7 @@ const GSTR9_9C: React.FC = () => {
                     </td>
                     <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} />
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>
                     </td>

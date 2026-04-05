@@ -3,6 +3,8 @@ import { MiscWorkRecord, MiscWorkStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import WorkForm from '../Clientform/workForm';
 import Loader from '../../components/Loader';
+import { toast } from 'sonner';
+
 
 const Miscellaneouswork: React.FC = () => {
   const [records, setRecords] = useState<MiscWorkRecord[]>([]);
@@ -50,7 +52,7 @@ const Miscellaneouswork: React.FC = () => {
         await api.deleteMiscWork(id);
         fetchRecords();
       } catch (err) {
-        alert("Deletion failed.");
+        toast.error("Deletion failed.");
       }
     }
   };

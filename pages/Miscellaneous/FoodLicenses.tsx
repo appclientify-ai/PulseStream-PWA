@@ -3,6 +3,8 @@ import { FoodLicenseRecord, FoodLicenseStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import FoodLicensesForm from '../Clientform/FoodLicensesForm';
 import Loader from '../../components/Loader';
+import { toast } from 'sonner';
+
 
 const FoodLicenses: React.FC = () => {
   const [records, setRecords] = useState<FoodLicenseRecord[]>([]);
@@ -50,7 +52,7 @@ const FoodLicenses: React.FC = () => {
         await api.deleteFoodLicense(id);
         fetchRecords();
       } catch (err) {
-        alert("Deletion failed.");
+        toast.error("Deletion failed.");
       }
     }
   };

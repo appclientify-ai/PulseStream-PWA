@@ -6,9 +6,10 @@ interface ITDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
+  onEdit?: (client: Client) => void;
 }
 
-const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client }) => {
+const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, onEdit }) => {
   if (!isOpen || !client) return null;
 
   const Field = ({ label, value, isMono = false, className = '' }: { label: string, value?: string | number, isMono?: boolean, className?: string }) => (
@@ -140,8 +141,11 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client }
 
         </div>
 
-        <footer className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-end shrink-0">
-          <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Close Profile</button>
+        <footer className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-between shrink-0">
+          {onEdit && (
+            <button onClick={() => onEdit(client)} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-lg">Modify Profile</button>
+          )}
+          <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-lg ml-auto">Close Profile</button>
         </footer>
       </div>
     </div>

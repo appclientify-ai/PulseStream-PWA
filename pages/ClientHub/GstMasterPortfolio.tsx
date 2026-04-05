@@ -4,6 +4,8 @@ import { Client, GstStatus, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import GSTViewIcon from '../../components/GSTViewIcon';
+import { toast } from 'sonner';
+
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -37,7 +39,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const fetch = async () => {
+  const fetchClients = async () => {
     setIsLoading(true);
     try {
       const data = await api.getClients();
@@ -45,7 +47,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     } catch (err) { console.error("Fetch failed", err); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetchClients(); }, []);
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {
@@ -67,7 +69,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   }, [activeActionsId]);
 
   const handleDataChange = () => {
-    fetch();
+    fetchClients();
     if (onDataChange) onDataChange();
   };
 
@@ -106,7 +108,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
       setLoginToolClient(updated as Client);
       setIsEditingLoginPass(false);
       fetch();
-    } catch (err) { alert("Vault update failed."); }
+    } catch (err) { toast.error("Vault update failed."); }
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
@@ -222,6 +224,8 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                      <div className="flex items-center justify-end gap-1">
                         <GSTViewIcon 
                           client={client}
+                          onEdit={handleEdit}
+                          onDataChange={handleDataChange}
                           className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
                         />
                         
@@ -300,7 +304,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                     </div>
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
                        <code className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{loginToolClient.gstProfile?.gstin}</code>
-                       <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.gstin || ''); alert('Copied'); }} className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
+                       <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.gstin || ''); toast.success('Copied'); }} className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                     </div>
                  </div>
 
@@ -309,7 +313,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Portal User ID</span>
                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
                           <span className="text-sm font-black text-slate-900 uppercase truncate">{loginToolClient.gstProfile?.username}</span>
-                          <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.username || ''); alert('Copied'); }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
+                          <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.username || ''); toast.success('Copied'); }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                        </div>
                     </div>
                     <div className="space-y-2">

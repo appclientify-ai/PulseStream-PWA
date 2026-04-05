@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { InvoiceSettings } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { toast } from 'sonner';
+
 
 const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [settings, setSettings] = useState<InvoiceSettings>({
     firmName: '', firmAddress: '', firmMobile: '', firmEmail: '', firmGstin: '',
     bankName: '', accountNo: '', ifsc: '', upiId: '', invoicePrefix: 'INV/',
-    terms: '', isGstEnabled: true
+    terms: '', isGstEnabled: true, firmLogo: '', firmSignature: '', whatsappNumber: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -25,9 +27,20 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       await api.saveInvoiceSettings(settings);
       onBack();
     } catch (err) {
-      alert("Settings update failed.");
+      toast.error("Settings update failed.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'firmLogo' | 'firmSignature') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSettings({ ...settings, [field]: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -56,6 +69,21 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
                   value={settings.firmName} onChange={e => setSettings({...settings, firmName: e.target.value})} />
              </div>
+             <div className="md:col-span-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm Address</label>
+                <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase min-h-[80px]"
+                  value={settings.firmAddress} onChange={e => setSettings({...settings, firmAddress: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm Mobile No.</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
+                  value={settings.firmMobile} onChange={e => setSettings({...settings, firmMobile: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm Email ID</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black"
+                  value={settings.firmEmail} onChange={e => setSettings({...settings, firmEmail: e.target.value})} />
+             </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Invoice Prefix</label>
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
@@ -65,6 +93,56 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm GSTIN</label>
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase font-mono"
                   value={settings.firmGstin} onChange={e => setSettings({...settings, firmGstin: e.target.value.toUpperCase()})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Company Logo</label>
+                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmLogo')} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                {settings.firmLogo && <img src={settings.firmLogo} alt="Logo" className="mt-2 h-12 object-contain" />}
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Signature</label>
+                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmSignature')} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                {settings.firmSignature && <img src={settings.firmSignature} alt="Signature" className="mt-2 h-12 object-contain" />}
+             </div>
+             <div className="md:col-span-2 flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <input type="checkbox" id="gstEnabled" checked={settings.isGstEnabled} onChange={e => setSettings({...settings, isGstEnabled: e.target.checked})} className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-600" />
+                <label htmlFor="gstEnabled" className="text-sm font-black uppercase text-slate-700 cursor-pointer">Enable GST Calculations</label>
+             </div>
+          </div>
+        </section>
+
+        <section>
+          <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-8">Payment & Bank Details</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Bank Name</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
+                  value={settings.bankName} onChange={e => setSettings({...settings, bankName: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Account Number</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase font-mono"
+                  value={settings.accountNo} onChange={e => setSettings({...settings, accountNo: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">IFSC Code</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase font-mono"
+                  value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value.toUpperCase()})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">UPI ID (For Payment QR)</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black"
+                  value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">WhatsApp Number (For Message QR)</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
+                  value={settings.whatsappNumber || ''} onChange={e => setSettings({...settings, whatsappNumber: e.target.value})} />
+             </div>
+             <div className="md:col-span-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Terms & Conditions</label>
+                <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-medium min-h-[120px]"
+                  value={settings.terms} onChange={e => setSettings({...settings, terms: e.target.value})} />
              </div>
           </div>
         </section>

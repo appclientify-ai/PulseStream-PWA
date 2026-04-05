@@ -4,6 +4,8 @@ import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import { toast } from 'sonner';
+
 
 const NoticeDrop: React.FC = () => {
   const [records, setRecords] = useState<LitigationRecord[]>([]);
@@ -54,7 +56,7 @@ const NoticeDrop: React.FC = () => {
       await api.saveLitigationRecord(updated);
       fetchAll();
     } catch (err) {
-      alert("Revert failed.");
+      toast.error("Revert failed.");
     }
     setActiveStatusMenuId(null);
   };
@@ -190,7 +192,7 @@ const NoticeDrop: React.FC = () => {
                             >
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
-                            {client && <GSTViewIcon client={client} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchData} />}
                             <button 
                               onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }}
                               className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"

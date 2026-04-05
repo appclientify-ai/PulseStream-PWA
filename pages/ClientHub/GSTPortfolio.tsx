@@ -4,6 +4,8 @@ import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
 import { Client, GstRegType, GstFilingFreq, ConstitutionType, ClientStatus } from '../../types.ts';
+import { toast } from 'sonner';
+
 
 const GSTPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -138,7 +140,7 @@ const GSTPortfolio: React.FC = () => {
       }
 
       setIsImporting(false);
-      alert(`Import sequence finished.\nSuccess: ${successCount}\nErrors: ${errorCount}`);
+      toast.error(`Import sequence finished.\nSuccess: ${successCount}\nErrors: ${errorCount}`);
       handleRefresh();
       if (fileInputRef.current) fileInputRef.current.value = '';
       setIsUtilityOpen(false);
