@@ -277,6 +277,11 @@ const Dashboard: React.FC = () => {
   const LitigationDueDates = () => {
     const sorted = [...litigation]
       .filter(l => l.status !== 'Completed' && l.status !== 'Drop' && l.dueDate)
+      .filter(l => {
+         const diff = new Date(l.dueDate).getTime() - new Date().getTime();
+         const days = diff / (1000 * 3600 * 24);
+         return days <= 15 && days >= -30; // within next 15 days, or overdue up to 30 days
+      })
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
       .slice(0, 10);
 

@@ -170,7 +170,7 @@ const GSTR4: React.FC = () => {
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 tracking-wider">
                       <div className="flex items-center gap-2">
-                        <span>••••••••</span>
+                        <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
                         {client.gstProfile?.username && (
                           <button onClick={() => { 
                             navigator.clipboard.writeText(client.gstProfile?.username || ''); 

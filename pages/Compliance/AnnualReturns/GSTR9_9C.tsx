@@ -247,8 +247,7 @@ const GSTR9_9C: React.FC = () => {
                             </div>
                           ) : (
                             <>
-                               <span className="font-black text-indigo-400 tracking-wider truncate">{isPassVisible ? client.gstProfile?.password : '••••••••'}</span>
-                               <button onClick={() => setVisiblePasswords(p => { const n = new Set(p); if (n.has(client.id)) { n.delete(client.id); } else { n.add(client.id); } return n; })} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all">{isPassVisible ? '🙈' : '👁️'}</button>
+                               <span className="font-black text-indigo-400 tracking-wider text-[12px] truncate">{client.gstProfile?.password}</span>
                                <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                                {client.gstProfile?.username && (
                                  <button onClick={() => { 

@@ -13,6 +13,8 @@ const CompositionFiling: React.FC = () => {
   const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [isCmp08FilterOpen, setIsCmp08FilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.quarterYear);
   const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
   
@@ -83,7 +85,10 @@ const CompositionFiling: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-3">Legal Name</th>
                 <th className="whitespace-nowrap px-4 py-3">Mobile No.</th>
                 <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-3 text-center">CMP-08</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
+                   <div className="flex items-center justify-center gap-1">CMP-08 <button onClick={() => setIsCmp08FilterOpen(!isCmp08FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
+                   {isCmp08FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setCmp08Filter(f as any); setIsCmp08FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
+            </th>
                 <th className="whitespace-nowrap px-4 py-3">User ID</th>
                 <th className="whitespace-nowrap px-4 py-3">Password</th>
                 <th className="whitespace-nowrap px-4 py-3 text-right">Action</th>
@@ -112,7 +117,7 @@ const CompositionFiling: React.FC = () => {
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest">
                       <div className="flex items-center gap-2">
-                        <span>••••••••</span>
+                        <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
                         {client.gstProfile?.username && (
                           <button onClick={() => { 
                             navigator.clipboard.writeText(client.gstProfile?.username || ''); 

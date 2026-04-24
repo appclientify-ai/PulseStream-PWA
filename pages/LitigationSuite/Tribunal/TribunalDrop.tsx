@@ -11,6 +11,7 @@ const TribunalDrop: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);

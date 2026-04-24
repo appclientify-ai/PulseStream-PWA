@@ -128,14 +128,30 @@ export const getDefaultPeriod = () => {
   let prevMonthIdx = m - 1;
   let mYear = calYear;
   if (prevMonthIdx < 0) { prevMonthIdx = 11; mYear = calYear - 1; }
+  
+  let qIdx;
+  let prevQMonth;
+  let prevQYear = calYear;
+  if (m >= 0 && m <= 2) {
+    qIdx = 2; // Oct-Dec (Q3)
+    prevQMonth = 9;
+    prevQYear = calYear - 1;
+  } else if (m >= 3 && m <= 5) {
+    qIdx = 3; // Jan-Mar (Q4)
+    prevQMonth = 0;
+  } else if (m >= 6 && m <= 8) {
+    qIdx = 0; // Apr-Jun (Q1)
+    prevQMonth = 3;
+  } else {
+    qIdx = 1; // Jul-Sep (Q2)
+    prevQMonth = 6;
+  }
+
   const monthFY = getFY(prevMonthIdx, mYear);
-  const qIdx = (m >= 0 && m <= 2) ? 3 : (m >= 3 && m <= 5) ? 0 : (m >= 6 && m <= 8) ? 1 : 2;
-  const qYear = (m >= 0 && m <= 2) ? calYear - 1 : calYear;
-  const qStartMonths = [3, 6, 9, 0];
-  const quarterFY = getFY(qStartMonths[qIdx], qYear);
+  const quarterFY = getFY(prevQMonth, prevQYear);
   return { 
     month: MONTHS[prevMonthIdx], 
-    quarter: QUARTERS[qIdx],
+    quarter: FY_QUARTERS[qIdx],
     year: monthFY,
     quarterYear: quarterFY
   };

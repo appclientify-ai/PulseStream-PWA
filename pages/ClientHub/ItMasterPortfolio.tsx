@@ -83,7 +83,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     }
     const s = externalSearch.toLowerCase();
     return list.filter(c => 
-      c.legalName.toLowerCase().includes(s) || 
+      (c.legalName || '').toLowerCase().includes(s) || 
       (c.itProfile?.pan || '').toLowerCase().includes(s) ||
       (c.itProfile?.fatherName || '').toLowerCase().includes(s) ||
       (c.mobile || '').includes(s)

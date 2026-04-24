@@ -76,7 +76,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   const filteredClients = useMemo(() => {
     const s = externalSearch.toLowerCase();
     let list = clients.filter(c => 
-      c.legalName.toLowerCase().includes(s) || 
+      (c.legalName || '').toLowerCase().includes(s) || 
       (c.tradeName || '').toLowerCase().includes(s) ||
       (c.gstProfile?.gstin || '').toLowerCase().includes(s) ||
       (c.mobile && c.mobile.includes(s))
@@ -107,7 +107,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
       await api.saveClient(updated);
       setLoginToolClient(updated as Client);
       setIsEditingLoginPass(false);
-      fetch();
+      fetchClients();
     } catch (err) { toast.error("Vault update failed."); }
   };
 
@@ -274,7 +274,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Modify Record</span>
           </button>
-          <button onClick={() => { if(confirm('Delete client permanently from vault?')) api.deleteClient(selectedClient!.id).then(fetch); setActiveActionsId(null); }} 
+          <button onClick={() => { if(confirm('Delete client permanently from vault?')) api.deleteClient(selectedClient!.id).then(fetchClients); setActiveActionsId(null); }} 
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 rounded-xl transition-colors text-left group">
               <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete Permanently</span>
