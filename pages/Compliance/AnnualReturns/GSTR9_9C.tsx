@@ -191,24 +191,24 @@ const GSTR9_9C: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1550px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">S.No.</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">Trader Name</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Legal Name</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[190px]">GSTIN</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trader Name</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
                    <div className="flex items-center justify-center gap-1">GSTR-9 <button onClick={() => setIs9FilterOpen(!is9FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                    {is9FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setGstr9Filter(f as any); setIs9FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
                 </th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px] text-center relative">
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
                    <div className="flex items-center justify-center gap-1">GSTR-9C <button onClick={() => setIs9cFilterOpen(!is9cFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                    {is9cFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending', 'N/A'].map(f => <button key={f} onClick={() => { setGstr9cFilter(f as any); setIs9cFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9cFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
                 </th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[130px]">User ID</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Password</th>
-                <th className="px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Action</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -219,27 +219,27 @@ const GSTR9_9C: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate">{client.tradeName || '---'}</td>
-                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
-                    <td className="px-4 py-[2px]">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate">{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/gstin">
                           <span className="font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</span>
                           <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')} className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
                        </div>
                     </td>
-                    <td className="px-4 py-[2px] text-center">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id, 'gstr9')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.gstr9 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{st.gstr9 ? 'Filed' : 'Pending'}</button>
                     </td>
-                    <td className="px-4 py-[2px] text-center">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        {app9c ? (
                          <button onClick={() => toggleStatus(client.id, 'gstr9c')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${st.gstr9c ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{st.gstr9c ? 'Filed' : 'Pending'}</button>
                        ) : (
                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">N/A</span>
                        )}
                     </td>
-                    <td className="px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
-                    <td className="px-4 py-[2px]">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
                             <div className="flex items-center gap-1">
@@ -262,7 +262,7 @@ const GSTR9_9C: React.FC = () => {
                           )}
                        </div>
                     </td>
-                    <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>

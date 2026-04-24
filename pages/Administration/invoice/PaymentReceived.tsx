@@ -54,26 +54,26 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       </div>
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1200px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No.</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Inv. No.</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Client</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Amount</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Payment Date</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Mode</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No.</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Inv. No.</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Client</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Amount</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Payment Date</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Mode</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredPayments.map((pay, idx) => (
                 <tr key={pay.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className="px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
-                  <td className="px-6 py-6 font-black text-slate-400 text-[11px] uppercase">{pay.invoiceNo || '---'}</td>
-                  <td className="px-6 py-6 font-black text-slate-900 text-[12px] uppercase truncate">{pay.clientName}</td>
-                  <td className="px-6 py-6 font-black text-emerald-600 text-[12px]">₹{pay.amount.toLocaleString()}</td>
-                  <td className="px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{pay.date.split('-').reverse().join('-')}</td>
-                  <td className="px-4 py-6">
+                  <td className="whitespace-nowrap px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-slate-400 text-[11px] uppercase">{pay.invoiceNo || '---'}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-slate-900 text-[12px] uppercase truncate">{pay.clientName}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-emerald-600 text-[12px]">₹{pay.amount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{pay.date.split('-').reverse().join('-')}</td>
+                  <td className="whitespace-nowrap px-4 py-6">
                     <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-100 text-slate-600">{pay.mode}</span>
                   </td>
                 </tr>

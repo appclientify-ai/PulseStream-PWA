@@ -75,18 +75,18 @@ const CompositionFiling: React.FC = () => {
       </div>
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-          <table className="w-full text-left border-collapse min-w-[1000px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[12px]">
-                <th className="px-4 py-3 w-[60px]">S.No.</th>
-                <th className="px-4 py-3 min-w-[200px]">Trade Name</th>
-                <th className="px-4 py-3 w-[200px]">Legal Name</th>
-                <th className="px-4 py-3 w-[120px]">Mobile No.</th>
-                <th className="px-4 py-3 w-[180px]">GSTIN</th>
-                <th className="px-4 py-3 w-[120px] text-center">CMP-08</th>
-                <th className="px-4 py-3 w-[140px]">User ID</th>
-                <th className="px-4 py-3 w-[160px]">Password</th>
-                <th className="px-4 py-3 w-[100px] text-right">Action</th>
+                <th className="whitespace-nowrap px-4 py-3">S.No.</th>
+                <th className="whitespace-nowrap px-4 py-3">Trade Name</th>
+                <th className="whitespace-nowrap px-4 py-3">Legal Name</th>
+                <th className="whitespace-nowrap px-4 py-3">Mobile No.</th>
+                <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">CMP-08</th>
+                <th className="whitespace-nowrap px-4 py-3">User ID</th>
+                <th className="whitespace-nowrap px-4 py-3">Password</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -94,11 +94,11 @@ const CompositionFiling: React.FC = () => {
                 const st = getStatus(client.id);
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black uppercase truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="px-4 py-[2px] font-bold text-slate-600 uppercase truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className="px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
-                    <td className="px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black uppercase truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-600 uppercase truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
@@ -108,9 +108,9 @@ const CompositionFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
-                    <td className="px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
-                    <td className="px-4 py-[2px] font-black text-indigo-400 tracking-widest">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest">
                       <div className="flex items-center gap-2">
                         <span>••••••••</span>
                         {client.gstProfile?.username && (
@@ -123,7 +123,7 @@ const CompositionFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-[2px] text-right flex items-center justify-end gap-1">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-right flex items-center justify-end gap-1">
                       <GSTViewIcon client={client} onDataChange={fetchClients} />
                     </td>
                   </tr>

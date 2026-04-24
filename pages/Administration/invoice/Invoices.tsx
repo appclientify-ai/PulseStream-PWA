@@ -114,6 +114,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => onViewChange?.('admin-invoicesetting')} className="bg-slate-100 text-slate-600 font-black uppercase tracking-widest px-6 h-11 rounded-xl hover:bg-slate-200 transition-all text-[10px] flex items-center gap-2 shrink-0">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            Settings
+          </button>
           <button onClick={() => onViewChange?.('admin-add-invoice')} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Create Invoice
@@ -123,27 +127,27 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1300px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1300px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No.</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Inv. No.</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Date</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Client</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Amount</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[140px]">Status</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[180px]">Actions</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S.No.</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Inv. No.</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Date</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Client</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Amount</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[140px]">Status</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[180px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInvoices.map((inv, idx) => (
                 <tr key={inv.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className="px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
-                  <td className="px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
-                  <td className="px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{inv.date.split('-').reverse().join('-')}</td>
-                  <td className="px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientName}</td>
-                  <td className="px-6 py-6 font-black text-indigo-600 text-[12px]">₹{inv.totalAmount.toLocaleString()}</td>
-                  <td className="px-6 py-6 text-center">
+                  <td className="whitespace-nowrap px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{inv.date.split('-').reverse().join('-')}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientName}</td>
+                  <td className="whitespace-nowrap px-6 py-6 font-black text-indigo-600 text-[12px]">₹{inv.totalAmount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-6 py-6 text-center">
                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-400'}`}>{inv.status}</span>
                   </td>
                   <td className="px-6 py-6 text-right whitespace-nowrap">
@@ -222,23 +226,23 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <table className="w-full text-left border-collapse">
                        <thead>
                           <tr className="border-b-2 border-slate-900">
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-12 text-center">#</th>
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate</th>
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty</th>
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>
-                             <th className="py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-32 text-right">Amount</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-12 text-center">#</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>
+                             <th className="whitespace-nowrap py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-32 text-right">Amount</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-100">
                           {previewInvoice.items.map((item, i) => (
                              <tr key={i}>
-                                <td className="py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
-                                <td className="py-4 text-xs font-bold text-slate-700">{item.description}</td>
-                                <td className="py-4 text-right text-xs font-bold text-slate-700">₹{item.rate}</td>
-                                <td className="py-4 text-center text-xs font-bold text-slate-700">{item.quantity}</td>
-                                <td className="py-4 text-center text-xs font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
-                                <td className="py-4 text-right text-xs font-bold text-slate-900">₹{(item.rate * item.quantity).toLocaleString()}</td>
+                                <td className="whitespace-nowrap py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
+                                <td className="whitespace-nowrap py-4 text-xs font-bold text-slate-700">{item.description}</td>
+                                <td className="whitespace-nowrap py-4 text-right text-xs font-bold text-slate-700">₹{item.rate}</td>
+                                <td className="whitespace-nowrap py-4 text-center text-xs font-bold text-slate-700">{item.quantity}</td>
+                                <td className="whitespace-nowrap py-4 text-center text-xs font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
+                                <td className="whitespace-nowrap py-4 text-right text-xs font-bold text-slate-900">₹{(item.rate * item.quantity).toLocaleString()}</td>
                              </tr>
                           ))}
                        </tbody>

@@ -153,13 +153,13 @@ const NoticePending: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1400px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[100px]">ID</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[100px]">ID</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
                   <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'section' && (
                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
@@ -168,9 +168,9 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
                   <div className="flex items-center gap-1">Deadline <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'days' && (
                     <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
@@ -178,13 +178,13 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
-                <th className="px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
+                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const dl = getDaysLeft(rec.dueDate);
@@ -193,14 +193,14 @@ const NoticePending: React.FC = () => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group h-[52px]">
-                      <td className="px-4 py-2 font-black text-indigo-400 font-mono text-[11px] truncate">
+                      <td className="whitespace-nowrap px-4 py-2 font-black text-indigo-400 font-mono text-[11px] truncate">
                         {getClientDisplayId(rec.clientId)}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="whitespace-nowrap px-4 py-2">
                         <p className="text-[12px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                         <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
                       </td>
-                      <td className="px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
@@ -214,10 +214,10 @@ const NoticePending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-[12px] font-black text-slate-600 uppercase">{rec.section ? `U/s ${rec.section}` : '---'}</td>
-                      <td className="px-4 py-2 text-[12px] font-black text-slate-700 uppercase">{rec.taxPeriod || '---'}</td>
-                      <td className="px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
-                      <td className="px-4 py-2">
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-600 uppercase">{rec.section ? `U/s ${rec.section}` : '---'}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-700 uppercase">{rec.taxPeriod || '---'}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-4 py-2">
                          <div className="flex items-center gap-1.5">
                             <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
                             <span className={`text-[12px] font-black ${isOverdue || isCritical ? 'text-red-500' : 'text-slate-700'}`}>
@@ -225,7 +225,7 @@ const NoticePending: React.FC = () => {
                             </span>
                          </div>
                       </td>
-                      <td className="px-4 py-2 text-center relative overflow-visible">
+                      <td className="whitespace-nowrap px-4 py-2 text-center relative overflow-visible">
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)} className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${isOverdue ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
                             {isOverdue ? 'Overdue' : 'Pending'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                          </button>
@@ -249,7 +249,7 @@ const NoticePending: React.FC = () => {
                             >
                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
-                            {client && <GSTViewIcon client={client} onDataChange={fetchData} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button 
                                onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
                                className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm group/btn"

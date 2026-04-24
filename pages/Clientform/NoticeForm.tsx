@@ -39,13 +39,28 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
 
   useEffect(() => {
     if (initialData) {
-      setFormData({
-        ...initialData,
-        category: category,
-        status: initialData.status || 'Pending',
-        filedDate: initialData.filedDate || '',
-        orderDate: initialData.orderDate || ''
-      });
+      if (isReissue) {
+        // Strip id to create a NEW record, keep previous as history
+        const { id, _id, isDemandPaid, ...rest } = initialData as any;
+        const prevDetails = `\n\n--- PREVIOUS ${initialData.category?.toUpperCase() || 'RECORD'} DETAILS ---\nRef: ${initialData.referenceNo}\nIssued: ${initialData.issuedDate}\nDue: ${initialData.dueDate}\nFiled: ${initialData.filedDate || 'N/A'}`;
+        setFormData({
+          ...rest,
+          category: category,
+          status: 'Pending',
+          filedDate: '',
+          orderDate: '',
+          remarks: (rest.remarks || '') + prevDetails,
+          isReissued: true
+        });
+      } else {
+        setFormData({
+          ...initialData,
+          category: category,
+          status: initialData.status || 'Pending',
+          filedDate: initialData.filedDate || '',
+          orderDate: initialData.orderDate || ''
+        });
+      }
       setSearchQuery(initialData.clientName || '');
     } else {
       setFormData({

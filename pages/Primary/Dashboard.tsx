@@ -55,6 +55,8 @@ const DueDateSetting = lazy(() => import('../Administration/DueDateSetting.tsx')
 const Setting = lazy(() => import('../Administration/Setting.tsx'));
 const Trash = lazy(() => import('../Administration/Trash.tsx'));
 
+const InvoiceSetting = lazy(() => import('../Administration/invoice/invoicesetting.tsx'));
+
 const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
   const isOnline = useOffline();
@@ -80,10 +82,20 @@ const Dashboard: React.FC = () => {
 
   // Period Filters for Dashboard Boxes
   const def = getDefaultPeriod();
+
+  const getCurrentAY = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const startYear = currentMonth >= 3 ? currentYear : currentYear - 1;
+    return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
+  };
+
   const [monthlyFilter, setMonthlyFilter] = useState({ year: def.year, month: def.month });
-  const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.year, quarter: def.quarter });
+  const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
   const [compositionFilter, setCompositionFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
-  const [itrFilter, setItrFilter] = useState({ ay: def.year });
+  const [annualFilter, setAnnualFilter] = useState({ year: def.year });
+  const [itrFilter, setItrFilter] = useState({ ay: getCurrentAY() });
 
   const loadData = useCallback(async () => {
     if (!token) return;
@@ -182,7 +194,7 @@ const Dashboard: React.FC = () => {
     <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 px-2">{title}</h3>
   );
 
-  const DetailedCard = ({ label, subLabel, stats, viewId, icon, color }: any) => (
+  const DetailedCard = ({ label, subLabel, periodControls, stats, viewId, icon, color }: any) => (
     <div 
       onClick={() => handleViewChange(viewId)}
       className="group bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:border-indigo-400 hover:shadow-xl transition-all cursor-pointer overflow-hidden relative"
@@ -196,7 +208,11 @@ const Dashboard: React.FC = () => {
           </div>
           <div>
             <h4 className="text-base font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600">{label}</h4>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{subLabel}</p>
+            {periodControls ? (
+              <div className="mt-1" onClick={(e) => e.stopPropagation()}>{periodControls}</div>
+            ) : (
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{subLabel}</p>
+            )}
           </div>
         </div>
         <div className="text-right">
@@ -258,14 +274,58 @@ const Dashboard: React.FC = () => {
     );
   };
 
+  const LitigationDueDates = () => {
+    const sorted = [...litigation]
+      .filter(l => l.status !== 'Completed' && l.status !== 'Drop' && l.dueDate)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 10);
+
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden mb-12">
+        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+           <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+              <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Upcoming Litigation Due Dates
+           </h4>
+        </div>
+        <div className="overflow-x-auto">
+           <table className="w-full text-left border-collapse table-auto overflow-hidden">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Due Date</th>
+                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Client</th>
+                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Forum</th>
+                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right whitespace-nowrap">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                 {sorted.length === 0 ? (
+                   <tr><td colSpan={4} className="py-5 px-4 text-xs text-slate-500 italic text-center">No upcoming dates</td></tr>
+                 ) : sorted.map(item => (
+                   <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                     <td className="py-3 px-4 text-xs font-bold text-rose-600 whitespace-nowrap">
+                       {new Date(item.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                     </td>
+                     <td className="py-3 px-4 text-xs font-bold text-slate-700 whitespace-nowrap truncate max-w-[200px]">{item.clientName || 'Unknown Client'}</td>
+                     <td className="py-3 px-4 text-xs font-bold text-slate-500 whitespace-nowrap">{item.category}</td>
+                     <td className="py-3 px-4 text-[10px] font-black uppercase text-right text-indigo-600 whitespace-nowrap">{item.status}</td>
+                   </tr>
+                 ))}
+              </tbody>
+           </table>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard': {
         const monthlyStats = getFilingCounts('monthly', `${monthlyFilter.year}_${monthlyFilter.month}`);
         const quarterlyStats = getFilingCounts('quarterly', `${quarterlyFilter.year}_${quarterlyFilter.quarter}`);
         const compStats = getFilingCounts('composition', `${compositionFilter.year}_${compositionFilter.quarter}`);
-        const gstr4Stats = getFilingCounts('gstr4', `${monthlyFilter.year}`); // Using monthly year as default for annual
-        const gstr9Stats = getFilingCounts('gstr9', `${monthlyFilter.year}`);
+        const gstr4Stats = getFilingCounts('gstr4', `${annualFilter.year}`); // Using monthly year as default for annual
+        const gstr9Stats = getFilingCounts('gstr9', `${annualFilter.year}`);
         const itrStats = getFilingCounts('itr', itrFilter.ay);
         const auditStats = getFilingCounts('audit', itrFilter.ay);
 
@@ -321,7 +381,24 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                        <DetailedCard 
                          label="Monthly" 
-                         subLabel={`${monthlyFilter.month} ${monthlyFilter.year}`}
+                         periodControls={
+                           <div className="flex gap-1">
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                 value={monthlyFilter.month} 
+                                 onChange={(e) => setMonthlyFilter({ ...monthlyFilter, month: e.target.value })}
+                              >
+                                {FY_MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-500 cursor-pointer focus:ring-0 p-0"
+                                 value={monthlyFilter.year}
+                                 onChange={(e) => setMonthlyFilter({ ...monthlyFilter, year: e.target.value })}
+                              >
+                                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                              </select>
+                           </div>
+                         }
                          stats={{
                            total: monthlyStats.total,
                            items: [
@@ -335,7 +412,24 @@ const Dashboard: React.FC = () => {
                        />
                        <DetailedCard 
                          label="Quarterly" 
-                         subLabel={`${quarterlyFilter.quarter} ${quarterlyFilter.year}`}
+                         periodControls={
+                           <div className="flex gap-1">
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                 value={quarterlyFilter.quarter} 
+                                 onChange={(e) => setQuarterlyFilter({ ...quarterlyFilter, quarter: e.target.value })}
+                              >
+                                {FY_QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}
+                              </select>
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-500 cursor-pointer focus:ring-0 p-0"
+                                 value={quarterlyFilter.year}
+                                 onChange={(e) => setQuarterlyFilter({ ...quarterlyFilter, year: e.target.value })}
+                              >
+                                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                              </select>
+                           </div>
+                         }
                          stats={{
                            total: quarterlyStats.total,
                            items: [
@@ -349,7 +443,24 @@ const Dashboard: React.FC = () => {
                        />
                        <DetailedCard 
                          label="Composition" 
-                         subLabel={`${compositionFilter.quarter} ${compositionFilter.year}`}
+                         periodControls={
+                           <div className="flex gap-1">
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                 value={compositionFilter.quarter} 
+                                 onChange={(e) => setCompositionFilter({ ...compositionFilter, quarter: e.target.value })}
+                              >
+                                {FY_QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}
+                              </select>
+                              <select 
+                                 className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-500 cursor-pointer focus:ring-0 p-0"
+                                 value={compositionFilter.year}
+                                 onChange={(e) => setCompositionFilter({ ...compositionFilter, year: e.target.value })}
+                              >
+                                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                              </select>
+                           </div>
+                         }
                          stats={{
                            total: compStats.total,
                            items: [
@@ -368,7 +479,15 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                        <DetailedCard 
                          label="GSTR-04 Annual" 
-                         subLabel={`FY ${monthlyFilter.year}`}
+                          periodControls={
+                               <select 
+                                  className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                  value={annualFilter.year}
+                                  onChange={(e) => setAnnualFilter({ ...annualFilter, year: e.target.value })}
+                               >
+                                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                               </select>
+                          }
                          stats={{
                            total: gstr4Stats.total,
                            items: [
@@ -382,7 +501,15 @@ const Dashboard: React.FC = () => {
                        />
                        <DetailedCard 
                          label="GSTR-9/9C Audit" 
-                         subLabel={`FY ${monthlyFilter.year}`}
+                          periodControls={
+                               <select 
+                                  className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                  value={annualFilter.year}
+                                  onChange={(e) => setAnnualFilter({ ...annualFilter, year: e.target.value })}
+                               >
+                                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                               </select>
+                          }
                          stats={{
                            total: gstr9Stats.total,
                            items: [
@@ -401,7 +528,22 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                        <DetailedCard 
                          label="ITR Returns" 
-                         subLabel={`AY ${itrFilter.ay}`}
+                          periodControls={
+                               <div className="flex gap-1 items-center">
+                                 <span className="text-[10px] font-bold text-slate-400 uppercase">AY</span>
+                                 <select 
+                                    className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                    value={itrFilter.ay}
+                                    onChange={(e) => setItrFilter({ ...itrFilter, ay: e.target.value })}
+                                 >
+                                   {YEARS.map(y => {
+                                      const startYear = parseInt(y.split('-')[0]);
+                                      const ay = `${startYear + 1}-${(startYear + 2).toString().slice(-2)}`;
+                                      return <option key={ay} value={ay}>{ay}</option>;
+                                   })}
+                                 </select>
+                               </div>
+                          }
                          stats={{
                            total: itrStats.total,
                            items: [
@@ -415,7 +557,22 @@ const Dashboard: React.FC = () => {
                        />
                        <DetailedCard 
                          label="Audit & B/S" 
-                         subLabel={`AY ${itrFilter.ay}`}
+                          periodControls={
+                               <div className="flex gap-1 items-center">
+                                 <span className="text-[10px] font-bold text-slate-400 uppercase">AY</span>
+                                 <select 
+                                    className="bg-transparent border-none text-[10px] uppercase font-bold text-slate-400 cursor-pointer focus:ring-0 p-0"
+                                    value={itrFilter.ay}
+                                    onChange={(e) => setItrFilter({ ...itrFilter, ay: e.target.value })}
+                                 >
+                                   {YEARS.map(y => {
+                                      const startYear = parseInt(y.split('-')[0]);
+                                      const ay = `${startYear + 1}-${(startYear + 2).toString().slice(-2)}`;
+                                      return <option key={ay} value={ay}>{ay}</option>;
+                                   })}
+                                 </select>
+                               </div>
+                          }
                          stats={{
                            total: auditStats.total,
                            items: [
@@ -435,6 +592,7 @@ const Dashboard: React.FC = () => {
             {/* Sector 3: Litigation */}
             <section>
               <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
+              <LitigationDueDates />
               <div className="grid grid-cols-1 gap-12">
                  <LitigationBlock forum="Notice" label="GST Notices" icon={<path d="M12 9v2m0 4h.01" />} />
                  <LitigationBlock forum="Appeal" label="GST Appeals" icon={<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2" />} />
@@ -502,6 +660,7 @@ const Dashboard: React.FC = () => {
       case 'messenger': return <Messenger />;
       case 'admin-invoices': return <Invoices onViewChange={handleViewChange} />;
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
+      case 'admin-invoicesetting': return <InvoiceSetting onBack={() => handleViewChange('admin-invoices')} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
       case 'admin-duedates': return <DueDateSetting />;
       case 'settings': return <Setting />;
@@ -546,6 +705,7 @@ const Dashboard: React.FC = () => {
       'reminders': { label: 'Reminders', desc: 'Statutory Compliance Deadline Monitor' },
       'admin-invoices': { label: 'Invoices', desc: 'Professional Billing and Receivables' },
       'admin-add-invoice': { label: 'Draft Invoice', desc: 'New Professional Bill Preparation' },
+      'admin-invoicesetting': { label: 'Invoice Settings', desc: 'Configure Firm Billing Details' },
       'admin-payments': { label: 'Payments', desc: 'Collection Realization and History' },
       'admin-duedates': { label: 'Due Dates', desc: 'Global Compliance Calendar Matrix' },
       'settings': { label: 'Vault Settings', desc: 'Firm Configuration and Security Protocols' },

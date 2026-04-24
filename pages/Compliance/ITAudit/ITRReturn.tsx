@@ -180,18 +180,18 @@ const ITRReturn: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1550px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1550px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
-                <th className="px-4 py-3 w-[90px]">S.No.</th>
-                <th className="px-4 py-3 w-[200px]">Name</th>
-                <th className="px-4 py-3 w-[180px]">Father Name</th>
-                <th className="px-4 py-3 w-[120px] text-center relative">
+                <th className="whitespace-nowrap px-4 py-3 w-[90px]">S.No.</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[200px]">Name</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[180px]">Father Name</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[120px] text-center relative">
                   <div className="flex items-center justify-center gap-1">Status <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                   {isFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setStatusFilter(f as any); setIsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}</div>}
                 </th>
-                <th className="px-4 py-3 w-[140px]">Filing Date</th>
-                <th className="px-4 py-3 w-[140px] text-center relative">
+                <th className="whitespace-nowrap px-4 py-3 w-[140px]">Filing Date</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[140px] text-center relative">
                   <div className="flex items-center justify-center gap-1">Refund Status <button onClick={() => setIsRefundFilterOpen(!isRefundFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                   {isRefundFilterOpen && (
                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
@@ -201,9 +201,9 @@ const ITRReturn: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="px-4 py-3 w-[160px]">Pan No.</th>
-                <th className="px-4 py-3 w-[160px]">Password</th>
-                <th className="px-4 py-3 w-[110px] text-right">Action</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[160px]">Pan No.</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[160px]">Password</th>
+                <th className="whitespace-nowrap px-4 py-3 w-[110px] text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -213,24 +213,24 @@ const ITRReturn: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black text-slate-900 uppercase truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.itProfile?.fatherName || '---'}</td>
-                    <td className="px-4 py-[2px] text-center">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.itProfile?.fatherName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
                     </td>
-                    <td className="px-4 py-[2px]">
+                    <td className="whitespace-nowrap px-4 py-[2px]">
                        {status.filed ? (
                          <input type="date" value={status.date || ''} onChange={e => updateFilingDate(client.id, e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none uppercase" />
                        ) : <span className="text-slate-200 font-black">---</span>}
                     </td>
-                    <td className="px-4 py-[2px] text-center">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => status.filed && cycleRefundStatus(client.id)} disabled={!status.filed} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border transition-all ${getRefundColor(status.refundStatus)} ${!status.filed ? 'opacity-30' : 'hover:shadow-sm'}`}>
                           {status.refundStatus || 'N/A'}
                        </button>
                     </td>
-                    <td className="px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">{client.itProfile?.pan}</td>
-                    <td className="px-4 py-[2px]">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">{client.itProfile?.pan}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
                             <div className="flex items-center gap-1">

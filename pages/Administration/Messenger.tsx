@@ -138,31 +138,31 @@ const Messenger: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1000px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px] text-center">Sel.</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[260px]">Trade Name</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Legal Name</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Mobile No.</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Status</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px] text-center">Sel.</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[260px]">Trade Name</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Legal Name</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Mobile No.</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredClients.map((c, idx) => (
                 <tr key={c.id} onClick={() => toggleClient(c.id)} className={`cursor-pointer transition-all group ${selectedIds.has(c.id) ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
-                  <td className="px-4 py-5 text-center">
+                  <td className="whitespace-nowrap px-4 py-5 text-center">
                     <div className={`h-5 w-5 mx-auto rounded-md border-2 transition-all flex items-center justify-center ${selectedIds.has(c.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200 bg-white group-hover:border-indigo-400'}`}>
                       {selectedIds.has(c.id) && <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>}
                     </div>
                   </td>
-                  <td className="px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                  <td className="px-4 py-5 text-[12px] font-black uppercase truncate text-slate-900" title={c.tradeName}>{c.tradeName || '---'}</td>
-                  <td className="px-4 py-5 text-[11px] font-bold text-slate-400 uppercase truncate" title={c.legalName}>{c.legalName}</td>
-                  <td className="px-4 py-5 font-black text-slate-600 font-mono text-[11px] uppercase tracking-widest">{c.gstProfile?.gstin || 'N/A'}</td>
-                  <td className="px-4 py-5 font-black text-slate-600 text-[12px]">+91 {c.mobile}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[12px] font-black uppercase truncate text-slate-900" title={c.tradeName}>{c.tradeName || '---'}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[11px] font-bold text-slate-400 uppercase truncate" title={c.legalName}>{c.legalName}</td>
+                  <td className="whitespace-nowrap px-4 py-5 font-black text-slate-600 font-mono text-[11px] uppercase tracking-widest">{c.gstProfile?.gstin || 'N/A'}</td>
+                  <td className="whitespace-nowrap px-4 py-5 font-black text-slate-600 text-[12px]">+91 {c.mobile}</td>
                   <td className="px-4 py-5 text-right whitespace-nowrap">
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${c.status.includes('Active') ? 'text-green-500' : 'text-slate-300'}`}>
                       {c.status.includes('Active') ? 'Active' : 'Inact.'}

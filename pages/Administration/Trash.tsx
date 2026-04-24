@@ -37,30 +37,30 @@ const Trash: React.FC = () => {
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-auto no-scrollbar flex-1">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 z-20">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Record Identity</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Created On</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Server ID</th>
+                <th className="whitespace-nowrap px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Record Identity</th>
+                <th className="whitespace-nowrap px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
+                <th className="whitespace-nowrap px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Created On</th>
+                <th className="whitespace-nowrap px-8 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Server ID</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {trashItems.length === 0 ? (
-                <tr><td colSpan={4} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No activity records found</td></tr>
+                <tr><td colSpan={4} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No activity records found</td></tr>
               ) : (
                 trashItems.map((item, idx) => (
                   <tr key={idx} className="hover:bg-indigo-50/20 transition-colors">
-                    <td className="px-8 py-6">
+                    <td className="whitespace-nowrap px-8 py-6">
                       <p className="text-sm font-black text-slate-900 uppercase">{item.data?.legalName || item.data?.title || item.name || 'System Object'}</p>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="whitespace-nowrap px-8 py-6">
                        <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{item.name?.replace('_', ' ')}</span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="whitespace-nowrap px-8 py-6">
                        <p className="text-sm font-black text-slate-600">{new Date(item.createdAt).toLocaleDateString()}</p>
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="whitespace-nowrap px-8 py-6 text-right">
                        <code className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">{item._id}</code>
                     </td>
                   </tr>

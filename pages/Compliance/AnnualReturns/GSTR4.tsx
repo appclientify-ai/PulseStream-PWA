@@ -133,17 +133,17 @@ const GSTR4: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
-                <th className="px-4 py-3 w-[100px]">S.No.</th>
-                <th className="px-4 py-3 min-w-[180px]">Trader Name</th>
-                <th className="px-4 py-3 w-[200px]">Legal Name</th>
-                <th className="px-4 py-3 w-[180px]">GSTIN</th>
-                <th className="px-4 py-3 w-[140px] text-center">GSTR-4 Status</th>
-                <th className="px-4 py-3 w-[140px]">User ID</th>
-                <th className="px-4 py-3 w-[160px]">Password</th>
-                <th className="px-4 py-3 w-[110px] text-right">Actions</th>
+                <th className="whitespace-nowrap px-4 py-3">S.No.</th>
+                <th className="whitespace-nowrap px-4 py-3">Trader Name</th>
+                <th className="whitespace-nowrap px-4 py-3">Legal Name</th>
+                <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">GSTR-4 Status</th>
+                <th className="whitespace-nowrap px-4 py-3">User ID</th>
+                <th className="whitespace-nowrap px-4 py-3">Password</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -151,10 +151,10 @@ const GSTR4: React.FC = () => {
                 const status = getStatus(client.id);
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="px-4 py-[2px] font-black uppercase truncate">{client.tradeName || '---'}</td>
-                    <td className="px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
-                    <td className="px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black uppercase truncate">{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
@@ -164,11 +164,11 @@ const GSTR4: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-[2px] text-center">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
                     </td>
-                    <td className="px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
-                    <td className="px-4 py-[2px] font-black text-indigo-600 tracking-wider">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 tracking-wider">
                       <div className="flex items-center gap-2">
                         <span>••••••••</span>
                         {client.gstProfile?.username && (
@@ -181,7 +181,7 @@ const GSTR4: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
+                    <td className="whitespace-nowrap px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>

@@ -81,23 +81,23 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1100px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1100px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">Ref No</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Date</th>
-                <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">Ref No</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Date</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.map((rec, idx) => (
                 <tr key={rec.id} className="hover:bg-slate-50/50 transition-all text-[12px]">
-                  <td className="px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                  <td className="px-6 py-5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
-                  <td className="px-6 py-5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
-                  <td className="px-6 py-5 font-black text-slate-400">{rec.issuedDate}</td>
+                  <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                  <td className="whitespace-nowrap px-6 py-5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
+                  <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
+                  <td className="whitespace-nowrap px-6 py-5 font-black text-slate-400">{rec.issuedDate}</td>
                   <td className="px-6 py-5 text-right whitespace-nowrap">
                      <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>

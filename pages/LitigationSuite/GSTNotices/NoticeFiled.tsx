@@ -134,13 +134,13 @@ const NoticeFiled: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-            <thead className="sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1400px]">
+            <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S. No.</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S. No.</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
                   <div className="flex items-center gap-1">
                     Section
                     <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 hover:bg-white rounded transition-colors shadow-sm">
@@ -156,26 +156,26 @@ const NoticeFiled: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Filing Date</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] text-center">Status Update</th>
-                <th className="px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Filing Date</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] text-center">Status Update</th>
+                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={8} className="py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No filed notices in vault</td></tr>
+                <tr><td colSpan={8} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No filed notices in vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[12px]">
-                      <td className="px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="px-4 py-5">
+                      <td className="whitespace-nowrap px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className="whitespace-nowrap px-4 py-5">
                         <p className="text-[11px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                         <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
                       </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
+                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
@@ -189,15 +189,15 @@ const NoticeFiled: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-600 uppercase">
+                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-600 uppercase">
                         {rec.section ? `U/s ${rec.section}` : '---'}
                       </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-slate-700 uppercase">
+                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-700 uppercase">
                         {rec.taxPeriod || '---'}
                       </td>
-                      <td className="px-4 py-5 text-[11px] font-black text-emerald-600 uppercase">{formatDisplayDate(rec.filedDate)}</td>
+                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-emerald-600 uppercase">{formatDisplayDate(rec.filedDate)}</td>
                       
-                      <td className="px-4 py-5 text-center relative overflow-visible">
+                      <td className="whitespace-nowrap px-4 py-5 text-center relative overflow-visible">
                         <div className="relative inline-block w-full">
                            <button 
                              onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
@@ -234,7 +234,7 @@ const NoticeFiled: React.FC = () => {
                             >
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
-                            {client && <GSTViewIcon client={client} onDataChange={fetchData} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button 
                               onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }}
                               className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
