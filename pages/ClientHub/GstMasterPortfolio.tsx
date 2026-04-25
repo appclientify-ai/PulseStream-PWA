@@ -75,12 +75,15 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
 
   const filteredClients = useMemo(() => {
     const s = (externalSearch || '').toLowerCase();
-    let list = clients.filter(c => 
-      (c.legalName || '').toLowerCase().includes(s) || 
-      (c.tradeName || '').toLowerCase().includes(s) ||
-      (c.gstProfile?.gstin || '').toLowerCase().includes(s) ||
-      (String(c.mobile || '').includes(s))
-    );
+    let list = (clients || []).filter(c => {
+      if (!c) return false;
+      const safeString = (val: any) => typeof val === 'string' ? val.toLowerCase() : String(val || '').toLowerCase();
+      
+      return safeString(c.legalName).includes(s) || 
+             safeString(c.tradeName).includes(s) ||
+             safeString(c.gstProfile?.gstin).includes(s) ||
+             safeString(c.mobile).includes(s);
+    });
 
     if (statusFilter !== 'All') {
       list = list.filter(c => (c.gstProfile?.gstStatus || 'Active') === statusFilter);
