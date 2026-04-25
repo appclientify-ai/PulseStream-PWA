@@ -79,7 +79,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
       (c.legalName || '').toLowerCase().includes(s) || 
       (c.tradeName || '').toLowerCase().includes(s) ||
       (c.gstProfile?.gstin || '').toLowerCase().includes(s) ||
-      (StringString(c.mobile || '').includes(s))
+      (String(c.mobile || '').includes(s))
     );
 
     if (statusFilter !== 'All') {
