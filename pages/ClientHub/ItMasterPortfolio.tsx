@@ -37,7 +37,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      setClients(data.filter(c => !!c.itProfile));
+      setClients((data || []).filter(c => !!c.itProfile));
     } catch (error) {
       console.error("IT Sync Error:", error);
     } finally {
@@ -77,16 +77,16 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   };
 
   const filteredClients = useMemo(() => {
-    let list = clients;
+    let list = clients || [];
     if (statusFilter !== 'All') {
-      list = list.filter(c => c.status === statusFilter);
+      list = list.filter(c => c?.status === statusFilter);
     }
     const s = (externalSearch || '').toLowerCase();
     return list.filter(c => 
       (c.legalName || '').toLowerCase().includes(s) || 
       (c.itProfile?.pan || '').toLowerCase().includes(s) ||
       (c.itProfile?.fatherName || '').toLowerCase().includes(s) ||
-      String(c.mobile || '').includes(s)
+      String(c.mobile || '').toLowerCase().includes(s)
     );
   }, [clients, externalSearch, statusFilter]);
 

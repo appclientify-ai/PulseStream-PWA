@@ -43,7 +43,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      setClients(data.filter(c => !!c.gstProfile));
+      setClients((data || []).filter(c => !!c.gstProfile));
     } catch (err) { console.error("Fetch failed", err); } finally { setIsLoading(false); }
   };
 
@@ -86,10 +86,10 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     });
 
     if (statusFilter !== 'All') {
-      list = list.filter(c => (c.gstProfile?.gstStatus || 'Active') === statusFilter);
+      list = list.filter(c => c && (c.gstProfile?.gstStatus || 'Active') === statusFilter);
     }
     if (relFilter !== 'All') {
-      list = list.filter(c => c.status === relFilter);
+      list = list.filter(c => c?.status === relFilter);
     }
 
     return list;

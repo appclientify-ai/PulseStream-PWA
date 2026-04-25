@@ -14,7 +14,7 @@ const ITPortfolio: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       const data = await api.getClients();
-      setClients(data.filter(c => !!c.itProfile));
+      setClients((data || []).filter(c => c && c.itProfile));
     } catch (err) {
       console.error("IT Vault Sync Error:", err);
     }
@@ -26,8 +26,8 @@ const ITPortfolio: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = clients.length;
-    const active = clients.filter(c => c.status === 'Active' || c.status === 'Active Filing').length;
-    const inactive = clients.filter(c => c.status === 'Inactive').length;
+    const active = (clients || []).filter(c => c?.status === 'Active' || c.status === 'Active Filing').length;
+    const inactive = (clients || []).filter(c => c?.status === 'Inactive').length;
     return { total, active, inactive };
   }, [clients]);
 

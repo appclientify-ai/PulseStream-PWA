@@ -25,7 +25,7 @@ const GSTPortfolio: React.FC = () => {
     const load = async () => {
       try {
         const data = await api.getClients();
-        setClients(data.filter(c => !!c.gstProfile));
+        setClients((data || []).filter(c => c && c.gstProfile));
       } catch (err) {
         console.error("Vault Sync Error:", err);
       }
@@ -35,10 +35,10 @@ const GSTPortfolio: React.FC = () => {
 
   const stats = useMemo(() => {
     return {
-      total: clients.length,
-      active: clients.filter(c => c.status === 'Active' || c.status === 'Active Filing').length,
-      litigation: clients.filter(c => c.status === 'Litigation').length,
-      inactive: clients.filter(c => c.status === 'Inactive').length
+      total: (clients || []).length,
+      active: (clients || []).filter(c => c?.status === 'Active' || c.status === 'Active Filing').length,
+      litigation: (clients || []).filter(c => c?.status === 'Litigation').length,
+      inactive: (clients || []).filter(c => c?.status === 'Inactive').length
     };
   }, [clients]);
 
@@ -49,7 +49,7 @@ const GSTPortfolio: React.FC = () => {
       "Category", "Filing Frequency", "Status"
     ].join(",");
 
-    const rows = clients.map(c => [
+    const rows = (clients || []).filter(Boolean).map(c => [
       c.tradeName, c.legalName, c.mobile, c.email, 
       c.gstProfile?.gstin, c.gstProfile?.pan, c.gstProfile?.username, c.gstProfile?.password,
       c.gstProfile?.constitution, c.gstProfile?.regDate, c.gstProfile?.regType,
