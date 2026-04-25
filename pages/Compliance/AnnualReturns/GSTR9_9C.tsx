@@ -30,8 +30,7 @@ const GSTR9_9C: React.FC = () => {
   const [isEditApplicabilityOpen, setIsEditApplicabilityOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [is9CApplicableState, setIs9CApplicableState] = useState(true);
-  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
-  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+    const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
 
   // Filters
@@ -200,11 +199,11 @@ const GSTR9_9C: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
                 <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
                    <div className="flex items-center justify-center gap-1">GSTR-9 <button onClick={() => setIs9FilterOpen(!is9FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
-                   {is9FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setGstr9Filter(f as any); setIs9FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
+                   {is9FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setGstr9Filter(f as any); setIs9FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
                 </th>
                 <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
                    <div className="flex items-center justify-center gap-1">GSTR-9C <button onClick={() => setIs9cFilterOpen(!is9cFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
-                   {is9cFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending', 'N/A'].map(f => <button key={f} onClick={() => { setGstr9cFilter(f as any); setIs9cFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9cFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
+                   {is9cFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">{['All', 'Filed', 'Pending', 'N/A'].map(f => <button key={f} onClick={() => { setGstr9cFilter(f as any); setIs9cFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${gstr9cFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
                 </th>
                 <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
                 <th className="whitespace-nowrap px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
@@ -215,8 +214,7 @@ const GSTR9_9C: React.FC = () => {
               {filteredDisplayList.map((client, idx) => {
                 const st = getStatus(client.id);
                 const app9c = is9CApplicable(client.id);
-                const isPassVisible = visiblePasswords.has(client.id);
-                const isEditingPass = editingPasswordId === client.id;
+                                const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>

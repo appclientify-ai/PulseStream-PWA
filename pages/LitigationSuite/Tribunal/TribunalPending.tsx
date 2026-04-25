@@ -13,7 +13,8 @@ const TribunalPending: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [activeHeaderFilter, setActiveHeaderFilter] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState('All');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
@@ -162,7 +163,7 @@ const TribunalPending: React.FC = () => {
                          </button>
                          {activeStatusMenuId === rec.id && (
                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 text-left">
-                              <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Mark Filed</button>
+                              <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
                            </div>
                          )}
                       </td>

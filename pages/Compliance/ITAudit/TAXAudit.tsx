@@ -197,7 +197,7 @@ const TAXAudit: React.FC = () => {
                     <button onClick={() => setIsBsFilterOpen(!isBsFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
                   </div>
                   {isBsFilterOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Document Required', 'In progress', 'Ready', 'Pending'].map(f => (
                         <button key={f} onClick={() => { setBsFilter(f as any); setIsBsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
@@ -210,7 +210,7 @@ const TAXAudit: React.FC = () => {
                     <button onClick={() => setIsAuditFilterOpen(!isAuditFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
                   </div>
                   {isAuditFilterOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Filed', 'Pending'].map(f => (
                         <button key={f} onClick={() => { setAuditFilter(f as any); setIsAuditFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
@@ -275,7 +275,7 @@ const TAXAudit: React.FC = () => {
       {/* VIEW MODAL (SHOWS FULL DETAILS + CA NAME EDIT) */}
       {isViewModalOpen && viewingClient && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95">
+           <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingClient.legalName}</h3>
@@ -357,7 +357,7 @@ const TAXAudit: React.FC = () => {
       {/* ADD CLIENT MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95">
+           <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95 flex flex-col gap-1">
               <div className="flex items-center justify-between shrink-0">
                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
                    {pendingClientForAdd ? 'Authorized Auditor' : `Track for FY ${selectedYear}`}

@@ -81,12 +81,12 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     if (statusFilter !== 'All') {
       list = list.filter(c => c.status === statusFilter);
     }
-    const s = externalSearch.toLowerCase();
+    const s = (externalSearch || '').toLowerCase();
     return list.filter(c => 
       (c.legalName || '').toLowerCase().includes(s) || 
       (c.itProfile?.pan || '').toLowerCase().includes(s) ||
       (c.itProfile?.fatherName || '').toLowerCase().includes(s) ||
-      (c.mobile || '').includes(s)
+      String(c.mobile || '').includes(s)
     );
   }, [clients, externalSearch, statusFilter]);
 
@@ -144,7 +144,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   </button>
                 </div>
                 {isStatusFilterOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">
+                  <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">
                     {['All', 'Active', 'Inactive'].map(f => (
                       <button key={f} onClick={() => { setStatusFilter(f); setIsStatusFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                     ))}

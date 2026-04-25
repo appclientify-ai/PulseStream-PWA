@@ -274,55 +274,6 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  const LitigationDueDates = () => {
-    const sorted = [...litigation]
-      .filter(l => l.status !== 'Completed' && l.status !== 'Drop' && l.dueDate)
-      .filter(l => {
-         const diff = new Date(l.dueDate).getTime() - new Date().getTime();
-         const days = diff / (1000 * 3600 * 24);
-         return days <= 15 && days >= -30; // within next 15 days, or overdue up to 30 days
-      })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .slice(0, 10);
-
-    return (
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden mb-12">
-        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-           <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
-              <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Upcoming Litigation Due Dates
-           </h4>
-        </div>
-        <div className="overflow-x-auto">
-           <table className="w-full text-left border-collapse table-auto overflow-hidden">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Due Date</th>
-                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Client</th>
-                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">Forum</th>
-                  <th className="py-3 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right whitespace-nowrap">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                 {sorted.length === 0 ? (
-                   <tr><td colSpan={4} className="py-5 px-4 text-xs text-slate-500 italic text-center">No upcoming dates</td></tr>
-                 ) : sorted.map(item => (
-                   <tr key={item.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                     <td className="py-3 px-4 text-xs font-bold text-rose-600 whitespace-nowrap">
-                       {new Date(item.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                     </td>
-                     <td className="py-3 px-4 text-xs font-bold text-slate-700 whitespace-nowrap truncate max-w-[200px]">{item.clientName || 'Unknown Client'}</td>
-                     <td className="py-3 px-4 text-xs font-bold text-slate-500 whitespace-nowrap">{item.category}</td>
-                     <td className="py-3 px-4 text-[10px] font-black uppercase text-right text-indigo-600 whitespace-nowrap">{item.status}</td>
-                   </tr>
-                 ))}
-              </tbody>
-           </table>
-        </div>
-      </div>
-    );
-  };
-
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard': {
@@ -597,7 +548,6 @@ const Dashboard: React.FC = () => {
             {/* Sector 3: Litigation */}
             <section>
               <SectionHeader title="Litigation Suite" subtitle="Legal Defense Command" />
-              <LitigationDueDates />
               <div className="grid grid-cols-1 gap-12">
                  <LitigationBlock forum="Notice" label="GST Notices" icon={<path d="M12 9v2m0 4h.01" />} />
                  <LitigationBlock forum="Appeal" label="GST Appeals" icon={<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2" />} />

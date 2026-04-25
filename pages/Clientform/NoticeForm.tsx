@@ -106,7 +106,7 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <form 
         onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
-        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95"
+        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
       >
         <div className="flex items-center justify-between shrink-0">
            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">

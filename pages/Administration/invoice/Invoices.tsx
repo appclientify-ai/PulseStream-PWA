@@ -80,8 +80,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   };
 
   const handleWhatsApp = (inv: InvoiceRecord) => {
-    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${inv.date.split('-').reverse().join('-')}\nAmount: ₹${inv.totalAmount.toLocaleString()}\nDue Date: ${inv.dueDate.split('-').reverse().join('-')}\n\nKindly settle the same. Thank you!`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    toast.success("Opening preview. Click WhatsApp to share with PDF.");
+    setPreviewInvoice(inv);
   };
 
   const handleWhatsAppShare = () => {

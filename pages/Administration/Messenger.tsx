@@ -177,7 +177,7 @@ const Messenger: React.FC = () => {
 
       {isComposerOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95">
+           <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div><h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Compose Broadcast</h3><p className="text-slate-500 text-sm font-medium mt-1">Routing to {selectedIds.size} entities.</p></div>
                  <button onClick={() => setIsComposerOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
@@ -213,7 +213,7 @@ const Messenger: React.FC = () => {
 
       {isQueueActive && selectedClientsList[queueIndex] && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-           <div className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
+           <div className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 flex flex-col gap-1">
               <div className="bg-slate-900 p-8 text-white">
                  <div className="flex items-center justify-between mb-6">
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Messaging Hub</span>

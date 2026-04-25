@@ -26,6 +26,8 @@ const GSTR4: React.FC = () => {
   // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [newPassVal, setNewPassVal] = useState('');
   
   // Actions Menu State
   const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
@@ -79,7 +81,17 @@ const GSTR4: React.FC = () => {
     return list;
   }, [clients, search, statusFilter, getStatus, selectedYear]);
 
-  const handleExport = () => {
+  
+  const handleUpdatePassword = async () => {
+    if (!selectedClient || !newPassVal.trim()) return;
+    try {
+      const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
+      await api.saveClient(updated);
+      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as any) : c));
+      setEditingPasswordId(null);
+    } catch (err) { toast.error("Update failed."); }
+  };
+const handleExport = () => {
     const headers = ["ID", "Trader", "GSTIN", "Status", "User ID", "Password"].join(",");
     const rows = filteredClients.map(c => [
       getClientDisplayId(c), 
@@ -149,6 +161,7 @@ const GSTR4: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredClients.map((client, idx) => {
                 const status = getStatus(client.id);
+                const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>

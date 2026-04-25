@@ -19,6 +19,8 @@ const CompositionFiling: React.FC = () => {
   const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
   
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [newPassVal, setNewPassVal] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const { getStatus, toggleStatus, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
@@ -52,7 +54,17 @@ const CompositionFiling: React.FC = () => {
     );
   }, [clients, search, selectedYear, quarterEndMonth]);
 
-  const handleExport = () => {
+  
+  const handleUpdatePassword = async () => {
+    if (!selectedClient || !newPassVal.trim()) return;
+    try {
+      const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
+      await api.saveClient(updated);
+      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as any) : c));
+      setEditingPasswordId(null);
+    } catch (err) { toast.error("Update failed."); }
+  };
+const handleExport = () => {
     const headers = ["ID", "Trader", "GSTIN", "CMP-08 Status"].join(",");
     const rows = filteredClients.map(c => [c.id, c.tradeName, c.gstProfile?.gstin, getStatus(c.id).cmp08?'Filed':'Pending'].join(",")).join("\n");
     const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
@@ -87,7 +99,7 @@ const CompositionFiling: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
                 <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center relative">
                    <div className="flex items-center justify-center gap-1">CMP-08 <button onClick={() => setIsCmp08FilterOpen(!isCmp08FilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
-                   {isCmp08FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setCmp08Filter(f as any); setIsCmp08FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
+                   {isCmp08FilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setCmp08Filter(f as any); setIsCmp08FilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}</div>}
             </th>
                 <th className="whitespace-nowrap px-4 py-3">User ID</th>
                 <th className="whitespace-nowrap px-4 py-3">Password</th>
@@ -97,6 +109,7 @@ const CompositionFiling: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredClients.map((client, idx) => {
                 const st = getStatus(client.id);
+                const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
@@ -115,17 +128,26 @@ const CompositionFiling: React.FC = () => {
                     </td>
                     <td className="whitespace-nowrap px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest">
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
-                        {client.gstProfile?.username && (
-                          <button onClick={() => { 
-                            navigator.clipboard.writeText(client.gstProfile?.username || ''); 
-                            window.open('https://services.gst.gov.in/services/login', '_blank'); 
-                          }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all shrink-0" title="Login to GST Portal">
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                          </button>
-                        )}
+                        <span>
+                          {isEditingPass ? (
+                            <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                               <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
+                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                               {client.gstProfile?.username && (
+                                 <button onClick={() => { 
+                                   navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                   window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                 }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
+                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                 </button>
+                               )}
+                            </div>
+                          )}
+                        </span>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-[2px] text-right flex items-center justify-end gap-1">

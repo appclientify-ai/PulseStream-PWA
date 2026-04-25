@@ -74,12 +74,12 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   };
 
   const filteredClients = useMemo(() => {
-    const s = externalSearch.toLowerCase();
+    const s = (externalSearch || '').toLowerCase();
     let list = clients.filter(c => 
       (c.legalName || '').toLowerCase().includes(s) || 
       (c.tradeName || '').toLowerCase().includes(s) ||
       (c.gstProfile?.gstin || '').toLowerCase().includes(s) ||
-      (c.mobile && c.mobile.includes(s))
+      (StringString(c.mobile || '').includes(s))
     );
 
     if (statusFilter !== 'All') {
@@ -147,7 +147,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
                 {isStatusFilterOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">
+                  <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">
                     {['All', 'Active', 'Suspended', 'Closed'].map(f => (
                       <button key={f} onClick={() => { setStatusFilter(f); setIsStatusFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                     ))}
@@ -162,7 +162,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
                 {isRelFilterOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95">
+                  <div className="absolute top-full left-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-xl z-[400] p-1 animate-in zoom-in-95 flex flex-col gap-1">
                     {['All', 'Active', 'Active Filing', 'Litigation', 'Inactive'].map(f => (
                       <button key={f} onClick={() => { setRelFilter(f); setIsRelFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${relFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                     ))}
