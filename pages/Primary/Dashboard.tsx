@@ -142,36 +142,36 @@ const Dashboard: React.FC = () => {
     let cmp08 = 0;
     
     if (type === 'monthly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
       total = applicable.length;
       r1 = applicable.filter(c => periodData[c.id]?.r1).length;
       r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
       filed = r3b;
     } else if (type === 'quarterly') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
       total = applicable.length;
       r1 = applicable.filter(c => periodData[c.id]?.r1).length;
       r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
       filed = r3b;
     } else if (type === 'composition') {
-      const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
       total = applicable.length;
       cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
       filed = cmp08;
     } else if (type === 'itr') {
-      const applicable = clients.filter(c => !!c.itProfile);
+      const applicable = (clients || []).filter(c => c && !!c.itProfile);
       total = applicable.length;
       filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr4') {
-       const applicable = clients.filter(c => c.gstProfile?.regType === 'Composition');
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr9') {
-       const applicable = clients.filter(c => c.gstProfile?.regType === 'Regular');
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular');
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'audit') {
-       const applicable = clients.filter(c => c.itProfile?.advisoryWork?.taxAudit);
+       const applicable = (clients || []).filter(c => c && c.itProfile?.advisoryWork?.taxAudit);
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.auditFiled).length;
     }
@@ -304,7 +304,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Regular & Comp. Entities</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.gstProfile).length}</p>
+                        <p className="text-4xl font-black text-slate-900">{(clients || []).filter(c => c && !!c.gstProfile).length}</p>
                         <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
                       </div>
                    </div>
@@ -320,7 +320,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Personal & Corporate Direct Tax</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{clients.filter(c => !!c.itProfile).length}</p>
+                        <p className="text-4xl font-black text-slate-900">{(clients || []).filter(c => c && !!c.itProfile).length}</p>
                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
                       </div>
                    </div>
@@ -560,7 +560,7 @@ const Dashboard: React.FC = () => {
             <section>
               <SectionHeader title="Service Desk" subtitle="New Enrollments & Work Logs" />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                 <CompactCard label="GST Reg." count={clients.filter(c => c.status === 'Active').length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
+                 <CompactCard label="GST Reg." count={(clients || []).filter(c => c && c.status === 'Active').length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
                  <CompactCard label="Food License" count={0} viewId="misc-food-lic" color="bg-emerald-500" icon={<path d="M3 3h2l.4 2" />} />
                  <CompactCard label="MSME Reg." count={0} viewId="misc-msme" color="bg-blue-500" icon={<path d="M21 13.255A23.931 23.931 0 0112 15" />} />
                  <CompactCard label="Work Log" count={miscWork.length} viewId="misc-work" color="bg-slate-700" icon={<path d="M12 8v4l3 3" />} />

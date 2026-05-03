@@ -41,7 +41,7 @@ const GSTR4: React.FC = () => {
     try {
       const data = await api.getClients();
       setAllClientsBase(data);
-      setClients(data.filter(c => c.gstProfile?.regType === 'Composition'));
+      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Composition'));
     } finally { setIsLoading(false); }
   };
 

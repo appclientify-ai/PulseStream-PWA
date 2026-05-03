@@ -38,7 +38,7 @@ const MonthlyFiling: React.FC = () => {
       const data = await api.getClients();
       setAllClientsBase(data);
       // AUTOMATIC ROUTING: Monthly return list only shows Regular taxpayers with Monthly frequency
-      setClients(data.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly'));
+      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly'));
     } finally { setIsLoading(false); }
   };
 

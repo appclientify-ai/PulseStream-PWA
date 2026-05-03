@@ -37,7 +37,7 @@ const QuarterlyFiling: React.FC = () => {
       const data = await api.getClients();
       setAllClientsBase(data);
       // AUTOMATIC ROUTING: Quarterly Return list only shows taxpayers with Quarterly frequency
-      setClients(data.filter(c => c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
+      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
     } finally { setIsLoading(false); }
   };
 

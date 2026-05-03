@@ -36,7 +36,7 @@ const GSTPortfolio: React.FC = () => {
   const stats = useMemo(() => {
     return {
       total: (clients || []).length,
-      active: (clients || []).filter(c => c?.status === 'Active' || c.status === 'Active Filing').length,
+      active: (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length,
       litigation: (clients || []).filter(c => c?.status === 'Litigation').length,
       inactive: (clients || []).filter(c => c?.status === 'Inactive').length
     };
@@ -50,10 +50,10 @@ const GSTPortfolio: React.FC = () => {
     ].join(",");
 
     const rows = (clients || []).filter(Boolean).map(c => [
-      c.tradeName, c.legalName, c.mobile, c.email, 
-      c.gstProfile?.gstin, c.gstProfile?.pan, c.gstProfile?.username, c.gstProfile?.password,
-      c.gstProfile?.constitution, c.gstProfile?.regDate, c.gstProfile?.regType,
-      c.gstProfile?.filingFreq, c.status
+      c?.tradeName, c?.legalName, c?.mobile, c?.email, 
+      c?.gstProfile?.gstin, c?.gstProfile?.pan, c?.gstProfile?.username, c?.gstProfile?.password,
+      c?.gstProfile?.constitution, c?.gstProfile?.regDate, c?.gstProfile?.regType,
+      c?.gstProfile?.filingFreq, c?.status
     ].map(v => `"${v || ''}"`).join(",")).join("\n");
 
     const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;

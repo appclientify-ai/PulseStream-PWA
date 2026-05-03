@@ -88,6 +88,7 @@ const GSTR9_9C: React.FC = () => {
     const currentWatchlist = watchlist[selectedYear] || [];
     
     return allClients.filter(c => {
+      if (!c) return false;
       const inWatchlist = currentWatchlist.includes(c.id);
       const isPersistent = c.status === 'Inactive' || c.status === 'Litigation';
       const visibleNormally = isClientVisibleInFY(c, selectedYear);

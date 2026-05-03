@@ -50,7 +50,7 @@ const ITRReturn: React.FC = () => {
     try {
       const data = await api.getClients();
       // Automatically show all active IT clients
-      setClients(data.filter(c => !!c.itProfile && (c.status === 'Active' || c.status === 'Active Filing')));
+      setClients(data.filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing')));
     } finally {
       setIsLoading(false);
     }
