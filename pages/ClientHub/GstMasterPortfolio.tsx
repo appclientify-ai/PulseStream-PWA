@@ -43,7 +43,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      setClients((data || []).filter(c => !!c.gstProfile));
+      setClients((data || []).filter(c => c && c.gstProfile));
     } catch (err) { console.error("Fetch failed", err); } finally { setIsLoading(false); }
   };
 
@@ -122,6 +122,11 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     });
     setActiveActionsId(client.id);
     setSelectedClient(client);
+  };
+
+  const handleEdit = (client: Client) => {
+    setSelectedClient(client);
+    setIsEditModalOpen(true);
   };
 
   if (isLoading) return (

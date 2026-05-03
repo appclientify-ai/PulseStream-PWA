@@ -37,7 +37,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     setIsLoading(true);
     try {
       const data = await api.getClients();
-      setClients((data || []).filter(c => !!c.itProfile));
+      setClients((data || []).filter(c => c && c.itProfile));
     } catch (error) {
       console.error("IT Sync Error:", error);
     } finally {
