@@ -177,7 +177,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
               </div>
               
               {isDropdownOpen && filteredClients.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
+                <div className="absolute bottom-full mb-1 z-[9999] left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
                   {filteredClients.map(c => (
                     <button key={c.id} onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all group">
                       <p className="text-xs font-black text-slate-900 uppercase group-hover:text-indigo-700">{c.legalName}</p>

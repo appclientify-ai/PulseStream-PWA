@@ -179,7 +179,7 @@ const ITRReturn: React.FC = () => {
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1 w-full">
+        <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
           <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1550px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
@@ -188,13 +188,13 @@ const ITRReturn: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-3 w-[180px]">Father Name</th>
                 <th className="whitespace-nowrap px-4 py-3 w-[120px] text-center relative">
                   <div className="flex items-center justify-center gap-1">Status <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
-                  {isFilterOpen && <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setStatusFilter(f as any); setIsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}</div>}
+                  {isFilterOpen && <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">{['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => { setStatusFilter(f as any); setIsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}</div>}
                 </th>
                 <th className="whitespace-nowrap px-4 py-3 w-[140px]">Filing Date</th>
                 <th className="whitespace-nowrap px-4 py-3 w-[140px] text-center relative">
                   <div className="flex items-center justify-center gap-1">Refund Status <button onClick={() => setIsRefundFilterOpen(!isRefundFilterOpen)} className="p-1 hover:bg-slate-200 rounded transition-colors"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                   {isRefundFilterOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Pending', 'Received', 'No Refund'].map(f => (
                         <button key={f} onClick={() => { setRefundStatusFilter(f as any); setIsRefundFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${refundStatusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>
                       ))}

@@ -183,7 +183,7 @@ const TAXAudit: React.FC = () => {
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
+        <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
           <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1250px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
@@ -197,7 +197,7 @@ const TAXAudit: React.FC = () => {
                     <button onClick={() => setIsBsFilterOpen(!isBsFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
                   </div>
                   {isBsFilterOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Document Required', 'In progress', 'Ready', 'Pending'].map(f => (
                         <button key={f} onClick={() => { setBsFilter(f as any); setIsBsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
@@ -210,7 +210,7 @@ const TAXAudit: React.FC = () => {
                     <button onClick={() => setIsAuditFilterOpen(!isAuditFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
                   </div>
                   {isAuditFilterOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Filed', 'Pending'].map(f => (
                         <button key={f} onClick={() => { setAuditFilter(f as any); setIsAuditFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
