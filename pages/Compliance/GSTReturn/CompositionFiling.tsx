@@ -25,6 +25,10 @@ const CompositionFiling: React.FC = () => {
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  
+  const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const { getStatus, toggleStatus, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
 
@@ -46,6 +50,21 @@ const CompositionFiling: React.FC = () => {
   };
 
   useEffect(() => { fetchClients(); }, []);
+
+  useEffect(() => {
+    const handleClose = (event: any) => {
+      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) setActiveActionsId(null);
+    };
+    if (activeActionsId) document.addEventListener('mousedown', handleClose);
+    return () => document.removeEventListener('mousedown', handleClose);
+  }, [activeActionsId]);
+
+  const openActionsMenu = (e: React.MouseEvent, client: Client) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenuPosition({ top: rect.bottom + window.scrollY + 8, left: rect.right - 256 });
+    setActiveActionsId(client.id);
+    setSelectedClient(client);
+  };
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
@@ -202,8 +221,13 @@ const CompositionFiling: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-right flex items-center justify-end gap-1">
-                      <GSTViewIcon client={client} onDataChange={fetchClients} />
+                    <td className="whitespace-nowrap px-4 py-[2px] text-right">
+                       <div className="flex items-center justify-end gap-1">
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
+                          <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
+                             <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                          </button>
+                       </div>
                     </td>
                   </tr>
                 );
@@ -213,7 +237,18 @@ const CompositionFiling: React.FC = () => {
         </div>
       </div>
 
-      {/* FULL CLIENT DETAIL VIEW MODAL removed - replaced by GSTViewIcon */}
+      {activeActionsId && selectedClient && (
+        <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right text-left">
+           <button onClick={() => { 
+             const text = `Trade Name: ${selectedClient.tradeName || ''}\nLegal Name: ${selectedClient.legalName || ''}\nGSTIN: ${selectedClient.gstProfile?.gstin || ''}\nUser ID: ${selectedClient.gstProfile?.username || ''}\nPassword: ${selectedClient.gstProfile?.password || ''}`;
+             navigator.clipboard.writeText(text).then(() => toast.success('Credentials copied to clipboard!'));
+             setActiveActionsId(null); 
+           }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors text-left group">
+              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Share Credentials</span>
+           </button>
+        </div>
+      )}
     </div>
   );
 };
