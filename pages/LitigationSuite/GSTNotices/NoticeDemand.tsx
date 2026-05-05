@@ -139,7 +139,7 @@ const NoticeDemand: React.FC = () => {
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
                             <button 
-                              onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')}
+                              onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))}
                               className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
                               title="Search Taxpayer"
                             >

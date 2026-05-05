@@ -200,7 +200,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                      <div className="flex items-center gap-2 group/gstin">
                         <span className={`font-black font-mono tracking-widest uppercase text-[12px] ${client.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
                         <button 
-                           onClick={() => { copyToClipboard(client.gstProfile?.gstin || ''); window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank'); }}
+                           onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }); }}
                            className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
                            title="Verify Ident."
                         >
@@ -323,7 +323,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                  <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entity GSTIN</span>
-                       <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${loginToolClient.gstProfile?.gstin}`, '_blank')} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Verify Identity</button>
+                       <button onClick={() => (navigator.clipboard.writeText(loginToolClient.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Verify Identity</button>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
                        <code className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{loginToolClient.gstProfile?.gstin}</code>

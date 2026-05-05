@@ -3,10 +3,10 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import { exportToCSV, printList } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
-
 
 const MonthlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -103,6 +103,38 @@ const MonthlyFiling: React.FC = () => {
     setSelectedClient(client);
   };
 
+  const handleExportCSV = () => {
+    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
+    const rows = filteredClients.map((client, index) => [
+      (index + 1).toString().padStart(2, '0'),
+      client.tradeName,
+      client.legalName,
+      client.mobile,
+      client.gstProfile?.gstin,
+      getStatus(client.id).r1 ? 'Filed' : 'Pending',
+      getStatus(client.id).r3b ? 'Filed' : 'Pending',
+      client.gstProfile?.username,
+      client.gstProfile?.password
+    ]);
+    exportToCSV(headers, rows, `Monthly_Filing_${selectedMonth}_${selectedYear}.csv`);
+  };
+
+  const handlePrint = () => {
+    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
+    const rows = filteredClients.map((client, index) => [
+      (index + 1).toString().padStart(2, '0'),
+      client.tradeName,
+      client.legalName,
+      client.mobile,
+      client.gstProfile?.gstin,
+      getStatus(client.id).r1 ? 'Filed' : 'Pending',
+      getStatus(client.id).r3b ? 'Filed' : 'Pending',
+      client.gstProfile?.username,
+      client.gstProfile?.password
+    ]);
+    printList(`Monthly Filing - ${selectedMonth} ${selectedYear}`, headers, rows);
+  };
+
   if (isLoading) return <Loader />;
 
   return (
@@ -129,6 +161,12 @@ const MonthlyFiling: React.FC = () => {
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+           <button onClick={handlePrint} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors" title="Print List">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+           </button>
+           <button onClick={handleExportCSV} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors" title="Export Excel / CSV">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+           </button>
            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
            <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
@@ -177,7 +215,7 @@ const MonthlyFiling: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
-                          <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
+                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                           </button>
                         )}

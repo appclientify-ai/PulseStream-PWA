@@ -6,6 +6,7 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useGSTR4Logic } from './GSTR4logic';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
 
 const GSTR4: React.FC = () => {
   const getPreviousFY = () => {
@@ -171,7 +172,7 @@ const handleExport = () => {
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
-                          <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
+                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                           </button>
                         )}

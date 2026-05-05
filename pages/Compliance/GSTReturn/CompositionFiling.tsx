@@ -4,9 +4,11 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import { exportToCSV, printList } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
+import { toast } from 'sonner';
 
 const CompositionFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -47,14 +49,22 @@ const CompositionFiling: React.FC = () => {
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
-    return clients.filter(c => 
+    let list = clients.filter(c => 
       isClientVisibleInPeriod(c, selectedYear, quarterEndMonth) &&
       ((c.legalName || '').toLowerCase().includes(s) || 
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-  }, [clients, search, selectedYear, quarterEndMonth]);
+    if (cmp08Filter !== 'All') {
+      list = list.filter(c => cmp08Filter === 'Filed' ? getStatus(c.id).cmp08 : !getStatus(c.id).cmp08);
+    }
+    return list;
+  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, getStatus]);
 
+  const stats = useMemo(() => {
+    const cmp08Count = filteredClients.filter(c => getStatus(c.id).cmp08).length;
+    return { total: filteredClients.length, cmp08: cmp08Count };
+  }, [filteredClients, getStatus]);
   
   const handleUpdatePassword = async () => {
     if (!selectedClient || !newPassVal.trim()) return;
@@ -65,12 +75,34 @@ const CompositionFiling: React.FC = () => {
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
-const handleExport = () => {
-    const headers = ["ID", "Trader", "GSTIN", "CMP-08 Status"].join(",");
-    const rows = filteredClients.map(c => [c.id, c.tradeName, c.gstProfile?.gstin, getStatus(c.id).cmp08?'Filed':'Pending'].join(",")).join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `Composition_${selectedQuarter}.csv`; a.click();
+  const handleExportCSV = () => {
+    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password'];
+    const rows = filteredClients.map((client, index) => [
+      (index + 1).toString().padStart(2, '0'),
+      client.tradeName,
+      client.legalName,
+      client.mobile,
+      client.gstProfile?.gstin,
+      getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
+      client.gstProfile?.username,
+      client.gstProfile?.password
+    ]);
+    exportToCSV(headers, rows, `Composition_Filing_${selectedQuarter}_${selectedYear}.csv`);
+  };
+
+  const handlePrint = () => {
+    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password'];
+    const rows = filteredClients.map((client, index) => [
+      (index + 1).toString().padStart(2, '0'),
+      client.tradeName,
+      client.legalName,
+      client.mobile,
+      client.gstProfile?.gstin,
+      getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
+      client.gstProfile?.username,
+      client.gstProfile?.password
+    ]);
+    printList(`Composition Filing - ${selectedQuarter} ${selectedYear}`, headers, rows);
   };
 
   if (isLoading) return <Loader />;
@@ -78,12 +110,28 @@ const handleExport = () => {
   return (
     <div className="flex flex-col h-full space-y-4 px-2">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+          <div className="text-center">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Quarter Total</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">CMP-08 Filed</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.cmp08}</p>
+          </div>
+        </div>
         <div className="flex-1 relative group w-full">
           <input type="text" placeholder="Search composition client..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
+          <button onClick={handlePrint} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors" title="Print List">
+             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+          </button>
+          <button onClick={handleExportCSV} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors" title="Export Excel / CSV">
+             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </button>
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
           <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}</select>
         </div>
@@ -124,7 +172,7 @@ const handleExport = () => {
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
-                          <button onClick={() => window.open(`https://services.gst.gov.in/services/searchtp?gstin=${client.gstProfile?.gstin}`, '_blank')} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
+                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                           </button>
                         )}
