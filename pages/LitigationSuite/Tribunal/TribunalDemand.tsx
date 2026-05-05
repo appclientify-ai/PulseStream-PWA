@@ -97,7 +97,7 @@ const TribunalDemand: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1250px]">
+          <table className="w-full text-left border-collapse table-auto min-w-[1250px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
@@ -137,7 +137,7 @@ const TribunalDemand: React.FC = () => {
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 uppercase truncate">{rec.referenceNo}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
-                      <td className="whitespace-nowrap px-6 py-5 text-center relative overflow-visible">
+                      <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                         <div className="relative inline-block w-full">
                            <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                              className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-all flex items-center justify-between shadow-sm">

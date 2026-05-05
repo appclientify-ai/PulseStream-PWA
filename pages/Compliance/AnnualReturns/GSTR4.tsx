@@ -37,6 +37,8 @@ const GSTR4: React.FC = () => {
 
   const { getStatus, toggleStatus, updateDueDate, getDueDate } = useGSTR4Logic(selectedYear);
 
+  const [cmp08Data, setCmp08Data] = useState<Record<string, Record<string, { cmp08: boolean }>>>({});
+
   const fetchClients = async () => {
     setIsLoading(true);
     try {
@@ -46,7 +48,15 @@ const GSTR4: React.FC = () => {
     } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { 
+    fetchClients(); 
+    const savedCmp08 = localStorage.getItem('clientify_composition_filing_v3');
+    if (savedCmp08) {
+      try {
+        setCmp08Data(JSON.parse(savedCmp08));
+      } catch (e) {}
+    }
+  }, []);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -153,6 +163,7 @@ const handleExport = () => {
                 <th className="whitespace-nowrap px-4 py-3">Trader Name</th>
                 <th className="whitespace-nowrap px-4 py-3">Legal Name</th>
                 <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
+                <th className="whitespace-nowrap px-4 py-3 text-center">CMP-08 Status</th>
                 <th className="whitespace-nowrap px-4 py-3 text-center">GSTR-4 Status</th>
                 <th className="whitespace-nowrap px-4 py-3">User ID</th>
                 <th className="whitespace-nowrap px-4 py-3">Password</th>
@@ -176,6 +187,23 @@ const handleExport = () => {
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                           </button>
                         )}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
+                      <div className="flex justify-center gap-1">
+                        {[
+                          { label: 'Q1', q: 'April-June (Q1)' },
+                          { label: 'Q2', q: 'July-September (Q2)' },
+                          { label: 'Q3', q: 'October-December (Q3)' },
+                          { label: 'Q4', q: 'January-March (Q4)' }
+                        ].map(qInfo => {
+                           const isFiled = cmp08Data[`${selectedYear}_${qInfo.q}`]?.[client.id]?.cmp08;
+                           return (
+                             <span key={qInfo.label} title={qInfo.q} className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${isFiled ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
+                               {qInfo.label}
+                             </span>
+                           );
+                        })}
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-[2px] text-center">

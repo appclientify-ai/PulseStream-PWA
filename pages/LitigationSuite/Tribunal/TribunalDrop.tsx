@@ -77,7 +77,7 @@ const TribunalDrop: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1250px]">
+          <table className="w-full text-left border-collapse table-auto min-w-[1250px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>

@@ -108,7 +108,7 @@ const AppealFiled: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1550px]">
+          <table className="w-full text-left border-collapse table-auto min-w-[1550px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
@@ -163,7 +163,7 @@ const AppealFiled: React.FC = () => {
                            </span>
                          ) : <span className="text-slate-300 font-black text-[9px] uppercase tracking-tighter">Schedule Pending</span>}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 text-center relative overflow-visible">
+                      <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                         <div className="relative inline-block w-full">
                            <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                              className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center justify-between shadow-sm">

@@ -72,13 +72,17 @@ const QuarterlyFiling: React.FC = () => {
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
-    return clients.filter(c => 
+    let list = clients.filter(c => 
       checkQrmpVisibility(c) &&
       ((c.legalName || '').toLowerCase().includes(s) || 
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-  }, [clients, search, selectedYear, selectedMonth]);
+
+    if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
+    if (r3bFilter !== 'All') list = list.filter(c => r3bFilter === 'Filed' ? getStatus(c.id).r3b : !getStatus(c.id).r3b);
+    return list;
+  }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, getStatus, checkQrmpVisibility]);
 
   const stats = useMemo(() => {
     const r1 = filteredClients.filter(c => getStatus(c.id).r1).length;
@@ -181,7 +185,13 @@ const QuarterlyFiling: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
                 <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
                 <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">IFF/R1</th>
+                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                   <div className="flex justify-center flex-col items-center">
+                     <TableFilter label="IFF/R1" isActive={r1Filter !== 'All'}>
+                       {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                     </TableFilter>
+                   </div>
+                </th>
                 <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
@@ -270,11 +280,11 @@ const QuarterlyFiling: React.FC = () => {
         <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right text-left">
            <button onClick={() => { 
              const text = `Trade Name: ${selectedClient.tradeName || ''}\nLegal Name: ${selectedClient.legalName || ''}\nGSTIN: ${selectedClient.gstProfile?.gstin || ''}\nUser ID: ${selectedClient.gstProfile?.username || ''}\nPassword: ${selectedClient.gstProfile?.password || ''}`;
-             navigator.clipboard.writeText(text).then(() => toast.success('Credentials copied to clipboard!'));
+             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
              setActiveActionsId(null); 
            }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl transition-colors text-left group">
-              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Share Credentials</span>
+              <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center text-green-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.126.549 4.2 1.593 6.035L.302 23.687l5.772-1.517a12.001 12.001 0 005.957 1.57h.005c6.645 0 12.031-5.385 12.031-12.031C24.067 5.385 18.681 0 12.031 0zm0 21.724c-1.802 0-3.568-.485-5.114-1.403l-.367-.217-3.8.998 1.018-3.705-.238-.38A9.992 9.992 0 012.016 12.03c0-5.526 4.498-10.024 10.024-10.024 2.678 0 5.195 1.042 7.087 2.937 1.892 1.892 2.934 4.409 2.934 7.087 0 5.528-4.499 10.028-10.025 10.028v-.004c0-.001-.002-.001-.005-.001zM17.53 14.19c-.302-.15-1.785-.882-2.062-.983-.277-.101-.479-.151-.68.15s-.781.983-.956 1.185c-.176.201-.352.226-.653.076-.301-.15-1.275-.471-2.428-1.5-3.036-2.699-2.227-2.699-.582-5.467.243-.404-.76-2.222-1.04-2.912-.272-.676-.55-.584-.755-.595l-.645-.01c-.226 0-.594.084-.904.42-.311.336-1.191 1.163-1.191 2.836 0 1.674 1.221 3.292 1.391 3.519.17.227 2.457 3.864 5.952 5.253.81.321 1.442.513 1.934.656.812.235 1.551.202 2.138.122.656-.09 2.062-.843 2.353-1.657.292-.814.292-1.512.204-1.657-.087-.145-.313-.231-.615-.383z"/></svg></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Share via WhatsApp</span>
            </button>
         </div>
       )}

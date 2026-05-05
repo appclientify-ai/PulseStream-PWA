@@ -109,7 +109,7 @@ const TribunalPending: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1250px]">
+          <table className="w-full text-left border-collapse table-auto min-w-[1250px]">
             <thead className="whitespace-nowrap sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
@@ -156,7 +156,7 @@ const TribunalPending: React.FC = () => {
                             <span className={`font-black uppercase text-[10px] ${timing.color}`}>{timing.label}</span>
                          </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 text-center relative overflow-visible">
+                      <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-500 border border-slate-200 hover:bg-white transition-all flex items-center justify-between shadow-sm">
                              Pending <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
