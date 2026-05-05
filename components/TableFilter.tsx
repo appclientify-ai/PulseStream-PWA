@@ -45,7 +45,7 @@ export const TableFilter: React.FC<TableFilterProps> = ({ label, isActive, onOpe
       {isOpen && (
         <div 
           style={{ top: coords.top, left: coords.left }} 
-          className="fixed bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left min-w-[120px]"
+          className="fixed bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left min-w-[120px] flex flex-col gap-1"
           onClick={(e) => e.stopPropagation()}
         >
           {children}
