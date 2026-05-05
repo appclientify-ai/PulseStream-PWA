@@ -3,6 +3,7 @@ import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType, Clie
 import { api } from '../../services/api.ts';
 import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
 import Loader from '../../components/Loader';
+import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
 
 
@@ -142,17 +143,14 @@ const GSTRegistration: React.FC = () => {
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity Identity</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Mobile</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Application Type</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[180px] relative">
-                  <button onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)} className="flex items-center justify-center gap-1 w-full uppercase">
-                    Status <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  {isStatusFilterOpen && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[180px]">
+                  <div className="flex justify-center flex-col items-center">
+                    <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                        {['All', 'Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
-                         <button key={st} onClick={() => { setStatusFilter(st); setIsStatusFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                         <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                        ))}
-                    </div>
-                  )}
+                    </TableFilter>
+                  </div>
                 </th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">App Date</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">ARN Identity</th>
@@ -183,7 +181,7 @@ const GSTRegistration: React.FC = () => {
                           <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                         </button>
                         {activeStatusRowId === rec.id && (
-                          <div className="absolute bottom-full mb-1 z-[9999] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
+                          <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
                              {['Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
                                <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
                              ))}

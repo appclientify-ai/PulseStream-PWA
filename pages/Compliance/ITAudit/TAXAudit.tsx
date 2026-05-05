@@ -5,6 +5,7 @@ import Loader from '../../../components/Loader';
 import { useTaxAuditLogic, BSStatus } from './TAXAuditlogic';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import { TableFilter } from '../../../components/TableFilter';
 
 const TAXAudit: React.FC = () => {
   const getPreviousFY = () => {
@@ -191,31 +192,23 @@ const TAXAudit: React.FC = () => {
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity Name</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN / PAN</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Resp. CA</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[170px] relative">
-                  <div className="flex items-center justify-center gap-1">
-                    Balance Sheet
-                    <button onClick={() => setIsBsFilterOpen(!isBsFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
-                  </div>
-                  {isBsFilterOpen && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[170px]">
+                  <div className="flex justify-center flex-col items-center">
+                    <TableFilter label="Balance Sheet" isActive={bsFilter !== 'All'}>
                       {['All', 'Document Required', 'In progress', 'Ready', 'Pending'].map(f => (
-                        <button key={f} onClick={() => { setBsFilter(f as any); setIsBsFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
+                        <button key={f} onClick={() => setBsFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
-                    </div>
-                  )}
-                </th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px] relative">
-                  <div className="flex items-center justify-center gap-1">
-                    Audit Status
-                    <button onClick={() => setIsAuditFilterOpen(!isAuditFilterOpen)} className="p-1 rounded bg-white border border-slate-200 shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button>
+                    </TableFilter>
                   </div>
-                  {isAuditFilterOpen && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                </th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px]">
+                  <div className="flex justify-center flex-col items-center">
+                    <TableFilter label="Audit Status" isActive={auditFilter !== 'All'}>
                       {['All', 'Filed', 'Pending'].map(f => (
-                        <button key={f} onClick={() => { setAuditFilter(f as any); setIsAuditFilterOpen(false); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
+                        <button key={f} onClick={() => setAuditFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
                       ))}
-                    </div>
-                  )}
+                    </TableFilter>
+                  </div>
                 </th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Action</th>
               </tr>

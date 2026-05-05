@@ -163,7 +163,7 @@ const NoticePending: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
                   <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'section' && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       <button onClick={() => { setSectionFilter('All'); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>All</button>
                       {sections.map(s => <button key={s} onClick={() => { setSectionFilter(s); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>U/s {s}</button>)}
                     </div>
@@ -174,7 +174,7 @@ const NoticePending: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
                   <div className="flex items-center gap-1">Due Date <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'days' && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Critical', 'Healthy'].map(opt => <button key={opt} onClick={() => { setDaysLeftFilter(opt as any); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${daysLeftFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
                     </div>
                   )}
@@ -182,7 +182,7 @@ const NoticePending: React.FC = () => {
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">
                   <div className="flex items-center justify-center gap-1">Status <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'status' ? null : 'status')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                   {activeHeaderFilter === 'status' && (
-                    <div className="absolute bottom-full mb-1 z-[9999] left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
+                    <div className="absolute top-full mt-1 z-50 left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Pending', 'Filed', 'Demand', 'Drop', 'Overdue', 'Closed'].map(opt => <button key={opt} onClick={() => { setStatusFilter(opt); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
                     </div>
                   )}
@@ -238,7 +238,7 @@ const NoticePending: React.FC = () => {
                             {isOverdue ? 'Overdue' : 'Pending'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                          </button>
                          {activeStatusMenuId === rec.id && (
-                           <div className="absolute bottom-full mb-1 z-[9999] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
+                           <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
                               <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
                            </div>
                          )}
