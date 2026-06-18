@@ -26,6 +26,12 @@ const NoticeFiled: React.FC = () => {
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
   const [isReissueMode, setIsReissueMode] = useState(false);
 
+  const [isOutcomeModalOpen, setIsOutcomeModalOpen] = useState(false);
+  const [recordToUpdate, setRecordToUpdate] = useState<LitigationRecord | null>(null);
+  const [outcomeStatus, setOutcomeStatus] = useState<LitigationStatus>('Drop');
+  const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [outcomeRefNo, setOutcomeRefNo] = useState('');
+
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [selectedClientForLogin, setSelectedClientForLogin] = useState<Client | null>(null);
 
@@ -58,14 +64,29 @@ const NoticeFiled: React.FC = () => {
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
-    try {
-      const updated = { ...record, status: newStatus };
-      await api.saveLitigationRecord(updated);
-      fetchAll();
-    } catch (err) {
-      toast.error("Status update failed.");
-    }
+    setRecordToUpdate(record);
+    setOutcomeStatus(newStatus);
+    setOutcomeDate(new Date().toISOString().split('T')[0]);
+    setOutcomeRefNo('');
+    setIsOutcomeModalOpen(true);
     setActiveStatusMenuId(null);
+  };
+
+  const submitOutcome = async () => {
+    if (!recordToUpdate) return;
+    try {
+      const updated = {
+        ...recordToUpdate,
+        status: outcomeStatus,
+        orderDate: outcomeDate,
+        referenceNo: outcomeRefNo || recordToUpdate.referenceNo
+      };
+      await api.saveLitigationRecord(updated);
+      setIsOutcomeModalOpen(false);
+      setRecordToUpdate(null);
+      fetchAll();
+      toast.success("Outcome updated successfully");
+    } catch (err) { toast.error("Outcome update failed."); }
   };
 
   const formatDisplayDate = (dateStr?: string) => {
@@ -75,15 +96,6 @@ const NoticeFiled: React.FC = () => {
     const [y, m, d] = parts;
     return `${d}-${m}-${y}`;
   };
-
-  const sectionCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    records.forEach(r => {
-      const sec = r.section || 'N/A';
-      counts[sec] = (counts[sec] || 0) + 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [records]);
 
   const sections = useMemo(() => Array.from(new Set(records.map(r => r.section).filter(Boolean))).sort(), [records]);
 
@@ -107,16 +119,8 @@ const NoticeFiled: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Filed Notices</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Filed Replies</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
-          </div>
-          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px]">
-            {sectionCounts.map(([sec, count]) => (
-              <div key={sec} className="text-center shrink-0">
-                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">U/s {sec}</p>
-                <p className="text-sm font-black text-indigo-600 leading-none">{count}</p>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -280,6 +284,36 @@ const NoticeFiled: React.FC = () => {
               </div>
               <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button></div>
            </div>
+        </div>
+      )}
+
+      {isOutcomeModalOpen && recordToUpdate && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div>
+                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Outcome Update</p>
+                 <h3 className="text-xl font-black truncate">{outcomeStatus === 'Drop' ? 'Drop Order' : 'Demand Order'}</h3>
+              </div>
+              <button onClick={() => setIsOutcomeModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+            </div>
+            <div className="p-10 space-y-6">
+               <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Order Date</label>
+                    <input type="date" value={outcomeDate} onChange={e => setOutcomeDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Order Reference No.</label>
+                    <input type="text" value={outcomeRefNo} onChange={e => setOutcomeRefNo(e.target.value)} placeholder="Ref No..." className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+               </div>
+            </div>
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+              <button onClick={() => setIsOutcomeModalOpen(false)} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
+              <button onClick={submitOutcome} className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all">Confirm</button>
+            </div>
+          </div>
         </div>
       )}
 

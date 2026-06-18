@@ -70,15 +70,6 @@ const NoticeDrop: React.FC = () => {
     return `${d}-${m}-${y}`;
   };
 
-  const sectionCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    records.forEach(r => {
-      const sec = r.section || 'N/A';
-      counts[sec] = (counts[sec] || 0) + 1;
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [records]);
-
   const filteredRecords = useMemo(() => {
     const s = search.toLowerCase();
     return records.filter(r => {
@@ -98,14 +89,6 @@ const NoticeDrop: React.FC = () => {
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Closed Notices</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
-          </div>
-          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px]">
-            {sectionCounts.map(([sec, count]) => (
-              <div key={sec} className="text-center shrink-0">
-                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">U/s {sec}</p>
-                <p className="text-sm font-black text-indigo-600 leading-none">{count}</p>
-              </div>
-            ))}
           </div>
         </div>
         <div className="relative flex-1 group w-full">
