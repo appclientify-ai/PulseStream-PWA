@@ -83,7 +83,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
                     <button key={c.id} type="button" onClick={() => { setFormData({ ...formData, clientName: c.tradeName || c.legalName, mobile: c.mobile }); setIsDropdownOpen(false); }}
                       className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
                     >
-                      <p className="text-xs font-black text-slate-900 uppercase truncate">{c.tradeName || c.legalName}</p>
+                      <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
                       <p className="text-[9px] text-slate-400 font-bold uppercase">Mobile: {c.mobile}</p>
                     </button>
                   ))}

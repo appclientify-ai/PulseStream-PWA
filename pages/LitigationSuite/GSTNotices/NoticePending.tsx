@@ -27,6 +27,11 @@ const NoticePending: React.FC = () => {
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [selectedClientForLogin, setSelectedClientForLogin] = useState<Client | null>(null);
 
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [recordToReply, setRecordToReply] = useState<LitigationRecord | null>(null);
+  const [replyDate, setReplyDate] = useState(new Date().toISOString().split('T')[0]);
+  const [replyRefNo, setReplyRefNo] = useState('');
+
   const fetchAll = async () => {
     setIsLoading(true);
     try {
@@ -74,6 +79,25 @@ const NoticePending: React.FC = () => {
       fetchAll();
     } catch (err) { toast.error("Status update failed."); }
     setActiveStatusMenuId(null);
+  };
+
+  const submitReply = async () => {
+    if (!recordToReply) return;
+    try {
+      const updated = { 
+        ...recordToReply, 
+        status: 'Filed' as LitigationStatus, 
+        filedDate: replyDate, 
+        replyReferenceNo: replyRefNo 
+      };
+      await api.saveLitigationRecord(updated);
+      setIsReplyModalOpen(false);
+      setRecordToReply(null);
+      setReplyDate(new Date().toISOString().split('T')[0]);
+      setReplyRefNo('');
+      fetchAll();
+      toast.success("Notice marked as replied");
+    } catch (err) { toast.error("Status update failed"); }
   };
 
   const handleDelete = async (id: string) => {
@@ -205,8 +229,8 @@ const NoticePending: React.FC = () => {
                         {getClientDisplayId(rec.clientId)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2">
-                        <p className="text-[12px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
+                        <p className="text-[12px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
+                        <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
@@ -222,8 +246,8 @@ const NoticePending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-600 uppercase">{rec.section ? `U/s ${rec.section}` : '---'}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-700 uppercase">{rec.taxPeriod || '---'}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
                       <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
                       <td className="whitespace-nowrap px-4 py-2">
                          <div className="flex items-center gap-1.5">
@@ -239,7 +263,7 @@ const NoticePending: React.FC = () => {
                          </button>
                          {activeStatusMenuId === rec.id && (
                            <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
-                              <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
+                              <button onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); setActiveStatusMenuId(null); }} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
                            </div>
                          )}
                       </td>
@@ -282,8 +306,8 @@ const NoticePending: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <p className="text-[10px] font-bold text-slate-500 tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
                     <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); setIsViewModalOpen(false); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Modify Record</button>
@@ -293,7 +317,7 @@ const NoticePending: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Entity GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Due Date</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
@@ -330,7 +354,7 @@ const NoticePending: React.FC = () => {
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
                  <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access Bridge</p>
-                    <h3 className="text-xl font-black uppercase truncate">{selectedClientForLogin.tradeName}</h3>
+                    <h3 className="text-xl font-black truncate">{selectedClientForLogin.tradeName}</h3>
                  </div>
                  <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
@@ -341,17 +365,47 @@ const NoticePending: React.FC = () => {
                        <p className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{selectedClientForLogin.gstProfile?.gstin}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClientForLogin.gstProfile?.username}</p></div>
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClientForLogin.gstProfile?.password}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 truncate">{selectedClientForLogin.gstProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClientForLogin.gstProfile?.password}</p></div>
                     </div>
                  </div>
               </div>
               <div className="p-8 bg-slate-50 border-t border-slate-100">
-                 <button onClick={() => { navigator.clipboard.writeText(selectedClientForLogin.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">
+                 <button onClick={() => { navigator.clipboard.writeText(selectedClientForLogin.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">
                     Launch Portal & Sync ID
                  </button>
               </div>
            </div>
+        </div>
+      )}
+
+      {isReplyModalOpen && recordToReply && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div>
+                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-2">Status Update</p>
+                 <h3 className="text-xl font-black truncate">Mark as Filed</h3>
+              </div>
+              <button onClick={() => setIsReplyModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+            </div>
+            <div className="p-10 space-y-6">
+               <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Reply Date</label>
+                    <input type="date" value={replyDate} onChange={e => setReplyDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Reply ARN / Reference No.</label>
+                    <input type="text" value={replyRefNo} onChange={e => setReplyRefNo(e.target.value)} placeholder="ARN or Ref Code..." className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+               </div>
+            </div>
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+              <button onClick={() => setIsReplyModalOpen(false)} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
+              <button onClick={submitReply} className="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all">Confirm</button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -119,7 +119,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   };
 
   const handleGstinChange = (val: string) => {
-    const gstin = val.toUpperCase().trim().slice(0, 15);
+    const gstin = val.trim().slice(0, 15);
     let pan = formData.gstProfile?.pan || '';
     if (gstin.length >= 12) pan = gstin.substring(2, 12);
     setFormData(prev => ({
@@ -201,7 +201,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
              </div>
              <div>
-                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">{initialData ? 'Edit Client Profile' : 'Add New GST Client'}</h2>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">{initialData ? 'Edit Client Profile' : 'Add New GST Client'}</h2>
                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Master Compliance Vault Entry</p>
              </div>
           </div>
@@ -263,11 +263,11 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Trade Name</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-indigo-600 transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value.toUpperCase()})} placeholder="Entity Trading Name" />
+                <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none focus:border-indigo-600 transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value})} placeholder="Entity Trading Name" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Legal Name</label>
-                <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-indigo-600 transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value.toUpperCase()})} placeholder="Legal Registered Name" />
+                <label className="text-[10px] font-black text-slate-400 tracking-widest ml-1">Legal Name</label>
+                <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none focus:border-indigo-600 transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} placeholder="Legal Registered Name" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -324,12 +324,12 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 {formData.gstProfile?.jurisdictionType === 'State' ? (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Sector</label>
-                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value.toUpperCase()}})} placeholder="Sector" />
+                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} placeholder="Sector" />
                   </div>
                 ) : (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Range</label>
-                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value.toUpperCase()}})} placeholder="Range" />
+                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} placeholder="Range" />
                   </div>
                 )}
                 {formData.gstProfile?.gstStatus === 'Closed' && (
@@ -359,7 +359,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Name</label>
                       <input className="bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold uppercase w-full" value={s.name} onChange={e => {
                         const next = [...formData.gstProfile!.stakeholders];
-                        next[idx].name = e.target.value.toUpperCase();
+                        next[idx].name = e.target.value;
                         setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
                       }} placeholder="Full Name" />
                     </div>
@@ -375,7 +375,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">PAN</label>
                       <input className="bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold uppercase font-mono w-full" value={s.pan} onChange={e => {
                         const next = [...formData.gstProfile!.stakeholders];
-                        next[idx].pan = e.target.value.toUpperCase().slice(0, 10);
+                        next[idx].pan = e.target.value.slice(0, 10);
                         setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
                       }} placeholder="PAN No" />
                     </div>
@@ -405,7 +405,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Accountant Name</label>
-                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold uppercase w-full" value={formData.gstProfile?.accountantName} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantName: e.target.value.toUpperCase()}})} placeholder="NAME" />
+                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-xs font-bold uppercase w-full" value={formData.gstProfile?.accountantName} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, accountantName: e.target.value}})} placeholder="NAME" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Accountant Mobile</label>
@@ -448,7 +448,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 space-y-5">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Bank Name</label>
-                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-sm font-black uppercase w-full" value={formData.bankDetails?.bankName} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, bankName: e.target.value.toUpperCase()}})} placeholder="Bank Name" />
+                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-sm font-black uppercase w-full" value={formData.bankDetails?.bankName} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, bankName: e.target.value}})} placeholder="Bank Name" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Account Number</label>
@@ -456,7 +456,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">IFSC Code</label>
-                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-sm font-black font-mono tracking-widest uppercase w-full" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value.toUpperCase()}})} placeholder="IFSC" />
+                    <input className="bg-white border border-slate-200 p-3 rounded-xl text-sm font-black font-mono tracking-widest uppercase w-full" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value}})} placeholder="IFSC" />
                   </div>
                 </div>
              </div>

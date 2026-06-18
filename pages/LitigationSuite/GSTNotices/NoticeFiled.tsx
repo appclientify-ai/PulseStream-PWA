@@ -172,8 +172,8 @@ const NoticeFiled: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="whitespace-nowrap px-4 py-5">
-                        <p className="text-[11px] font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase truncate">{rec.referenceNo}</p>
+                        <p className="text-[11px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
+                        <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
@@ -258,8 +258,8 @@ const NoticeFiled: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <p className="text-[10px] font-bold text-slate-500 tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
                     <button onClick={() => { setSelectedRecord(viewingRecord); setIsReissueMode(false); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Modify Record</button>
@@ -269,9 +269,10 @@ const NoticeFiled: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Entity GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
+                 <div className="col-span-2"><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Reply Ref / ARN</p><p className="text-base font-black text-slate-900 font-mono tracking-widest">{viewingRecord.replyReferenceNo || 'N/A'}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p>
                     <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p>
@@ -289,7 +290,7 @@ const NoticeFiled: React.FC = () => {
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
                  <div>
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access Bridge</p>
-                    <h3 className="text-xl font-black uppercase truncate">{selectedClientForLogin.tradeName}</h3>
+                    <h3 className="text-xl font-black truncate">{selectedClientForLogin.tradeName}</h3>
                  </div>
                  <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
@@ -300,13 +301,13 @@ const NoticeFiled: React.FC = () => {
                        <p className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{selectedClientForLogin.gstProfile?.gstin}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 uppercase truncate">{selectedClientForLogin.gstProfile?.username}</p></div>
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClientForLogin.gstProfile?.password}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 truncate">{selectedClientForLogin.gstProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClientForLogin.gstProfile?.password}</p></div>
                     </div>
                  </div>
               </div>
               <div className="p-8 bg-slate-50 border-t border-slate-100">
-                 <button onClick={() => { navigator.clipboard.writeText(selectedClientForLogin.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">
+                 <button onClick={() => { navigator.clipboard.writeText(selectedClientForLogin.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">
                     Launch Portal & Sync ID
                  </button>
               </div>

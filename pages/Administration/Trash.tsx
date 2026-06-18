@@ -52,7 +52,7 @@ const Trash: React.FC = () => {
                 trashItems.map((item, idx) => (
                   <tr key={idx} className="hover:bg-indigo-50/20 transition-colors">
                     <td className="whitespace-nowrap px-8 py-6">
-                      <p className="text-sm font-black text-slate-900 uppercase">{item.data?.legalName || item.data?.title || item.name || 'System Object'}</p>
+                      <p className="text-sm font-black text-slate-900">{item.data?.legalName || item.data?.title || item.name || 'System Object'}</p>
                     </td>
                     <td className="whitespace-nowrap px-8 py-6">
                        <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{item.name?.replace('_', ' ')}</span>

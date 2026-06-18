@@ -42,7 +42,7 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
       if (isReissue) {
         // Strip id to create a NEW record, keep previous as history
         const { id, _id, isDemandPaid, ...rest } = initialData as any;
-        const prevDetails = `\n\n--- PREVIOUS ${initialData.category?.toUpperCase() || 'RECORD'} DETAILS ---\nRef: ${initialData.referenceNo}\nIssued: ${initialData.issuedDate}\nDue: ${initialData.dueDate}\nFiled: ${initialData.filedDate || 'N/A'}`;
+        const prevDetails = `\n\n--- PREVIOUS ${initialData.category || 'RECORD'} DETAILS ---\nRef: ${initialData.referenceNo}\nIssued: ${initialData.issuedDate}\nDue: ${initialData.dueDate}\nFiled: ${initialData.filedDate || 'N/A'}`;
         setFormData({
           ...rest,
           category: category,
@@ -126,7 +126,7 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
               <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto no-scrollbar">
                 {filteredClients.map(c => (
                   <button key={c.id} type="button" onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0">
-                    <p className="text-xs font-black text-slate-900 uppercase truncate">{c.tradeName || c.legalName}</p>
+                    <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
                     <p className="text-[10px] text-indigo-600 font-mono font-black">{c.gstProfile?.gstin || 'NO GSTIN'}</p>
                   </button>
                 ))}
@@ -137,17 +137,17 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Section</label>
-              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.section || ''} onChange={e => setFormData({...formData, section: e.target.value.toUpperCase()})} placeholder="E.G. 73" />
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.section || ''} onChange={e => setFormData({...formData, section: e.target.value})} placeholder="E.G. 73" />
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Tax Period</label>
-              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.taxPeriod || ''} onChange={e => setFormData({...formData, taxPeriod: e.target.value.toUpperCase()})} placeholder="E.G. 2023-24" />
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.taxPeriod || ''} onChange={e => setFormData({...formData, taxPeriod: e.target.value})} placeholder="E.G. 2023-24" />
             </div>
           </div>
 
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reference No</label>
-            <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value.toUpperCase()})} placeholder="Notice/Order No" />
+            <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value})} placeholder="Notice/Order No" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

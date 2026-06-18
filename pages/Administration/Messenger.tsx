@@ -159,8 +159,8 @@ const Messenger: React.FC = () => {
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                  <td className="whitespace-nowrap px-4 py-5 text-[12px] font-black uppercase truncate text-slate-900" title={c.tradeName}>{c.tradeName || '---'}</td>
-                  <td className="whitespace-nowrap px-4 py-5 text-[11px] font-bold text-slate-400 uppercase truncate" title={c.legalName}>{c.legalName}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[12px] font-black truncate text-slate-900" title={c.tradeName}>{c.tradeName || '---'}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[11px] font-bold text-slate-400 truncate" title={c.legalName}>{c.legalName}</td>
                   <td className="whitespace-nowrap px-4 py-5 font-black text-slate-600 font-mono text-[11px] uppercase tracking-widest">{c.gstProfile?.gstin || 'N/A'}</td>
                   <td className="whitespace-nowrap px-4 py-5 font-black text-slate-600 text-[12px]">+91 {c.mobile}</td>
                   <td className="px-4 py-5 text-right whitespace-nowrap">
@@ -219,7 +219,7 @@ const Messenger: React.FC = () => {
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Messaging Hub</span>
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{queueIndex + 1} / {selectedClientsList.length}</span>
                  </div>
-                 <h3 className="text-xl font-black uppercase truncate">{selectedClientsList[queueIndex].legalName}</h3>
+                 <h3 className="text-xl font-black truncate">{selectedClientsList[queueIndex].legalName}</h3>
                  <div className="mt-8 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${((queueIndex + 1) / selectedClientsList.length) * 100}%` }} />
                  </div>

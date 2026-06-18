@@ -81,7 +81,7 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
                     <button key={c.id} type="button" onClick={() => { setFormData({ ...formData, clientName: c.tradeName || c.legalName, mobile: c.mobile }); setIsDropdownOpen(false); }}
                       className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
                     >
-                      <p className="text-xs font-black text-slate-900 uppercase truncate">{c.tradeName || c.legalName}</p>
+                      <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
                       <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Mobile: {c.mobile}</p>
                     </button>
                   ))}
@@ -109,7 +109,7 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Udyam No</label>
               <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-black uppercase font-mono tracking-widest outline-none"
-                value={formData.udyamNumber} onChange={e => setFormData({...formData, udyamNumber: e.target.value.toUpperCase()})} placeholder="UDYAM-XX-00-0000000" />
+                value={formData.udyamNumber} onChange={e => setFormData({...formData, udyamNumber: e.target.value})} placeholder="UDYAM-XX-00-0000000" />
             </div>
           </div>
 

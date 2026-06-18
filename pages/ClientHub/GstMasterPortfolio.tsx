@@ -188,10 +188,10 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                     {(idx + 1).toString().padStart(2, '0')}
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
+                     <p className="font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
-                     <p className="font-bold text-slate-600 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
+                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
@@ -259,7 +259,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
         >
           <div className="px-3 py-2 border-b border-slate-50 mb-1">
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Global Operations</p>
-             <p className="text-[10px] font-black text-slate-900 truncate uppercase mt-0.5">{selectedClient.tradeName || selectedClient.legalName}</p>
+             <p className="text-[10px] font-black text-slate-900 truncate mt-0.5">{selectedClient.tradeName || selectedClient.legalName}</p>
           </div>
           <button onClick={() => { setLoginToolClient(selectedClient!); setTempPass(selectedClient!.gstProfile?.password || ''); setIsLoginBoxOpen(true); setActiveActionsId(null); }} 
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group">
@@ -322,7 +322,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
                  <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access Utility</p>
-                    <h3 className="text-xl font-black uppercase truncate">{loginToolClient.tradeName}</h3>
+                    <h3 className="text-xl font-black truncate">{loginToolClient.tradeName}</h3>
                  </div>
                  <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
@@ -343,7 +343,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                     <div className="space-y-2">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Portal User ID</span>
                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                          <span className="text-sm font-black text-slate-900 uppercase truncate">{loginToolClient.gstProfile?.username}</span>
+                          <span className="text-sm font-black text-slate-900 truncate">{loginToolClient.gstProfile?.username}</span>
                           <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.username || ''); toast.success('Copied'); }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
                        </div>
                     </div>

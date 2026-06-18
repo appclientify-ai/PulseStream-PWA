@@ -92,7 +92,7 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm GSTIN</label>
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase font-mono"
-                  value={settings.firmGstin} onChange={e => setSettings({...settings, firmGstin: e.target.value.toUpperCase()})} />
+                  value={settings.firmGstin} onChange={e => setSettings({...settings, firmGstin: e.target.value})} />
              </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Company Logo</label>
@@ -127,7 +127,7 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">IFSC Code</label>
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase font-mono"
-                  value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value.toUpperCase()})} />
+                  value={settings.ifsc} onChange={e => setSettings({...settings, ifsc: e.target.value})} />
              </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">UPI ID (For Payment QR)</label>

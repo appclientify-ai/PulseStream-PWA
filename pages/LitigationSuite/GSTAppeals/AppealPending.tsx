@@ -21,6 +21,11 @@ const AppealPending: React.FC = () => {
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
 
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [recordToReply, setRecordToReply] = useState<LitigationRecord | null>(null);
+  const [replyDate, setReplyDate] = useState(new Date().toISOString().split('T')[0]);
+  const [replyRefNo, setReplyRefNo] = useState('');
+
   const fetchAll = async () => {
     setIsLoading(true);
     try {
@@ -57,6 +62,25 @@ const AppealPending: React.FC = () => {
       toast.error("Status update failed.");
     }
     setActiveStatusMenuId(null);
+  };
+
+  const submitReply = async () => {
+    if (!recordToReply) return;
+    try {
+      const updated = { 
+        ...recordToReply, 
+        status: 'Filed' as LitigationStatus, 
+        filedDate: replyDate, 
+        replyReferenceNo: replyRefNo 
+      };
+      await api.saveLitigationRecord(updated);
+      setIsReplyModalOpen(false);
+      setRecordToReply(null);
+      setReplyDate(new Date().toISOString().split('T')[0]);
+      setReplyRefNo('');
+      fetchAll();
+      toast.success("Appeal marked as replied");
+    } catch (err) { toast.error("Status update failed"); }
   };
 
   const formatDisplayDate = (dateStr?: string) => {
@@ -130,6 +154,7 @@ const AppealPending: React.FC = () => {
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Order U/s</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Order Ref</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Order Date</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Due Date</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Deadline</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px]">Status</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
@@ -137,7 +162,7 @@ const AppealPending: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={9} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Appeals Archived</td></tr>
+                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Appeals Archived</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const timing = getAppealTiming(rec.orderDate || rec.issuedDate);
@@ -146,8 +171,8 @@ const AppealPending: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="whitespace-nowrap px-6 py-5">
-                         <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate mt-0.5">{client?.legalName}</p>
+                         <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate mt-0.5">{client?.legalName}</p>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
@@ -163,9 +188,10 @@ const AppealPending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 uppercase truncate">{rec.referenceNo}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5">
                          <div className="flex items-center gap-2">
                             <div className={`h-1.5 w-1.5 rounded-full ${timing.dot}`} />
@@ -179,7 +205,7 @@ const AppealPending: React.FC = () => {
                          </button>
                          {activeStatusMenuId === rec.id && (
                            <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
-                              <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
+                              <button onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); setActiveStatusMenuId(null); }} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Appeal Filed</button>
                            </div>
                          )}
                       </td>
@@ -205,7 +231,7 @@ const AppealPending: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Appeal Profile • Awaiting Submission</p>
                  </div>
                  <div className="flex items-center gap-2">
@@ -216,8 +242,8 @@ const AppealPending: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN Identity</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Adjudication Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Adjudication Ref No</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.referenceNo}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Adjudication Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.referenceNo}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Final Appeal Due</p><p className="text-base font-black text-red-500">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No internal history logged.'}</p></div>
@@ -227,6 +253,35 @@ const AppealPending: React.FC = () => {
         </div>
       )}
 
+      {isReplyModalOpen && recordToReply && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div>
+                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-2">Status Update</p>
+                 <h3 className="text-xl font-black truncate">Mark as Filed</h3>
+              </div>
+              <button onClick={() => setIsReplyModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+            </div>
+            <div className="p-10 space-y-6">
+               <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Appeal Filing Date</label>
+                    <input type="date" value={replyDate} onChange={e => setReplyDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">ARN No.</label>
+                    <input type="text" value={replyRefNo} onChange={e => setReplyRefNo(e.target.value)} placeholder="ARN or Ref Code..." className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+               </div>
+            </div>
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+              <button onClick={() => setIsReplyModalOpen(false)} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
+              <button onClick={submitReply} className="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
       <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category="Appeal" initialData={selectedRecord} />
     </div>
   );

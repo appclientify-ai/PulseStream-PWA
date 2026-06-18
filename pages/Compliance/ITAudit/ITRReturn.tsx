@@ -217,8 +217,8 @@ const ITRReturn: React.FC = () => {
                 return (
                   <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.itProfile?.fatherName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate">{client.itProfile?.fatherName || '---'}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
                     </td>
@@ -232,18 +232,23 @@ const ITRReturn: React.FC = () => {
                           {status.refundStatus || 'N/A'}
                        </button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">{client.itProfile?.pan}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">{client.itProfile?.pan}</td>
                     <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
-                            <div className="flex items-center gap-1">
-                               <input autoFocus value={newPasswordValue} onChange={e => setNewPasswordValue(e.target.value)} onBlur={() => saveQuickPassword(client)} onKeyDown={e => { if (e.key === 'Enter') saveQuickPassword(client); }} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
-                            </div>
+                            <input autoFocus value={newPasswordValue} onChange={e => setNewPasswordValue(e.target.value)} onBlur={() => saveQuickPassword(client)} onKeyDown={e => { if (e.key === 'Enter') saveQuickPassword(client); }} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
                           ) : (
                             <>
-                               <span className="font-black text-indigo-400 tracking-wider truncate">{isPassVisible ? client.itProfile?.password : '••••••••'}</span>
-                               <button onClick={() => setVisiblePasswords(prev => { const n = new Set(prev); if (n.has(client.id)) { n.delete(client.id); } else { n.add(client.id); } return n; })} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all">{isPassVisible ? '🙈' : '👁️'}</button>
-                               <button onClick={() => { setEditingPasswordId(client.id); setNewPasswordValue(client.itProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                               <span className="font-black text-indigo-400 tracking-wider text-[12px] truncate">{client.itProfile?.password}</span>
+                               <button onClick={() => { setEditingPasswordId(client.id); setNewPasswordValue(client.itProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                               {client.itProfile?.username && (
+                                 <button onClick={() => { 
+                                   navigator.clipboard.writeText(client.itProfile?.username || ''); 
+                                   window.open('https://eportal.incometax.gov.in/iec/foservices/#/login', '_blank'); 
+                                 }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to IT Portal">
+                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                 </button>
+                               )}
                             </>
                           )}
                        </div>
@@ -283,19 +288,19 @@ const ITRReturn: React.FC = () => {
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-lg bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
-                 <div><p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access</p><h3 className="text-xl font-black uppercase truncate">{selectedClient.legalName}</h3></div>
+                 <div><p className="text-[10px] font-black tracking-[0.4em] text-indigo-400 mb-2">Portal Access</p><h3 className="text-xl font-black truncate">{selectedClient.legalName}</h3></div>
                  <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
               <div className="p-10 space-y-8">
                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col gap-4">
-                    <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">PAN Identity</p><p className="text-lg font-black text-indigo-600 font-mono uppercase tracking-widest">{selectedClient.itProfile?.pan}</p></div>
+                    <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">PAN Identity</p><p className="text-lg font-black text-indigo-600 font-mono tracking-widest">{selectedClient.itProfile?.pan}</p></div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900">{selectedClient.itProfile?.username}</p></div>
-                       <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.itProfile?.password}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900">{selectedClient.itProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.itProfile?.password}</p></div>
                     </div>
                  </div>
               </div>
-              <div className="p-8 bg-slate-50 border-t border-slate-100"><button onClick={() => { navigator.clipboard.writeText(selectedClient.itProfile?.username || ''); window.open('https://eportal.incometax.gov.in/iec/foservices/#/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">Launch IT Portal & Copy ID</button></div>
+              <div className="p-8 bg-slate-50 border-t border-slate-100"><button onClick={() => { navigator.clipboard.writeText(selectedClient.itProfile?.username || ''); window.open('https://eportal.incometax.gov.in/iec/foservices/#/login', '_blank'); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl flex items-center justify-center gap-3">Launch IT Portal & Copy ID</button></div>
            </div>
         </div>
       )}

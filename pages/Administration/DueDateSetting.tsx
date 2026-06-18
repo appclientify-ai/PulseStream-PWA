@@ -104,7 +104,7 @@ const DueDateSetting: React.FC = () => {
                     <div key={month} className="grid grid-cols-12 items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all group">
                       <div className="col-span-4 flex items-center gap-3">
                          <div className="h-8 w-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center font-black text-[10px] text-slate-300">
-                           {month.substring(0,3).toUpperCase()}
+                           {month.substring(0,3)}
                          </div>
                          <span className="text-sm font-black text-slate-700 uppercase tracking-tight">{month}</span>
                       </div>

@@ -167,7 +167,7 @@ const Setting: React.FC = () => {
                     <div className="h-24 w-24 md:h-32 md:w-32 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center text-4xl md:text-5xl font-black shadow-2xl overflow-hidden ring-8 ring-slate-50">
                        {profileData.avatar ? (
                          <img src={profileData.avatar} alt="DP" className="h-full w-full object-cover" />
-                       ) : user?.username?.substring(0,2).toUpperCase()}
+                       ) : user?.username?.substring(0,2)}
                     </div>
                     <button 
                       type="button"
@@ -179,7 +179,7 @@ const Setting: React.FC = () => {
                     <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
                  </div>
                  <div className="text-center md:text-left">
-                    <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">{user?.username}</h3>
+                    <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{user?.username}</h3>
                     <p className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mt-1.5">Authorized Practitioner Profile</p>
                  </div>
               </div>
@@ -187,7 +187,7 @@ const Setting: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block ml-1">Practitioner Name</label>
-                    <input required value={profileData.username} onChange={e => setProfileData({...profileData, username: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-black text-slate-800 outline-none focus:ring-4 focus:ring-indigo-50 uppercase" />
+                    <input required value={profileData.username} onChange={e => setProfileData({...profileData, username: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-black text-slate-800 outline-none focus:ring-4 focus:ring-indigo-50" />
                  </div>
                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block ml-1">Work Email</label>

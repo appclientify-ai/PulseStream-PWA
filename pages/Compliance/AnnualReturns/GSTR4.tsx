@@ -54,7 +54,9 @@ const GSTR4: React.FC = () => {
     if (savedCmp08) {
       try {
         setCmp08Data(JSON.parse(savedCmp08));
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     }
   }, []);
 
@@ -177,8 +179,8 @@ const handleExport = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black uppercase truncate">{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black truncate">{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate">{client.legalName}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
@@ -209,7 +211,7 @@ const handleExport = () => {
                     <td className="whitespace-nowrap px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 tracking-wider">
                       <div className="flex items-center gap-2">
                         <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>

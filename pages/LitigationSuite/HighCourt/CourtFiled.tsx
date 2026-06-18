@@ -129,7 +129,7 @@ const CourtFiled: React.FC = () => {
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
@@ -144,7 +144,7 @@ const CourtFiled: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5">
                          <input type="date" value={rec.hearingDate || ''} onChange={(e) => updateHearingDate(rec, e.target.value)}
@@ -193,7 +193,7 @@ const CourtFiled: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">High Court Judgment Review Profile</p>
                  </div>
                  <div className="flex items-center gap-2">

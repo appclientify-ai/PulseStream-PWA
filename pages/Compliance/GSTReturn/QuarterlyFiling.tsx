@@ -211,8 +211,8 @@ const QuarterlyFiling: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
@@ -238,7 +238,7 @@ const QuarterlyFiling: React.FC = () => {
                          </button>
                        ) : <span className="text-[10px] font-black text-slate-300">N/A</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 text-[12px] uppercase truncate">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (

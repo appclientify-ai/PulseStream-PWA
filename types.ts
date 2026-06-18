@@ -187,6 +187,7 @@ export interface LitigationRecord {
   issuedDate: string;
   dueDate: string;
   filedDate?: string;
+  replyReferenceNo?: string;
   orderDate?: string;
   remarks?: string;
   isReissued?: boolean;

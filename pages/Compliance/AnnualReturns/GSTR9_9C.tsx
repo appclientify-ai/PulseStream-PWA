@@ -226,8 +226,8 @@ const GSTR9_9C: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate">{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate">{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate">{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate">{client.legalName}</td>
                     <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/gstin">
                           <span className="font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</span>
@@ -244,7 +244,7 @@ const GSTR9_9C: React.FC = () => {
                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">N/A</span>
                        )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate uppercase">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
@@ -317,7 +317,7 @@ const GSTR9_9C: React.FC = () => {
                     <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1 bg-white">
                        {allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
                          <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
-                            <p className="text-sm font-black uppercase truncate">{c.tradeName || c.legalName}</p>
+                            <p className="text-sm font-black truncate">{c.tradeName || c.legalName}</p>
                             <p className={`text-[10px] font-mono mt-1 ${selectedClient?.id === c.id ? 'text-indigo-200' : 'text-slate-400'}`}>{c.gstProfile?.gstin || 'NO GSTIN'}</p>
                          </button>
                        ))}
@@ -333,7 +333,7 @@ const GSTR9_9C: React.FC = () => {
                             </div>
                          </section>
                          <section className="grid grid-cols-1 gap-6">
-                            <div className="space-y-1"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Principal Legal Identity</p><p className="text-lg font-black text-slate-900 uppercase truncate leading-none">{selectedClient.legalName}</p></div>
+                            <div className="space-y-1"><p className="text-[9px] font-black text-slate-400 tracking-widest">Principal Legal Identity</p><p className="text-lg font-black text-slate-900 truncate leading-none">{selectedClient.legalName}</p></div>
                             <div className="grid grid-cols-2 gap-4">
                                <div><p className="text-[9px] font-black uppercase text-slate-400">GSTIN No</p><p className="text-sm font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
                                <div><p className="text-[9px] font-black uppercase text-slate-400">Status</p><p className="text-sm font-black text-emerald-600 uppercase">{selectedClient.status}</p></div>
@@ -354,7 +354,7 @@ const GSTR9_9C: React.FC = () => {
       {isEditApplicabilityOpen && selectedClient && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 space-y-8 animate-in zoom-in-95 border border-slate-200">
-              <div><h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Audit Applicability</h3><p className="text-sm font-bold text-slate-400 uppercase mt-1 truncate">{selectedClient.legalName}</p></div>
+              <div><h3 className="text-xl font-black text-slate-900 tracking-tight">Audit Applicability</h3><p className="text-sm font-bold text-slate-400 mt-1 truncate">{selectedClient.legalName}</p></div>
               <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between">
                  <span className="text-sm font-black text-slate-700 uppercase">GSTR-9C Requirement</span>
                  <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} /></button>

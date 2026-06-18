@@ -67,7 +67,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
   };
 
   const handlePanChange = (val: string) => {
-    const pan = val.toUpperCase().trim().slice(0, 10);
+    const pan = val.trim().slice(0, 10);
     setFormData(prev => ({
       ...prev,
       itProfile: { ...prev.itProfile!, pan, username: pan }
@@ -134,7 +134,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 002 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
              </div>
              <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
                    {initialData ? 'Edit IT Record' : 'New Income Tax Profile'}
                 </h2>
                 <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mt-2">Direct Tax Intelligence Unit</p>
@@ -227,19 +227,19 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Legal Name (As per PAN)</label>
-                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value.toUpperCase()})} placeholder="E.G. JOHN DOE" />
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.legalName} onChange={e => setFormData({...formData, legalName: e.target.value})} placeholder="E.G. JOHN DOE" />
                 </div>
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Trade Name (Optional)</label>
-                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value.toUpperCase()})} placeholder="BUSINESS NAME" />
+                   <label className="text-[10px] font-black text-slate-400 tracking-widest ml-1">Trade Name (Optional)</label>
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.tradeName} onChange={e => setFormData({...formData, tradeName: e.target.value})} placeholder="BUSINESS NAME" />
                 </div>
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">DOB / Incorporation</label>
+                   <label className="text-[10px] font-black text-slate-400 tracking-widest ml-1">DOB / Incorporation</label>
                    <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:bg-white transition-all uppercase" value={formData.itProfile?.dob} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, dob: e.target.value}})} />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Father's Name</label>
-                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold uppercase outline-none focus:bg-white transition-all" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value.toUpperCase()}})} placeholder="Father's Full Name" />
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:bg-white transition-all" value={formData.itProfile?.fatherName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, fatherName: e.target.value}})} placeholder="Father's Full Name" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2">
@@ -294,7 +294,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                 {(formData.itProfile?.natureOfWork === 'Business' || formData.itProfile?.natureOfWork === 'Profession') && (
                   <div className="space-y-2 animate-in slide-in-from-right-2">
                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Business Name</label>
-                     <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none" value={formData.itProfile?.businessName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, businessName: e.target.value.toUpperCase()}})} placeholder="Trade Name..." />
+                     <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black uppercase outline-none" value={formData.itProfile?.businessName} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, businessName: e.target.value}})} placeholder="Trade Name..." />
                   </div>
                 )}
              </div>
@@ -307,7 +307,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Bank Name</label>
-                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none uppercase" value={formData.bankDetails?.bankName} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, bankName: e.target.value.toUpperCase()}})} placeholder="HDFC / SBI" />
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none uppercase" value={formData.bankDetails?.bankName} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, bankName: e.target.value}})} placeholder="HDFC / SBI" />
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">A/C Number</label>
@@ -315,7 +315,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                 </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">IFSC Code</label>
-                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black font-mono tracking-widest outline-none uppercase" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value.toUpperCase()}})} placeholder="HDFC0000123" />
+                   <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black font-mono tracking-widest outline-none uppercase" value={formData.bankDetails?.ifsc} onChange={e => setFormData({...formData, bankDetails: {...formData.bankDetails!, ifsc: e.target.value}})} placeholder="HDFC0000123" />
                 </div>
              </div>
           </fieldset>

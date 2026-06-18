@@ -208,8 +208,8 @@ const MonthlyFiling: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 uppercase truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black font-mono uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
@@ -233,7 +233,7 @@ const MonthlyFiling: React.FC = () => {
                           <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                        </button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 text-[12px] uppercase truncate">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (

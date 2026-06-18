@@ -229,8 +229,8 @@ const TAXAudit: React.FC = () => {
                     <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="whitespace-nowrap px-6 py-5">
-                        <p className="font-black text-slate-900 uppercase truncate" title={client.tradeName}>{client.tradeName || client.legalName}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate">{client.legalName}</p>
+                        <p className="font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</p>
+                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate">{client.legalName}</p>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
                          {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}
@@ -271,7 +271,7 @@ const TAXAudit: React.FC = () => {
            <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingClient.legalName}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingClient.legalName}</h3>
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Audit Review Profile • FY {selectedYear}</p>
                  </div>
                  <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-all">
@@ -310,7 +310,7 @@ const TAXAudit: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                        <div className="space-y-1">
                           <p className="text-[9px] font-black uppercase text-slate-400">Trade Name</p>
-                          <p className="text-sm font-black text-slate-900 uppercase truncate">{viewingClient.tradeName || '---'}</p>
+                          <p className="text-sm font-black text-slate-900 truncate">{viewingClient.tradeName || '---'}</p>
                        </div>
                        <div className="space-y-1">
                           <p className="text-[9px] font-black uppercase text-slate-400">Permanent ID (PAN)</p>
@@ -375,7 +375,7 @@ const TAXAudit: React.FC = () => {
                          <button key={c.id} onClick={() => { setPendingClientForAdd(c); setNewCaName(''); }} 
                            className="w-full text-left p-4 rounded-2xl border border-slate-100 hover:border-indigo-600 hover:bg-indigo-50/50 transition-all flex items-center justify-between group">
                             <div className="min-w-0 flex-1">
-                               <p className="text-sm font-black text-slate-900 uppercase group-hover:text-indigo-600 truncate">{c.legalName}</p>
+                               <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 truncate">{c.legalName}</p>
                                <p className="text-[10px] text-slate-400 font-mono tracking-tight mt-1">{c.gstProfile?.gstin || c.itProfile?.pan || 'NO IDENTIFIER'}</p>
                             </div>
                             <svg className="h-5 w-5 text-slate-300 group-hover:text-indigo-600 shrink-0 ml-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
@@ -388,7 +388,7 @@ const TAXAudit: React.FC = () => {
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                   <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Target Entity</p>
-                    <p className="text-base font-black text-indigo-900 uppercase leading-tight">{pendingClientForAdd.legalName}</p>
+                    <p className="text-base font-black text-indigo-900 leading-tight">{pendingClientForAdd.legalName}</p>
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block ml-1">Responsible CA Name (Signatory)</label>

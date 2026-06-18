@@ -35,7 +35,7 @@ const Reminders: React.FC = () => {
           title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
           client: r.clientName,
           date: r.dueDate,
-          category: r.category.toUpperCase() as any,
+          category: r.category as any,
           priority: 'High',
           status: 'Response Due',
           origin: 'litigation'

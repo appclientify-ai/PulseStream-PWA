@@ -171,17 +171,17 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                     {(idx + 1).toString().padStart(2, '0')}
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-900 uppercase truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
+                     <p className="font-black text-slate-900 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
-                     <p className="font-bold text-slate-600 uppercase truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
+                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
                   <td className="whitespace-nowrap px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/pan">
-                        <span className="font-black font-mono tracking-widest uppercase text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
+                        <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
                         <button 
                            onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
                            className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-sm border border-emerald-100"
@@ -242,7 +242,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
         >
           <div className="px-3 py-2 border-b border-slate-50 mb-1">
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">IT Operations</p>
-             <p className="text-[10px] font-black text-slate-900 truncate uppercase mt-0.5">{selectedClient.legalName}</p>
+             <p className="text-[10px] font-black text-slate-900 truncate mt-0.5">{selectedClient.legalName}</p>
           </div>
           <button onClick={() => { 
               copyToClipboard(selectedClient!.itProfile?.username || ''); 

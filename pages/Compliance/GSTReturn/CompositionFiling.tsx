@@ -184,8 +184,8 @@ const CompositionFiling: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black uppercase truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-600 uppercase truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-600 truncate" title={client.legalName}>{client.legalName}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
                       <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ const CompositionFiling: React.FC = () => {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 uppercase truncate">{client.gstProfile?.username}</td>
+                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
                     <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
                       <div className="flex items-center gap-2">
                         <span>

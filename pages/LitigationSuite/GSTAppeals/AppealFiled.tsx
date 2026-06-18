@@ -19,6 +19,12 @@ const AppealFiled: React.FC = () => {
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
 
+  const [isOutcomeModalOpen, setIsOutcomeModalOpen] = useState(false);
+  const [recordToUpdate, setRecordToUpdate] = useState<LitigationRecord | null>(null);
+  const [outcomeStatus, setOutcomeStatus] = useState<LitigationStatus>('Drop');
+  const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [outcomeRefNo, setOutcomeRefNo] = useState('');
+
   const fetchAll = async () => {
     setIsLoading(true);
     try {
@@ -52,12 +58,29 @@ const AppealFiled: React.FC = () => {
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
-    try {
-      const updated = { ...record, status: newStatus };
-      await api.saveLitigationRecord(updated);
-      fetchAll();
-    } catch (err) { toast.error("Outcome update failed."); }
+    setRecordToUpdate(record);
+    setOutcomeStatus(newStatus);
+    setOutcomeDate(new Date().toISOString().split('T')[0]);
+    setOutcomeRefNo('');
+    setIsOutcomeModalOpen(true);
     setActiveStatusMenuId(null);
+  };
+
+  const submitOutcome = async () => {
+    if (!recordToUpdate) return;
+    try {
+      const updated = { 
+        ...recordToUpdate, 
+        status: outcomeStatus,
+        orderDate: outcomeDate,
+        referenceNo: outcomeRefNo || recordToUpdate.referenceNo
+      };
+      await api.saveLitigationRecord(updated);
+      setIsOutcomeModalOpen(false);
+      setRecordToUpdate(null);
+      fetchAll();
+      toast.success("Outcome updated successfully");
+    } catch (err) { toast.error("Outcome update failed."); }
   };
 
   const formatDisplayDate = (dateStr?: string) => {
@@ -133,8 +156,8 @@ const AppealFiled: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="whitespace-nowrap px-6 py-5">
-                         <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate mt-0.5">{client?.legalName}</p>
+                         <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate mt-0.5">{client?.legalName}</p>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
@@ -150,7 +173,7 @@ const AppealFiled: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5">
                          <input type="date" value={rec.hearingDate || ''} onChange={(e) => updateHearingDate(rec, e.target.value)}
@@ -170,7 +193,7 @@ const AppealFiled: React.FC = () => {
                              Update Outcome <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
-                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
+                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
                                 <button onClick={() => updateRecordStatus(rec, 'Drop')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Relief Granted</button>
                                 <button onClick={() => updateRecordStatus(rec, 'Demand')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50">Sustained</button>
                              </div>
@@ -199,8 +222,8 @@ const AppealFiled: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Order Ref: {viewingRecord.referenceNo}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <p className="text-[10px] font-bold text-slate-500 tracking-widest mt-1">Order Ref: {viewingRecord.referenceNo}</p>
                  </div>
                  <div className="flex items-center gap-2">
                     <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Edit Record</button>
@@ -210,13 +233,43 @@ const AppealFiled: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Appeal Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.taxPeriod || 'N/A'}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Filing Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Scheduled Hearing</p><p className="text-base font-black text-indigo-600">{formatDisplayDate(viewingRecord.hearingDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Case History</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close View</button></div>
            </div>
+        </div>
+      )}
+
+      {isOutcomeModalOpen && recordToUpdate && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div>
+                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Outcome Update</p>
+                 <h3 className="text-xl font-black truncate">{outcomeStatus === 'Drop' ? 'Relief Granted' : 'Sustained'}</h3>
+              </div>
+              <button onClick={() => setIsOutcomeModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+            </div>
+            <div className="p-10 space-y-6">
+               <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Order Date</label>
+                    <input type="date" value={outcomeDate} onChange={e => setOutcomeDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Order Reference No.</label>
+                    <input type="text" value={outcomeRefNo} onChange={e => setOutcomeRefNo(e.target.value)} placeholder="Ref No..." className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
+                  </div>
+               </div>
+            </div>
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+              <button onClick={() => setIsOutcomeModalOpen(false)} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
+              <button onClick={submitOutcome} className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all">Confirm</button>
+            </div>
+          </div>
         </div>
       )}
 

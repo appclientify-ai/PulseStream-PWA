@@ -193,7 +193,7 @@ const GSTRegistration: React.FC = () => {
                        <input 
                          type="text" 
                          value={rec.arn || ''} 
-                         onChange={e => handleInlineUpdate(rec.id, 'arn', e.target.value.toUpperCase())}
+                         onChange={e => handleInlineUpdate(rec.id, 'arn', e.target.value)}
                          className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-black text-indigo-600 font-mono tracking-widest uppercase transition-all"
                          placeholder="AA0000..."
                        />

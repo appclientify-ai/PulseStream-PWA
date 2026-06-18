@@ -102,7 +102,7 @@ const AppealDrop: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className="whitespace-nowrap px-6 py-5">
-                         <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
@@ -118,8 +118,8 @@ const AppealDrop: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 uppercase">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 uppercase truncate">{rec.referenceNo}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-emerald-600 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5 text-center">
                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
@@ -150,7 +150,7 @@ const AppealDrop: React.FC = () => {
            <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight truncate">{viewingRecord.clientName}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Appeal Outcome: {viewingRecord.isDemandPaid ? 'Demand Discharged' : 'Order Quashed'}</p>
                  </div>
                  <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors shrink-0"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
@@ -158,7 +158,7 @@ const AppealDrop: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Relief Status</p><p className={`text-base font-black uppercase ${viewingRecord.isDemandPaid ? 'text-orange-600' : 'text-emerald-600'}`}>{viewingRecord.isDemandPaid ? 'PAID / SETTLED' : 'CLOSED (RELIEF)'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Appeal Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Outcome Ref</p><p className="text-base font-black text-slate-900 uppercase">{viewingRecord.referenceNo}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Outcome Ref</p><p className="text-base font-black text-slate-900">{viewingRecord.referenceNo}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
