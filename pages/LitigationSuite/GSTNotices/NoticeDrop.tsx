@@ -99,7 +99,7 @@ const NoticeDrop: React.FC = () => {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Closed Notices</p>
             <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
           </div>
-          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px] min-h-[300px] pb-32">
+          <div className="flex items-center gap-4 border-l border-slate-100 pl-6 overflow-x-auto no-scrollbar max-w-[400px]">
             {sectionCounts.map(([sec, count]) => (
               <div key={sec} className="text-center shrink-0">
                 <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">U/s {sec}</p>
@@ -173,7 +173,7 @@ const NoticeDrop: React.FC = () => {
                              {rec.isDemandPaid ? 'Paid' : 'Dropped'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
-                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
+                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
                                 <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600 text-left">Revert to Filed</button>
                              </div>
                            )}

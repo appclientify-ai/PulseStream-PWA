@@ -164,7 +164,7 @@ const TribunalFiled: React.FC = () => {
                              Outcome <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
-                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
+                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
                                 <button onClick={() => updateRecordStatus(rec, 'Drop')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Relief Granted</button>
                                 <button onClick={() => updateRecordStatus(rec, 'Demand')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50">Sustained</button>
                              </div>

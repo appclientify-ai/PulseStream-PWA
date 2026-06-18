@@ -146,7 +146,7 @@ const AppealDemand: React.FC = () => {
                              Sustained <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                            </button>
                            {activeStatusMenuId === rec.id && (
-                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left">
+                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
                                 <button onClick={() => updateRecordStatus(rec, 'Drop', true)} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-orange-50 text-orange-600 text-left">Demand Paid</button>
                                 <button onClick={() => { setTargetCategory('Tribunal'); setIsReissueMode(true); setSelectedRecord(rec); setIsModalOpen(true); setActiveStatusMenuId(null); }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-indigo-600 text-left border-t border-slate-50">GSTAT (Tribunal)</button>
                                 <button onClick={() => { setTargetCategory('HighCourt'); setIsReissueMode(true); setSelectedRecord(rec); setIsModalOpen(true); setActiveStatusMenuId(null); }} className="w-full px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-amber-50 text-amber-600 text-left border-t border-slate-50">High Court (WP)</button>
