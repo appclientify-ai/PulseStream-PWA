@@ -66,7 +66,7 @@ const CourtDemand: React.FC = () => {
     return records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             (r.referenceNo || '').toLowerCase().includes(s) ||
+             ((r.tioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
   }, [records, clients, search]);
@@ -129,8 +129,8 @@ const CourtDemand: React.FC = () => {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
                       <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                         <div className="relative inline-block w-full">
                            <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
@@ -177,8 +177,8 @@ const CourtDemand: React.FC = () => {
               </div>
               <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p><p className="text-base font-black text-red-600 uppercase">SUSTAINED (DEMAND)</p></div>
-                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Matter Ref</p><p className="text-base font-black text-slate-900">{viewingRecord.referenceNo}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">TIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.tioRefNo || viewingRecord.referenceNo || '---'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.tioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close Details</button></div>

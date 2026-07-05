@@ -195,6 +195,12 @@ export interface LitigationRecord {
   previousNoticeSection?: string;
   isDemandPaid?: boolean;
   hearingDate?: string;
+  oioRefNo?: string;
+  oioDate?: string;
+  aioArn?: string;
+  aioDate?: string;
+  tioRefNo?: string;
+  tioDate?: string;
 }
 
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';

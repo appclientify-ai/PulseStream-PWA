@@ -145,31 +145,109 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
             </div>
           </div>
 
-          <div>
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reference No</label>
-            <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value})} placeholder="Notice/Order No" />
-          </div>
+          {(category === 'Notice' || category === 'Appeal') && (
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reference No</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value})} placeholder="Notice/Order No" />
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">{category !== 'Notice' ? 'Order Date' : 'Issued Date'}</label>
-              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => {
-                const newDate = e.target.value;
-                if (category !== 'Notice' && newDate) {
-                  const date = new Date(newDate);
-                  date.setDate(date.getDate() + 90);
-                  const dueDate = date.toISOString().split('T')[0];
-                  setFormData({...formData, issuedDate: newDate, orderDate: newDate, dueDate: dueDate});
-                } else {
-                  setFormData({...formData, issuedDate: newDate, orderDate: newDate});
-                }
-              }} />
+          {(category === 'Notice' || category === 'Appeal') && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">{category === 'Appeal' ? 'Order Date' : 'Issued Date'}</label>
+                <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => {
+                  const newDate = e.target.value;
+                  if (category === 'Appeal' && newDate) {
+                    const date = new Date(newDate);
+                    date.setDate(date.getDate() + 90);
+                    const dueDate = date.toISOString().split('T')[0];
+                    setFormData({...formData, issuedDate: newDate, orderDate: newDate, dueDate: dueDate});
+                  } else {
+                    setFormData({...formData, issuedDate: newDate, orderDate: newDate});
+                  }
+                }} />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
-              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
-            </div>
-          </div>
+          )}
+
+          {category === 'Tribunal' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">OIO Ref No</label>
+                  <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.oioRefNo || ''} onChange={e => setFormData({...formData, oioRefNo: e.target.value})} placeholder="OIO Ref" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">OIO Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.oioDate || ''} onChange={e => setFormData({...formData, oioDate: e.target.value})} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">AIO ARN No</label>
+                  <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.aioArn || ''} onChange={e => setFormData({...formData, aioArn: e.target.value})} placeholder="AIO ARN" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">AIO Order Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.aioDate || ''} onChange={e => {
+                    const newDate = e.target.value;
+                    if (newDate) {
+                      const date = new Date(newDate);
+                      date.setDate(date.getDate() + 90);
+                      const dueDate = date.toISOString().split('T')[0];
+                      setFormData({...formData, aioDate: newDate, dueDate: dueDate});
+                    } else {
+                      setFormData({...formData, aioDate: newDate});
+                    }
+                  }} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {category === 'HighCourt' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">TIO Ref No</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.tioRefNo || ''} onChange={e => setFormData({...formData, tioRefNo: e.target.value})} placeholder="TIO Ref" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">TIO Order Date</label>
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.tioDate || ''} onChange={e => {
+                    const newDate = e.target.value;
+                    if (newDate) {
+                      const date = new Date(newDate);
+                      date.setDate(date.getDate() + 90);
+                      const dueDate = date.toISOString().split('T')[0];
+                      setFormData({...formData, tioDate: newDate, dueDate: dueDate});
+                    } else {
+                      setFormData({...formData, tioDate: newDate, dueDate: ''});
+                    }
+                  }} />
+                </div>
+              </div>
+              {formData.dueDate && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                    <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Status</label>

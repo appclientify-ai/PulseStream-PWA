@@ -51,7 +51,7 @@ const CourtDrop: React.FC = () => {
     return records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             (r.referenceNo || '').toLowerCase().includes(s) ||
+             ((r.tioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
   }, [records, clients, search]);
@@ -114,8 +114,8 @@ const CourtDrop: React.FC = () => {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-emerald-600 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-emerald-600 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5 text-center">
                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                            rec.isDemandPaid ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm'
@@ -152,8 +152,8 @@ const CourtDrop: React.FC = () => {
               </div>
               <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Result Status</p><p className={`text-base font-black uppercase ${viewingRecord.isDemandPaid ? 'text-orange-600' : 'text-emerald-600'}`}>{viewingRecord.isDemandPaid ? 'DEPOSIT SETTLED' : 'CLOSED (RELIEF)'}</p></div>
-                 <div><p className="text-[10px] font-black text-slate-400 mb-1">Outcome Ref</p><p className="text-base font-black text-slate-900">{viewingRecord.referenceNo}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
+                 <div><p className="text-[10px] font-black text-slate-400 mb-1">TIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.tioRefNo || viewingRecord.referenceNo || '---'}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.tioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Case Summary</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0">

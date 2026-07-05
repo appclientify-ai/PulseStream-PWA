@@ -80,7 +80,7 @@ const CourtPending: React.FC = () => {
     return records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             (r.referenceNo || '').toLowerCase().includes(s) ||
+             ((r.tioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
   }, [records, clients, search]);
@@ -149,9 +149,9 @@ const CourtPending: React.FC = () => {
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate) || '---'}</td>
                       <td className="whitespace-nowrap px-6 py-5">
                          <div className="flex items-center gap-2">
                             <div className={`h-1.5 w-1.5 rounded-full ${timing.dot}`} />
@@ -203,7 +203,8 @@ const CourtPending: React.FC = () => {
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">High Court U/s</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">TIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.tioRefNo || viewingRecord.referenceNo || "---"}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">TIO Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.tioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Response Due</p><p className="text-base font-black text-red-500">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>

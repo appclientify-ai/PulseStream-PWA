@@ -80,7 +80,7 @@ const TribunalFiled: React.FC = () => {
     return records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             (r.referenceNo || '').toLowerCase().includes(s) ||
+             ((r.aioArn || r.oioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
   }, [records, clients, search]);
@@ -204,6 +204,7 @@ const TribunalFiled: React.FC = () => {
               <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
+                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">AIO/OIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.aioArn || viewingRecord.oioRefNo || viewingRecord.referenceNo || "---"}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Filing Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Scheduled Hearing</p><p className="text-base font-black text-indigo-600">{formatDisplayDate(viewingRecord.hearingDate)}</p></div>
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Case Log</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
