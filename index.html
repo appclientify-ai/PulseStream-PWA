@@ -96,5 +96,12 @@
   <body class="app-font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW ref fail', err));
+        });
+      }
+    </script>
   </body>
 </html>
