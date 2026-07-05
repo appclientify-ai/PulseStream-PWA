@@ -10,8 +10,8 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
     <div className="flex min-h-screen flex-col items-center bg-white selection:bg-indigo-100 selection:text-indigo-900 scroll-smooth">
       {/* Dynamic Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-[10%] top-[-10%] h-[600px] w-[600px] rounded-full bg-indigo-50/50 blur-[120px] animate-pulse" />
-        <div className="absolute right-[5%] bottom-[5%] h-[500px] w-[500px] rounded-full bg-blue-50/50 blur-[120px]" />
+        <div className="absolute left-[10%] top-[-10%] h-[600px] rounded-full bg-indigo-50/50 blur-[120px] animate-pulse" />
+        <div className="absolute right-[5%] bottom-[5%] h-[500px] rounded-full bg-blue-50/50 blur-[120px]" />
       </div>
       
       {/* Hero Section */}

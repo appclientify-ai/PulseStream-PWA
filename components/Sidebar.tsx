@@ -126,9 +126,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     }
   ];
 
-  const handleItemClick = (item: NavItem) => {
+  const handleItemClick = (e: React.MouseEvent, item: NavItem) => {
     if (item.children?.length) {
-      onOpenFolder(item);
+      if (hoveredItem?.id === item.id) {
+        setHoveredItem(null);
+      } else {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoveredItem({ id: item.id, top: rect.top, item });
+      }
     } else {
       onViewChange(item.id as ActiveView);
     }
@@ -148,7 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     return (
       <div key={item.id} className="w-full relative px-2">
         <button
-          onClick={() => handleItemClick(item)}
+          onClick={(e) => handleItemClick(e, item)}
           onMouseEnter={(e) => handleMouseEnter(e, item)}
           onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}
           className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 group/item ${
@@ -183,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     <>
       <aside 
         className={`fixed inset-y-0 left-0 z-[70] flex flex-col border-r border-slate-200 bg-white shadow-2xl transition-all duration-500 ease-in-out ${
-          isCollapsed ? 'w-20' : 'w-80'
+          isCollapsed ? 'w-20' : 'w-72'
         }`}
       >
         <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
@@ -234,7 +239,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
       {/* Floating Tooltip / Menu */}
       {hoveredItem && (isCollapsed || hoveredItem.item.children) && (
         <div 
-          className={`fixed z-[80] ${isCollapsed ? 'left-20' : 'left-80'} pl-2`}
+          className={`fixed z-[80] ${isCollapsed ? 'left-20' : 'left-72'} pl-2`}
           style={{ top: hoveredItem.top }}
           onMouseEnter={() => { if (hoverTimeout.current) clearTimeout(hoverTimeout.current); }}
           onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}

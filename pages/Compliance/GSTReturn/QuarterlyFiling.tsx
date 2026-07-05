@@ -178,30 +178,30 @@ const QuarterlyFiling: React.FC = () => {
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
           <table className="w-full text-left border-collapse table-auto overflow-hidden">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="IFF/R1" isActive={r1Filter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Password</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Password</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -210,11 +210,11 @@ const QuarterlyFiling: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">
+                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className=" px-4 py-[2px] font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className=" px-4 py-[2px] font-bold text-slate-500 truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className=" px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
+                    <td className=" px-4 py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
@@ -224,13 +224,13 @@ const QuarterlyFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
+                    <td className=" px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
                           {st.r1 ? 'Filed' : 'Pending'}
                           <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                        </button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
+                    <td className=" px-4 py-[2px] text-center">
                        {isQuarterEnd ? (
                          <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r3b ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
                             {st.r3b ? 'Filed' : 'Pending'}
@@ -238,8 +238,8 @@ const QuarterlyFiling: React.FC = () => {
                          </button>
                        ) : <span className="text-[10px] font-black text-slate-300">N/A</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px]">
+                    <td className=" px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
+                    <td className=" px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
                             <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
@@ -259,7 +259,7 @@ const QuarterlyFiling: React.FC = () => {
                           )}
                        </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-right">
+                    <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">

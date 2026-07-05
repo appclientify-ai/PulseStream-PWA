@@ -141,16 +141,16 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   return (
     <div className="w-full h-full flex flex-col min-h-0">
       <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-        <table className="w-full text-left border-collapse table-auto min-w-[1300px]">
-          <thead className="whitespace-nowrap sticky top-0 z-20">
+        <table className="w-full text-left border-collapse table-auto min-w-full">
+          <thead className=" sticky top-0 z-20">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">S.No.</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[240px]">Name</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Father Name</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[140px]">Mobile No.</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Pan No.</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">Password</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px]">
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
                   <button onClick={(e) => openFilterMenu(e, 'status')} className="p-1 hover:bg-slate-200 rounded transition-colors">
@@ -158,28 +158,28 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Action</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={8} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
+              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-emerald-50/10 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
+                  <td className=" px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
                     {(idx + 1).toString().padStart(2, '0')}
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-900 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/pan">
                         <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
                         <button 
@@ -191,7 +191,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         </button>
                      </div>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/pass">
                         <span className="font-black text-slate-400 text-[12px] tracking-widest">
                            {visiblePasswords.has(client.id) ? client.itProfile?.password : '••••••••'}
@@ -201,14 +201,14 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         </button>
                      </div>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                        client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                      }`}>
                        {client.status}
                      </span>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px] text-right overflow-visible">
+                  <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
                         <ITViewIcon 
                           client={client}

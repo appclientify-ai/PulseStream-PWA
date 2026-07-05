@@ -721,7 +721,7 @@ const Dashboard: React.FC = () => {
         onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
         onOpenFolder={setNavigationFolder}
       />
-      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-24' : 'ml-[22rem]'}`}>
+      <main className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-500 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'}`}>
         <Header 
           isConnected={isOnline} 
           currentUser={user} 
@@ -736,49 +736,6 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </main>
-
-      {/* Central Navigation Modal */}
-      {navigationFolder && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-           <div className="fixed inset-0" onClick={() => setNavigationFolder(null)} />
-           <div className="relative w-full max-w-lg bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 border border-slate-200">
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         {navigationFolder.icon}
-                       </svg>
-                    </div>
-                    <div>
-                       <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{navigationFolder.label}</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Select Module Target</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setNavigationFolder(null)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
-                    <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                 </button>
-              </div>
-              <div className="p-4 grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">
-                 {navigationFolder.children?.map(child => (
-                   <button 
-                     key={child.id}
-                     onClick={() => handleViewChange(child.id as ActiveView)}
-                     className="w-full text-left px-6 py-5 hover:bg-indigo-600 rounded-[1.5rem] transition-all group flex items-center justify-between"
-                   >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-900 group-hover:text-white uppercase tracking-wider">{child.label}</span>
-                        <span className="text-[9px] font-bold text-slate-400 group-hover:text-indigo-200 uppercase mt-1">Authorized Vault Access</span>
-                      </div>
-                      <svg className="h-5 w-5 text-slate-200 group-hover:text-white group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" /></svg>
-                   </button>
-                 ))}
-              </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Clientify Navigation Hub</p>
-              </div>
-           </div>
-        </div>
-      )}
 
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
       

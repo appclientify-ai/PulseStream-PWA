@@ -195,7 +195,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                        <p className="text-sm font-black text-slate-900 uppercase">{clientLegalName}</p>
                        {clientAddress && <p className="text-[10px] font-medium text-slate-500 mt-1 uppercase leading-relaxed">{clientAddress}</p>}
                     </div>
-                    <div className="flex flex-col gap-3 min-w-[150px]">
+                    <div className="flex flex-col gap-3 min-w-full">
                        <div>
                           <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest mb-1">GSTIN / PAN</p>
                           <p className="text-xs font-mono font-bold text-slate-700 uppercase">{clientGstin || 'N/A'}</p>
@@ -228,22 +228,22 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
              <table className="w-full text-left border-collapse">
                 <thead>
                    <tr className="border-b border-slate-200 bg-slate-100/50">
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-12 text-center">#</th>
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Service Details</th>
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Rate</th>
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">Qty</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-12 text-center">#</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Service Details</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Rate</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">Qty</th>
                       {settings?.isGstEnabled && (
-                        <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">GST %</th>
+                        <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">GST %</th>
                       )}
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-40 text-right">Amount</th>
-                      <th className="whitespace-nowrap p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-16 text-center">Action</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-40 text-right">Amount</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-16 text-center">Action</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                    {items.map((item, idx) => (
                      <tr key={item.id} className="group hover:bg-white transition-colors">
-                        <td className="whitespace-nowrap p-4 text-center font-black text-slate-300 text-xs">{idx + 1}</td>
-                        <td className="whitespace-nowrap p-4">
+                        <td className=" p-4 text-center font-black text-slate-300 text-xs">{idx + 1}</td>
+                        <td className=" p-4">
                            <input 
                               className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
                               value={item.description} 
@@ -251,7 +251,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                               placeholder="Enter service description..." 
                            />
                         </td>
-                        <td className="whitespace-nowrap p-4">
+                        <td className=" p-4">
                            <input 
                               type="number" 
                               className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-right placeholder:text-slate-300 transition-all text-slate-700"
@@ -260,7 +260,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                               placeholder="0.00" 
                            />
                         </td>
-                        <td className="whitespace-nowrap p-4">
+                        <td className=" p-4">
                            <input 
                               type="number" 
                               className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center placeholder:text-slate-300 transition-all text-slate-700"
@@ -270,7 +270,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                            />
                         </td>
                         {settings?.isGstEnabled && (
-                           <td className="whitespace-nowrap p-4">
+                           <td className=" p-4">
                               <select
                                  className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center text-slate-700 cursor-pointer appearance-none"
                                  value={item.taxRate}
@@ -282,10 +282,10 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                               </select>
                            </td>
                         )}
-                        <td className="whitespace-nowrap p-4 text-right font-black text-slate-900 text-xs">
+                        <td className=" p-4 text-right font-black text-slate-900 text-xs">
                            ₹{(item.rate * item.quantity).toLocaleString()}
                         </td>
-                        <td className="whitespace-nowrap p-4 text-center">
+                        <td className=" p-4 text-center">
                            <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                            </button>

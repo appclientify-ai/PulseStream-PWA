@@ -143,16 +143,16 @@ const Reminders: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1200px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S. No.</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity Identity</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Module</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[300px]">Task Reference</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Target Date</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Remaining</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S. No.</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Entity Identity</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Module</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Task Reference</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Target Date</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Remaining</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -160,19 +160,19 @@ const Reminders: React.FC = () => {
                 const dl = getDaysLeft(item.date);
                 return (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-all group">
-                    <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-5 font-black text-slate-900 uppercase truncate">{item.client}</td>
-                    <td className="whitespace-nowrap px-4 py-5">
+                    <td className=" px-4 py-5 text-[11px] font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className=" px-4 py-5 font-black text-slate-900 uppercase truncate">{item.client}</td>
+                    <td className=" px-4 py-5">
                       <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase ${item.origin === 'litigation' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{item.category}</span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-5 font-bold text-slate-500 uppercase truncate">{item.title}</td>
-                    <td className="whitespace-nowrap px-4 py-5 font-black text-slate-700 uppercase">{item.date.split('-').reverse().join('-')}</td>
-                    <td className="whitespace-nowrap px-4 py-5">
+                    <td className=" px-4 py-5 font-bold text-slate-500 uppercase truncate">{item.title}</td>
+                    <td className=" px-4 py-5 font-black text-slate-700 uppercase">{item.date.split('-').reverse().join('-')}</td>
+                    <td className=" px-4 py-5">
                        <span className={`text-[11px] font-black ${dl < 0 ? 'text-red-600' : dl <= 7 ? 'text-orange-600' : 'text-slate-600'}`}>
                           {dl < 0 ? `${Math.abs(dl)} days overdue` : `${dl} days left`}
                        </span>
                     </td>
-                    <td className="px-4 py-5 text-right whitespace-nowrap">
+                    <td className="px-4 py-5 text-right ">
                        <button onClick={fetchUnifiedData} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                        </button>

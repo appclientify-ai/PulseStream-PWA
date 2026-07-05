@@ -101,36 +101,36 @@ const MSMERegistration: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1000px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[300px]">Enterprise Entity</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[200px]">Udyam Registration No</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Status</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Record Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Enterprise Entity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Udyam Registration No</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Record Date</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={6} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No MSME records tracked</td></tr>
+                <tr><td colSpan={6} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No MSME records tracked</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => (
                   <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[12px]">
-                    <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-6 py-5">
+                    <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className=" px-6 py-5">
                        <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{rec.mobile || '---'}</p>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase truncate">{rec.udyamNumber || 'Pending App'}</td>
-                    <td className="whitespace-nowrap px-6 py-5 text-center">
+                    <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase truncate">{rec.udyamNumber || 'Pending App'}</td>
+                    <td className=" px-6 py-5 text-center">
                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(rec.status)}`}>
                          {rec.status}
                        </span>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
-                    <td className="px-6 py-5 text-right whitespace-nowrap">
+                    <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
+                    <td className="px-6 py-5 text-right ">
                       <div className="flex items-center justify-end gap-2">
                          <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>

@@ -178,13 +178,13 @@ const NoticePending: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto min-w-[1400px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[100px]">ID</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px] relative">
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">ID</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
                   <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'section' && (
                     <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
@@ -193,10 +193,10 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Due Date</th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Tax Period</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Notice Date</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
                   <div className="flex items-center gap-1">Due Days <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'days' && (
                     <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
@@ -204,7 +204,7 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px] relative">
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center relative">
                   <div className="flex items-center justify-center gap-1">Status <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'status' ? null : 'status')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
                   {activeHeaderFilter === 'status' && (
                     <div className="absolute top-full mt-1 z-50 left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
@@ -212,12 +212,12 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
-                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[120px]">Actions</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={11} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
+                <tr><td colSpan={11} className=" py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const dl = getDaysLeft(rec.dueDate);
@@ -226,14 +226,14 @@ const NoticePending: React.FC = () => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group h-[52px]">
-                      <td className="whitespace-nowrap px-4 py-2 font-black text-indigo-400 font-mono text-[11px] truncate">
+                      <td className=" px-4 py-2 font-black text-indigo-400 font-mono text-[11px] truncate">
                         {getClientDisplayId(rec.clientId)}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2">
+                      <td className=" px-4 py-2">
                         <p className="text-[12px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
                         <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
+                      <td className=" px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
@@ -247,11 +247,11 @@ const NoticePending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
-                      <td className="whitespace-nowrap px-4 py-2">
+                      <td className=" px-4 py-2 text-[12px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
+                      <td className=" px-4 py-2 text-[12px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
+                      <td className=" px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
+                      <td className=" px-4 py-2 text-[12px] font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
+                      <td className=" px-4 py-2">
                          <div className="flex items-center gap-1.5">
                             <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
                             <span className={`text-[12px] font-black ${isOverdue || isCritical ? 'text-red-500' : 'text-slate-700'}`}>
@@ -259,7 +259,7 @@ const NoticePending: React.FC = () => {
                             </span>
                          </div>
                       </td>
-                      <td className={`whitespace-nowrap px-4 py-2 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
+                      <td className={` px-4 py-2 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)} className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${isOverdue ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
                             {isOverdue ? 'Overdue' : 'Pending'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                          </button>
@@ -269,7 +269,7 @@ const NoticePending: React.FC = () => {
                            </div>
                          )}
                       </td>
-                      <td className="px-4 py-2 text-right whitespace-nowrap">
+                      <td className="px-4 py-2 text-right ">
                          <div className="flex items-center justify-end gap-2">
                             <button 
                                onClick={() => { 

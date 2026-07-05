@@ -177,7 +177,7 @@ const TAXAudit: React.FC = () => {
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
           <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
-            <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">Due:</span>
+            <span className="text-[9px] font-black text-slate-400 uppercase ">Due:</span>
             <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
           </div>
         </div>
@@ -185,14 +185,14 @@ const TAXAudit: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1250px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Entity Name</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN / PAN</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Resp. CA</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[170px]">
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Entity Name</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN / PAN</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Resp. CA</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Balance Sheet" isActive={bsFilter !== 'All'}>
                       {['All', 'Document Required', 'In progress', 'Ready', 'Pending'].map(f => (
@@ -201,7 +201,7 @@ const TAXAudit: React.FC = () => {
                     </TableFilter>
                   </div>
                 </th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px]">
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Audit Status" isActive={auditFilter !== 'All'}>
                       {['All', 'Filed', 'Pending'].map(f => (
@@ -210,12 +210,12 @@ const TAXAudit: React.FC = () => {
                     </TableFilter>
                   </div>
                 </th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Action</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTracked.length === 0 ? (
-                <tr><td colSpan={7} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No audit records tracked for FY {selectedYear}</td></tr>
+                <tr><td colSpan={7} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No audit records tracked for FY {selectedYear}</td></tr>
               ) : (
                 filteredTracked.map((client, idx) => {
                   const status = getStatus(client.id);
@@ -227,28 +227,28 @@ const TAXAudit: React.FC = () => {
                   };
                   return (
                     <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="whitespace-nowrap px-6 py-5">
+                      <td className=" px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-6 py-5">
                         <p className="font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</p>
                         <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate">{client.legalName}</p>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
+                      <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
                          {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600 truncate uppercase">
+                      <td className=" px-6 py-5 font-black text-slate-600 truncate uppercase">
                         {status.caName || '---'}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 text-center">
+                      <td className=" px-6 py-5 text-center">
                         <button onClick={() => cycleBSStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${bsColors[status.bsStatus] || bsColors.Pending}`}>
                           {status.bsStatus}
                         </button>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 text-center">
+                      <td className=" px-6 py-5 text-center">
                         <button onClick={() => toggleAuditStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${status.auditFiled ? 'bg-indigo-600 text-white shadow-lg border-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'}`}>
                           {status.auditFiled ? 'Filed' : 'Pending'}
                         </button>
                       </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">
                             {client.gstProfile && <GSTViewIcon client={client} onDataChange={fetchClients} />}
                             <button onClick={() => { setViewingClient(client); setEditCaName(status.caName || ''); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">

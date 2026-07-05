@@ -100,34 +100,34 @@ const NoticeDrop: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto min-w-[1300px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[60px]">S. No.</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Trade Name</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Section</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Order Date</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px] text-center">Status</th>
-                <th className="whitespace-nowrap px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S. No.</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Section</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Tax Period</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Notice Date</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={9} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No dropped notices in vault</td></tr>
+                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No dropped notices in vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[12px]">
-                      <td className="whitespace-nowrap px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="whitespace-nowrap px-4 py-5">
+                      <td className=" px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-4 py-5">
                         <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
                         <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
+                      <td className=" px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
@@ -141,11 +141,11 @@ const NoticeDrop: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
-                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
-                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
-                      <td className="whitespace-nowrap px-4 py-5 text-[11px] font-black text-emerald-600 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
-                      <td className={`whitespace-nowrap px-4 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
+                      <td className=" px-4 py-5 text-[11px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
+                      <td className=" px-4 py-5 text-[11px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
+                      <td className=" px-4 py-5 text-[11px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
+                      <td className=" px-4 py-5 text-[11px] font-black text-emerald-600 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
+                      <td className={` px-4 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                         <div className="relative inline-block w-full">
                            <button 
                              onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
@@ -162,7 +162,7 @@ const NoticeDrop: React.FC = () => {
                            )}
                         </div>
                       </td>
-                      <td className="px-4 py-5 text-right whitespace-nowrap">
+                      <td className="px-4 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
                             <button 
                                onClick={() => { 

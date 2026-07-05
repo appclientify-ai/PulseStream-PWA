@@ -131,35 +131,35 @@ const AppealFiled: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto min-w-[1550px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[220px]">Client Identity</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Appeal U/s</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Filing Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Next Hearing</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Status Ref.</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[160px]">Outcome Update</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Appeal U/s</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing Date</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Next Hearing</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Status Ref.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Outcome Update</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No filed appeals found in vault</td></tr>
+                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No filed appeals found in vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   const hDays = getHearingDaysLeft(rec.hearingDate);
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
-                      <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="whitespace-nowrap px-6 py-5">
+                      <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-6 py-5">
                          <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
                          <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate mt-0.5">{client?.legalName}</p>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
+                      <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
                           <span>{client?.gstProfile?.gstin || 'N/A'}</span>
                           {client?.gstProfile?.gstin && (
@@ -173,20 +173,20 @@ const AppealFiled: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
-                      <td className="whitespace-nowrap px-6 py-5">
+                      <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
+                      <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.filedDate)}</td>
+                      <td className=" px-6 py-5">
                          <input type="date" value={rec.hearingDate || ''} onChange={(e) => updateHearingDate(rec, e.target.value)}
                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px] font-black text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-100 transition-all" />
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5">
+                      <td className=" px-6 py-5">
                          {hDays !== null ? (
                            <span className={`text-[10px] font-black uppercase ${hDays < 0 ? 'text-red-500' : hDays <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
                               {hDays < 0 ? `${Math.abs(hDays)} Overdue` : `${hDays} Days Left`}
                            </span>
                          ) : <span className="text-slate-300 font-black text-[9px] uppercase tracking-tighter">Schedule Pending</span>}
                       </td>
-                      <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
+                      <td className={` px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                         <div className="relative inline-block w-full">
                            <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                              className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all flex items-center justify-between shadow-sm">
@@ -200,7 +200,7 @@ const AppealFiled: React.FC = () => {
                            )}
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">
                             {client?.gstProfile && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto">

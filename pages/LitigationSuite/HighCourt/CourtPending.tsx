@@ -109,32 +109,32 @@ const CourtPending: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto min-w-[1250px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[70px]">S.No.</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[240px]">Trade Identity</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Matter U/s</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Case Ref</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Order Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Due Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Due Days</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center w-[130px]">Status</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Matter U/s</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Case Ref</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Days</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center">Status</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Court Matters</td></tr>
+                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Court Matters</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const timing = getCourtTiming(rec.dueDate);
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
-                      <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
+                      <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-6 py-5 font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</td>
+                      <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
                         <div className="flex items-center gap-2">
                           <span>{clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin || 'N/A'}</span>
                           {clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin && (
@@ -148,17 +148,17 @@ const CourtPending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate) || '---'}</td>
-                      <td className="whitespace-nowrap px-6 py-5">
+                      <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
+                      <td className=" px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
+                      <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
+                      <td className=" px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate) || '---'}</td>
+                      <td className=" px-6 py-5">
                          <div className="flex items-center gap-2">
                             <div className={`h-1.5 w-1.5 rounded-full ${timing.dot}`} />
                             <span className={`font-black uppercase text-[10px] ${timing.color}`}>{timing.label}</span>
                          </div>
                       </td>
-                      <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
+                      <td className={` px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-500 border border-slate-200 hover:bg-white transition-all flex items-center justify-between shadow-sm">
                              Pending <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
@@ -169,7 +169,7 @@ const CourtPending: React.FC = () => {
                            </div>
                          )}
                       </td>
-                      <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
                             {clients.find(c => c.id === rec.clientId) && <GSTViewIcon client={clients.find(c => c.id === rec.clientId)!} onDataChange={fetchAll} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto" title="View Notice Details">

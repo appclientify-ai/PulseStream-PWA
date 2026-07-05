@@ -158,23 +158,23 @@ const CompositionFiling: React.FC = () => {
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
           <table className="w-full text-left border-collapse]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[12px]">
-                <th className="whitespace-nowrap px-4 py-3">S.No.</th>
-                <th className="whitespace-nowrap px-4 py-3">Trade Name</th>
-                <th className="whitespace-nowrap px-4 py-3">Legal Name</th>
-                <th className="whitespace-nowrap px-4 py-3">Mobile No.</th>
-                <th className="whitespace-nowrap px-4 py-3">GSTIN</th>
-                <th className="whitespace-nowrap px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className=" px-4 py-3">S.No.</th>
+                <th className=" px-4 py-3">Trade Name</th>
+                <th className=" px-4 py-3">Legal Name</th>
+                <th className=" px-4 py-3">Mobile No.</th>
+                <th className=" px-4 py-3">GSTIN</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="CMP-08" isActive={cmp08Filter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3">User ID</th>
-                <th className="whitespace-nowrap px-4 py-3">Password</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">Action</th>
+                <th className=" px-4 py-3">User ID</th>
+                <th className=" px-4 py-3">Password</th>
+                <th className=" px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -183,11 +183,11 @@ const CompositionFiling: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-600 truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
+                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className=" px-4 py-[2px] font-black truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className=" px-4 py-[2px] font-bold text-slate-600 truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className=" px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
+                    <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
@@ -197,9 +197,9 @@ const CompositionFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
+                    <td className=" px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
+                    <td className=" px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
+                    <td className=" px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
                       <div className="flex items-center gap-2">
                         <span>
                           {isEditingPass ? (
@@ -221,7 +221,7 @@ const CompositionFiling: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-right">
+                    <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">

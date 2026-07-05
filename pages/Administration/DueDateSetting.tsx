@@ -57,7 +57,7 @@ const DueDateSetting: React.FC = () => {
               <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight leading-none">Compliance Calendar</h2>
               <p className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1.5">Master Due Date Management</p>
            </div>
-           <div className="h-10 w-[1px] bg-slate-100 hidden md:block" />
+           <div className="h-10 bg-slate-100 hidden md:block" />
            <div className="flex items-center gap-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hidden sm:inline">Financial Year:</span>
               <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)}
@@ -72,7 +72,7 @@ const DueDateSetting: React.FC = () => {
              <button 
                key={cat.id} 
                onClick={() => setActiveCategory(cat.id)}
-               className={`px-5 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${
+               className={`px-5 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2  ${
                  activeCategory === cat.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                }`}
              >

@@ -75,6 +75,17 @@ const ITRReturn: React.FC = () => {
     return `IT/${rank.toString().padStart(2, '0')}`;
   }, [clients]);
 
+    const stats = useMemo(() => {
+    const total = clients.length;
+    let filed = 0;
+    let pending = 0;
+    clients.forEach(c => {
+      if (getStatus(c.id).filed) filed++;
+      else pending++;
+    });
+    return { total, filed, pending };
+  }, [clients, getStatus]);
+
   const filteredClients = useMemo(() => {
     let list = clients.filter(c => 
       (c.legalName || '').toLowerCase().includes(search.toLowerCase()) || 
@@ -159,7 +170,15 @@ const ITRReturn: React.FC = () => {
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total IT Return</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredClients.length}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Filed</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
+            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
         </div>
 
@@ -173,7 +192,7 @@ const ITRReturn: React.FC = () => {
           <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="Export CSV"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
           <select value={selectedAY} onChange={e => setSelectedAY(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>AY {y}</option>)}</select>
           <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
-            <span className="text-[9px] font-black text-slate-400 uppercase whitespace-nowrap">Due:</span>
+            <span className="text-[9px] font-black text-slate-400 uppercase ">Due:</span>
             <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
           </div>
         </div>
@@ -181,21 +200,21 @@ const ITRReturn: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-[1550px]">
-            <thead className="whitespace-nowrap sticky top-0 z-20">
+          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+            <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
-                <th className="whitespace-nowrap px-4 py-3 w-[90px]">S.No.</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[200px]">Name</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[180px]">Father Name</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[120px] text-center">
+                <th className=" px-4 py-3">S.No.</th>
+                <th className=" px-4 py-3">Name</th>
+                <th className=" px-4 py-3">Father Name</th>
+                <th className=" px-4 py-3 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                       {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setStatusFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}
                     </TableFilter>
                   </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3 w-[140px]">Filing Date</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[140px] text-center">
+                <th className=" px-4 py-3">Filing Date</th>
+                <th className=" px-4 py-3 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Refund Status" isActive={refundStatusFilter !== 'All'}>
                       {['All', 'Pending', 'Received', 'No Refund'].map(f => (
@@ -204,9 +223,9 @@ const ITRReturn: React.FC = () => {
                     </TableFilter>
                   </div>
                 </th>
-                <th className="whitespace-nowrap px-4 py-3 w-[160px]">Pan No.</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[160px]">Password</th>
-                <th className="whitespace-nowrap px-4 py-3 w-[110px] text-right">Action</th>
+                <th className=" px-4 py-3">Pan No.</th>
+                <th className=" px-4 py-3">Password</th>
+                <th className=" px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -216,24 +235,24 @@ const ITRReturn: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-slate-900 truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-bold text-slate-500 truncate">{client.itProfile?.fatherName || '---'}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
+                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className=" px-4 py-[2px] font-black text-slate-900 truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className=" px-4 py-[2px] font-bold text-slate-500 truncate">{client.itProfile?.fatherName || '---'}</td>
+                    <td className=" px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px]">
+                    <td className=" px-4 py-[2px]">
                        {status.filed ? (
                          <input type="date" value={status.date || ''} onChange={e => updateFilingDate(client.id, e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none uppercase" />
                        ) : <span className="text-slate-200 font-black">---</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] text-center">
+                    <td className=" px-4 py-[2px] text-center">
                        <button onClick={() => status.filed && cycleRefundStatus(client.id)} disabled={!status.filed} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border transition-all ${getRefundColor(status.refundStatus)} ${!status.filed ? 'opacity-30' : 'hover:shadow-sm'}`}>
                           {status.refundStatus || 'N/A'}
                        </button>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">{client.itProfile?.pan}</td>
-                    <td className="whitespace-nowrap px-4 py-[2px]">
+                    <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">{client.itProfile?.pan}</td>
+                    <td className=" px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/pass">
                           {isEditingPass ? (
                             <input autoFocus value={newPasswordValue} onChange={e => setNewPasswordValue(e.target.value)} onBlur={() => saveQuickPassword(client)} onKeyDown={e => { if (e.key === 'Enter') saveQuickPassword(client); }} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
@@ -253,7 +272,7 @@ const ITRReturn: React.FC = () => {
                           )}
                        </div>
                     </td>
-                    <td className="px-4 py-[2px] text-right whitespace-nowrap overflow-visible">
+                    <td className="px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
                           <ITViewIcon client={client} onDataChange={fetchClients} />
                           {client.gstProfile && <GSTViewIcon client={client} onDataChange={fetchClients} />}

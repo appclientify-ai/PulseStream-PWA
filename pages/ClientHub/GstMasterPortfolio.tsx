@@ -151,15 +151,15 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   return (
     <div className="w-full h-full flex flex-col min-h-0">
       <div className="overflow-x-auto no-scrollbar flex-1 w-full">
-        <table className="w-full text-left border-collapse table-auto min-w-[1400px]">
-          <thead className="whitespace-nowrap sticky top-0 z-20">
+        <table className="w-full text-left border-collapse table-auto min-w-full">
+          <thead className=" sticky top-0 z-20">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[100px]">S.No.</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[200px]">Trade Name</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[240px]">Legal Name</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[140px]">Mobile No</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[180px]">GSTIN</th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[120px]">
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
                   <button onClick={(e) => openFilterMenu(e, 'status')} className="p-1 hover:bg-slate-200 rounded transition-colors">
@@ -167,7 +167,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 w-[160px]">
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Relationship
                   <button onClick={(e) => openFilterMenu(e, 'rel')} className="p-1 hover:bg-slate-200 rounded transition-colors">
@@ -175,28 +175,28 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className="whitespace-nowrap px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right w-[110px]">Actions</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={8} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
+                  <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
                     {(idx + 1).toString().padStart(2, '0')}
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-bold text-slate-600 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/gstin">
                         <span className={`font-black font-mono tracking-widest uppercase text-[12px] ${client.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
                         <button 
@@ -208,7 +208,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                         </button>
                      </div>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                        client.gstProfile?.gstStatus === 'Closed' ? 'bg-red-50 text-red-600 border-red-100' : 
                        client.gstProfile?.gstStatus === 'Suspended' ? 'bg-amber-50 text-amber-600 border-amber-100' :
@@ -217,7 +217,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                        {client.gstProfile?.gstStatus || 'Active'}
                      </span>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                        client.status === 'Active' || client.status === 'Active Filing' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 
                        client.status === 'Litigation' ? 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse' :
@@ -226,7 +226,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                        {client.status}
                      </span>
                   </td>
-                  <td className="whitespace-nowrap px-[5.5px] py-[2px] text-right overflow-visible">
+                  <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
                         <GSTViewIcon 
                           client={client}
