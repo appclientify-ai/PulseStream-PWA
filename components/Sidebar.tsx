@@ -19,6 +19,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed, onToggle, onOpenFolder }) => {
   const [hoveredItem, setHoveredItem] = useState<{ id: string; top: number; item: NavItem } | null>(null);
+  const hoverTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   const navigation: { group: string; items: NavItem[] }[] = [
     {
@@ -134,7 +135,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
   };
 
   const handleMouseEnter = (e: React.MouseEvent, item: NavItem) => {
-    if (!isCollapsed) return;
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    if (!isCollapsed && (!item.children || item.children.length === 0)) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredItem({ id: item.id, top: rect.top, item });
   };
@@ -148,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         <button
           onClick={() => handleItemClick(item)}
           onMouseEnter={(e) => handleMouseEnter(e, item)}
-          onMouseLeave={() => setHoveredItem(null)}
+          onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}
           className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 group/item ${
             isCollapsed ? 'justify-center py-4' : 'px-4 py-3'
           } ${
@@ -230,16 +232,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
       </aside>
 
       {/* Floating Tooltip / Menu */}
-      {isCollapsed && hoveredItem && (
+      {hoveredItem && (isCollapsed || hoveredItem.item.children) && (
         <div 
-          className="fixed left-20 ml-4 z-[80] bg-slate-900 text-white rounded-xl shadow-2xl p-3 animate-in fade-in zoom-in-95 duration-200 min-w-[180px] border border-white/10"
+          className={`fixed z-[80] ${isCollapsed ? 'left-20' : 'left-80'} pl-2`}
           style={{ top: hoveredItem.top }}
-          onMouseEnter={() => setHoveredItem(hoveredItem)}
-          onMouseLeave={() => setHoveredItem(null)}
+          onMouseEnter={() => { if (hoverTimeout.current) clearTimeout(hoverTimeout.current); }}
+          onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}
         >
-          <div className="absolute left-0 top-6 -ml-1.5 h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900 border-l border-b border-white/10" />
+          <div className="absolute left-2 top-6 -ml-1.5 h-3 w-3 -translate-y-1/2 rotate-45 bg-slate-900 border-l border-b border-white/10" />
           
-          <div className="relative z-10">
+          <div className="relative z-10 bg-slate-900 text-white rounded-xl shadow-2xl p-3 border border-white/10 min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
              <div className="mb-2 pb-2 border-b border-white/10">
                <span className="text-xs font-black uppercase tracking-wider text-white block">{hoveredItem.item.label}</span>
              </div>
