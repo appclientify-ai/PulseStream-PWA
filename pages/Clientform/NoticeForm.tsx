@@ -152,8 +152,18 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Issued Date</label>
-              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => setFormData({...formData, issuedDate: e.target.value})} />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">{category !== 'Notice' ? 'Order Date' : 'Issued Date'}</label>
+              <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => {
+                const newDate = e.target.value;
+                if (category !== 'Notice' && newDate) {
+                  const date = new Date(newDate);
+                  date.setDate(date.getDate() + 90);
+                  const dueDate = date.toISOString().split('T')[0];
+                  setFormData({...formData, issuedDate: newDate, orderDate: newDate, dueDate: dueDate});
+                } else {
+                  setFormData({...formData, issuedDate: newDate, orderDate: newDate});
+                }
+              }} />
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>

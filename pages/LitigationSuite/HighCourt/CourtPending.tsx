@@ -60,6 +60,21 @@ const CourtPending: React.FC = () => {
     return `${d}-${m}-${y}`;
   };
 
+  const getCourtTiming = (dueDate?: string) => {
+    if (!dueDate) return { label: 'No Due Date', color: 'text-slate-400', dot: 'bg-slate-300' };
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const diff = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diff < 0) return { label: `${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Day' : 'Days'} Overdue`, color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    if (diff === 0) return { label: 'Today', color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    if (diff <= 7) return { label: `${diff} ${diff === 1 ? 'Day' : 'Days'}`, color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    return { label: `${diff} ${diff === 1 ? 'Day' : 'Days'}`, color: 'text-slate-700', dot: 'bg-amber-400' };
+  };
+
   const filteredRecords = useMemo(() => {
     const s = search.toLowerCase();
     return records.filter(r => {
@@ -102,17 +117,19 @@ const CourtPending: React.FC = () => {
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">GSTIN</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Matter U/s</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Case Ref</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Notice Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Deadline</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Order Date</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Due Date</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Due Days</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center w-[130px]">Status</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={9} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Court Matters</td></tr>
+                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Court Matters</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
+                  const timing = getCourtTiming(rec.dueDate);
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className="whitespace-nowrap px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
@@ -133,8 +150,14 @@ const CourtPending: React.FC = () => {
                       </td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-slate-700 truncate">{rec.referenceNo}</td>
-                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.orderDate || rec.issuedDate)}</td>
                       <td className="whitespace-nowrap px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
+                      <td className="whitespace-nowrap px-6 py-5">
+                         <div className="flex items-center gap-2">
+                            <div className={`h-1.5 w-1.5 rounded-full ${timing.dot}`} />
+                            <span className={`font-black uppercase text-[10px] ${timing.color}`}>{timing.label}</span>
+                         </div>
+                      </td>
                       <td className={`whitespace-nowrap px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-500 border border-slate-200 hover:bg-white transition-all flex items-center justify-between shadow-sm">

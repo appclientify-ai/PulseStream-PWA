@@ -195,8 +195,9 @@ const NoticePending: React.FC = () => {
                 </th>
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px]">Tax Period</th>
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Notice Date</th>
+                <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[120px]">Due Date</th>
                 <th className="whitespace-nowrap px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[150px] relative">
-                  <div className="flex items-center gap-1">Due Date <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
+                  <div className="flex items-center gap-1">Due Days <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'days' && (
                     <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
                       {['All', 'Critical', 'Healthy'].map(opt => <button key={opt} onClick={() => { setDaysLeftFilter(opt as any); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${daysLeftFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
@@ -216,7 +217,7 @@ const NoticePending: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
+                <tr><td colSpan={11} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const dl = getDaysLeft(rec.dueDate);
@@ -249,6 +250,7 @@ const NoticePending: React.FC = () => {
                       <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
                       <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
                       <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-[12px] font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
                       <td className="whitespace-nowrap px-4 py-2">
                          <div className="flex items-center gap-1.5">
                             <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />

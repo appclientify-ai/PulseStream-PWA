@@ -91,24 +91,19 @@ const AppealPending: React.FC = () => {
     return `${d}-${m}-${y}`;
   };
 
-  const getAppealTiming = (orderDate?: string) => {
-    if (!orderDate) return { label: 'No Order Date', color: 'text-slate-400', dot: 'bg-slate-300' };
-    const start = new Date(orderDate);
-    start.setHours(0, 0, 0, 0);
+  const getAppealTiming = (dueDate?: string) => {
+    if (!dueDate) return { label: 'No Due Date', color: 'text-slate-400', dot: 'bg-slate-300' };
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
-    const due90 = new Date(start);
-    due90.setDate(due90.getDate() + 90);
-    const due120 = new Date(start);
-    due120.setDate(due120.getDate() + 120);
+    const diff = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    const diff90 = Math.round((due90.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    const diff120 = Math.round((due120.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diff90 >= 0) return { label: `${diff90} Days Left`, color: 'text-amber-600', dot: 'bg-amber-500' };
-    if (diff120 >= 0) return { label: `${diff120} Ext. Days`, color: 'text-orange-600', dot: 'bg-orange-500 animate-pulse' };
-    return { label: `${Math.abs(diff120)} Overdue`, color: 'text-red-600', dot: 'bg-red-600' };
+    if (diff < 0) return { label: `${Math.abs(diff)} ${Math.abs(diff) === 1 ? 'Day' : 'Days'} Overdue`, color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    if (diff === 0) return { label: 'Today', color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    if (diff <= 7) return { label: `${diff} ${diff === 1 ? 'Day' : 'Days'}`, color: 'text-red-500', dot: 'bg-red-500 animate-pulse' };
+    return { label: `${diff} ${diff === 1 ? 'Day' : 'Days'}`, color: 'text-slate-700', dot: 'bg-amber-400' };
   };
 
   const filteredRecords = useMemo(() => {
@@ -155,7 +150,7 @@ const AppealPending: React.FC = () => {
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[180px]">Order Ref</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Order Date</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[140px]">Due Date</th>
-                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Deadline</th>
+                <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 w-[160px]">Due Days</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center w-[130px]">Status</th>
                 <th className="whitespace-nowrap px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right w-[100px]">Actions</th>
               </tr>
@@ -165,7 +160,7 @@ const AppealPending: React.FC = () => {
                 <tr><td colSpan={10} className="whitespace-nowrap py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Appeals Archived</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
-                  const timing = getAppealTiming(rec.orderDate || rec.issuedDate);
+                  const timing = getAppealTiming(rec.dueDate);
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
