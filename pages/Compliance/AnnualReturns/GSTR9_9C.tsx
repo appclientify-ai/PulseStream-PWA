@@ -8,6 +8,8 @@ import { TableFilter } from '../../../components/TableFilter';
 import { useGSTR9Logic } from './GSTR9_9Clogic';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
+import { ExportMenu } from '../../../components/ExportMenu';
+import { exportToCSV, printList } from '../../../exportUtils';
 
 
 const GSTR9_9C: React.FC = () => {
@@ -137,24 +139,39 @@ const GSTR9_9C: React.FC = () => {
     });
   }, [allClients, search, selectedYear, watchlist, gstr9Filter, gstr9cFilter, getStatus, is9CApplicable]);
 
-  const handleExport = () => {
-    const headers = ["ID", "Trader Name", "Legal Name", "GSTIN", "GSTR-9", "GSTR-9C", "User ID", "Password"].join(",");
+
+  const handleExportCSV = () => {
+    const headers = ["ID", "Trader", "GSTIN", "GSTR-9", "GSTR-9C", "User ID", "Password"].join(",");
     const rows = filteredDisplayList.map(c => {
-      const st = getStatus(c.id);
+      const s = getStatus(c.id);
+      const app9c = is9CApplicable(c.id);
       return [
-        getClientDisplayId(c),
-        c.tradeName || '---',
-        c.legalName,
-        c.gstProfile?.gstin,
-        st.gstr9 ? 'Filed' : 'Pending',
-        is9CApplicable(c.id) ? (st.gstr9c ? 'Filed' : 'Pending') : 'N/A',
-        c.gstProfile?.username,
-        c.gstProfile?.password
-      ].map(v => `"${v || ''}"`).join(",");
-    }).join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `GSTR9_Audit_${selectedYear}.csv`; a.click();
+        getClientDisplayId(c), 
+        c.tradeName, 
+        c.gstProfile?.gstin, 
+        s.gstr9 ? 'Filed' : 'Pending',
+        app9c ? (s.gstr9c ? 'Filed' : 'Pending') : 'N/A',
+        c.gstProfile?.gstPortalUsername || '---',
+        c.gstProfile?.gstPortalPassword || '---'
+      ];
+    });
+    exportToCSV(headers.split(','), rows, 'GSTR9_9C_Audit.csv');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ["ID", "Trader", "GSTIN", "GSTR-9", "GSTR-9C"];
+    const rows = filteredDisplayList.map(c => {
+      const s = getStatus(c.id);
+      const app9c = is9CApplicable(c.id);
+      return [
+        getClientDisplayId(c), 
+        c.tradeName, 
+        c.gstProfile?.gstin, 
+        s.gstr9 ? 'Filed' : 'Pending',
+        app9c ? (s.gstr9c ? 'Filed' : 'Pending') : 'N/A'
+      ];
+    });
+    printList('GSTR-9/9C Audit Returns', headers, rows);
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
@@ -186,8 +203,16 @@ const GSTR9_9C: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Audit Vault</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredDisplayList.length}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">GSTR-9/9C Total</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Filed</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
+            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
@@ -196,7 +221,7 @@ const GSTR9_9C: React.FC = () => {
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="Export CSV"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
+          <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button onClick={() => { setSelectedClient(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-11 px-6 bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all flex items-center gap-2">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Track Entity

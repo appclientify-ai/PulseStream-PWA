@@ -9,6 +9,8 @@ import { TableFilter } from '../../../components/TableFilter';
 import { useITRReturnLogic, RefundStatus } from './ITRReturnlogic';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
+import { ExportMenu } from '../../../components/ExportMenu';
+import { exportToCSV, printList } from '../../../exportUtils';
 
 
 const ITRReturn: React.FC = () => {
@@ -110,24 +112,39 @@ const ITRReturn: React.FC = () => {
     return list;
   }, [clients, search, statusFilter, refundStatusFilter, getStatus]);
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     const headers = ["ID", "Name", "Father Name", "Status", "Filing Date", "Refund Status", "PAN", "Password"].join(",");
     const rows = filteredClients.map(c => {
       const s = getStatus(c.id);
       return [
         getClientDisplayId(c),
         c.legalName,
-        c.itProfile?.fatherName,
+        c.itProfile?.fatherName || '---',
         s.filed ? 'Filed' : 'Pending',
         s.date || '---',
         s.refundStatus || 'N/A',
-        c.itProfile?.pan,
-        c.itProfile?.password
-      ].map(v => `"${v || ''}"`).join(",");
-    }).join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `ITR_Return_${selectedAY}.csv`; a.click();
+        c.itProfile?.pan || '---',
+        c.itProfile?.password || '---'
+      ];
+    });
+    exportToCSV(headers.split(','), rows, 'IT_Returns.csv');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ["ID", "Name", "Father Name", "Status", "Filing Date", "Refund Status", "PAN"];
+    const rows = filteredClients.map(c => {
+      const s = getStatus(c.id);
+      return [
+        getClientDisplayId(c),
+        c.legalName,
+        c.itProfile?.fatherName || '---',
+        s.filed ? 'Filed' : 'Pending',
+        s.date || '---',
+        s.refundStatus || 'N/A',
+        c.itProfile?.pan || '---'
+      ];
+    });
+    printList('IT Returns', headers, rows);
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
@@ -189,7 +206,7 @@ const ITRReturn: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm" title="Export CSV"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
+          <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <select value={selectedAY} onChange={e => setSelectedAY(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>AY {y}</option>)}</select>
           <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
             <span className="text-[9px] font-black text-slate-400 uppercase ">Due:</span>

@@ -5,6 +5,8 @@ import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
+import { ExportMenu } from '../../../components/ExportMenu';
+import { exportToCSV, printList } from '../../../exportUtils';
 
 
 const AppealPending: React.FC = () => {
@@ -116,6 +118,42 @@ const AppealPending: React.FC = () => {
     });
   }, [records, clients, search]);
 
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Trade Name', 'GSTIN', 'Order U/s', 'Order Ref', 'Order Date', 'Due Date', 'Status'];
+    const rows = filteredRecords.map(r => {
+      const c = clients.find(cl => cl.id === r.clientId);
+      return [
+        r.id.substring(0,6),
+        r.clientName,
+        c?.gstProfile?.gstin || '---',
+        'U/s ' + r.section,
+        r.referenceNo || '---',
+        r.issuedDate,
+        r.dueDate,
+        r.status
+      ];
+    });
+    exportToCSV(headers, rows, 'Pending_Appeals.csv');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ['Trade Name', 'GSTIN', 'Order U/s', 'Order Ref', 'Order Date', 'Due Date', 'Status'];
+    const rows = filteredRecords.map(r => {
+      const c = clients.find(cl => cl.id === r.clientId);
+      return [
+        r.clientName,
+        c?.gstProfile?.gstin || '---',
+        'U/s ' + r.section,
+        r.referenceNo || '---',
+        r.issuedDate,
+        r.dueDate,
+        r.status
+      ];
+    });
+    printList('Pending Appeals', headers, rows);
+  };
+
   if (isLoading) return <Loader />;
 
   return (
@@ -132,6 +170,7 @@ const AppealPending: React.FC = () => {
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
+        <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
         <button onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
           Record Appeal

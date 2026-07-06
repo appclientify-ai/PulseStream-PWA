@@ -7,6 +7,8 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { useGSTR4Logic } from './GSTR4logic';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
+import { ExportMenu } from '../../../components/ExportMenu';
+import { exportToCSV, printList } from '../../../exportUtils';
 
 const GSTR4: React.FC = () => {
   const getPreviousFY = () => {
@@ -115,24 +117,30 @@ const GSTR4: React.FC = () => {
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
-const handleExport = () => {
+
+const handleExportCSV = () => {
     const headers = ["ID", "Trader", "GSTIN", "Status", "User ID", "Password"].join(",");
     const rows = filteredClients.map(c => [
       getClientDisplayId(c), 
       c.tradeName, 
       c.gstProfile?.gstin, 
       getStatus(c.id).filed ? 'Filed' : 'Pending',
-      c.gstProfile?.username,
-      c.gstProfile?.password
-    ].map(v => `"${v || ''}"`).join(",")).join("\n");
-    
-    const blob = new Blob([headers + "\n" + rows], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); 
-    a.href = url; 
-    a.download = `GSTR4_${selectedYear}.csv`; 
-    a.click();
-  };
+      c.gstProfile?.gstPortalUsername || '---',
+      c.gstProfile?.gstPortalPassword || '---'
+    ]);
+    exportToCSV(headers.split(','), rows, 'GSTR4_Composition.csv');
+};
+
+const handleExportPDF = () => {
+    const headers = ["ID", "Trader", "GSTIN", "Status"];
+    const rows = filteredClients.map(c => [
+      getClientDisplayId(c), 
+      c.tradeName, 
+      c.gstProfile?.gstin, 
+      getStatus(c.id).filed ? 'Filed' : 'Pending'
+    ]);
+    printList('GSTR-4 Composition Returns', headers, rows);
+};
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -170,7 +178,7 @@ const handleExport = () => {
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleExport} className="h-11 w-11 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl transition-all shadow-sm"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m4 4V4" /></svg></button>
+          <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
         </div>
       </div>

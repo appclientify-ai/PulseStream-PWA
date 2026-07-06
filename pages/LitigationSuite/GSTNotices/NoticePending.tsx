@@ -6,6 +6,8 @@ import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
+import { ExportMenu } from '../../../components/ExportMenu';
+import { exportToCSV, printList } from '../../../exportUtils';
 
 
 const NoticePending: React.FC = () => {
@@ -142,6 +144,41 @@ const NoticePending: React.FC = () => {
     }
     return list;
   }, [records, clients, search, sectionFilter, daysLeftFilter]);
+
+
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Trade Name', 'GSTIN', 'Section', 'Tax Period', 'Notice Date', 'Due Date', 'Status'];
+    const rows = filteredRecords.map(r => {
+      const c = clients.find(cl => cl.id === r.clientId);
+      return [
+        r.id.substring(0,6),
+        r.clientName,
+        c?.gstProfile?.gstin || '---',
+        'U/s ' + r.section,
+        r.taxPeriod || '---',
+        r.issuedDate,
+        r.dueDate,
+        r.status
+      ];
+    });
+    exportToCSV(headers, rows, 'Pending_Notices.csv');
+  };
+
+  const handleExportPDF = () => {
+    const headers = ['Trade Name', 'GSTIN', 'Section', 'Notice Date', 'Due Date', 'Status'];
+    const rows = filteredRecords.map(r => {
+      const c = clients.find(cl => cl.id === r.clientId);
+      return [
+        r.clientName,
+        c?.gstProfile?.gstin || '---',
+        'U/s ' + r.section,
+        r.issuedDate,
+        r.dueDate,
+        r.status
+      ];
+    });
+    printList('Pending Notices', headers, rows);
+  };
 
   if (isLoading) return <Loader />;
 
