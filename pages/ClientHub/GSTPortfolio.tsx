@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { formatDate } from '../../exportUtils';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
@@ -52,7 +53,7 @@ const GSTPortfolio: React.FC = () => {
     const rows = (clients || []).filter(Boolean).map(c => [
       c?.tradeName, c?.legalName, c?.mobile, c?.email, 
       c?.gstProfile?.gstin, c?.gstProfile?.pan, c?.gstProfile?.username, c?.gstProfile?.password,
-      c?.gstProfile?.constitution, c?.gstProfile?.regDate, c?.gstProfile?.regType,
+      c?.gstProfile?.constitution, formatDate(c?.gstProfile?.regDate), c?.gstProfile?.regType,
       c?.gstProfile?.filingFreq, c?.status
     ].map(v => `"${v || ''}"`).join(",")).join("\n");
 

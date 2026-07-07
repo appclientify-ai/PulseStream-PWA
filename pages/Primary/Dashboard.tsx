@@ -12,6 +12,7 @@ import Header from '../../components/Header.tsx';
 import Loader from '../../components/Loader.tsx';
 import InstallBanner from '../../components/InstallBanner.tsx';
 import CommandPalette from '../../components/CommandPalette.tsx';
+import UpcomingDeadlinesWidget from '../../components/UpcomingDeadlinesWidget.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
 import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
@@ -296,9 +297,11 @@ const Dashboard: React.FC = () => {
             {installPrompt && <InstallBanner onInstall={triggerInstall} />}
             
             
-            {/* Attention Summary Card */}
-            <section className="mb-8">
-               <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+              <div className="col-span-1 xl:col-span-2">
+                {/* Attention Summary Card */}
+                <section className="h-full">
+                  <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 h-full">
                   <div className="absolute top-0 right-0 h-40 w-40 bg-red-600/5 -mr-10 -mt-10 rounded-full blur-3xl" />
                   <div className="flex items-center gap-6 relative z-10">
                      <div className="h-16 w-16 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shadow-inner">
@@ -328,10 +331,14 @@ const Dashboard: React.FC = () => {
                         <p className="text-3xl font-black text-slate-900">{pendingCourt}</p>
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">High Court</p>
                      </div>
+                                       </div>
                   </div>
-               </div>
-            </section>
-
+               </section>
+              </div>
+              <div className="col-span-1 min-h-[400px]">
+                 <UpcomingDeadlinesWidget />
+              </div>
+            </div>
             {/* Sector 1: Client Hub */}
             <section>
               <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />

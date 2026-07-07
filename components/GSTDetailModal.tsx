@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Client } from '../types';
+import { formatDate } from '../exportUtils';
 
 interface GSTDetailModalProps {
   isOpen: boolean;
@@ -147,7 +148,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               <Field label="Taxpayer Type" value={client.gstProfile?.regType} />
               <Field label="Filing Frequency" value={client.gstProfile?.filingFreq} />
               <Field label="Jurisdiction" value={client.gstProfile?.jurisdictionType} />
-              <Field label="Registration Date" value={client.gstProfile?.regDate} />
+              <Field label="Registration Date" value={formatDate(client.gstProfile?.regDate)} />
               <Field label="GSTN Status" value={client.gstProfile?.gstStatus} />
               <Field label="Sector" value={client.gstProfile?.jurisdictionType === 'State' ? client.gstProfile?.sector : client.gstProfile?.range} />
             </div>

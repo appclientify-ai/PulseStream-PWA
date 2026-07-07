@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { formatDate } from '../../exportUtils';
 import { Client, GstStatus, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
@@ -11,6 +12,62 @@ interface GstMasterPortfolioProps {
   externalSearch?: string;
   onDataChange?: () => void;
 }
+
+
+const getComplianceStatus = (client: Client) => {
+   if (!client || !client.gstProfile) return null;
+   
+   const freq = client.gstProfile.filingFreq;
+   const isComp = client.gstProfile.regType === 'Composition';
+   
+   const now = new Date();
+   const m = now.getMonth();
+   const calYear = now.getFullYear();
+   const getFY = (month: number, year: number) => {
+     if (month >= 3) return `${year}-${(year + 1).toString().slice(-2)}`;
+     return `${year - 1}-${year.toString().slice(-2)}`;
+   };
+   
+   let prevMonthIdx = m - 1;
+   let mYear = calYear;
+   if (prevMonthIdx < 0) { prevMonthIdx = 11; mYear = calYear - 1; }
+   const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][prevMonthIdx];
+   const monthFY = getFY(prevMonthIdx, mYear);
+   
+   let qIdx;
+   let prevQMonth;
+   let prevQYear = calYear;
+   if (m >= 0 && m <= 2) { qIdx = 2; prevQMonth = 9; prevQYear = calYear - 1; } 
+   else if (m >= 3 && m <= 5) { qIdx = 3; prevQMonth = 0; } 
+   else if (m >= 6 && m <= 8) { qIdx = 0; prevQMonth = 3; } 
+   else { qIdx = 1; prevQMonth = 6; }
+   const quarters = ['April-June (Q1)', 'July-September (Q2)', 'October-December (Q3)', 'January-March (Q4)'];
+   const quarterName = quarters[qIdx];
+   const quarterFY = getFY(prevQMonth, prevQYear);
+
+   if (client.gstProfile.gstStatus === 'Closed') {
+      return { label: 'N/A', color: 'bg-slate-50 text-slate-400 border-slate-200' };
+   }
+
+   if (isComp) {
+      const data = JSON.parse(localStorage.getItem('clientify_composition_filing_v3') || '{}');
+      const pData = data[`${quarterFY}_${quarterName}`] || {};
+      const status = pData[client.id] || {};
+      return status.cmp08 ? { label: 'Filed', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' } : { label: 'Pending', color: 'bg-rose-100 text-rose-700 border-rose-200 animate-pulse' };
+   }
+   
+   if (freq === 'Quarterly') {
+      const data = JSON.parse(localStorage.getItem('clientify_quarterly_filing_v3') || '{}');
+      const pData = data[`${quarterFY}_${quarterName}`] || {};
+      const status = pData[client.id] || {};
+      return status.r3b ? { label: 'Filed', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' } : { label: 'Pending', color: 'bg-rose-100 text-rose-700 border-rose-200 animate-pulse' };
+   }
+   
+   const data = JSON.parse(localStorage.getItem('clientify_monthly_filing_v3') || '{}');
+   const pData = data[`${monthFY}_${monthName}`] || {};
+   const status = pData[client.id] || {};
+   return status.r3b ? { label: 'Filed', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' } : { label: 'Pending', color: 'bg-rose-100 text-rose-700 border-rose-200 animate-pulse' };
+};
 
 const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({ 
   externalSearch = '', 
@@ -175,12 +232,13 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Compliance</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+              <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
@@ -225,6 +283,18 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                      }`}>
                        {client.status}
                      </span>
+                  </td>
+                  <td className=" px-[5.5px] py-[2px]">
+                     {(() => {
+                        const compStat = getComplianceStatus(client);
+                        return compStat ? (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${compStat.color}`}>
+                            {compStat.label}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">---</span>
+                        );
+                     })()}
                   </td>
                   <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
@@ -275,7 +345,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">WhatsApp Creds</span>
           </button>
           <button onClick={() => { 
-              const fullText = `*Client Details*\nTrade Name: ${selectedClient!.tradeName || 'N/A'}\nLegal Name: ${selectedClient!.legalName || 'N/A'}\nMobile: ${selectedClient!.mobile || 'N/A'}\nEmail: ${selectedClient!.email || 'N/A'}\n\n*GST Details*\nGSTIN: ${selectedClient!.gstProfile?.gstin || 'N/A'}\nStatus: ${selectedClient!.gstProfile?.gstStatus || 'N/A'}\nReg Type: ${selectedClient!.gstProfile?.regType || 'N/A'}\nFiling: ${selectedClient!.gstProfile?.filingFreq || 'N/A'}\nReg Date: ${selectedClient!.gstProfile?.regDate || 'N/A'}\nJurisdiction: ${selectedClient!.gstProfile?.jurisdictionType || 'N/A'}\nSector/Range: ${selectedClient!.gstProfile?.sector || selectedClient!.gstProfile?.range || 'N/A'}\n\n*Credentials*\nGST User ID: ${selectedClient!.gstProfile?.username || 'N/A'}\nGST Password: ${selectedClient!.gstProfile?.password || 'N/A'}\n\n*IT Details*\nPAN: ${selectedClient!.itProfile?.pan || 'N/A'}\nIT User ID: ${selectedClient!.itProfile?.username || 'N/A'}\nIT Password: ${selectedClient!.itProfile?.password || 'N/A'}`;
+              const fullText = `*Client Details*\nTrade Name: ${selectedClient!.tradeName || 'N/A'}\nLegal Name: ${selectedClient!.legalName || 'N/A'}\nMobile: ${selectedClient!.mobile || 'N/A'}\nEmail: ${selectedClient!.email || 'N/A'}\n\n*GST Details*\nGSTIN: ${selectedClient!.gstProfile?.gstin || 'N/A'}\nStatus: ${selectedClient!.gstProfile?.gstStatus || 'N/A'}\nReg Type: ${selectedClient!.gstProfile?.regType || 'N/A'}\nFiling: ${selectedClient!.gstProfile?.filingFreq || 'N/A'}\nReg Date: ${formatDate(selectedClient!.gstProfile?.regDate)}\nJurisdiction: ${selectedClient!.gstProfile?.jurisdictionType || 'N/A'}\nSector/Range: ${selectedClient!.gstProfile?.sector || selectedClient!.gstProfile?.range || 'N/A'}\n\n*Credentials*\nGST User ID: ${selectedClient!.gstProfile?.username || 'N/A'}\nGST Password: ${selectedClient!.gstProfile?.password || 'N/A'}\n\n*IT Details*\nPAN: ${selectedClient!.itProfile?.pan || 'N/A'}\nIT User ID: ${selectedClient!.itProfile?.username || 'N/A'}\nIT Password: ${selectedClient!.itProfile?.password || 'N/A'}`;
               shareViaWhatsApp(fullText);
               setActiveActionsId(null);
           }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">

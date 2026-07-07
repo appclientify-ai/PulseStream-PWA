@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Client } from '../types';
+import { formatDate } from '../exportUtils';
 
 interface ITDetailModalProps {
   isOpen: boolean;
@@ -105,7 +106,7 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, 
               <Field label="Trade Name (Optional)" value={client.tradeName} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Field label="DOB / Incorporation" value={client.itProfile?.dob} />
+              <Field label="DOB / Incorporation" value={formatDate(client.itProfile?.dob)} />
               <Field label="Father's Name" value={client.itProfile?.fatherName} />
               <Field label="Mobile No" value={client.mobile} isMono />
               <Field label="Email Address" value={client.email} />
