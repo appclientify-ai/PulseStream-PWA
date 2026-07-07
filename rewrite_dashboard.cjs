@@ -1,9 +1,8 @@
 const fs = require('fs');
-
 const file = 'pages/Primary/Dashboard.tsx';
 let content = fs.readFileSync(file, 'utf8');
 
-const oldGrid = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+const oldStr = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
               <div className="col-span-1 xl:col-span-2">
                 {/* Attention Summary Card */}
                 <section className="h-full">
@@ -37,6 +36,7 @@ const oldGrid = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
                         <p className="text-3xl font-black text-slate-900">{pendingCourt}</p>
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">High Court</p>
                      </div>
+                                       
                   </div>
                   </div>
                </section>
@@ -46,7 +46,7 @@ const oldGrid = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
               </div>
             </div>`;
 
-const newGrid = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+const newStr = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
               <div className="col-span-1 xl:col-span-2 min-h-[400px]">
                  <UpcomingDeadlinesWidget />
               </div>
@@ -89,6 +89,13 @@ const newGrid = `<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
               </div>
             </div>`;
 
-content = content.replace(oldGrid, newGrid);
-fs.writeFileSync(file, content);
-console.log("Patched grid");
+if (content.includes(oldStr)) {
+  content = content.replace(oldStr, newStr);
+  fs.writeFileSync(file, content);
+  console.log("Success replace");
+} else {
+  // Let's use regex
+  content = content.replace(/<div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">[\s\S]*?<\/div>\s*<\/div>\n\s*\{\/\* Sector 1: Client Hub \*\/\}/, newStr + '\n            {/* Sector 1: Client Hub */}');
+  fs.writeFileSync(file, content);
+  console.log("Success regex replace");
+}

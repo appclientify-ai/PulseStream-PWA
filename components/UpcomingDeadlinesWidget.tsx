@@ -66,7 +66,7 @@ const UpcomingDeadlinesWidget: React.FC = () => {
       setDeadlines(upcoming);
       
       checkNotifications(upcoming);
-    } catch (e) {}
+    } catch (e) { console.error(e); }
   };
 
   const checkNotifications = (upcoming: Deadline[]) => {
@@ -127,7 +127,7 @@ const UpcomingDeadlinesWidget: React.FC = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 pr-2">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         {deadlines.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-2">
             <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -136,7 +136,8 @@ const UpcomingDeadlinesWidget: React.FC = () => {
             <p className="text-[10px] font-black uppercase tracking-widest">No upcoming deadlines</p>
           </div>
         ) : (
-          deadlines.slice(0, 6).map(d => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+          {deadlines.slice(0, 10).map(d => {
             const diffTime = d.date.getTime() - new Date().getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const isUrgent = diffDays <= 3 && diffDays >= 0;
@@ -161,13 +162,14 @@ const UpcomingDeadlinesWidget: React.FC = () => {
                 </div>
               </div>
             );
-          })
+          })}
+          </div>
         )}
       </div>
       
-      {deadlines.length > 6 && (
+      {deadlines.length > 10 && (
          <div className="pt-4 mt-2 border-t border-slate-100 text-center shrink-0">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">+{deadlines.length - 6} More Upcoming</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">+{deadlines.length - 10} More Upcoming</p>
          </div>
       )}
     </div>
