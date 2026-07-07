@@ -119,7 +119,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
       a.href = url;
       a.download = opt.filename;
       a.click();
-      window.open(`https://api.whatsapp.com/send?phone=${previewInvoice.miscMobile || ''}&text=${encodeURIComponent(text)}`, '_blank');
+      window.location.href = `whatsapp://send?phone=${previewInvoice.miscMobile || ''}&text=${encodeURIComponent(text)}`;
     });
   };
 

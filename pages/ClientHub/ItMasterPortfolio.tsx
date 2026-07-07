@@ -118,7 +118,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   };
 
   const shareViaWhatsApp = (text: string) => {
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {

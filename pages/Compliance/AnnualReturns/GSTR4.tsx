@@ -150,7 +150,7 @@ const handleExportPDF = () => {
   };
 
   const shareViaWhatsApp = (text: string) => {
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
   if (isLoading) return <Loader />;

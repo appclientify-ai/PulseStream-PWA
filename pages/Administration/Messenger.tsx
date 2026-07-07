@@ -91,8 +91,8 @@ const Messenger: React.FC = () => {
     const client = selectedClientsList[queueIndex];
     if (!client) return;
     const personalizedMsg = formatMessage(templateText, client);
-    const url = `https://api.whatsapp.com/send?phone=91${client.mobile}&text=${encodeURIComponent(personalizedMsg)}`;
-    window.open(url, '_blank');
+    const url = `whatsapp://send?phone=91${client.mobile}&text=${encodeURIComponent(personalizedMsg)}`;
+    window.location.href = url;
     if (queueIndex < selectedClientsList.length - 1) setQueueIndex(queueIndex + 1);
     else {
       toast.success("Broadcast Sequence Completed!");
