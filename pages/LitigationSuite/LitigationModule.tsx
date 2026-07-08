@@ -38,6 +38,18 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
     fetchAll();
   }, [category, status]);
 
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteLitigationRecord(id);
+      toast.success('Record deleted successfully');
+      setIsModalOpen(false);
+      fetchAll();
+    } catch (error) {
+      toast.error('Failed to delete record');
+    }
+  };
+
   const handleSave = async (data: Partial<LitigationRecord>) => {
     await api.saveLitigationRecord({ ...data, category });
     setIsModalOpen(false);
@@ -110,7 +122,7 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
         </div>
       </div>
 
-      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category={category} initialData={selectedRecord} />
+      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category={category} initialData={selectedRecord} />
     </div>
   );
 };

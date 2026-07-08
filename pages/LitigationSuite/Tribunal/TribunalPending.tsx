@@ -36,6 +36,18 @@ const TribunalPending: React.FC = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteLitigationRecord(id);
+      toast.success('Record deleted successfully');
+      setIsModalOpen(false);
+      fetchAll();
+    } catch (error) {
+      toast.error('Failed to delete record');
+    }
+  };
+
   const handleSave = async (data: Partial<LitigationRecord>) => {
     await api.saveLitigationRecord({ ...data, category: 'Tribunal' });
     setIsModalOpen(false);
@@ -215,7 +227,7 @@ const TribunalPending: React.FC = () => {
         </div>
       )}
 
-      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category="Tribunal" initialData={selectedRecord} />
+      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category="Tribunal" initialData={selectedRecord} />
     </div>
   );
 };

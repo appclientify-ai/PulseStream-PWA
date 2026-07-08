@@ -37,6 +37,18 @@ const TribunalDemand: React.FC = () => {
 
   useEffect(() => { fetchAll(); }, []);
 
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteLitigationRecord(id);
+      toast.success('Record deleted successfully');
+      setIsModalOpen(false);
+      fetchAll();
+    } catch (error) {
+      toast.error('Failed to delete record');
+    }
+  };
+
   const handleSave = async (data: Partial<LitigationRecord>) => {
     await api.saveLitigationRecord({ ...data });
     setIsModalOpen(false);
@@ -193,7 +205,7 @@ const TribunalDemand: React.FC = () => {
         </div>
       )}
 
-      <NoticeForm isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setIsReissueMode(false); }} onSave={handleSave} clients={clients} category={targetCategory} initialData={selectedRecord} isReissue={isReissueMode} />
+      <NoticeForm isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setIsReissueMode(false); }} onSave={handleSave} onDelete={handleDelete} clients={clients} category={targetCategory} initialData={selectedRecord} isReissue={isReissueMode} />
     </div>
   );
 };

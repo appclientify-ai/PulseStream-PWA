@@ -51,8 +51,7 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
     const query = formData.clientName?.toLowerCase() || '';
     if (!query || initialData) return [];
     return dbClients.filter(c => 
-      c.legalName.toLowerCase().includes(query) || 
-      c.tradeName.toLowerCase().includes(query)
+      (c.legalName || '').toLowerCase().includes(query) || (c.tradeName || '').toLowerCase().includes(query)
     ).slice(0, 5);
   }, [formData.clientName, dbClients, initialData]);
 

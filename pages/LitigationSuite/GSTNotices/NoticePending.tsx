@@ -448,7 +448,7 @@ const NoticePending: React.FC = () => {
         </div>
       )}
 
-      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} clients={clients} category="Notice" initialData={selectedRecord} />
+      <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category="Notice" initialData={selectedRecord} />
     </div>
   );
 };

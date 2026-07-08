@@ -6,13 +6,14 @@ interface NoticeFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: Partial<LitigationRecord>) => void;
+  onDelete?: (id: string) => void;
   clients: Client[];
   category: LitigationCategory;
   initialData?: Partial<LitigationRecord> | null;
   isReissue?: boolean;
 }
 
-const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, clients: propClients, category, initialData, isReissue }) => {
+const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDelete, clients: propClients, category, initialData, isReissue }) => {
   const [formData, setFormData] = useState<Partial<LitigationRecord>>({
     status: 'Pending',
     category: category,
@@ -286,8 +287,14 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, client
         </div>
 
         <div className="flex gap-4 pt-4 shrink-0">
+          {onDelete && initialData?.id && (
+            <button type="button" onClick={() => onDelete(initialData.id!)} className="flex-1 py-4 text-red-500 font-black uppercase tracking-widest text-[10px] border border-red-200 bg-red-50 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
+               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+               Delete
+            </button>
+          )}
           <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
-          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save Litigation</button>
+          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save</button>
         </div>
       </form>
     </div>

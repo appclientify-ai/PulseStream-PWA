@@ -153,6 +153,7 @@ class ApiService {
     return items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i));
   }
 
+  async deleteLitigationRecord(id: string): Promise<void> { await this.delete(`/items/${id}`); }
   async saveLitigationRecord(record: Partial<LitigationRecord>): Promise<LitigationRecord> {
     const payload = { name: 'litigation', data: record };
     const res = record.id 
