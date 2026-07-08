@@ -158,6 +158,8 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Email ID</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
@@ -173,7 +175,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
+              <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-emerald-50/10 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
@@ -188,6 +190,12 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
+                  </td>
+                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
+                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.email}>{client.email || '---'}</p>
+                  </td>
+                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
+                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.address}>{client.address || '---'}</p>
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/pan">

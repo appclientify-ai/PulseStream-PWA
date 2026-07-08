@@ -45,13 +45,13 @@ const GSTPortfolio: React.FC = () => {
 
   const handleExportCSV = () => {
     const headers = [
-      "Trade Name", "Legal Name", "Mobile", "Email", "GSTIN", "PAN", 
+      "Trade Name", "Legal Name", "Mobile", "Email", "Address", "GSTIN", "PAN", 
       "Portal User ID", "Portal Password", "Constitution", "Registration Date", 
       "Category", "Filing Frequency", "Status"
     ].join(",");
 
     const rows = (clients || []).filter(Boolean).map(c => [
-      c?.tradeName, c?.legalName, c?.mobile, c?.email, 
+      c?.tradeName, c?.legalName, c?.mobile, c?.email, c?.address,
       c?.gstProfile?.gstin, c?.gstProfile?.pan, c?.gstProfile?.username, c?.gstProfile?.password,
       c?.gstProfile?.constitution, formatDate(c?.gstProfile?.regDate), c?.gstProfile?.regType,
       c?.gstProfile?.filingFreq, c?.status
