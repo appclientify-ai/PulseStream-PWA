@@ -75,6 +75,9 @@ const Dashboard: React.FC = () => {
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
   const [miscWork, setMiscWork] = useState<any[]>([]);
+  const [gstReg, setGstReg] = useState<any[]>([]);
+  const [foodLic, setFoodLic] = useState<any[]>([]);
+  const [msme, setMsme] = useState<any[]>([]);
 
   // Form Modals
   const [isGstModalOpen, setIsGstModalOpen] = useState(false);
@@ -105,6 +108,9 @@ const Dashboard: React.FC = () => {
       setInvoices(summary.invoices);
       setLitigation(summary.litigation);
       setMiscWork(summary.work);
+      setGstReg(summary.gstReg || []);
+      setFoodLic(summary.foodLic || []);
+      setMsme(summary.msme || []);
     } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
   }, [token]);
 
@@ -567,9 +573,9 @@ const Dashboard: React.FC = () => {
             <section>
               <SectionHeader title="Service Desk" subtitle="New Enrollments & Work Logs" />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                 <CompactCard label="GST Reg." count={(clients || []).filter(c => c && c.status === 'Active').length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
-                 <CompactCard label="Food License" count={0} viewId="misc-food-lic" color="bg-emerald-500" icon={<path d="M3 3h2l.4 2" />} />
-                 <CompactCard label="MSME Reg." count={0} viewId="misc-msme" color="bg-blue-500" icon={<path d="M21 13.255A23.931 23.931 0 0112 15" />} />
+                 <CompactCard label="GST Reg." count={gstReg.length} viewId="misc-gst-reg" color="bg-indigo-500" icon={<path d="M9 12l2 2 4-4" />} />
+                 <CompactCard label="Food License" count={foodLic.length} viewId="misc-food-lic" color="bg-emerald-500" icon={<path d="M3 3h2l.4 2" />} />
+                 <CompactCard label="MSME Reg." count={msme.length} viewId="misc-msme" color="bg-blue-500" icon={<path d="M21 13.255A23.931 23.931 0 0112 15" />} />
                  <CompactCard label="Work Log" count={miscWork.length} viewId="misc-work" color="bg-slate-700" icon={<path d="M12 8v4l3 3" />} />
               </div>
             </section>

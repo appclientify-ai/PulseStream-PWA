@@ -34,7 +34,7 @@ const MSMERegistration: React.FC = () => {
     return records.filter(r => 
       (r.clientName || '').toLowerCase().includes(s) || 
       (r.udyamNumber && r.udyamNumber.toLowerCase().includes(s))
-    ).sort((a, b) => new Date(b.appDate).getTime() - new Date(a.appDate).getTime());
+    ).sort((a, b) => (new Date(b.appDate || 0).getTime() || 0) - (new Date(a.appDate || 0).getTime() || 0));
   }, [records, search]);
 
   const stats = useMemo(() => {

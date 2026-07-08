@@ -33,9 +33,9 @@ const Miscellaneouswork: React.FC = () => {
     const s = search.toLowerCase();
     return records.filter(r => 
       (r.clientName || '').toLowerCase().includes(s) || 
-      (r.description || '').toLowerCase().includes(s) ||
-      (r.assignedTo || '').toLowerCase().includes(s)
-    ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      (String(r.description || '')).toLowerCase().includes(s) ||
+      (String(r.assignedTo || '')).toLowerCase().includes(s)
+    ).sort((a, b) => (new Date(b.startDate || 0).getTime() || 0) - (new Date(a.startDate || 0).getTime() || 0));
   }, [records, search]);
 
   const stats = useMemo(() => {

@@ -119,13 +119,19 @@ class ApiService {
       this.getClients(),
       this.getLitigationRecords(),
       this.getInvoices(),
-      this.getMiscWork()
+      this.getMiscWork(),
+      this.getGSTRegistrations(),
+      this.getFoodLicenses(),
+      this.getMSMERegistrations()
     ]);
     return {
       clients: results[0].status === 'fulfilled' ? results[0].value : [],
       litigation: results[1].status === 'fulfilled' ? results[1].value : [],
       invoices: results[2].status === 'fulfilled' ? results[2].value : [],
-      work: results[3].status === 'fulfilled' ? results[3].value : []
+      work: results[3].status === 'fulfilled' ? results[3].value : [],
+      gstReg: results[4].status === 'fulfilled' ? results[4].value : [],
+      foodLic: results[5].status === 'fulfilled' ? results[5].value : [],
+      msme: results[6].status === 'fulfilled' ? results[6].value : []
     };
   }
 

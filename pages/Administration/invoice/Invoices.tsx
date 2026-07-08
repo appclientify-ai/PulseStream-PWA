@@ -6,6 +6,7 @@ import Loader from '../../../components/Loader';
 import { QRCodeSVG } from 'qrcode.react';
 
 import html2pdf from 'html2pdf.js';
+import { TableFilter } from '../../../components/TableFilter';
 
 interface InvoicesProps {
   onViewChange?: (view: string, extra?: any) => void;
@@ -47,9 +48,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();
     let list = invoices.filter(i => 
-      i.invoiceNo.toLowerCase().includes(s) || 
-      i.clientName.toLowerCase().includes(s)
-    ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      (i.status !== 'Paid') && 
+      (i.invoiceNo.toLowerCase().includes(s) || 
+      i.clientName.toLowerCase().includes(s))
+    ).sort((a,b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
     if (statusFilter !== 'All') {
       list = list.filter(i => i.status === statusFilter);
@@ -176,7 +178,15 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Amount</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
+    <div className="flex justify-center flex-col items-center">
+      <TableFilter label="Status" isActive={statusFilter !== 'All'}>
+         {['All', 'Draft', 'Sent'].map(st => (
+           <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+         ))}
+      </TableFilter>
+    </div>
+  </th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
@@ -189,7 +199,24 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientName}</td>
                   <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">₹{inv.totalAmount.toLocaleString()}</td>
                   <td className=" px-6 py-6 text-center">
-                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-400'}`}>{inv.status}</span>
+                     <select
+                       value={inv.status}
+                       onChange={async (e) => {
+                         const val = e.target.value;
+                         if (val === 'Paid') {
+                           setSettlingInvoice(inv);
+                         } else {
+                           const updated = { ...inv, status: val as any };
+                           await api.saveInvoice(updated);
+                           fetchAll();
+                         }
+                       }}
+                       className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
+                     >
+                       <option value="Draft">Draft</option>
+                       <option value="Sent">Invoice Sent</option>
+                       <option value="Paid">Payment Received</option>
+                     </select>
                   </td>
                   <td className="px-6 py-6 text-right ">
                      <div className="flex items-center justify-end gap-2">
@@ -213,6 +240,46 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           </table>
         </div>
       </div>
+
+      
+      {/* Settling Modal */}
+      {settlingInvoice && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col p-8 space-y-6">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Record Payment</h3>
+              
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Payment Date</label>
+                <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={payDate} onChange={e => setPayDate(e.target.value)} />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Payment Mode</label>
+                <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={payMode} onChange={e => setPayMode(e.target.value as any)}>
+                  <option value="Online">Online / NEFT</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </div>
+
+              {payMode === 'Cheque' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Cheque / Reference No</label>
+                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-emerald-50"
+                    value={chequeNo} onChange={e => setChequeNo(e.target.value)} placeholder="000000" />
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setSettlingInvoice(null)} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancel</button>
+                <button type="button" onClick={handleReceiveConfirm} className="flex-[2] bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Confirm Payment</button>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Invoice Preview Modal */}
       {previewInvoice && (

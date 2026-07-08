@@ -33,9 +33,9 @@ const FoodLicenses: React.FC = () => {
     const s = search.toLowerCase();
     return records.filter(r => 
       (r.clientName || '').toLowerCase().includes(s) || 
-      (r.mobile && r.mobile.includes(s)) || 
-      (r.licenseNo && r.licenseNo.toLowerCase().includes(s))
-    ).sort((a, b) => new Date(b.appDate).getTime() - new Date(a.appDate).getTime());
+      (r.mobile && String(r.mobile).includes(s)) || 
+      (r.licenseNo && String(r.licenseNo).toLowerCase().includes(s))
+    ).sort((a, b) => (new Date(b.appDate || 0).getTime() || 0) - (new Date(a.appDate || 0).getTime() || 0));
   }, [records, search]);
 
   const stats = useMemo(() => {
