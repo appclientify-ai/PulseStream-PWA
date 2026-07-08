@@ -1,63 +1,65 @@
 const fs = require('fs');
 
-const filesToPatch = [
-    'pages/Compliance/ITAudit/ITRReturn.tsx',
-    'pages/Compliance/AnnualReturns/GSTR9_9C.tsx',
-    'pages/Compliance/AnnualReturns/GSTR4.tsx',
-    'pages/ClientHub/GstMasterPortfolio.tsx',
-    'pages/ClientHub/ItMasterPortfolio.tsx'
-];
+function patchFile(file) {
+  let content = fs.readFileSync(file, 'utf8');
 
-for (const file of filesToPatch) {
-    if (fs.existsSync(file)) {
-        let content = fs.readFileSync(file, 'utf8');
-        content = content.replace(
-            /window\.open\(\`https:\/\/api\.whatsapp\.com\/send\?text=\$\{encodeURIComponent\(text\)\}\`, '_blank'\);/g,
-            "window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;"
-        );
-        fs.writeFileSync(file, content);
-        console.log('Patched', file);
-    }
+  // Add state for Share Modal
+  content = content.replace("const [isEditModalOpen, setIsEditModalOpen] = useState(false);", "const [isEditModalOpen, setIsEditModalOpen] = useState(false);\n  const [shareText, setShareText] = useState('');\n  const [isShareModalOpen, setIsShareModalOpen] = useState(false);\n  const [selectedNote, setSelectedNote] = useState('');");
+
+  // Modify shareViaWhatsApp to just trigger the modal
+  content = content.replace(
+    "const shareViaWhatsApp = (text: string) => {\n    window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;\n  };",
+    `const handleShareClick = (text: string) => {
+    setShareText(text);
+    setIsShareModalOpen(true);
+  };
+  
+  const proceedShare = () => {
+    const final = shareText + (selectedNote ? '\\n\\n*Note:*\\n' + selectedNote : '');
+    window.location.href = \`whatsapp://send?text=\${encodeURIComponent(final)}\`;
+    setIsShareModalOpen(false);
+  };`
+  );
+
+  // Replace shareViaWhatsApp calls
+  content = content.replace(/shareViaWhatsApp\(creds\);/g, "handleShareClick(creds);");
+  content = content.replace(/shareViaWhatsApp\(fullText\);/g, "handleShareClick(fullText);");
+
+  // Add the Share Modal UI
+  const modalUI = `
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-black text-slate-900 uppercase mb-4">Append Note</h3>
+            <textarea
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-bold outline-none h-32 mb-4 focus:ring-4 focus:ring-emerald-50"
+              placeholder="Select a note or type here..."
+              value={selectedNote}
+              onChange={(e) => setSelectedNote(e.target.value)}
+            />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
+               {(() => {
+                 const saved = localStorage.getItem('clientify_custom_templates');
+                 const templates = saved ? JSON.parse(saved) : [];
+                 return templates.map((t: any, i: number) => (
+                   <button key={i} onClick={() => setSelectedNote(t.text)} className="shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-600 hover:bg-slate-200">{t.label}</button>
+                 ));
+               })()}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setIsShareModalOpen(false)} className="flex-1 py-3 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl">Cancel</button>
+              <button onClick={proceedShare} className="flex-1 py-3 bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-emerald-600/20">Share Now</button>
+            </div>
+          </div>
+        </div>
+      )}
+  `;
+  content = content.replace('{/* Client Details Modal */}', modalUI + '\n      {/* Client Details Modal */}');
+
+  fs.writeFileSync(file, content);
+  console.log("Patched " + file);
 }
 
-const gstFilingFiles = [
-    'pages/Compliance/GSTReturn/QuarterlyFiling.tsx',
-    'pages/Compliance/GSTReturn/CompositionFiling.tsx',
-    'pages/Compliance/GSTReturn/MonthlyFiling.tsx'
-];
-
-for (const file of gstFilingFiles) {
-    if (fs.existsSync(file)) {
-        let content = fs.readFileSync(file, 'utf8');
-        content = content.replace(
-            /window\.open\(\`https:\/\/wa\.me\/\?text=\$\{encodeURIComponent\(text\)\}\`, '_blank'\);/g,
-            "window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;"
-        );
-        fs.writeFileSync(file, content);
-        console.log('Patched', file);
-    }
-}
-
-const messengerFile = 'pages/Administration/Messenger.tsx';
-if (fs.existsSync(messengerFile)) {
-    let content = fs.readFileSync(messengerFile, 'utf8');
-    content = content.replace(
-        /const url = \`https:\/\/api\.whatsapp\.com\/send\?phone=91\$\{client\.mobile\}&text=\$\{encodeURIComponent\(personalizedMsg\)\}\`;/g,
-        "const url = `whatsapp://send?phone=91${client.mobile}&text=${encodeURIComponent(personalizedMsg)}`;"
-    );
-    // Messenger uses window.open(url, '_blank') later? Let's check.
-    fs.writeFileSync(messengerFile, content);
-    console.log('Patched', messengerFile);
-}
-
-const invoicesFile = 'pages/Administration/invoice/Invoices.tsx';
-if (fs.existsSync(invoicesFile)) {
-    let content = fs.readFileSync(invoicesFile, 'utf8');
-    content = content.replace(
-        /window\.open\(\`https:\/\/api\.whatsapp\.com\/send\?phone=\$\{previewInvoice\.miscMobile \|\| ''\}&text=\$\{encodeURIComponent\(text\)\}\`, '_blank'\);/g,
-        "window.location.href = `whatsapp://send?phone=${previewInvoice.miscMobile || ''}&text=${encodeURIComponent(text)}`;"
-    );
-    fs.writeFileSync(invoicesFile, content);
-    console.log('Patched', invoicesFile);
-}
-
+patchFile('pages/ClientHub/GstMasterPortfolio.tsx');
+patchFile('pages/ClientHub/ItMasterPortfolio.tsx');

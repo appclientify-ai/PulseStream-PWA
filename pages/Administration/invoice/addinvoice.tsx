@@ -78,7 +78,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     setClientLegalName(c.legalName);
     setClientGstin(c.gstProfile?.gstin || c.itProfile?.pan || '');
     setClientMobile(c.mobile);
-    setClientAddress(c.gstProfile?.address || '');
+    setClientAddress(c.address || '');
     setIsDropdownOpen(false);
   };
 
@@ -179,9 +179,11 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
               {isDropdownOpen && filteredClients.length > 0 && (
                 <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 overflow-hidden max-h-60 overflow-y-auto no-scrollbar">
                   {filteredClients.map(c => (
-                    <button key={c.id} onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all group">
-                      <p className="text-xs font-black text-slate-900 group-hover:text-indigo-700">{c.legalName}</p>
-                      <p className="text-[10px] text-slate-400 font-mono uppercase">{c.gstProfile?.gstin || c.itProfile?.pan || 'NO ID'}</p>
+                    <button key={c.id} onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 rounded-xl transition-all group border-b border-slate-100 last:border-none">
+                      <p className="text-xs font-black text-slate-900 group-hover:text-indigo-700">{c.legalName} {c.tradeName ? `(${c.tradeName})` : ''}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">ID: {c.gstProfile?.gstin || c.itProfile?.pan || 'NO ID'}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">Mob: {c.mobile || 'N/A'}</p>
+                      {c.address && <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{c.address}</p>}
                     </button>
                   ))}
                 </div>

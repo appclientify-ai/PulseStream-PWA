@@ -186,6 +186,16 @@ class ApiService {
     const invs = await this.getInvoices();
     const inv = invs.find(i => i.id === invoiceId);
     if (!inv) return;
+
+    const existingPayments = await this.getPayments();
+    if (existingPayments.some(p => p.invoiceNo === inv.invoiceNo)) {
+       inv.status = 'Paid';
+       inv.paymentDate = paymentData.date;
+       inv.paymentMode = paymentData.mode;
+       await this.saveInvoice(inv);
+       return;
+    }
+
     inv.status = 'Paid';
     inv.paymentDate = paymentData.date;
     inv.paymentMode = paymentData.mode;
@@ -216,6 +226,7 @@ class ApiService {
     return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
   }
 
+  async deletePayment(id: string) { await this.delete(`/items/${id}`); }
   async savePayment(payment: Partial<PaymentRecord>): Promise<PaymentRecord> {
     const payload = { name: 'payment', data: payment };
     const res = payment.id ? await this.put(`/items/${payment.id}`, payload) : await this.post('/items', payload);

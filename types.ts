@@ -104,6 +104,7 @@ export interface Client {
   tradeName: string;
   mobile: string;
   email: string;
+  address?: string; // Client address
   status: ClientStatus;
   gstProfile?: GSTProfile;
   itProfile?: ITProfile;

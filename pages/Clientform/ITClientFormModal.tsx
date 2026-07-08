@@ -22,7 +22,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
     legalName: '',
     tradeName: '',
     mobile: '',
-    email: '',
+    email: '', address: '',
     status: 'Active',
     itProfile: {
       pan: '',
@@ -241,6 +241,10 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Email ID</label>
                    <input type="email" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black outline-none focus:border-indigo-600 focus:bg-white transition-all" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="Email Address" />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Client Address</label>
+                   <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:border-indigo-600 focus:bg-white transition-all resize-none" rows={2} value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full Address" />
+                </div>
                 <div className="space-y-2">
                    <label className="text-[10px] font-black text-slate-400 tracking-widest ml-1">DOB / Incorporation</label>
                    <input type="date" className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none focus:bg-white transition-all uppercase" value={formData.itProfile?.dob} onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, dob: e.target.value}})} />
@@ -257,6 +261,10 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                    <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Email Address</label>
                       <input className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none lowercase" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="client@firm.com" />
+                   </div>
+                   <div className="space-y-2 md:col-span-2">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Client Address</label>
+                      <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold outline-none resize-none" rows={2} value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Full Address" />
                    </div>
                 </div>
              </div>
