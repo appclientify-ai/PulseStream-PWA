@@ -143,6 +143,11 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               <Field label="Trade Name" value={client.tradeName} />
               <Field label="Legal Name" value={client.legalName} />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Field label="Mobile No" value={client.mobile} isMono />
+              <Field label="Email Address" value={client.email} />
+              <Field label="Client Address" value={client.address} className="md:col-span-1" />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Field label="Business Type" value={client.gstProfile?.constitution} />
               <Field label="Taxpayer Type" value={client.gstProfile?.regType} />

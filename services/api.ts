@@ -203,6 +203,7 @@ class ApiService {
     await this.savePayment({
       clientId: inv.clientId,
       clientName: inv.clientName,
+      clientTradeName: inv.clientTradeName,
       invoiceNo: inv.invoiceNo,
       date: paymentData.date,
       amount: inv.totalAmount,

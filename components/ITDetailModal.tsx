@@ -111,6 +111,9 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, 
               <Field label="Mobile No" value={client.mobile} isMono />
               <Field label="Email Address" value={client.email} />
             </div>
+            <div className="grid grid-cols-1 gap-6">
+              <Field label="Client Address" value={client.address} />
+            </div>
           </section>
 
           {/* 4. Professional Profile */}

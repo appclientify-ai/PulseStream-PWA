@@ -158,9 +158,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Email ID</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
+                            <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
@@ -175,7 +173,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
+              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-emerald-50/10 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
@@ -191,13 +189,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
-                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.email}>{client.email || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.address}>{client.address || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
+                                    <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/pan">
                         <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
                         <button 
@@ -271,7 +263,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">IT Portal Login</span>
           </button>
           <button onClick={() => { 
-              const creds = `*Income Tax Credentials*\n*Entity:* ${selectedClient!.legalName}\n*PAN:* ${selectedClient!.itProfile?.pan}\n*Password:* ${selectedClient!.itProfile?.password}`;
+              const creds = `*Income Tax Credentials*\n*Entity:* ${selectedClient!.legalName}\n*PAN:* ${selectedClient!.itProfile?.pan}\n*User ID:* ${selectedClient!.itProfile?.username}\n*Password:* ${selectedClient!.itProfile?.password}`;
               handleShareClick(creds);
               setActiveActionsId(null);
           }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group border-t border-slate-50">
@@ -306,6 +298,35 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           {['All', 'Active', 'Inactive'].map(f => (
             <button key={f} onClick={() => { setStatusFilter(f); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
           ))}
+        </div>
+      )}
+
+      
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-black text-slate-900 uppercase mb-4">Append Note</h3>
+            <textarea
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-bold outline-none h-32 mb-4 focus:ring-4 focus:ring-emerald-50"
+              placeholder="Select a note or type here..."
+              value={selectedNote}
+              onChange={(e) => setSelectedNote(e.target.value)}
+            />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
+               {(() => {
+                 const saved = localStorage.getItem('clientify_custom_templates');
+                 const templates = saved ? JSON.parse(saved) : [];
+                 return templates.map((t: any, i: number) => (
+                   <button key={i} onClick={() => setSelectedNote(t.text)} className="shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-600 hover:bg-slate-200">{t.label}</button>
+                 ));
+               })()}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setIsShareModalOpen(false)} className="flex-1 py-3 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={proceedShare} className="flex-1 py-3 bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">Share Now</button>
+            </div>
+          </div>
         </div>
       )}
 

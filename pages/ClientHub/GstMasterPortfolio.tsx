@@ -167,9 +167,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Email ID</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
+                            <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
@@ -191,7 +189,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
               filteredClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
@@ -207,13 +205,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
-                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.email}>{client.email || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                     <p className="font-bold text-slate-600 text-[11px] truncate" title={client.address}>{client.address || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
+                                    <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/gstin">
                         <span className={`font-black font-mono tracking-widest uppercase text-[12px] ${client.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
                         <button 
@@ -310,6 +302,35 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete Permanently</span>
           </button>
+        </div>
+      )}
+
+      
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-black text-slate-900 uppercase mb-4">Append Note</h3>
+            <textarea
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-bold outline-none h-32 mb-4 focus:ring-4 focus:ring-emerald-50"
+              placeholder="Select a note or type here..."
+              value={selectedNote}
+              onChange={(e) => setSelectedNote(e.target.value)}
+            />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
+               {(() => {
+                 const saved = localStorage.getItem('clientify_custom_templates');
+                 const templates = saved ? JSON.parse(saved) : [];
+                 return templates.map((t: any, i: number) => (
+                   <button key={i} onClick={() => setSelectedNote(t.text)} className="shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-600 hover:bg-slate-200">{t.label}</button>
+                 ));
+               })()}
+            </div>
+            <div className="flex gap-4">
+              <button onClick={() => setIsShareModalOpen(false)} className="flex-1 py-3 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={proceedShare} className="flex-1 py-3 bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">Share Now</button>
+            </div>
+          </div>
         </div>
       )}
 

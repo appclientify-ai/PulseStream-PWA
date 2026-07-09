@@ -22,6 +22,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [settings, setSettings] = useState<InvoiceSettings | null>(null);
 
   const [settlingInvoice, setSettlingInvoice] = useState<InvoiceRecord | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [payMode, setPayMode] = useState<'Cash' | 'Online' | 'Cheque' | 'UPI'>('Online');
   const [chequeNo, setChequeNo] = useState('');
@@ -50,7 +51,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     let list = invoices.filter(i => 
       (i.status !== 'Paid') && 
       (i.invoiceNo.toLowerCase().includes(s) || 
-      i.clientName.toLowerCase().includes(s))
+      i.clientName.toLowerCase().includes(s) || (i.clientTradeName && i.clientTradeName.toLowerCase().includes(s)))
     ).sort((a,b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
     if (statusFilter !== 'All') {
@@ -60,14 +61,19 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   }, [invoices, search, statusFilter]);
 
   const handleReceiveConfirm = async () => {
-    if (!settlingInvoice) return;
-    await api.migrateToPayment(settlingInvoice.id, {
-      date: payDate,
-      mode: payMode,
-      chequeNo: payMode === 'Cheque' ? chequeNo : undefined
-    });
-    setSettlingInvoice(null);
-    fetchAll();
+    if (!settlingInvoice || isSaving) return;
+    setIsSaving(true);
+    try {
+      await api.migrateToPayment(settlingInvoice.id, {
+        date: payDate,
+        mode: payMode,
+        chequeNo: payMode === 'Cheque' ? chequeNo : undefined
+      });
+      setSettlingInvoice(null);
+      await fetchAll();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -148,7 +154,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Bills</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{invoices.length}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
@@ -176,7 +182,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Inv. No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client (Trade/Legal)</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Amount</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
     <div className="flex justify-center flex-col items-center">
@@ -196,7 +202,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
                   <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
                   <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{inv.date.split('-').reverse().join('-')}</td>
-                  <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientName}</td>
+                  <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
                   <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">₹{inv.totalAmount.toLocaleString()}</td>
                   <td className=" px-6 py-6 text-center">
                      <select
@@ -275,7 +281,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
               <div className="flex gap-4 pt-4 border-t border-slate-100">
                 <button type="button" onClick={() => setSettlingInvoice(null)} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancel</button>
-                <button type="button" onClick={handleReceiveConfirm} className="flex-[2] bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Confirm Payment</button>
+                <button type="button" disabled={isSaving} onClick={handleReceiveConfirm} className="flex-[2] bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Confirm Payment</button>
               </div>
            </div>
         </div>
@@ -330,7 +336,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Bill To</p>
-                       <h3 className="text-lg font-black uppercase text-slate-900">{previewInvoice.clientName}</h3>
+                       <h3 className="text-lg font-black uppercase text-slate-900">{previewInvoice.clientName}</h3>{previewInvoice.clientTradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.clientTradeName}</p>}
                        {previewInvoice.miscAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.miscAddress}</p>}
                        <p className="text-xs font-bold text-slate-500 uppercase mt-1">Mobile: {previewInvoice.miscMobile || 'N/A'}</p>
                     </div>

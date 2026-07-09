@@ -25,6 +25,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   const [invDate, setInvDate] = useState(new Date().toISOString().split('T')[0]);
   
   const [clientLegalName, setClientLegalName] = useState('');
+  const [clientTradeName, setClientTradeName] = useState('');
   const [clientGstin, setClientGstin] = useState('');
   const [clientMobile, setClientMobile] = useState('');
   const [clientAddress, setClientAddress] = useState('');
@@ -33,6 +34,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     { id: '1', description: '', quantity: 1, rate: 0, taxRate: 18, amount: 0 }
   ]);
   const [status, setStatus] = useState<InvoiceRecord['status']>('Draft');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -50,6 +52,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         setSearchQuery(editingInvoice.clientName);
         setIsMiscClient(!!editingInvoice.isMiscClient);
         setClientLegalName(editingInvoice.clientName);
+        setClientTradeName(editingInvoice.clientTradeName || '');
         setClientMobile(editingInvoice.miscMobile || '');
         setClientAddress(editingInvoice.miscAddress || '');
         setInvDate(editingInvoice.date);
@@ -65,9 +68,13 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
 
   const filteredClients = useMemo(() => {
     if (!searchQuery) return [];
+    const sq = searchQuery.toLowerCase();
     return clients.filter(c => 
-      c.legalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.gstProfile?.gstin || '').toLowerCase().includes(searchQuery.toLowerCase())
+      c.legalName.toLowerCase().includes(sq) ||
+      (c.tradeName || '').toLowerCase().includes(sq) ||
+      (c.gstProfile?.gstin || '').toLowerCase().includes(sq) ||
+      (c.itProfile?.pan || '').toLowerCase().includes(sq) ||
+      (c.mobile || '').toLowerCase().includes(sq)
     );
   }, [clients, searchQuery]);
 
@@ -76,6 +83,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     setSearchQuery(c.legalName);
     setIsMiscClient(false);
     setClientLegalName(c.legalName);
+    setClientTradeName(c.tradeName || '');
     setClientGstin(c.gstProfile?.gstin || c.itProfile?.pan || '');
     setClientMobile(c.mobile);
     setClientAddress(c.address || '');
@@ -110,29 +118,44 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
     if (!clientLegalName) return toast.success('Specify a billing entity.');
-    const dDate = new Date(invDate);
-    dDate.setDate(dDate.getDate() + 15);
+    
+    // Check for duplicate invoice numbers
+    if (!editingInvoice) {
+       const allInvs = await api.getInvoices();
+       if (allInvs.some(i => i.invoiceNo === invoiceNo)) {
+          return toast.error('Invoice number already exists. Please refresh or use another number.');
+       }
+    }
 
-    const record: Partial<InvoiceRecord> = {
-      id: editingInvoice?.id,
-      clientId: isMiscClient ? 'misc' : selectedClientId,
-      clientName: clientLegalName,
-      isMiscClient,
-      miscMobile: clientMobile,
-      miscAddress: clientAddress,
-      invoiceNo,
-      date: invDate,
-      dueDate: dDate.toISOString().split('T')[0],
-      items,
-      subTotal: totals.subTotal,
-      totalTax: totals.totalTax,
-      totalAmount: totals.grandTotal,
-      status
-    };
-
-    await api.saveInvoice(record);
-    onBack();
+    setIsSaving(true);
+    try {
+      const dDate = new Date(invDate);
+      dDate.setDate(dDate.getDate() + 15);
+      const record: Partial<InvoiceRecord> = {
+        id: editingInvoice?.id,
+        clientId: isMiscClient ? 'misc' : selectedClientId,
+        clientName: clientLegalName,
+        clientTradeName: clientTradeName,
+        isMiscClient,
+        miscMobile: clientMobile,
+        miscAddress: clientAddress,
+        invoiceNo,
+        date: invDate,
+        dueDate: dDate.toISOString().split('T')[0],
+        items,
+        subTotal: totals.subTotal,
+        totalTax: totals.totalTax,
+        totalAmount: totals.grandTotal,
+        status
+      };
+      await api.saveInvoice(record);
+      onBack();
+    } catch (e) {
+      setIsSaving(false);
+      toast.error('Failed to save invoice.');
+    }
   };
 
   if (isLoading) return <Loader />;
@@ -150,7 +173,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
           </div>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleSave} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-10 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs">
+          <button disabled={isSaving} onClick={handleSave} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-10 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs">
             Commit Invoice
           </button>
         </div>
@@ -194,7 +217,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                  <div className="mt-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-top-4">
                     <div className="flex-1">
                        <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest mb-1">Billed To</p>
-                       <p className="text-sm font-black text-slate-900 uppercase">{clientLegalName}</p>
+                       <p className="text-sm font-black text-slate-900 uppercase">{clientLegalName}</p>{clientTradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-0.5">{clientTradeName}</p>}
                        {clientAddress && <p className="text-[10px] font-medium text-slate-500 mt-1 uppercase leading-relaxed">{clientAddress}</p>}
                     </div>
                     <div className="flex flex-col gap-3 min-w-full">

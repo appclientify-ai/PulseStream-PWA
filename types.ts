@@ -126,6 +126,7 @@ export interface InvoiceRecord {
   id: string;
   clientId: string;
   clientName: string;
+  clientTradeName?: string;
   invoiceNo: string;
   date: string;
   dueDate: string;
@@ -163,6 +164,7 @@ export interface PaymentRecord {
   id: string;
   clientId: string;
   clientName: string;
+  clientTradeName?: string;
   invoiceNo?: string;
   invoiceDate?: string;
   date: string;
