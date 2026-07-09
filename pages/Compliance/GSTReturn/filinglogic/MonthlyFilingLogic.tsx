@@ -85,12 +85,8 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
     }
   }
 
-  // 3. Status Check (Inactive)
-  if (client.status === 'Inactive') {
-    const now = new Date();
-    const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    if (periodDate >= currentMonthDate) return false;
-  }
+  // 3. Status Check (Inactive / Litigation)
+  if (client.status === 'Litigation' || client.status === 'Inactive') return false;
 
   return true;
 };
@@ -113,6 +109,8 @@ export const isClientVisibleInFY = (client: Client, fy: string) => {
     const cancelDate = new Date(client.gstProfile.cancelDate);
     if (cancelDate < fyStart) return false;
   }
+
+  if (client.status === 'Litigation' || client.status === 'Inactive') return false;
 
   return true;
 };

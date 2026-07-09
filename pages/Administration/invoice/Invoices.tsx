@@ -326,6 +326,11 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        </div>
                        <div className="text-right">
                           <h2 className="text-4xl font-black text-slate-200 uppercase tracking-tighter">Invoice</h2>
+                          {previewInvoice.status === 'Paid' && (
+                             <div className="mt-2 inline-block border-2 border-emerald-500 text-emerald-600 px-3 py-1 rounded-lg bg-emerald-50">
+                                <p className="text-xl font-black uppercase tracking-widest leading-none">PAID</p>
+                             </div>
+                          )}
                           <div className="mt-4 space-y-1">
                              <p className="text-xs font-bold text-slate-500 uppercase">Invoice No: <span className="text-slate-900">{previewInvoice.invoiceNo}</span></p>
                              <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{previewInvoice.date.split('-').reverse().join('-')}</span></p>

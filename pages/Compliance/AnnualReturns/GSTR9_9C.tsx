@@ -34,6 +34,7 @@ const GSTR9_9C: React.FC = () => {
   const [isEditApplicabilityOpen, setIsEditApplicabilityOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [is9CApplicableState, setIs9CApplicableState] = useState(true);
+  const [turnoverState, setTurnoverState] = useState('');
     const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
 
@@ -92,10 +93,7 @@ const GSTR9_9C: React.FC = () => {
     const currentWatchlist = watchlist[selectedYear] || [];
     const baseClients = allClients.filter(c => {
       if (!c) return false;
-      const inWatchlist = currentWatchlist.includes(c.id);
-      const visibleNormally = isClientVisibleInFY(c, selectedYear);
-      if (!inWatchlist && !visibleNormally) return false;
-      return true;
+      return currentWatchlist.includes(c.id);
     });
     total = baseClients.length;
     baseClients.forEach(c => {
@@ -113,12 +111,7 @@ const GSTR9_9C: React.FC = () => {
     return allClients.filter(c => {
       if (!c) return false;
       const inWatchlist = currentWatchlist.includes(c.id);
-      const isPersistent = c.status === 'Inactive' || c.status === 'Litigation';
-      const visibleNormally = isClientVisibleInFY(c, selectedYear);
-      
-      // LOGIC: Show if in watchlist OR if visible normally. 
-      // Persistent (Inactive/Litigation) logic: If in watchlist, they are never removed until delete.
-      if (!inWatchlist && !visibleNormally) return false;
+      if (!inWatchlist) return false;
       
       return (c.legalName || '').toLowerCase().includes(s) || 
              (c.tradeName || '').toLowerCase().includes(s) || 
@@ -361,7 +354,7 @@ const GSTR9_9C: React.FC = () => {
                     <div className="p-4 bg-slate-50 border-b border-slate-100"><input type="text" placeholder="Lookup Master Vault..." value={addSearch} onChange={e => setAddSearch(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-600/10" /></div>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1 bg-white">
                        {allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
-                         <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
+                         <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); setTurnoverState(''); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
                             <p className="text-sm font-black truncate">{c.tradeName || c.legalName}</p>
                             <p className={`text-[10px] font-mono mt-1 ${selectedClient?.id === c.id ? 'text-indigo-200' : 'text-slate-400'}`}>{c.gstProfile?.gstin || 'NO GSTIN'}</p>
                          </button>
@@ -371,8 +364,19 @@ const GSTR9_9C: React.FC = () => {
                  <div className="flex-1 bg-slate-50/50 p-8 overflow-y-auto no-scrollbar">
                     {selectedClient ? (
                       <div className="space-y-10 animate-in slide-in-from-right-4">
-                         <section className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
+                         <section className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
+                            <div>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Turnover (₹)</p>
+                              <input type="number" placeholder="e.g. 55000000" value={turnoverState} onChange={(e) => {
+                                const val = e.target.value;
+                                setTurnoverState(val);
+                                const t = Number(val);
+                                if (t > 50000000) setIs9CApplicableState(true);
+                                else if (t && t <= 50000000) setIs9CApplicableState(false);
+                              }} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
+                              <p className="text-[10px] text-slate-400 font-medium mt-2">&gt; ₹5 Cr automatically enables GSTR-9C.</p>
+                            </div>
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                                <div><p className="text-sm font-black text-slate-900 uppercase">GSTR-9C Applicable?</p><p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Include reconciliation audit</p></div>
                                <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} /></button>
                             </div>
