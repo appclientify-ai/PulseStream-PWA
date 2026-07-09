@@ -104,6 +104,11 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
+      <div className="flex items-center gap-6 border-b border-slate-200 shrink-0 mb-2">
+        <button className="pb-3 border-b-2 border-indigo-600 text-indigo-600 font-black uppercase tracking-widest text-[11px]">
+          Payment History
+        </button>
+      </div>
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
@@ -198,9 +203,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
               
               <div className="flex-1 overflow-y-auto p-8 bg-white" ref={printRef}>
                  <div className="space-y-8 relative">
-                    <div className="absolute right-0 top-32 rotate-12 opacity-10 pointer-events-none">
-                       <h1 className="text-8xl font-black text-emerald-600 uppercase">Paid</h1>
-                    </div>
+                    
                     <div className="flex justify-between items-start">
                        <div className="flex gap-4 items-start">
                           {settings?.firmLogo && (
@@ -216,6 +219,9 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                        </div>
                        <div className="text-right z-10 relative">
                           <h2 className="text-4xl font-black text-slate-200 uppercase tracking-tighter">Receipt</h2>
+                          <div className="mt-2 inline-block border-2 border-emerald-500 text-emerald-600 px-3 py-1 rounded-lg bg-emerald-50">
+                             <p className="text-xl font-black uppercase tracking-widest leading-none">PAID</p>
+                          </div>
                           <div className="mt-4 space-y-1">
                              <p className="text-xs font-bold text-emerald-600 uppercase">Payment Mode: <span className="text-emerald-700">{previewPayment.pay.mode === 'Cheque' && previewPayment.pay.chequeNo ? `Cheque (${previewPayment.pay.chequeNo})` : previewPayment.pay.mode}</span></p>
                              <p className="text-xs font-bold text-slate-500 uppercase">Amount Received: <span className="text-slate-900 font-black">₹{previewPayment.pay.amount.toLocaleString()}</span></p>
