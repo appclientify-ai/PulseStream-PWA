@@ -137,10 +137,26 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     const printWindow = window.open('about:blank', '_blank', 'width=800,height=900');
     if (printWindow) {
       printWindow.document.write(`
-        <html><head><title>Invoice - ${previewInvoice?.invoiceNo}</title><script src="https://cdn.tailwindcss.com"></script></head>
-        <body onload="setTimeout(() => { window.print(); window.close(); }, 500)">
-          <div class="p-10">${printContent.innerHTML}</div>
-        </body></html>
+        <html>
+        <head>
+          <title>Invoice - ${previewInvoice?.invoiceNo}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; page-break-after: auto; }
+              thead { display: table-header-group; }
+              tfoot { display: table-footer-group; }
+              .page-break { page-break-before: always; }
+              @page { margin: 10mm; }
+            }
+          </style>
+        </head>
+        <body onload="setTimeout(() => { window.print(); window.close(); }, 800)">
+          <div class="p-4 sm:p-10 max-w-5xl mx-auto">${printContent.innerHTML}</div>
+        </body>
+        </html>
       `);
       printWindow.document.close();
     }
@@ -308,7 +324,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                  </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-8 bg-white" ref={printRef}>
+              <div className="flex-1 overflow-y-auto bg-white">
+              <div className="p-8" ref={printRef}>
                  {/* Printable Content */}
                  <div className="space-y-8">
                     <div className="flex justify-between items-start">
@@ -342,6 +359,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Bill To</p>
                        <h3 className="text-lg font-black uppercase text-slate-900">{previewInvoice.clientName}</h3>{previewInvoice.clientTradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.clientTradeName}</p>}
+                       {previewInvoice.clientGstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {previewInvoice.clientGstin}</p>}
                        {previewInvoice.miscAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.miscAddress}</p>}
                        <p className="text-xs font-bold text-slate-500 uppercase mt-1">Mobile: {previewInvoice.miscMobile || 'N/A'}</p>
                     </div>
@@ -393,23 +411,25 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
                     <div className="pt-12 border-t border-slate-100">
                        <div className="flex justify-between items-end">
-                          <div className="flex gap-8">
-                             {settings?.upiId && (
-                               <div className="flex flex-col items-center gap-2">
-                                 <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
-                                 <span className="text-[9px] font-black uppercase text-slate-500">Scan to Pay</span>
-                               </div>
-                             )}
-                             {settings?.whatsappNumber && (
-                               <div className="flex flex-col items-center gap-2">
-                                 <QRCodeSVG value={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`Hello, regarding invoice ${previewInvoice.invoiceNo}`)}`} size={80} />
-                                 <span className="text-[9px] font-black uppercase text-slate-500">WhatsApp Us</span>
-                               </div>
-                             )}
-                          </div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase max-w-xs whitespace-pre-wrap">
-                             <p>Terms & Conditions:</p>
-                             <p className="mt-1">{settings?.terms || '1. Payment is due within 15 days.\n2. Please quote invoice number in all correspondence.'}</p>
+                          <div className="flex flex-col gap-6 max-w-sm">
+                             <div className="text-[10px] font-bold text-slate-500 uppercase whitespace-pre-wrap">
+                                <p className="text-slate-900 font-black mb-1">Terms & Conditions:</p>
+                                <p className="mt-1">{settings?.terms || '1. Payment is due within 15 days.\n2. Please quote invoice number in all correspondence.'}</p>
+                             </div>
+                             <div className="flex gap-8">
+                               {settings?.upiId && (
+                                 <div className="flex flex-col items-center gap-2">
+                                   <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
+                                   <span className="text-[9px] font-black uppercase text-slate-500">Scan to Pay</span>
+                                 </div>
+                               )}
+                               {settings?.whatsappNumber && (
+                                 <div className="flex flex-col items-center gap-2">
+                                   <QRCodeSVG value={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`Hello, regarding invoice ${previewInvoice.invoiceNo}`)}`} size={80} />
+                                   <span className="text-[9px] font-black uppercase text-slate-500">WhatsApp Us</span>
+                                 </div>
+                               )}
+                             </div>
                           </div>
                           <div className="text-center flex flex-col items-center">
                              {settings?.firmSignature ? (
@@ -423,6 +443,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        </div>
                     </div>
                  </div>
+              </div>
               </div>
            </div>
         </div>

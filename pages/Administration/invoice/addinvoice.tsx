@@ -53,6 +53,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         setIsMiscClient(!!editingInvoice.isMiscClient);
         setClientLegalName(editingInvoice.clientName);
         setClientTradeName(editingInvoice.clientTradeName || '');
+        setClientGstin(editingInvoice.clientGstin || '');
         setClientMobile(editingInvoice.miscMobile || '');
         setClientAddress(editingInvoice.miscAddress || '');
         setInvDate(editingInvoice.date);
@@ -138,6 +139,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         clientId: isMiscClient ? 'misc' : selectedClientId,
         clientName: clientLegalName,
         clientTradeName: clientTradeName,
+        clientGstin: clientGstin,
         isMiscClient,
         miscMobile: clientMobile,
         miscAddress: clientAddress,

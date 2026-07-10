@@ -177,7 +177,21 @@ class ApiService {
   async generateNextInvoiceNo(): Promise<string> {
     const invs = await this.getInvoices();
     const sets = await this.getInvoiceSettings();
-    const count = invs.length + 1;
+    const existingNums = new Set<number>();
+    for (const inv of invs) {
+       const parts = inv.invoiceNo.split('/');
+       if (parts.length > 1) {
+          const numStr = parts[parts.length - 1];
+          const num = parseInt(numStr, 10);
+          if (!isNaN(num)) {
+             existingNums.add(num);
+          }
+       }
+    }
+    let count = 1;
+    while (existingNums.has(count)) {
+       count++;
+    }
     const year = new Date().getFullYear();
     return `${sets.invoicePrefix}${year}/${count.toString().padStart(3, '0')}`;
   }

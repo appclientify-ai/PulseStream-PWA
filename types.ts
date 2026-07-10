@@ -127,6 +127,7 @@ export interface InvoiceRecord {
   clientId: string;
   clientName: string;
   clientTradeName?: string;
+  clientGstin?: string;
   invoiceNo: string;
   date: string;
   dueDate: string;
