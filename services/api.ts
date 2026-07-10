@@ -177,10 +177,16 @@ class ApiService {
   async generateNextInvoiceNo(): Promise<string> {
     const invs = await this.getInvoices();
     const sets = await this.getInvoiceSettings();
+    const fy = getFinancialYear();
+    const prefix = sets.invoicePrefix || 'INV';
+    
+    // Filter invoices by the same financial year to find the next number
+    const sameFyInvs = invs.filter(inv => inv.invoiceNo.includes(`${prefix}/${fy}/`));
+    
     const existingNums = new Set<number>();
-    for (const inv of invs) {
+    for (const inv of sameFyInvs) {
        const parts = inv.invoiceNo.split('/');
-       if (parts.length > 1) {
+       if (parts.length >= 3) {
           const numStr = parts[parts.length - 1];
           const num = parseInt(numStr, 10);
           if (!isNaN(num)) {
@@ -188,12 +194,12 @@ class ApiService {
           }
        }
     }
+    
     let count = 1;
     while (existingNums.has(count)) {
        count++;
     }
-    const year = new Date().getFullYear();
-    return `${sets.invoicePrefix}${year}/${count.toString().padStart(3, '0')}`;
+    return `${prefix}/${fy}/${count.toString().padStart(2, '0')}`;
   }
 
   async migrateToPayment(invoiceId: string, paymentData: { date: string; mode: string; chequeNo?: string }): Promise<void> {
