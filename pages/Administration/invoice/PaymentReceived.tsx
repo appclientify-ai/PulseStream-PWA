@@ -55,15 +55,33 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   };
 
   const handlePrint = () => {
-    if (!previewPayment || !printRef.current) return;
-    const opt = {
-      margin: 10,
-      filename: `PaymentReceipt_${previewPayment.inv.invoiceNo}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().from(printRef.current).set(opt).save();
+    const printContent = printRef.current;
+    if (!previewPayment || !printContent) return;
+    const printWindow = window.open('about:blank', '_blank', 'width=800,height=900');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Receipt - ${previewPayment.inv.invoiceNo}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; page-break-after: auto; }
+              thead { display: table-header-group; }
+              tfoot { display: table-footer-group; }
+              @page { margin: 10mm; }
+            }
+          </style>
+        </head>
+        <body onload="setTimeout(() => { window.print(); window.close(); }, 800)">
+          <div class="p-4 sm:p-10 max-w-5xl mx-auto">${printContent.innerHTML}</div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   };
 
   const handleWhatsAppShare = () => {
@@ -233,6 +251,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 relative z-10">
                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Received From</p>
                        <h3 className="text-lg font-black uppercase text-slate-900">{previewPayment.inv.clientName}</h3>{previewPayment.inv.clientTradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewPayment.inv.clientTradeName}</p>}
+                       {previewPayment.inv.clientGstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {previewPayment.inv.clientGstin}</p>}
                        {previewPayment.inv.miscAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewPayment.inv.miscAddress}</p>}
                        <p className="text-xs font-bold text-slate-500 uppercase mt-1">Mobile: {previewPayment.inv.miscMobile || 'N/A'}</p>
                        <p className="text-xs font-bold text-slate-500 uppercase mt-1">Against Invoice No: <span className="text-slate-900">{previewPayment.inv.invoiceNo}</span></p>
@@ -283,20 +302,22 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                        </div>
                     </div>
                     
-                    <div className="pt-12 border-t border-slate-100 relative z-10">
+                    <div className="pt-8 border-t border-slate-100 mt-8 relative z-10">
                        <div className="flex justify-between items-end">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase max-w-xs whitespace-pre-wrap">
-                             <p>Terms & Conditions:</p>
+                          <div className="text-[10px] font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
+                             <p className="text-slate-900 font-black mb-1">Terms & Conditions:</p>
                              <p className="mt-1">{settings?.terms || 'This is a computer generated receipt.'}</p>
                           </div>
-                          <div className="text-center flex flex-col items-center">
-                             {settings?.firmSignature ? (
-                               <img src={settings.firmSignature} alt="Signature" className="h-16 object-contain mb-2" />
-                             ) : (
-                               <div className="h-16 mb-2" />
-                             )}
-                             <p className="text-[10px] font-black uppercase text-slate-900">Authorized Signatory</p>
-                             <p className="text-[9px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
+                          <div className="flex gap-12 items-end">
+                             <div className="text-center flex flex-col items-center">
+                                {settings?.firmSignature ? (
+                                  <img src={settings.firmSignature} alt="Signature" className="h-16 object-contain mb-2" />
+                                ) : (
+                                  <div className="h-16 mb-2" />
+                                )}
+                                <p className="text-[10px] font-black uppercase text-slate-900">Authorized Signatory</p>
+                                <p className="text-[9px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
+                             </div>
                           </div>
                        </div>
                     </div>
