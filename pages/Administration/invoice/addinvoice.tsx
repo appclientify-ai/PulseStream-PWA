@@ -14,7 +14,7 @@ interface AddInvoiceProps {
 
 const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState('');
   const [settings, setSettings] = useState<InvoiceSettings | null>(null);
   
@@ -38,11 +38,10 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
 
   useEffect(() => {
     const init = async () => {
-      const [clis, nextNo, sets] = await Promise.all([
-        api.getClients(),
-        api.generateNextInvoiceNo(),
-        api.getInvoiceSettings()
-      ]);
+      const clisPromise = api.getClients();
+      const setsPromise = api.getInvoiceSettings();
+      
+      const [clis, sets] = await Promise.all([clisPromise, setsPromise]);
       setClients(clis);
       setSettings(sets);
       
@@ -60,7 +59,29 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         setItems(editingInvoice.items);
         setStatus(editingInvoice.status);
       } else {
-        setInvoiceNo(nextNo);
+        const invs = await api.getInvoices();
+        const fy = () => {
+          const d = new Date();
+          const year = d.getFullYear();
+          const month = d.getMonth();
+          if (month >= 3) return `${year.toString().slice(2)}-${(year + 1).toString().slice(2)}`;
+          return `${(year - 1).toString().slice(2)}-${year.toString().slice(2)}`;
+        };
+        const fYear = fy();
+        const prefix = sets.invoicePrefix || 'INV';
+        const sameFyInvs = invs.filter(inv => inv.invoiceNo.includes(`${prefix}/${fYear}/`));
+        const existingNums = new Set<number>();
+        for (const inv of sameFyInvs) {
+           const parts = inv.invoiceNo.split('/');
+           if (parts.length >= 3) {
+              const numStr = parts[parts.length - 1];
+              const num = parseInt(numStr, 10);
+              if (!isNaN(num)) existingNums.add(num);
+           }
+        }
+        let count = 1;
+        while (existingNums.has(count)) count++;
+        setInvoiceNo(`${prefix}/${fYear}/${count.toString().padStart(2, '0')}`);
       }
       setIsLoading(false);
     };
@@ -158,7 +179,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     }
   };
 
-  if (isLoading) return <Loader />;
+  // if (isLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto w-full overflow-hidden pb-10">
