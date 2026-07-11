@@ -330,11 +330,11 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                  {/* Printable Content */}
                  <div className="space-y-8">
                     <div className="flex justify-between items-start">
-                       <div className="flex gap-4 items-start">
+                       <div className="flex gap-6 items-stretch">
                           {settings?.firmLogo && (
-                            <img src={settings.firmLogo} alt="Logo" className="h-16 w-auto object-contain" />
+                            <img src={settings.firmLogo} alt="Logo" className="h-auto max-h-40 w-auto object-contain self-start" />
                           )}
-                          <div>
+                          <div className="flex flex-col justify-center">
                              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
                              {settings?.firmServices && <p className="text-[10px] font-black text-indigo-500 uppercase mt-0.5 tracking-widest">{settings.firmServices}</p>}
                              {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-2 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}

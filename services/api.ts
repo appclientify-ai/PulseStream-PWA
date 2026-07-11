@@ -122,7 +122,8 @@ class ApiService {
       this.getMiscWork(),
       this.getGSTRegistrations(),
       this.getFoodLicenses(),
-      this.getMSMERegistrations()
+      this.getMSMERegistrations(),
+      this.getPayments()
     ]);
     return {
       clients: results[0].status === 'fulfilled' ? results[0].value : [],
@@ -131,7 +132,8 @@ class ApiService {
       work: results[3].status === 'fulfilled' ? results[3].value : [],
       gstReg: results[4].status === 'fulfilled' ? results[4].value : [],
       foodLic: results[5].status === 'fulfilled' ? results[5].value : [],
-      msme: results[6].status === 'fulfilled' ? results[6].value : []
+      msme: results[6].status === 'fulfilled' ? results[6].value : [],
+      payments: results[7].status === 'fulfilled' ? results[7].value : []
     };
   }
 

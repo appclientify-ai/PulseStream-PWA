@@ -73,6 +73,7 @@ const Dashboard: React.FC = () => {
   // Data State
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
   const [miscWork, setMiscWork] = useState<any[]>([]);
   const [gstReg, setGstReg] = useState<any[]>([]);
@@ -111,6 +112,7 @@ const Dashboard: React.FC = () => {
       setGstReg(summary.gstReg || []);
       setFoodLic(summary.foodLic || []);
       setMsme(summary.msme || []);
+      setPayments(summary.payments || []);
     } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
   }, [token]);
 
@@ -586,8 +588,8 @@ const Dashboard: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                  <CompactCard label="Message" count={0} viewId="messenger" color="bg-indigo-600" icon={<path d="M8 10h.01M12 10h.01" />} />
                  <CompactCard label="Reminders" count={0} viewId="reminders" color="bg-rose-500" icon={<path d="M15 17h5l-1.405-1.405" />} />
-                 <CompactCard label="Invoices" count={invoices.length} viewId="admin-invoices" color="bg-slate-900" icon={<path d="M9 14l6-6" />} />
-                 <CompactCard label="Payments" count={0} viewId="admin-payments" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2" />} />
+                 <CompactCard label="Invoices" count={invoices.filter(i => i.status !== 'Paid').length} viewId="admin-invoices" color="bg-slate-900" icon={<path d="M9 14l6-6" />} />
+                 <CompactCard label="Payments" count={payments.length} viewId="admin-payments" color="bg-emerald-600" icon={<path d="M17 9V7a2 2 0 00-2-2" />} />
                  <CompactCard label="Due Date" count={0} viewId="admin-duedates" color="bg-amber-600" icon={<path d="M8 7V3m8 4V3" />} />
                  <CompactCard label="Trash" count={0} viewId="trash" color="bg-slate-400" icon={<path d="M19 7l-.867 12.142" />} />
               </div>
