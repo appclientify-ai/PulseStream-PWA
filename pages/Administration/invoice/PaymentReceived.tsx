@@ -122,11 +122,6 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
-      <div className="flex items-center gap-6 border-b border-slate-200 shrink-0 mb-2">
-        <button className="pb-3 border-b-2 border-indigo-600 text-indigo-600 font-black uppercase tracking-widest text-[11px]">
-          Payment History
-        </button>
-      </div>
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
