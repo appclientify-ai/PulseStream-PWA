@@ -341,65 +341,89 @@ const GSTR9_9C: React.FC = () => {
         </div>
       )}
 
-      {/* TRACK CLIENT MODAL (WITH FULL DETAILS & 9C TOGGLE) */}
+      {/* TRACK CLIENT MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-              <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
-                 <h3 className="text-xl font-black uppercase tracking-tight">Audit Enrollment • FY {selectedYear}</h3>
-                 <button onClick={() => setIsAddModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-10 space-y-8 animate-in zoom-in-95 border border-slate-200">
+              <div className="flex justify-between items-center">
+                 <h3 className="text-xl font-black text-slate-900 tracking-tight">Audit Enrollment • FY {selectedYear}</h3>
+                 <button onClick={() => { setIsAddModalOpen(false); setSelectedClient(null); setTurnoverState(''); }} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+                 </button>
               </div>
-              <div className="flex-1 flex flex-col md:flex-row h-[500px]">
-                 <div className="w-full md:w-1/2 border-r border-slate-100 flex flex-col">
-                    <div className="p-4 bg-slate-50 border-b border-slate-100"><input type="text" placeholder="Lookup Master Vault..." value={addSearch} onChange={e => setAddSearch(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-600/10" /></div>
-                    <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1 bg-white">
-                       {addSearch.length > 0 ? (
-                          allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
-                         <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); setTurnoverState(''); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
-                            <p className="text-sm font-black truncate">{c.tradeName || c.legalName}</p>
-                            <p className={`text-[10px] font-mono mt-1 ${selectedClient?.id === c.id ? 'text-indigo-200' : 'text-slate-400'}`}>{c.gstProfile?.gstin || 'NO GSTIN'}</p>
-                         </button>
-                          ))
-                       ) : (
-                          <div className="flex items-center justify-center h-full text-slate-400 text-xs font-bold uppercase tracking-widest text-center">
-                            Search by Name or GSTIN<br/>to find an entity
-                          </div>
+
+              <div className="space-y-6">
+                 <div>
+                    
+                    <div className="relative">
+                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Lookup</label>
+                       <input 
+                         type="text" 
+                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-bold text-sm outline-none focus:ring-4 focus:ring-indigo-100 transition-all uppercase"
+                         placeholder="Trade Name or GSTIN..." 
+                         value={addSearch || (selectedClient ? (selectedClient.tradeName || selectedClient.legalName) : '')} 
+                         onChange={(e) => { 
+                            setAddSearch(e.target.value);
+                            setSelectedClient(null);
+                         }} 
+                         onFocus={() => setAddSearch('')}
+                       />
+                       {addSearch.length > 0 && !selectedClient && (
+                         <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto no-scrollbar">
+                           {allClients
+                             .filter(c => !((watchlist[selectedYear] || []).includes(c.id)))
+                             .filter(c => ((c.tradeName || c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase())))
+                             .slice(0, 15)
+                             .map(c => (
+                             <button 
+                               key={c.id} 
+                               type="button" 
+                               onClick={() => {
+                                 setSelectedClient(c); 
+                                 setAddSearch('');
+                                 setIs9CApplicableState(true);
+                                 setTurnoverState('');
+                               }} 
+                               className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
+                             >
+                               <p className="text-sm font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
+                               <p className="text-[10px] text-indigo-600 font-mono font-black">{c.gstProfile?.gstin || 'NO GSTIN'}</p>
+                             </button>
+                           ))}
+                         </div>
                        )}
                     </div>
                  </div>
-                 <div className="flex-1 bg-slate-50/50 p-8 overflow-y-auto no-scrollbar">
-                    {selectedClient ? (
-                      <div className="space-y-10 animate-in slide-in-from-right-4">
-                         <section className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
-                            <div>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Annual Turnover (₹)</p>
-                              <input type="number" placeholder="e.g. 55000000" value={turnoverState} onChange={(e) => {
-                                const val = e.target.value;
-                                setTurnoverState(val);
-                                const t = Number(val);
-                                if (t > 50000000) setIs9CApplicableState(true);
-                                else if (t && t <= 50000000) setIs9CApplicableState(false);
-                              }} className="w-full bg-slate-50 border-none rounded-xl py-3 px-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-                              <p className="text-[10px] text-slate-400 font-medium mt-2">&gt; ₹5 Cr automatically enables GSTR-9C.</p>
-                            </div>
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                               <div><p className="text-sm font-black text-slate-900 uppercase">GSTR-9C Applicable?</p><p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Include reconciliation audit</p></div>
-                               <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} /></button>
-                            </div>
-                         </section>
-                         <section className="grid grid-cols-1 gap-6">
-                            <div className="space-y-1"><p className="text-[9px] font-black text-slate-400 tracking-widest">Principal Legal Identity</p><p className="text-lg font-black text-slate-900 truncate leading-none">{selectedClient.legalName}</p></div>
-                            <div className="grid grid-cols-2 gap-4">
-                               <div><p className="text-[9px] font-black uppercase text-slate-400">GSTIN No</p><p className="text-sm font-black text-indigo-600 font-mono tracking-widest">{selectedClient.gstProfile?.gstin}</p></div>
-                               <div><p className="text-[9px] font-black uppercase text-slate-400">Status</p><p className="text-sm font-black text-emerald-600 uppercase">{selectedClient.status}</p></div>
-                            </div>
-                         </section>
-                         <button onClick={() => { addToWatchlist(selectedClient.id, is9CApplicableState); setIsAddModalOpen(false); setSelectedClient(null); }} className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:bg-slate-900 transition-all">Synchronize for Audit</button>
-                      </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-60"><svg className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg><p className="text-sm font-black uppercase tracking-widest">Select Entity To Track</p></div>
-                    )}
-                 </div>
+
+                 {selectedClient && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Annual Turnover (₹)</label>
+                          <input type="number" placeholder="e.g. 55000000" value={turnoverState} onChange={(e) => {
+                             const val = e.target.value;
+                             setTurnoverState(val);
+                             const t = Number(val);
+                             if (t > 50000000) setIs9CApplicableState(true);
+                             else if (t && t <= 50000000) setIs9CApplicableState(false);
+                          }} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 font-bold text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-600/10 transition-all" />
+                          <p className="text-[10px] text-slate-400 font-medium mt-2">&gt; ₹5 Cr automatically enables GSTR-9C.</p>
+                       </div>
+
+                       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center justify-between">
+                          <div>
+                             <p className="text-sm font-black text-slate-900 uppercase">GSTR-9C Applicable?</p>
+                             <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Include reconciliation audit</p>
+                          </div>
+                          <button onClick={() => setIs9CApplicableState(!is9CApplicableState)} className={`h-8 w-16 rounded-full transition-all relative p-1 ${is9CApplicableState ? 'bg-indigo-600' : 'bg-slate-200'}`}>
+                             <div className={`h-6 w-6 bg-white rounded-full shadow-md transition-all ${is9CApplicableState ? 'translate-x-8' : 'translate-x-0'}`} />
+                          </button>
+                       </div>
+                    </div>
+                 )}
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                 <button disabled={!selectedClient} onClick={() => { addToWatchlist(selectedClient.id, is9CApplicableState); setIsAddModalOpen(false); setSelectedClient(null); setTurnoverState(''); }} className="w-full py-5 bg-indigo-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:bg-slate-900 transition-all">Synchronize for Audit</button>
               </div>
            </div>
         </div>

@@ -88,8 +88,9 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   };
 
   const handleWhatsApp = (inv: InvoiceRecord) => {
-    toast.success("Opening preview. Click WhatsApp to share with PDF.");
-    setPreviewInvoice(inv);
+    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${inv.date.split('-').reverse().join('-')}\nAmount: ₹${inv.totalAmount.toLocaleString()}\nDue Date: ${inv.dueDate.split('-').reverse().join('-')}\n\nKindly settle the same. Thank you!`;
+    const phone = inv.miscMobile || '';
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleWhatsAppShare = () => {
@@ -335,8 +336,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           )}
                           <div>
                              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
-                             {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
+                             {settings?.firmServices && <p className="text-[10px] font-black text-indigo-500 uppercase mt-0.5 tracking-widest">{settings.firmServices}</p>}
+                             {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-2 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
                              {settings?.firmGstin && settings.firmGstin.toLowerCase() !== 'n/a' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
+                             {settings?.professionType && settings?.registrationNo && <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{settings.professionType === 'CA' ? 'Membership No: ' : 'Bar Registration No: '}{settings.registrationNo}</p>}
                              {settings?.firmMobile && <p className="text-xs font-bold text-slate-500 uppercase">Contact: {settings.firmMobile}</p>}
                              {settings?.firmEmail && <p className="text-xs font-bold text-slate-500 uppercase">Email: {settings.firmEmail}</p>}
                           </div>
@@ -372,7 +375,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description of Compliance Service</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty/M</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate(/₹)</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>
+                             {settings?.isGstEnabled && <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>}
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Total(/₹)</th>
                           </tr>
                        </thead>
@@ -384,7 +387,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                                 <td className=" py-4 text-[10px] font-bold text-slate-700">{item.description}</td>
                                 <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{item.quantity}</td>
                                 <td className=" py-4 text-right text-[10px] font-bold text-slate-700">{item.rate}</td>
-                                <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
+                                {settings?.isGstEnabled && <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{item.taxRate}%</td>}
                                 <td className=" py-4 text-right text-[10px] font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
                              </tr>
                           ))}
