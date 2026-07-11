@@ -336,7 +336,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           <div>
                              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
                              {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
-                             {settings?.firmGstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
+                             {settings?.firmGstin && settings.firmGstin.toLowerCase() !== 'n/a' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
                              {settings?.firmMobile && <p className="text-xs font-bold text-slate-500 uppercase">Contact: {settings.firmMobile}</p>}
                              {settings?.firmEmail && <p className="text-xs font-bold text-slate-500 uppercase">Email: {settings.firmEmail}</p>}
                           </div>
@@ -359,7 +359,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Bill To</p>
                        <h3 className="text-lg font-black uppercase text-slate-900">{previewInvoice.clientName}</h3>{previewInvoice.clientTradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.clientTradeName}</p>}
-                       {previewInvoice.clientGstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {previewInvoice.clientGstin}</p>}
+                       {previewInvoice.clientGstin && previewInvoice.clientGstin !== 'N/A' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {previewInvoice.clientGstin}</p>}
                        {previewInvoice.miscAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{previewInvoice.miscAddress}</p>}
                        <p className="text-xs font-bold text-slate-500 uppercase mt-1">Mobile: {previewInvoice.miscMobile || 'N/A'}</p>
                     </div>
@@ -367,36 +367,44 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <table className="w-full text-left border-collapse">
                        <thead>
                           <tr className="border-b-2 border-slate-900">
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-12 text-center">#</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-8 text-center">#</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24">Period / AY</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description of Compliance Service</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty/M</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate(/₹)</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-32 text-right">Amount</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Total(/₹)</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-100">
                           {previewInvoice.items.map((item, i) => (
                              <tr key={i}>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
-                                <td className=" py-4 text-xs font-bold text-slate-700">{item.description}</td>
-                                <td className=" py-4 text-right text-xs font-bold text-slate-700">₹{item.rate}</td>
-                                <td className=" py-4 text-center text-xs font-bold text-slate-700">{item.quantity}</td>
-                                <td className=" py-4 text-center text-xs font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
-                                <td className=" py-4 text-right text-xs font-bold text-slate-900">₹{(item.rate * item.quantity).toLocaleString()}</td>
+                                <td className=" py-4 text-[10px] font-bold text-slate-700">{item.period || '-'}</td>
+                                <td className=" py-4 text-[10px] font-bold text-slate-700">{item.description}</td>
+                                <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{item.quantity}</td>
+                                <td className=" py-4 text-right text-[10px] font-bold text-slate-700">{item.rate}</td>
+                                <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
+                                <td className=" py-4 text-right text-[10px] font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
                              </tr>
                           ))}
                        </tbody>
                     </table>
 
                     <div className="flex justify-between items-start mt-4">
-                       <div className="flex flex-col gap-2 pt-2">
+                       <div className="flex flex-row gap-6 pt-2 items-start">
                           {settings?.upiId && (
                             <div className="flex flex-col items-center gap-2">
                               <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
                               <span className="text-[9px] font-black uppercase text-slate-500">Scan to Pay</span>
                             </div>
                           )}
+                          <div className="flex flex-col gap-1">
+                             <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
+                             <p className="text-[9px] font-bold text-slate-600 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
+                             <p className="text-[9px] font-bold text-slate-600 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
+                             <p className="text-[9px] font-bold text-slate-600 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
+                          </div>
                        </div>
                        <div className="w-64 space-y-3">
                           <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
@@ -419,7 +427,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
                     <div className="pt-8 border-t border-slate-100 mt-8">
                        <div className="flex justify-between items-end">
-                          <div className="text-[10px] font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
+                          <div className="text-[8px] leading-tight font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
                              <p className="text-slate-900 font-black mb-1">Terms & Conditions:</p>
                              <p className="mt-1">{settings?.terms || '1. Payment is due within 15 days.\n2. Please quote invoice number in all correspondence.'}</p>
                           </div>

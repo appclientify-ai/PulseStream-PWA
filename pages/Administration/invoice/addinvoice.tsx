@@ -69,19 +69,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         };
         const fYear = fy();
         const prefix = sets.invoicePrefix || 'INV';
-        const sameFyInvs = invs.filter(inv => inv.invoiceNo.includes(`${prefix}/${fYear}/`));
-        const existingNums = new Set<number>();
-        for (const inv of sameFyInvs) {
-           const parts = inv.invoiceNo.split('/');
-           if (parts.length >= 3) {
-              const numStr = parts[parts.length - 1];
-              const num = parseInt(numStr, 10);
-              if (!isNaN(num)) existingNums.add(num);
-           }
-        }
-        let count = 1;
-        while (existingNums.has(count)) count++;
-        setInvoiceNo(`${prefix}/${fYear}/${count.toString().padStart(2, '0')}`);
+        setInvoiceNo(`${prefix}/${fYear}/`);
       }
       setIsLoading(false);
     };
@@ -298,13 +286,14 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                 <thead>
                    <tr className="border-b border-slate-200 bg-slate-100/50">
                       <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-12 text-center">#</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Service Details</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Rate</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">Qty</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32">Period / AY</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Description of Compliance Service</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">Qty / Months</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Rate (/₹)</th>
                       {settings?.isGstEnabled && (
                         <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">GST %</th>
                       )}
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-40 text-right">Amount</th>
+                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-40 text-right">Total(/₹)</th>
                       <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-16 text-center">Action</th>
                    </tr>
                 </thead>
@@ -312,6 +301,14 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                    {items.map((item, idx) => (
                      <tr key={item.id} className="group hover:bg-white transition-colors">
                         <td className=" p-4 text-center font-black text-slate-300 text-xs">{idx + 1}</td>
+                        <td className=" p-4">
+                           <input 
+                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
+                              value={item.period || ''} 
+                              onChange={e => updateItem(item.id, 'period', e.target.value)} 
+                              placeholder="2023-24..." 
+                           />
+                        </td>
                         <td className=" p-4">
                            <input 
                               className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
@@ -323,19 +320,19 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                         <td className=" p-4">
                            <input 
                               type="number" 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-right placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.rate} 
-                              onChange={e => updateItem(item.id, 'rate', Number(e.target.value))} 
-                              placeholder="0.00" 
+                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center placeholder:text-slate-300 transition-all text-slate-700"
+                              value={item.quantity} 
+                              onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))} 
+                              placeholder="1" 
                            />
                         </td>
                         <td className=" p-4">
                            <input 
                               type="number" 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.quantity} 
-                              onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))} 
-                              placeholder="1" 
+                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-right placeholder:text-slate-300 transition-all text-slate-700"
+                              value={item.rate} 
+                              onChange={e => updateItem(item.id, 'rate', Number(e.target.value))} 
+                              placeholder="0.00" 
                            />
                         </td>
                         {settings?.isGstEnabled && (

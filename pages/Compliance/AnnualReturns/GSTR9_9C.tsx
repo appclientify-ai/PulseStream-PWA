@@ -353,12 +353,18 @@ const GSTR9_9C: React.FC = () => {
                  <div className="w-full md:w-1/2 border-r border-slate-100 flex flex-col">
                     <div className="p-4 bg-slate-50 border-b border-slate-100"><input type="text" placeholder="Lookup Master Vault..." value={addSearch} onChange={e => setAddSearch(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-600/10" /></div>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1 bg-white">
-                       {allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
+                       {addSearch.length > 0 ? (
+                          allClients.filter(c => !((watchlist[selectedYear] || []).includes(c.id)) && ((c.legalName || '').toLowerCase().includes(addSearch.toLowerCase()) || (c.gstProfile?.gstin || '').toLowerCase().includes(addSearch.toLowerCase()))).slice(0, 15).map(c => (
                          <button key={c.id} onClick={() => { setSelectedClient(c); setIs9CApplicableState(true); setTurnoverState(''); }} className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedClient?.id === c.id ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'hover:bg-slate-50 border-transparent text-slate-900'}`}>
                             <p className="text-sm font-black truncate">{c.tradeName || c.legalName}</p>
                             <p className={`text-[10px] font-mono mt-1 ${selectedClient?.id === c.id ? 'text-indigo-200' : 'text-slate-400'}`}>{c.gstProfile?.gstin || 'NO GSTIN'}</p>
                          </button>
-                       ))}
+                          ))
+                       ) : (
+                          <div className="flex items-center justify-center h-full text-slate-400 text-xs font-bold uppercase tracking-widest text-center">
+                            Search by Name or GSTIN<br/>to find an entity
+                          </div>
+                       )}
                     </div>
                  </div>
                  <div className="flex-1 bg-slate-50/50 p-8 overflow-y-auto no-scrollbar">

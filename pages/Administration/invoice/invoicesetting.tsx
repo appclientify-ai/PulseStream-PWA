@@ -95,6 +95,25 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   value={settings.firmName} onChange={e => setSettings({...settings, firmName: e.target.value})} />
              </div>
              <div className="md:col-span-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Service Provided (Description)</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase" placeholder="e.g. Tax Consultancy & Legal Services"
+                  value={settings.firmServices || ''} onChange={e => setSettings({...settings, firmServices: e.target.value})} />
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Profession Type</label>
+                <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase outline-none"
+                  value={settings.professionType || ''} onChange={e => setSettings({...settings, professionType: e.target.value as 'CA' | 'Advocate'})}>
+                   <option value="">Select Profession</option>
+                   <option value="CA">Chartered Accountant (CA)</option>
+                   <option value="Advocate">Advocate</option>
+                </select>
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">{settings.professionType === 'CA' ? 'Membership No' : 'Bar Registration No'}</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase" placeholder="Registration No" disabled={!settings.professionType}
+                  value={settings.registrationNo || ''} onChange={e => setSettings({...settings, registrationNo: e.target.value})} />
+             </div>
+             <div className="md:col-span-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Firm Address</label>
                 <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase min-h-[80px]"
                   value={settings.firmAddress} onChange={e => setSettings({...settings, firmAddress: e.target.value})} />

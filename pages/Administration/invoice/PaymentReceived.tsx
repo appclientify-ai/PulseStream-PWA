@@ -223,14 +223,16 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                  <div className="space-y-8 relative">
                     
                     <div className="flex justify-between items-start">
-                       <div className="flex gap-4 items-start">
+                       <div className="flex flex-col gap-4">
                           {settings?.firmLogo && (
-                            <img src={settings.firmLogo} alt="Logo" className="h-16 w-auto object-contain" />
+                            <div><img src={settings.firmLogo} alt="Logo" className="h-20 w-auto object-contain" /></div>
                           )}
                           <div>
-                             <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
-                             {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-1 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
-                             {settings?.firmGstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
+                             <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
+                             {settings?.firmServices && <p className="text-[10px] font-black text-indigo-600 uppercase mt-1 tracking-widest">{settings.firmServices}</p>}
+                             {settings?.professionType && settings?.registrationNo && <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{settings.professionType === 'CA' ? 'Membership No: ' : 'Bar Registration No: '}{settings.registrationNo}</p>}
+                             {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-2 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
+                             {settings?.firmGstin && settings.firmGstin.toLowerCase() !== 'n/a' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
                              {settings?.firmMobile && <p className="text-xs font-bold text-slate-500 uppercase">Contact: {settings.firmMobile}</p>}
                              {settings?.firmEmail && <p className="text-xs font-bold text-slate-500 uppercase">Email: {settings.firmEmail}</p>}
                           </div>
@@ -304,7 +306,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                     
                     <div className="pt-8 border-t border-slate-100 mt-8 relative z-10">
                        <div className="flex justify-between items-end">
-                          <div className="text-[10px] font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
+                          <div className="text-[8px] leading-tight font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
                              <p className="text-slate-900 font-black mb-1">Terms & Conditions:</p>
                              <p className="mt-1">{settings?.terms || 'This is a computer generated receipt.'}</p>
                           </div>

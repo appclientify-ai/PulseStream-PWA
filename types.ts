@@ -115,6 +115,7 @@ export interface Client {
 
 export interface InvoiceLineItem {
   id: string;
+  period?: string;
   description: string;
   quantity: number;
   rate: number;
@@ -145,6 +146,9 @@ export interface InvoiceRecord {
 
 export interface InvoiceSettings {
   firmName: string;
+  professionType?: 'CA' | 'Advocate';
+  registrationNo?: string;
+  firmServices?: string;
   firmAddress: string;
   firmMobile: string;
   firmEmail: string;
