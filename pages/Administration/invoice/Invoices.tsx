@@ -157,7 +157,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           </style>
         </head>
         <body onload="setTimeout(() => { window.print(); window.close(); }, 800)">
-          <div class="p-4 sm:p-10 max-w-5xl mx-auto">${printContent.innerHTML}</div>
+          <div class="p-4 sm:p-10 max-w-5xl mx-auto relative">${printContent.innerHTML}</div>
         </body>
         </html>
       `);
@@ -343,8 +343,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
               <div className="flex-1 overflow-y-auto bg-white">
               <div className="p-8 relative" ref={printRef}>
                  {settings?.firmLogo && (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0">
-                       <img src={settings.firmLogo} alt="Watermark" className="max-w-[80%] max-h-[80%] object-contain" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none z-0 overflow-hidden">
+                       <img src={settings.firmLogo} alt="Watermark" className="w-[120%] h-[120%] object-contain mix-blend-multiply" />
                     </div>
                  )}
                  {/* Printable Content */}

@@ -143,8 +143,8 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="flex items-center gap-4">
                   <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmLogo')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
                   {settings.firmLogo && (
-                    <button type="button" onClick={() => setSettings({...settings, firmLogo: ''})} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">
-                      Remove
+                    <button type="button" onClick={() => setSettings({...settings, firmLogo: ''})} className="h-10 w-10 flex items-center justify-center bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors" title="Delete Logo">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   )}
                 </div>
@@ -155,8 +155,8 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="flex items-center gap-4">
                   <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmSignature')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
                   {settings.firmSignature && (
-                    <button type="button" onClick={() => setSettings({...settings, firmSignature: ''})} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">
-                      Remove
+                    <button type="button" onClick={() => setSettings({...settings, firmSignature: ''})} className="h-10 w-10 flex items-center justify-center bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors" title="Delete Signature">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   )}
                 </div>
