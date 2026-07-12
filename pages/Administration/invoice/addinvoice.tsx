@@ -88,7 +88,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     );
   }, [clients, searchQuery]);
 
-  const handleClientSelect = (c: Client) => {
+  const handleClientSelect = async (c: Client) => {
     setSelectedClientId(c.id);
     setSearchQuery(c.legalName);
     setIsMiscClient(false);
@@ -98,6 +98,34 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     setClientMobile(c.mobile);
     setClientAddress(c.address || '');
     setIsDropdownOpen(false);
+
+    try {
+      const invs = await api.getInvoices();
+      const unpaid = invs.filter(i => i.clientId === c.id && (i.status === 'Sent' || i.status === 'Overdue' || i.status === 'Partial'));
+      if (unpaid.length > 0) {
+        const prevItems: InvoiceLineItem[] = unpaid.map((inv, idx) => {
+           const due = inv.status === 'Partial' && inv.balanceDue ? inv.balanceDue : inv.totalAmount;
+           return {
+             id: `prev-${inv.id}-${idx}`,
+             description: `Previous Balance (Inv ${inv.invoiceNo})`,
+             quantity: 1,
+             rate: due,
+             taxRate: 0,
+             amount: due
+           };
+        });
+        
+        // Remove empty default item if it's the only one
+        setItems(prev => {
+          if (prev.length === 1 && prev[0].description === '' && prev[0].rate === 0) {
+             return prevItems;
+          }
+          return [...prev, ...prevItems];
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const totals = useMemo(() => {

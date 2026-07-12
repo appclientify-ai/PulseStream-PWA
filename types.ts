@@ -136,7 +136,9 @@ export interface InvoiceRecord {
   subTotal: number;
   totalTax: number;
   totalAmount: number;
-  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+  amountPaid?: number;
+  balanceDue?: number;
+  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled' | 'Partial';
   paymentMode?: string;
   paymentDate?: string;
   miscMobile?: string;

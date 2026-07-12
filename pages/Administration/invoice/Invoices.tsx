@@ -26,6 +26,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [payMode, setPayMode] = useState<'Cash' | 'Online' | 'Cheque' | 'UPI'>('Online');
   const [chequeNo, setChequeNo] = useState('');
+  const [payAmount, setPayAmount] = useState<number | ''>('');
 
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -67,7 +68,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
       await api.migrateToPayment(settlingInvoice.id, {
         date: payDate,
         mode: payMode,
-        chequeNo: payMode === 'Cheque' ? chequeNo : undefined
+        chequeNo: payMode === 'Cheque' ? chequeNo : undefined,
+        amount: Number(payAmount)
       });
       setSettlingInvoice(null);
       await fetchAll();
@@ -226,18 +228,20 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        value={inv.status}
                        onChange={async (e) => {
                          const val = e.target.value;
-                         if (val === 'Paid') {
+                         if (val === 'Paid' || val === 'Partial') {
                            setSettlingInvoice(inv);
+                           setPayAmount(inv.totalAmount - (inv.amountPaid || 0));
                          } else {
                            const updated = { ...inv, status: val as any };
                            await api.saveInvoice(updated);
                            fetchAll();
                          }
                        }}
-                       className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
+                       className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
                      >
                        <option value="Draft">Draft</option>
                        <option value="Sent">Invoice Sent</option>
+                       <option value="Partial">Partially Paid</option>
                        <option value="Paid">Payment Received</option>
                      </select>
                   </td>
@@ -271,6 +275,12 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
            <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col p-8 space-y-6">
               <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Record Payment</h3>
               
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Amount Received</label>
+                <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={payAmount} onChange={e => setPayAmount(Number(e.target.value))} />
+              </div>
+
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Payment Date</label>
                 <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
@@ -326,16 +336,16 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
               </div>
               
               <div className="flex-1 overflow-y-auto bg-white">
-              <div className="p-8" ref={printRef}>
+              <div className="p-8 relative" ref={printRef}>
+                 {settings?.firmLogo && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0">
+                       <img src={settings.firmLogo} alt="Watermark" className="max-w-[80%] max-h-[80%] object-contain" />
+                    </div>
+                 )}
                  {/* Printable Content */}
-                 <div className="space-y-8">
+                 <div className="space-y-8 relative z-10">
                     <div className="flex justify-between items-start">
                        <div className="flex gap-6 items-stretch">
-                          {settings?.firmLogo && (
-                            <div className="flex items-stretch">
-                               <img src={settings.firmLogo} alt="Logo" className="w-auto object-contain" style={{ height: '100%' }} />
-                            </div>
-                          )}
                           <div className="flex flex-col justify-center py-1">
                              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
                              {settings?.firmServices && <p className="text-[10px] font-black text-indigo-500 uppercase mt-0.5 tracking-widest">{settings.firmServices}</p>}

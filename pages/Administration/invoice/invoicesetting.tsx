@@ -140,12 +140,26 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Company Logo</label>
-                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmLogo')} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                <div className="flex items-center gap-4">
+                  <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmLogo')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                  {settings.firmLogo && (
+                    <button type="button" onClick={() => setSettings({...settings, firmLogo: ''})} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">
+                      Remove
+                    </button>
+                  )}
+                </div>
                 {settings.firmLogo && <img src={settings.firmLogo} alt="Logo" className="mt-2 h-12 object-contain" />}
              </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Signature</label>
-                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmSignature')} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                <div className="flex items-center gap-4">
+                  <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmSignature')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                  {settings.firmSignature && (
+                    <button type="button" onClick={() => setSettings({...settings, firmSignature: ''})} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-100 transition-colors">
+                      Remove
+                    </button>
+                  )}
+                </div>
                 {settings.firmSignature && <img src={settings.firmSignature} alt="Signature" className="mt-2 h-12 object-contain" />}
              </div>
              <div className="md:col-span-2 flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">

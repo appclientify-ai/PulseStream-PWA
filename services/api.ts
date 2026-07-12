@@ -204,31 +204,36 @@ class ApiService {
     return `${prefix}/${fy}/${count.toString().padStart(2, '0')}`;
   }
 
-  async migrateToPayment(invoiceId: string, paymentData: { date: string; mode: string; chequeNo?: string }): Promise<void> {
+  async migrateToPayment(invoiceId: string, paymentData: { date: string; mode: string; chequeNo?: string; amount?: number }): Promise<void> {
     const invs = await this.getInvoices();
     const inv = invs.find(i => i.id === invoiceId);
     if (!inv) return;
 
-    const existingPayments = await this.getPayments();
-    if (existingPayments.some(p => p.invoiceNo === inv.invoiceNo)) {
-       inv.status = 'Paid';
-       inv.paymentDate = paymentData.date;
-       inv.paymentMode = paymentData.mode;
-       await this.saveInvoice(inv);
-       return;
+    const paidAmount = paymentData.amount || inv.totalAmount;
+    const currentPaid = inv.amountPaid || 0;
+    const newPaid = currentPaid + paidAmount;
+    
+    inv.amountPaid = newPaid;
+    inv.balanceDue = inv.totalAmount - newPaid;
+    
+    if (inv.balanceDue <= 0) {
+      inv.status = 'Paid';
+      inv.balanceDue = 0;
+    } else {
+      inv.status = 'Partial';
     }
 
-    inv.status = 'Paid';
     inv.paymentDate = paymentData.date;
     inv.paymentMode = paymentData.mode;
     await this.saveInvoice(inv);
+    
     await this.savePayment({
       clientId: inv.clientId,
       clientName: inv.clientName,
       clientTradeName: inv.clientTradeName,
       invoiceNo: inv.invoiceNo,
       date: paymentData.date,
-      amount: inv.totalAmount,
+      amount: paidAmount,
       mode: paymentData.mode as any,
       chequeNo: paymentData.chequeNo
     });

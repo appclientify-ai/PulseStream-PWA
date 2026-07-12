@@ -18,16 +18,20 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   const [search, setSearch] = useState('');
   const [settings, setSettings] = useState<InvoiceSettings | null>(null);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [showLedger, setShowLedger] = useState(false);
+  const [selectedLedgerClient, setSelectedLedgerClient] = useState<string>('');
   const [previewPayment, setPreviewPayment] = useState<{pay: PaymentRecord, inv: InvoiceRecord} | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
     setIsLoading(true);
     try {
-      const [pays, sets, invs] = await Promise.all([api.getPayments(), api.getInvoiceSettings(), api.getInvoices()]);
+      const [pays, sets, invs, clis] = await Promise.all([api.getPayments(), api.getInvoiceSettings(), api.getInvoices(), api.getClients()]);
       setPayments(pays);
       setSettings(sets);
       setInvoices(invs);
+      setClients(clis);
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +122,35 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
     });
   };
 
+  const ledgerEntries = useMemo(() => {
+    if (!selectedLedgerClient) return [];
+    
+    type LedgerEntry = { date: string; type: string; ref: string; debit: number; credit: number };
+    const entries: LedgerEntry[] = [];
+    
+    invoices.filter(i => i.clientId === selectedLedgerClient).forEach(inv => {
+       entries.push({
+         date: inv.date,
+         type: 'Invoice',
+         ref: inv.invoiceNo,
+         debit: inv.totalAmount,
+         credit: 0
+       });
+    });
+    
+    payments.filter(p => p.clientId === selectedLedgerClient).forEach(pay => {
+       entries.push({
+         date: pay.date,
+         type: 'Payment',
+         ref: pay.mode + (pay.chequeNo ? ` - ${pay.chequeNo}` : ''),
+         debit: 0,
+         credit: pay.amount
+       });
+    });
+    
+    return entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [selectedLedgerClient, invoices, payments]);
+
   if (isLoading) return <Loader />;
 
   return (
@@ -147,6 +180,11 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
           <input type="text" placeholder="Search Client, Inv No or Ref..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" />
         </div>
+        
+        <button onClick={() => setShowLedger(true)} className="shrink-0 flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-95">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <span className="font-black text-xs uppercase tracking-widest">Client Ledger</span>
+        </button>
       </div>
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto no-scrollbar flex-1">
@@ -214,16 +252,16 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                  </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-8 bg-white" ref={printRef}>
-                 <div className="space-y-8 relative">
+              <div className="flex-1 overflow-y-auto p-8 bg-white relative" ref={printRef}>
+                 {settings?.firmLogo && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none z-0">
+                       <img src={settings.firmLogo} alt="Watermark" className="max-w-[80%] max-h-[80%] object-contain" />
+                    </div>
+                 )}
+                 <div className="space-y-8 relative z-10">
                     
                     <div className="flex justify-between items-start">
                        <div className="flex gap-6 items-stretch">
-                          {settings?.firmLogo && (
-                            <div className="flex items-stretch">
-                               <img src={settings.firmLogo} alt="Logo" className="w-auto object-contain" style={{ height: '100%' }} />
-                            </div>
-                          )}
                           <div className="flex flex-col justify-center py-1">
                              <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
                              {settings?.firmServices && <p className="text-[10px] font-black text-indigo-600 uppercase mt-1 tracking-widest">{settings.firmServices}</p>}
@@ -325,8 +363,69 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
            </div>
         </div>
       )}
+
+      {/* Ledger Modal */}
+      {showLedger && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Client Ledger</h3>
+                 <button onClick={() => { setShowLedger(false); setSelectedLedgerClient(''); }} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
+                    <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                 </button>
+              </div>
+
+              <div className="p-8 flex-1 overflow-y-auto bg-white flex flex-col gap-6">
+                 <div>
+                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Select Client</label>
+                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                     value={selectedLedgerClient} onChange={e => setSelectedLedgerClient(e.target.value)}>
+                     <option value="">-- Choose a Client --</option>
+                     {clients.map(c => (
+                       <option key={c.id} value={c.id}>{c.legalName} {c.tradeName ? `(${c.tradeName})` : ''}</option>
+                     ))}
+                   </select>
+                 </div>
+
+                 {selectedLedgerClient && (
+                   <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                     <table className="w-full text-left border-collapse table-auto">
+                       <thead className="bg-slate-50 border-b border-slate-200">
+                         <tr>
+                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest">Date</th>
+                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest">Description</th>
+                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Debit (₹)</th>
+                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Credit (₹)</th>
+                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Balance (₹)</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-100">
+                         {(() => {
+                           let runningBalance = 0;
+                           return ledgerEntries.length === 0 ? (
+                             <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold text-xs uppercase">No records found.</td></tr>
+                           ) : ledgerEntries.map((entry, idx) => {
+                             runningBalance += (entry.debit - entry.credit);
+                             return (
+                               <tr key={idx} className="hover:bg-slate-50">
+                                 <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
+                                 <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
+                                 <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
+                                 <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
+                                 <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">{runningBalance.toLocaleString()} {runningBalance > 0 ? 'Dr' : runningBalance < 0 ? 'Cr' : ''}</td>
+                               </tr>
+                             );
+                           });
+                         })()}
+                       </tbody>
+                     </table>
+                   </div>
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default PaymentReceived;
