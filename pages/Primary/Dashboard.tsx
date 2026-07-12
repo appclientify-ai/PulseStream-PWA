@@ -95,10 +95,20 @@ const Dashboard: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
+  const getPrevFY = (fy: string) => {
+    const parts = fy.split('-');
+    if (parts.length === 2) {
+      const start = parseInt(parts[0], 10);
+      const end = parseInt(parts[1], 10);
+      return `${start - 1}-${(end - 1).toString().padStart(2, '0')}`;
+    }
+    return fy;
+  };
+
   const [monthlyFilter, setMonthlyFilter] = useState({ year: def.year, month: def.month });
   const [quarterlyFilter, setQuarterlyFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
   const [compositionFilter, setCompositionFilter] = useState({ year: def.quarterYear, quarter: def.quarter });
-  const [annualFilter, setAnnualFilter] = useState({ year: def.year });
+  const [annualFilter, setAnnualFilter] = useState({ year: getPrevFY(def.year) });
   const [itrFilter, setItrFilter] = useState({ ay: getCurrentAY() });
 
   const loadData = useCallback(async () => {
@@ -175,9 +185,12 @@ const Dashboard: React.FC = () => {
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr9') {
-       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular');
+       const watchlistStr = localStorage.getItem('clientify_gstr9_watchlist_v2');
+       const watchlistObj = watchlistStr ? JSON.parse(watchlistStr) : {};
+       const currentWatchlist: string[] = watchlistObj[periodKey] || [];
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id));
        total = applicable.length;
-       filed = applicable.filter(c => periodData[c.id]?.filed).length;
+       filed = applicable.filter(c => periodData[c.id]?.gstr9).length;
     } else if (type === 'audit') {
        const applicable = (clients || []).filter(c => c && c.itProfile?.advisoryWork?.taxAudit);
        total = applicable.length;

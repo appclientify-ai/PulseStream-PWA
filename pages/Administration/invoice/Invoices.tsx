@@ -332,14 +332,16 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <div className="flex justify-between items-start">
                        <div className="flex gap-6 items-stretch">
                           {settings?.firmLogo && (
-                            <img src={settings.firmLogo} alt="Logo" className="h-auto max-h-40 w-auto object-contain self-start" />
+                            <div className="flex items-stretch">
+                               <img src={settings.firmLogo} alt="Logo" className="w-auto object-contain" style={{ height: '100%' }} />
+                            </div>
                           )}
-                          <div className="flex flex-col justify-center">
+                          <div className="flex flex-col justify-center py-1">
                              <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
                              {settings?.firmServices && <p className="text-[10px] font-black text-indigo-500 uppercase mt-0.5 tracking-widest">{settings.firmServices}</p>}
+                             {settings?.professionType && settings?.registrationNo && <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{settings.professionType === 'CA' ? 'Membership No: ' : 'Bar Registration No: '}{settings.registrationNo}</p>}
                              {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-2 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
                              {settings?.firmGstin && settings.firmGstin.toLowerCase() !== 'n/a' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
-                             {settings?.professionType && settings?.registrationNo && <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{settings.professionType === 'CA' ? 'Membership No: ' : 'Bar Registration No: '}{settings.registrationNo}</p>}
                              {settings?.firmMobile && <p className="text-xs font-bold text-slate-500 uppercase">Contact: {settings.firmMobile}</p>}
                              {settings?.firmEmail && <p className="text-xs font-bold text-slate-500 uppercase">Email: {settings.firmEmail}</p>}
                           </div>
