@@ -222,7 +222,12 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
                   <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{inv.date.split('-').reverse().join('-')}</td>
                   <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
-                  <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">₹{inv.totalAmount.toLocaleString()}</td>
+                  <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">
+                     ₹{inv.totalAmount.toLocaleString()}
+                     {inv.status === 'Partial' && inv.balanceDue && (
+                       <div className="text-[9px] text-amber-500 mt-1 uppercase tracking-widest font-black">Due: ₹{inv.balanceDue.toLocaleString()}</div>
+                     )}
+                  </td>
                   <td className=" px-6 py-6 text-center">
                      <select
                        value={inv.status}
