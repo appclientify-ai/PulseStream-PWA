@@ -253,11 +253,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
               </div>
               
               <div className="flex-1 overflow-y-auto p-8 bg-white relative" ref={printRef}>
-                 {settings?.firmLogo && (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none z-50 overflow-hidden">
-                       <img src={settings.firmLogo} alt="Watermark" className="w-[90%] h-[90%] object-contain mix-blend-multiply" />
-                    </div>
-                 )}
+
                  <div className="space-y-8 relative z-10">
                     
                     <div className="flex justify-between items-start">
