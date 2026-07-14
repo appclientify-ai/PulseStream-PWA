@@ -93,6 +93,7 @@ export interface ITProfile {
 }
 
 export interface BankDetails {
+  accountName?: string;
   bankName: string;
   accountNo: string;
   ifsc: string;
@@ -155,6 +156,7 @@ export interface InvoiceSettings {
   firmMobile: string;
   firmEmail: string;
   firmGstin: string;
+  accountName?: string;
   bankName: string;
   accountNo: string;
   ifsc: string;

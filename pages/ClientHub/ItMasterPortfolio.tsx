@@ -57,7 +57,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { fetchClients();
+    const syncHandler = () => { console.log('Syncing clients...'); fetchClients(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {

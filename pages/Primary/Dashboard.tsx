@@ -1,4 +1,5 @@
 
+import { useParams, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
 import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
@@ -61,7 +62,9 @@ const Dashboard: React.FC = () => {
   const { user, token } = useAuth();
   const isOnline = useOffline();
   const { installPrompt, triggerInstall } = usePWA();
-  const [activeView, setActiveView] = useState<ActiveView>('dashboard');
+  const { view } = useParams<{ view: string }>();
+  const navigate = useNavigate();
+  const activeView = (view as ActiveView) || 'dashboard';
   const [viewExtra, setViewExtra] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -127,16 +130,38 @@ const Dashboard: React.FC = () => {
   }, [token]);
 
   useEffect(() => {
-    if (isOnline) { loadData(); socketService.connect(); }
-    return () => socketService.disconnect();
+    if (isOnline) { 
+      loadData(); 
+      socketService.connect(); 
+      const syncHandler = () => { console.log('Syncing main dashboard data...'); loadData(); };
+      window.addEventListener('clientify_db_change', syncHandler);
+      return () => {
+        window.removeEventListener('clientify_db_change', syncHandler);
+        socketService.disconnect();
+      };
+    }
   }, [isOnline, loadData]);
 
   const handleViewChange = (view: ActiveView, extra?: any) => {
-    setActiveView(view);
+    navigate(`/${view}`);
     setViewExtra(extra || null);
-    setNavigationFolder(null); // Close navigation modal if open
+    setNavigationFolder(null);
     window.scrollTo(0, 0);
   };
+
+const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
+  
+  useEffect(() => {
+    const loadFilingData = async () => {
+      const keys = ['clientify_monthly_filing_v3', 'clientify_quarterly_filing_v3', 'clientify_composition_filing_v3', 'clientify_gstr4_filing_v1', 'clientify_gstr9_filing_data_v2', 'clientify_itr_filing_data_v2', 'clientify_audit_fin_data_v3', 'clientify_gstr9_watchlist_v2'];
+      const data: Record<string, any> = {};
+      for (const k of keys) {
+        data[k] = await api.getAppData(k) || {};
+      }
+      setFilingDataCache(data);
+    };
+    loadFilingData();
+  }, []);
 
   const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
     const keys: Record<string, string> = {
@@ -149,8 +174,7 @@ const Dashboard: React.FC = () => {
       audit: 'clientify_audit_fin_data_v3'
     };
     const storageKey = keys[type];
-    const saved = localStorage.getItem(storageKey);
-    const data = saved ? JSON.parse(saved) : {};
+    const data = filingDataCache[storageKey] || {};
     const periodData = data[periodKey] || {};
     
     let total = 0;
@@ -177,16 +201,14 @@ const Dashboard: React.FC = () => {
       cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
       filed = cmp08;
     } else if (type === 'itr') {
-      const applicable = (clients || []).filter(c => c && !!c.itProfile);
-      total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.filed).length;
+      total = clients?.length || 0;
+      filed = (clients || []).filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr4') {
        const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr9') {
-       const watchlistStr = localStorage.getItem('clientify_gstr9_watchlist_v2');
-       const watchlistObj = watchlistStr ? JSON.parse(watchlistStr) : {};
+       const watchlistObj = filingDataCache['clientify_gstr9_watchlist_v2'] || {};
        const currentWatchlist: string[] = watchlistObj[periodKey] || [];
        const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id));
        total = applicable.length;

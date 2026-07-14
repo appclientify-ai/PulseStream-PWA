@@ -37,7 +37,11 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll();
+    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const filteredPayments = useMemo(() => {
     const s = search.toLowerCase();

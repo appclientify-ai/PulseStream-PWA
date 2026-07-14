@@ -49,7 +49,11 @@ const TAXAudit: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const trackedClients = useMemo(() => {
     const selectedStartYear = parseInt(selectedYear.split('-')[0]);

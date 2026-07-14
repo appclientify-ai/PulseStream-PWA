@@ -31,6 +31,9 @@ const GSTRegistration: React.FC = () => {
 
   useEffect(() => {
     fetchRegistrations();
+    const syncHandler = () => { console.log('Syncing data...'); fetchRegistrations(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   const handleInlineUpdate = async (id: string, field: keyof GSTRegistrationRecord, value: any) => {

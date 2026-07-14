@@ -51,16 +51,11 @@ const GSTR4: React.FC = () => {
     } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { 
+useEffect(() => { 
     fetchClients(); 
-    const savedCmp08 = localStorage.getItem('clientify_composition_filing_v3');
-    if (savedCmp08) {
-      try {
-        setCmp08Data(JSON.parse(savedCmp08));
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    api.getAppData('clientify_composition_filing_v3').then(data => {
+      if (data) setCmp08Data(data);
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {

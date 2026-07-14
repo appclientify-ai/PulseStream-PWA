@@ -45,7 +45,11 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll();
+    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();
@@ -417,6 +421,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           )}
                           <div className="flex flex-col gap-1">
                              <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
+                             <p className="text-[9px] font-bold text-slate-600 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
                              <p className="text-[9px] font-bold text-slate-600 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
                              <p className="text-[9px] font-bold text-slate-600 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
                              <p className="text-[9px] font-bold text-slate-600 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>

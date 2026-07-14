@@ -32,6 +32,9 @@ const GSTPortfolio: React.FC = () => {
       }
     };
     load();
+    const syncHandler = () => { console.log('Syncing data...'); load(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [refreshTrigger]);
 
   const stats = useMemo(() => {

@@ -43,6 +43,9 @@ const NoticeDemand: React.FC = () => {
 
   useEffect(() => {
     fetchAll();
+    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   

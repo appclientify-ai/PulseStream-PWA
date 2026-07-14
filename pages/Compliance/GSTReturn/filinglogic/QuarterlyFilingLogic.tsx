@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../../services/api';
 
 export interface FilingStatus {
   r1: boolean;
@@ -11,15 +12,30 @@ const STORAGE_KEY_DATES = 'clientify_quarterly_due_dates_v1';
 export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: string) => {
   const periodKey = `${selectedYear}_${selectedQuarter}`;
   
-  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [data, dates] = await Promise.all([
+          api.getAppData(STORAGE_KEY),
+          api.getAppData(STORAGE_KEY_DATES)
+        ]);
+        if (data) setAllData(data);
+        if (dates) setDueDates(dates);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b') => {
     setAllData(prev => {
@@ -28,7 +44,7 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
       clientData[type] = !clientData[type];
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [periodKey]);
@@ -40,10 +56,10 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
   };
 
   const getDueDate = () => dueDates[periodKey] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
 };

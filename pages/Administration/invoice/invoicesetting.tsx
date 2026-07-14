@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [settings, setSettings] = useState<InvoiceSettings>({
     firmName: '', firmAddress: '', firmMobile: '', firmEmail: '', firmGstin: '',
-    bankName: '', accountNo: '', ifsc: '', upiId: '', invoicePrefix: 'INV/',
+    accountName: '', bankName: '', accountNo: '', ifsc: '', upiId: '', invoicePrefix: 'INV/',
     terms: '', isGstEnabled: true, firmLogo: '', firmSignature: '', whatsappNumber: ''
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -177,6 +177,11 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <section>
           <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-8">Payment & Bank Details</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Account Holder Name</label>
+                <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"
+                  value={settings.accountName || ''} onChange={e => setSettings({...settings, accountName: e.target.value})} />
+             </div>
              <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Bank Name</label>
                 <input className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 font-black uppercase"

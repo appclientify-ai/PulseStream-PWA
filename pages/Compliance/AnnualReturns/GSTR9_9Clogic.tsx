@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../services/api';
 
 export interface GSTR9FilingStatus {
   gstr9: boolean;
@@ -13,37 +14,45 @@ const STORAGE_KEY_CONFIG = 'clientify_gstr9_config_v2';
 const STORAGE_KEY_DATES = 'clientify_gstr9_due_dates_v2';
 
 export const useGSTR9Logic = (selectedYear: string) => {
-  // Watchlist: Record<FinancialYear, ClientID[]>
-  const [watchlist, setWatchlist] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_WATCHLIST);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [watchlist, setWatchlist] = useState<Record<string, string[]>>({});
+  const [config, setConfig] = useState<Record<string, { gstr9cApplicable: boolean }>>({});
+  const [filingData, setFilingData] = useState<Record<string, Record<string, GSTR9FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // Applicability Config: ClientID -> { gstr9cApplicable: boolean }
-  const [config, setConfig] = useState<Record<string, { gstr9cApplicable: boolean }>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_CONFIG);
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  // Filing Data: Year -> ClientID -> Status
-  const [filingData, setFilingData] = useState<Record<string, Record<string, GSTR9FilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATA);
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [w, c, f, d] = await Promise.all([
+          api.getAppData(STORAGE_KEY_WATCHLIST),
+          api.getAppData(STORAGE_KEY_CONFIG),
+          api.getAppData(STORAGE_KEY_DATA),
+          api.getAppData(STORAGE_KEY_DATES)
+        ]);
+        if (w) setWatchlist(w);
+        if (c) setConfig(c);
+        if (f) setFilingData(f);
+        if (d) setDueDates(d);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const updateFilingData = (newData: Record<string, Record<string, GSTR9FilingStatus>>) => {
     setFilingData(newData);
-    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(newData));
+    api.saveAppData(STORAGE_KEY_DATA, newData).catch(console.error);
   };
 
   const updateConfig = (newConfig: Record<string, { gstr9cApplicable: boolean }>) => {
     setConfig(newConfig);
-    localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(newConfig));
+    api.saveAppData(STORAGE_KEY_CONFIG, newConfig).catch(console.error);
   };
 
   const toggleStatus = useCallback((clientId: string, type: 'gstr9' | 'gstr9c') => {
@@ -52,7 +61,6 @@ export const useGSTR9Logic = (selectedYear: string) => {
     
     clientData[type] = !clientData[type];
     
-    // Auto-set date
     const dateKey = type === 'gstr9' ? 'gstr9Date' : 'gstr9cDate';
     if (clientData[type]) {
       clientData[dateKey] = new Date().toISOString().split('T')[0];
@@ -74,7 +82,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       const current = prev[selectedYear] || [];
       if (current.includes(clientId)) return prev;
       const next = { ...prev, [selectedYear]: [...current, clientId] };
-      localStorage.setItem(STORAGE_KEY_WATCHLIST, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
       return next;
     });
     updateConfig({ ...config, [clientId]: { gstr9cApplicable: is9CApplicable } });
@@ -90,7 +98,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       Object.keys(prev).forEach(year => {
         next[year] = prev[year].filter(id => id !== clientId);
       });
-      localStorage.setItem(STORAGE_KEY_WATCHLIST, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
       return next;
     });
   };
@@ -107,22 +115,14 @@ export const useGSTR9Logic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';
 
   return { 
-    getStatus, 
-    toggleStatus, 
-    watchlist, 
-    addToWatchlist, 
-    update9CApplicability,
-    removeFromWatchlist,
-    hasFilingInYear,
-    is9CApplicable,
-    updateDueDate,
-    getDueDate,
-    filingData 
+    getStatus, toggleStatus, watchlist, addToWatchlist, 
+    update9CApplicability, removeFromWatchlist, hasFilingInYear, 
+    is9CApplicable, updateDueDate, getDueDate, filingData, isDataLoaded 
   };
 };

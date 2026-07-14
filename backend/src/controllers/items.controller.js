@@ -20,7 +20,13 @@ export const createItem = async (req, res) => {
     };
 
     const result = await items.insertOne(newItem);
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('db_item_change', { type: 'insert', data: { ...newItem, _id: result.insertedId }, id: result.insertedId, timestamp: new Date() });
+    }
     res.status(201).json({ ...newItem, _id: result.insertedId });
+
   } catch (err) {
     console.error('Create Item Error:', err);
     res.status(500).json({ error: 'Failed to archive record in vault' });
@@ -66,7 +72,13 @@ export const updateItem = async (req, res) => {
       return res.status(404).json({ error: 'Record not found or unauthorized' });
     }
 
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('db_item_change', { type: 'update', data: result, id: id, timestamp: new Date() });
+    }
     res.json(result);
+
   } catch (err) {
     console.error('Update Item Error:', err);
     res.status(500).json({ error: 'Failed to update vault record' });
@@ -87,7 +99,13 @@ export const deleteItem = async (req, res) => {
       return res.status(404).json({ error: 'Record not found or unauthorized' });
     }
 
+    
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('db_item_change', { type: 'delete', id: id, timestamp: new Date() });
+    }
     res.json({ message: 'Record permanently removed from vault' });
+
   } catch (err) {
     console.error('Delete Item Error:', err);
     res.status(500).json({ error: 'Failed to delete vault record' });

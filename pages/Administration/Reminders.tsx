@@ -68,6 +68,9 @@ const Reminders: React.FC = () => {
 
   useEffect(() => {
     fetchUnifiedData();
+    const syncHandler = () => { console.log('Syncing data...'); fetchUnifiedData(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   const getDaysLeft = (dueDate: string) => {

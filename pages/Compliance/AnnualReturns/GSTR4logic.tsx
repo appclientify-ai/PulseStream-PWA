@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../services/api';
 
 export interface GSTR4FilingStatus {
   filed: boolean;
@@ -9,15 +10,28 @@ const STORAGE_KEY = 'clientify_gstr4_filing_v1';
 const STORAGE_KEY_DATES = 'clientify_gstr4_due_dates_v1';
 
 export const useGSTR4Logic = (selectedYear: string) => {
-  const [allData, setAllData] = useState<Record<string, Record<string, GSTR4FilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [allData, setAllData] = useState<Record<string, Record<string, GSTR4FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await api.getAppData(STORAGE_KEY);
+        if (data) setAllData(data);
+        const dates = await api.getAppData(STORAGE_KEY_DATES);
+        if (dates) setDueDates(dates);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {
@@ -33,7 +47,7 @@ export const useGSTR4Logic = (selectedYear: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -45,10 +59,10 @@ export const useGSTR4Logic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
 };

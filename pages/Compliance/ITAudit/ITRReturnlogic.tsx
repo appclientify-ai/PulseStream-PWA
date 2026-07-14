@@ -1,5 +1,5 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../services/api';
 
 export type RefundStatus = 'Pending' | 'Processed' | 'Issued' | 'Adjusted' | 'Rejected' | 'N/A';
 
@@ -15,15 +15,30 @@ const STORAGE_KEY = 'clientify_itr_filing_data_v2';
 const STORAGE_KEY_DATES = 'clientify_itr_due_dates_v1';
 
 export const useITRReturnLogic = (selectedAY: string) => {
-  const [allData, setAllData] = useState<Record<string, Record<string, ITRFilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [allData, setAllData] = useState<Record<string, Record<string, ITRFilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [data, dates] = await Promise.all([
+          api.getAppData(STORAGE_KEY),
+          api.getAppData(STORAGE_KEY_DATES)
+        ]);
+        if (data) setAllData(data);
+        if (dates) setDueDates(dates);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {
@@ -43,7 +58,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -55,7 +70,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       clientData.date = date;
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -71,7 +86,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -89,7 +104,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -101,10 +116,10 @@ export const useITRReturnLogic = (selectedAY: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedAY]: val };
     setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedAY] || '';
 
-  return { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateFileData, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateFileData, updateDueDate, getDueDate, isDataLoaded };
 };

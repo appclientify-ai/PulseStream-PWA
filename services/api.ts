@@ -321,6 +321,25 @@ class ApiService {
     return this.transformItem<MiscWorkRecord>(work.id ? await this.put(`/items/${work.id}`, payload) : await this.post('/items', payload));
   }
   async deleteMiscWork(id: string) { await this.delete(`/items/${id}`); }
+
+
+
+  async getAppData(key: string): Promise<any> {
+    const items = await this.get('/items');
+    const existing = items.find((i: any) => i.name === 'app_data_' + key);
+    return existing ? existing.data : null;
+  }
+  async saveAppData(key: string, data: any): Promise<void> {
+    const items = await this.get('/items');
+    const existing = items.find((i: any) => i.name === 'app_data_' + key);
+    const payload = { name: 'app_data_' + key, data: data };
+    if (existing) {
+      await this.put(`/items/${existing._id}`, payload);
+    } else {
+      await this.post('/items', payload);
+    }
+  }
+
 }
 
 export const api = new ApiService();

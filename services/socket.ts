@@ -26,6 +26,12 @@ class SocketService {
         this.trigger(event, args[0]);
       });
 
+      
+      this.socket.on('db_item_change', (payload) => {
+        console.debug('Real-time update received:', payload);
+        window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
+      });
+
       this.socket.on('disconnect', () => {
         console.warn('🔌 Vault Sync Interrupted');
         this.trigger('disconnect', {});

@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { api } from '../../../../services/api';
 
 export interface FilingStatus {
   cmp08: boolean;
@@ -10,15 +11,28 @@ const STORAGE_KEY_DATES = 'clientify_composition_due_dates_v1';
 export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter: string) => {
   const periodKey = `${selectedYear}_${selectedQuarter}`;
   
-  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  const [dueDates, setDueDates] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_DATES);
-    return saved ? JSON.parse(saved) : {};
-  });
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await api.getAppData(STORAGE_KEY);
+        if (data) setAllData(data);
+        const dates = await api.getAppData(STORAGE_KEY_DATES);
+        if (dates) setDueDates(dates);
+      } catch (err) {
+        console.error('Failed to load composition data', err);
+      } finally {
+        setIsDataLoaded(true);
+      }
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {
@@ -27,7 +41,7 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
       clientData.cmp08 = !clientData.cmp08;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      api.saveAppData(STORAGE_KEY, next).catch(err => console.error('Failed to save composition data', err));
       return next;
     });
   }, [periodKey]);
@@ -39,10 +53,10 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    localStorage.setItem(STORAGE_KEY_DATES, JSON.stringify(next));
+    api.saveAppData(STORAGE_KEY_DATES, next).catch(err => console.error('Failed to save composition due dates', err));
   };
 
   const getDueDate = () => dueDates[periodKey] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate };
+  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
 };

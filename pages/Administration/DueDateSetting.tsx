@@ -1,3 +1,4 @@
+import { api } from '../../services/api';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Loader from '../../components/Loader';
@@ -21,12 +22,20 @@ const DueDateSetting: React.FC = () => {
   const [dates, setDates] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
+const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setDates(JSON.parse(saved));
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const saved = await api.getAppData(STORAGE_KEY);
+        if (saved) setDates(saved);
+      } catch(e) { console.error(e); }
+      setIsLoading(false);
+    };
+    load();
+    const syncHandler = () => load();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   const handleDateChange = (moduleId: string, period: string, value: string) => {
@@ -34,9 +43,9 @@ const DueDateSetting: React.FC = () => {
     setDates(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dates));
+    await api.saveAppData(STORAGE_KEY, dates);
     setTimeout(() => setIsSaving(false), 600);
   };
 

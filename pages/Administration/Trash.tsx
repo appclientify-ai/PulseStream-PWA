@@ -21,7 +21,11 @@ const Trash: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchTrash(); }, []);
+  useEffect(() => { fetchTrash();
+    const syncHandler = () => { console.log('Syncing data...'); fetchTrash(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   if (isLoading) return <Loader />;
 

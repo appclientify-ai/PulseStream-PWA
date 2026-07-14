@@ -43,7 +43,11 @@ const NoticePending: React.FC = () => {
     } catch (err) { console.error("Failed to sync notice vault:", err); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll();
+    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   const getClientDisplayId = useCallback((clientId: string) => {
     const client = clients.find(c => c.id === clientId);

@@ -27,6 +27,9 @@ const FoodLicenses: React.FC = () => {
 
   useEffect(() => {
     fetchRecords();
+    const syncHandler = () => { console.log('Syncing data...'); fetchRecords(); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   const filteredRecords = useMemo(() => {

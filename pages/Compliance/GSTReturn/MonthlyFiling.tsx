@@ -44,7 +44,11 @@ const MonthlyFiling: React.FC = () => {
     } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
 
   useEffect(() => {
     const handleClose = (event: any) => {
