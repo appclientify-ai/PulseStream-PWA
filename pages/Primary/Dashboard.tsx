@@ -201,8 +201,9 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
       cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
       filed = cmp08;
     } else if (type === 'itr') {
-      total = clients?.length || 0;
-      filed = (clients || []).filter(c => periodData[c.id]?.filed).length;
+      const applicable = (clients || []).filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing'));
+      total = applicable.length;
+      filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr4') {
        const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
        total = applicable.length;

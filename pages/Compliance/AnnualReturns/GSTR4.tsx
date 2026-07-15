@@ -76,7 +76,7 @@ useEffect(() => {
     const sameGroup = allClientsBase.filter(c => 
       c.gstProfile?.jurisdictionType === client.gstProfile?.jurisdictionType &&
       (isState ? c.gstProfile?.sector === val : c.gstProfile?.range === val)
-    ).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    ).sort((a, b) => (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime()));
     const rank = sameGroup.findIndex(c => c.id === client.id) + 1;
     return `${prefix}/${val || '?'}/${rank}`;
   }, [allClientsBase]);

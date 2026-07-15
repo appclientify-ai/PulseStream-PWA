@@ -26,7 +26,7 @@ const startServer = async () => {
     // Start watching database changes for real-time reactivity
     initChangeStreams(io);
     
-    server.listen(PORT, () => {
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 SERVER IS LIVE: http://localhost:${PORT}`);
       console.log(`🏥 HEALTH CHECK: http://localhost:${PORT}/health`);
       console.log('-------------------------------------------');

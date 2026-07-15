@@ -77,7 +77,7 @@ const ITRReturn: React.FC = () => {
   }, [activeActionsId]);
 
   const getClientDisplayId = useCallback((client: Client) => {
-    const itGroup = clients.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const itGroup = clients.slice().sort((a, b) => (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime()));
     const rank = itGroup.findIndex(c => c.id === client.id) + 1;
     return `IT/${rank.toString().padStart(2, '0')}`;
   }, [clients]);
