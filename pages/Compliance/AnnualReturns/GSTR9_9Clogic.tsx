@@ -47,12 +47,10 @@ export const useGSTR9Logic = (selectedYear: string) => {
 
   const updateFilingData = (newData: Record<string, Record<string, GSTR9FilingStatus>>) => {
     setFilingData(newData);
-    api.saveAppData(STORAGE_KEY_DATA, newData).catch(console.error);
   };
 
   const updateConfig = (newConfig: Record<string, { gstr9cApplicable: boolean }>) => {
     setConfig(newConfig);
-    api.saveAppData(STORAGE_KEY_CONFIG, newConfig).catch(console.error);
   };
 
   const toggleStatus = useCallback((clientId: string, type: 'gstr9' | 'gstr9c') => {
@@ -70,7 +68,8 @@ export const useGSTR9Logic = (selectedYear: string) => {
     
     yearData[clientId] = clientData;
     const next = { ...filingData, [selectedYear]: yearData };
-    updateFilingData(next);
+    setFilingData(next);
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
   }, [filingData, selectedYear]);
 
   const getStatus = useCallback((clientId: string): GSTR9FilingStatus => {
@@ -82,7 +81,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       const current = prev[selectedYear] || [];
       if (current.includes(clientId)) return prev;
       const next = { ...prev, [selectedYear]: [...current, clientId] };
-      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] }).catch(console.error);
       return next;
     });
     updateConfig({ ...config, [clientId]: { gstr9cApplicable: is9CApplicable } });
@@ -98,7 +97,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       Object.keys(prev).forEach(year => {
         next[year] = prev[year].filter(id => id !== clientId);
       });
-      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).catch(console.error);
       return next;
     });
   };
@@ -115,7 +114,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';

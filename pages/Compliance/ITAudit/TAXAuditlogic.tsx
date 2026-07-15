@@ -51,7 +51,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
       const current = prev[selectedYear] || [];
       if (current.includes(clientId)) return prev;
       const next = { ...prev, [selectedYear]: [...current, clientId] };
-      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] }).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -62,7 +62,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
       Object.keys(prev).forEach(year => {
         next[year] = prev[year].filter(id => id !== clientId);
       });
-      api.saveAppData(STORAGE_KEY_WATCHLIST, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).catch(console.error);
       return next;
     });
   }, []);
@@ -81,7 +81,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      api.saveAppData(STORAGE_KEY_DATA, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -98,7 +98,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      api.saveAppData(STORAGE_KEY_DATA, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -110,7 +110,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
       clientData.caName = name;
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      api.saveAppData(STORAGE_KEY_DATA, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -122,7 +122,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';

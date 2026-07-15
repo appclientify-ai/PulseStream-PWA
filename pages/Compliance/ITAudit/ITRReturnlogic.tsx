@@ -58,7 +58,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -70,7 +70,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       clientData.date = date;
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -86,7 +86,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -104,7 +104,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -116,7 +116,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedAY]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedAY}`]: val }).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedAY] || '';

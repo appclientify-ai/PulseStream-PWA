@@ -12,10 +12,18 @@ import OfflineBanner from './components/OfflineBanner.tsx';
 import { api } from './services/api.ts';
 import { useOffline } from './hooks/useOffline.ts';
 import { Toaster } from 'sonner';
+import { socketService } from './services/socket.ts';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const navigate = useNavigate();
+  useEffect(() => {
+    if (isAuthenticated) {
+      socketService.connect();
+    } else {
+      socketService.disconnect();
+    }
+  }, [isAuthenticated]);
   const location = useLocation();
   
   const handleReconnect = useCallback(() => {

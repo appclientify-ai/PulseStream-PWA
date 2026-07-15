@@ -33,6 +33,12 @@ const Messenger: React.FC = () => {
     });
   }, []);
 
+
+  useEffect(() => {
+    const syncHandler = () => api.getClients().then(setClients);
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
     return clients.filter(c => 

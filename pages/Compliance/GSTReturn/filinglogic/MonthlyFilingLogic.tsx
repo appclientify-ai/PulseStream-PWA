@@ -189,10 +189,11 @@ useEffect(() => {
     setAllData(prev => {
       const periodData = { ...(prev[periodKey] || {}) };
       const clientData = { ...(periodData[clientId] || { r1: false, r3b: false, cmp08: false }) };
-      (clientData as any)[type] = !(clientData as any)[type];
+      const newVal = !(clientData as any)[type];
+      (clientData as any)[type] = newVal;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      api.saveAppData(storageKey, next).catch(err => console.error('Failed to save filing data', err));
+      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).catch(err => console.error('Failed to save filing data', err));
       return next;
     });
   }, [selectedYear, selectedMonth, storageKey]);
@@ -206,7 +207,7 @@ useEffect(() => {
     const key = `${selectedYear}_${selectedMonth}`;
     const next = { ...dueDates, [key]: val };
     setDueDates(next);
-    api.saveAppData(storageKeyDates, next).catch(err => console.error('Failed to save due dates', err));
+    api.patchAppData(storageKeyDates, { [`data.${key}`]: val }).catch(err => console.error('Failed to save due dates', err));
   };
 
   const getDueDate = () => dueDates[`${selectedYear}_${selectedMonth}`] || '';

@@ -39,6 +39,19 @@ class ApiService {
     return result;
   }
 
+  
+  async patch(endpoint: string, data: any) {
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const url = this.getFullUrl(endpoint);
+    try {
+      const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(data) });
+      return this.handleResponse(res);
+    } catch (err: any) {
+      throw new Error(`Connection Failed: Could not reach ${url}.`);
+    }
+  }
+
   async get(endpoint: string) {
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
     const url = this.getFullUrl(endpoint);
@@ -324,6 +337,11 @@ class ApiService {
 
 
 
+  
+  async patchAppData(key: string, updates: Record<string, any>): Promise<any> {
+    return this.patch(`/items/app_data/${key}/patch`, { updates });
+  }
+  
   async getAppData(key: string): Promise<any> {
     const items = await this.get('/items');
     const existing = items.find((i: any) => i.name === 'app_data_' + key);

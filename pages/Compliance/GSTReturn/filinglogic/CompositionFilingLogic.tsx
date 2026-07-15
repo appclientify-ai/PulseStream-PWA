@@ -38,10 +38,11 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
     setAllData(prev => {
       const periodData = { ...(prev[periodKey] || {}) };
       const clientData = { ...(periodData[clientId] || { cmp08: false }) };
-      clientData.cmp08 = !clientData.cmp08;
+      const newVal = !clientData.cmp08;
+      clientData.cmp08 = newVal;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      api.saveAppData(STORAGE_KEY, next).catch(err => console.error('Failed to save composition data', err));
+      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.cmp08`]: newVal }).catch(err => console.error('Failed to save composition data', err));
       return next;
     });
   }, [periodKey]);
@@ -53,7 +54,7 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(err => console.error('Failed to save composition due dates', err));
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).catch(err => console.error('Failed to save composition due dates', err));
   };
 
   const getDueDate = () => dueDates[periodKey] || '';

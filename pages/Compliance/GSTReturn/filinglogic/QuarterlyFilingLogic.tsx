@@ -41,10 +41,11 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
     setAllData(prev => {
       const periodData = { ...(prev[periodKey] || {}) };
       const clientData = { ...(periodData[clientId] || { r1: false, r3b: false }) };
-      clientData[type] = !clientData[type];
+      const newVal = !clientData[type];
+      clientData[type] = newVal;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).catch(console.error);
       return next;
     });
   }, [periodKey]);
@@ -56,7 +57,7 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).catch(console.error);
   };
 
   const getDueDate = () => dueDates[periodKey] || '';

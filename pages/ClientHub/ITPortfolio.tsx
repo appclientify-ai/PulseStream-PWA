@@ -24,6 +24,12 @@ const ITPortfolio: React.FC = () => {
     loadData();
   }, [refreshTrigger, loadData]);
 
+
+  useEffect(() => {
+    const syncHandler = () => loadData();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, [loadData]);
   const stats = useMemo(() => {
     const total = clients.length;
     const active = (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;

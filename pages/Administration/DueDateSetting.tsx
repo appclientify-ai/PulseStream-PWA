@@ -45,7 +45,7 @@ const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
 
   const handleSave = async () => {
     setIsSaving(true);
-    await api.saveAppData(STORAGE_KEY, dates);
+    await api.patchAppData(STORAGE_KEY, Object.fromEntries(Object.entries(dates).map(([k,v]) => [`data.${k}`, v])));
     setTimeout(() => setIsSaving(false), 600);
   };
 

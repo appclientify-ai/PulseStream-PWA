@@ -92,6 +92,12 @@ useEffect(() => {
     return { total, filed, pending };
   }, [clients, selectedYear, getStatus]);
 
+
+  useEffect(() => {
+    const syncHandler = () => fetchClients();
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
   const filteredClients = useMemo(() => {
     let list = clients.filter(c => 
       isClientVisibleInFY(c, selectedYear) &&

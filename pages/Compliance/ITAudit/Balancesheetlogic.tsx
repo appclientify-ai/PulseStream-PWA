@@ -49,7 +49,7 @@ export const useBalancesheetLogic = (selectedYear: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      api.saveAppData(STORAGE_KEY, next).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -61,7 +61,7 @@ export const useBalancesheetLogic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.saveAppData(STORAGE_KEY_DATES, next).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';
