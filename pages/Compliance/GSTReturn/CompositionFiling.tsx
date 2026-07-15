@@ -41,8 +41,8 @@ const CompositionFiling: React.FC = () => {
     return 'March';
   }, [selectedQuarter]);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getClients();
       setAllClientsBase(data);
@@ -51,7 +51,7 @@ const CompositionFiling: React.FC = () => {
   };
 
   useEffect(() => { fetchClients();
-    const syncHandler = () => fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

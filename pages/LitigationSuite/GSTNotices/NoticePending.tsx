@@ -34,8 +34,8 @@ const NoticePending: React.FC = () => {
   const [replyDate, setReplyDate] = useState(new Date().toISOString().split('T')[0]);
   const [replyRefNo, setReplyRefNo] = useState('');
 
-  const fetchAll = async () => {
-    setIsLoading(true);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [recs, clis] = await Promise.all([api.getLitigationRecords(), api.getClients()]);
       setRecords(recs.filter(r => r.category === 'Notice' && r.status === 'Pending'));
@@ -44,7 +44,7 @@ const NoticePending: React.FC = () => {
   };
 
   useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

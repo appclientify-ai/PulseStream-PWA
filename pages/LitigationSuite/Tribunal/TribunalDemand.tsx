@@ -21,8 +21,8 @@ const TribunalDemand: React.FC = () => {
   const [targetCategory, setTargetCategory] = useState<LitigationCategory>('Tribunal');
   const [isReissueMode, setIsReissueMode] = useState(false);
 
-  const fetchAll = async () => {
-    setIsLoading(true);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [recs, clis] = await Promise.all([
         api.getLitigationRecords(),
@@ -36,7 +36,7 @@ const TribunalDemand: React.FC = () => {
   };
 
   useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

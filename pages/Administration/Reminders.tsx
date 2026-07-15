@@ -20,8 +20,8 @@ const Reminders: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'All' | 'Litigation' | 'Misc Work'>('All');
 
-  const fetchUnifiedData = async () => {
-    setIsLoading(true);
+  const fetchUnifiedData = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [litigation, work] = await Promise.all([
         api.getLitigationRecords(),
@@ -68,7 +68,7 @@ const Reminders: React.FC = () => {
 
   useEffect(() => {
     fetchUnifiedData();
-    const syncHandler = () => { console.log('Syncing data...'); fetchUnifiedData(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchUnifiedData(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

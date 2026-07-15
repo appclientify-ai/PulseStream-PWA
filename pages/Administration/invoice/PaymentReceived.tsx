@@ -24,8 +24,8 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   const [previewPayment, setPreviewPayment] = useState<{pay: PaymentRecord, inv: InvoiceRecord} | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fetchAll = async () => {
-    setIsLoading(true);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [pays, sets, invs, clis] = await Promise.all([api.getPayments(), api.getInvoiceSettings(), api.getInvoices(), api.getClients()]);
       setPayments(pays);
@@ -38,7 +38,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   };
 
   useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

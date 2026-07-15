@@ -17,8 +17,8 @@ const GSTRegistration: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<GSTRegistrationRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const fetchRegistrations = async () => {
-    setIsLoading(true);
+  const fetchRegistrations = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getGSTRegistrations();
       setRegistrations(data);
@@ -31,7 +31,7 @@ const GSTRegistration: React.FC = () => {
 
   useEffect(() => {
     fetchRegistrations();
-    const syncHandler = () => { console.log('Syncing data...'); fetchRegistrations(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchRegistrations(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

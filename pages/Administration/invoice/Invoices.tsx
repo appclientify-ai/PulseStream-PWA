@@ -31,8 +31,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fetchAll = async () => {
-    setIsLoading(true);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [invs, sets] = await Promise.all([
         api.getInvoices(),
@@ -46,7 +46,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   };
 
   useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

@@ -1,3 +1,8 @@
+const fs = require('fs');
+let content = fs.readFileSync('backend/src/app.js', 'utf8');
+
+// We want to replace the dev environment section and catch-all
+const newAppJS = `
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -72,3 +77,6 @@ async function setup() {
 }
 
 setup();
+`;
+
+fs.writeFileSync('backend/src/app.js', newAppJS.trim());

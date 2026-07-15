@@ -13,8 +13,8 @@ const MSMERegistration: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MSMERegistrationRecord | null>(null);
 
-  const fetchRecords = async () => {
-    setIsLoading(true);
+  const fetchRecords = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getMSMERegistrations();
       setRecords(data);
@@ -27,7 +27,7 @@ const MSMERegistration: React.FC = () => {
 
   useEffect(() => {
     fetchRecords();
-    const syncHandler = () => { console.log('Syncing data...'); fetchRecords(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchRecords(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

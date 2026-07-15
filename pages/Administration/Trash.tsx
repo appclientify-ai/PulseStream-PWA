@@ -7,8 +7,8 @@ const Trash: React.FC = () => {
   const [trashItems, setTrashItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTrash = async () => {
-    setIsLoading(true);
+  const fetchTrash = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       // In this version, we fetch recent items as a placeholder for trash
       // Since permanent delete is active, we list the "Audit Log" of recent master items
@@ -22,7 +22,7 @@ const Trash: React.FC = () => {
   };
 
   useEffect(() => { fetchTrash();
-    const syncHandler = () => { console.log('Syncing data...'); fetchTrash(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchTrash(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

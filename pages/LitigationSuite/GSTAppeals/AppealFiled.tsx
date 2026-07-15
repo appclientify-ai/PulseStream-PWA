@@ -25,8 +25,8 @@ const AppealFiled: React.FC = () => {
   const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().split('T')[0]);
   const [outcomeRefNo, setOutcomeRefNo] = useState('');
 
-  const fetchAll = async () => {
-    setIsLoading(true);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const [recs, clis] = await Promise.all([
         api.getLitigationRecords(),
@@ -42,7 +42,7 @@ const AppealFiled: React.FC = () => {
   };
 
   useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing data...'); fetchAll(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

@@ -42,8 +42,8 @@ const GSTR4: React.FC = () => {
 
   const [cmp08Data, setCmp08Data] = useState<Record<string, Record<string, { cmp08: boolean }>>>({});
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getClients();
       setAllClientsBase(data);

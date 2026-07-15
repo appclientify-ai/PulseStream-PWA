@@ -49,8 +49,8 @@ const ITRReturn: React.FC = () => {
 
   const { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(selectedAY);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getClients();
       // Automatically show all active IT clients
@@ -61,7 +61,7 @@ const ITRReturn: React.FC = () => {
   };
 
   useEffect(() => { fetchClients();
-    const syncHandler = () => fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

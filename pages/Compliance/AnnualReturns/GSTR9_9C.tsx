@@ -55,8 +55,8 @@ const GSTR9_9C: React.FC = () => {
     getDueDate, updateDueDate 
   } = useGSTR9Logic(selectedYear);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getClients();
       setAllClients(data);
@@ -64,7 +64,7 @@ const GSTR9_9C: React.FC = () => {
   };
 
   useEffect(() => { fetchClients();
-    const syncHandler = () => fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

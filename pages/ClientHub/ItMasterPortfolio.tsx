@@ -45,8 +45,8 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
       const data = await api.getClients();
       setClients((data || []).filter(c => c && c.itProfile));
@@ -58,7 +58,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   };
 
   useEffect(() => { fetchClients();
-    const syncHandler = () => { console.log('Syncing clients...'); fetchClients(); };
+    const syncHandler = () => { console.log('Syncing in background...'); fetchClients(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);

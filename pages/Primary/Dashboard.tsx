@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
   const [annualFilter, setAnnualFilter] = useState({ year: getPrevFY(def.year) });
   const [itrFilter, setItrFilter] = useState({ ay: getCurrentAY() });
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isSync = false) => {
     if (!token) return;
     try {
       const summary = await api.getDashboardSummary();
@@ -133,7 +133,7 @@ const Dashboard: React.FC = () => {
     if (isOnline) { 
       loadData(); 
       socketService.connect(); 
-      const syncHandler = () => { console.log('Syncing main dashboard data...'); loadData(); };
+      const syncHandler = () => { console.log('Syncing main dashboard data...'); loadData(true); };
       window.addEventListener('clientify_db_change', syncHandler);
       return () => {
         window.removeEventListener('clientify_db_change', syncHandler);
