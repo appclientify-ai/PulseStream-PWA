@@ -62,7 +62,7 @@ export const periodToDate = (fy: string, monthName: string) => {
  * CORE LOGIC: Determines if a client should be shown in a specific filing period
  */
 export const isClientVisibleInPeriod = (client: Client, selectedYear: string, selectedMonth: string) => {
-  if (!client.gstProfile) return false;
+  if (!client || !client.gstProfile) return false;
   
   const periodDate = periodToDate(selectedYear, selectedMonth);
   
@@ -95,7 +95,7 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
  * CORE LOGIC: For Annual Returns
  */
 export const isClientVisibleInFY = (client: Client, fy: string) => {
-  if (!client.gstProfile) return false;
+  if (!client || !client.gstProfile) return false;
   const [startYearStr] = fy.split('-');
   const fyStart = new Date(parseInt(startYearStr), 3, 1); // April 1st
   const fyEnd = new Date(parseInt(startYearStr) + 1, 2, 31); // March 31st
@@ -193,7 +193,7 @@ useEffect(() => {
       (clientData as any)[type] = newVal;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).catch(err => console.error('Failed to save filing data', err));
+      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save filing data', err));
       return next;
     });
   }, [selectedYear, selectedMonth, storageKey]);
@@ -207,7 +207,7 @@ useEffect(() => {
     const key = `${selectedYear}_${selectedMonth}`;
     const next = { ...dueDates, [key]: val };
     setDueDates(next);
-    api.patchAppData(storageKeyDates, { [`data.${key}`]: val }).catch(err => console.error('Failed to save due dates', err));
+    api.patchAppData(storageKeyDates, { [`data.${key}`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save due dates', err));
   };
 
   const getDueDate = () => dueDates[`${selectedYear}_${selectedMonth}`] || '';

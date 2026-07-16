@@ -60,7 +60,7 @@ const QuarterlyFiling: React.FC = () => {
   const isQuarterEnd = useMemo(() => ['June', 'September', 'December', 'March'].includes(selectedMonth), [selectedMonth]);
 
   const checkQrmpVisibility = (c: Client) => {
-    if (!c.gstProfile) return false;
+    if (!c || !c.gstProfile) return false;
     const visibleInMonth = isClientVisibleInPeriod(c, selectedYear, selectedMonth);
     if (isQuarterEnd) {
       if (c.gstProfile.cancelDate && c.gstProfile.gstStatus === 'Closed') {

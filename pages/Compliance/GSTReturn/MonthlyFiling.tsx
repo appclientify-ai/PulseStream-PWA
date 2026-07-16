@@ -59,11 +59,11 @@ const MonthlyFiling: React.FC = () => {
   }, [activeActionsId]);
 
   const getClientDisplayId = useCallback((client: Client) => {
-    if (!client.gstProfile) return '---';
+    if (!client || !client.gstProfile) return '---';
     const isState = client.gstProfile.jurisdictionType === 'State';
     const val = isState ? client.gstProfile.sector : client.gstProfile.range;
     const prefix = isState ? 'S' : 'C';
-    const sameGroup = allClientsBase.filter(c => 
+    const sameGroup = allClientsBase.filter(c => c && 
       c.gstProfile?.jurisdictionType === client.gstProfile?.jurisdictionType &&
       (isState ? c.gstProfile?.sector === val : c.gstProfile?.range === val)
     ).sort((a, b) => (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime()));
