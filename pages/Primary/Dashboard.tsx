@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
             const syncHandler = (e: any) => { 
         console.log('Real-time sync event received:', e.detail);
         if (!e || !e.detail || !e.detail.data) {
-          loadData(true);
+          loadData(true); loadFilingData();
           return;
         }
         
@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
           case 'payment': applyUpdate(setPayments); break;
           default: 
             console.log('Unknown slice, reloading all data');
-            loadData(true);
+            loadData(true); loadFilingData();
         }
       };
       window.addEventListener('clientify_db_change', syncHandler);
@@ -188,15 +188,16 @@ const Dashboard: React.FC = () => {
 
 const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
   
+  const loadFilingData = async () => {
+    const keys = ['clientify_monthly_filing_v3', 'clientify_quarterly_filing_v3', 'clientify_composition_filing_v3', 'clientify_gstr4_filing_v1', 'clientify_gstr9_filing_data_v2', 'clientify_itr_filing_data_v2', 'clientify_audit_fin_data_v3', 'clientify_gstr9_watchlist_v2'];
+    const data: Record<string, any> = {};
+    for (const k of keys) {
+      data[k] = await api.getAppData(k) || {};
+    }
+    setFilingDataCache(data);
+  };
+  
   useEffect(() => {
-    const loadFilingData = async () => {
-      const keys = ['clientify_monthly_filing_v3', 'clientify_quarterly_filing_v3', 'clientify_composition_filing_v3', 'clientify_gstr4_filing_v1', 'clientify_gstr9_filing_data_v2', 'clientify_itr_filing_data_v2', 'clientify_audit_fin_data_v3', 'clientify_gstr9_watchlist_v2'];
-      const data: Record<string, any> = {};
-      for (const k of keys) {
-        data[k] = await api.getAppData(k) || {};
-      }
-      setFilingDataCache(data);
-    };
     loadFilingData();
   }, []);
 

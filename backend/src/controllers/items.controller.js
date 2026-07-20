@@ -21,6 +21,11 @@ export const createItem = async (req, res) => {
 
     const result = await items.insertOne(newItem);
     
+    
+    // Unwrap the result if it's nested
+    if (result && result.value) {
+      result = result.value;
+    }
     const io = req.app.get('io');
     if (io) {
       io.emit('db_item_change', { type: 'insert', data: { ...newItem, _id: result.insertedId }, id: result.insertedId, timestamp: new Date() });
@@ -73,6 +78,11 @@ export const updateItem = async (req, res) => {
     }
 
     
+    
+    // Unwrap the result if it's nested
+    if (result && result.value) {
+      result = result.value;
+    }
     const io = req.app.get('io');
     if (io) {
       io.emit('db_item_change', { type: 'update', data: result, id: id, timestamp: new Date() });
@@ -100,6 +110,11 @@ export const deleteItem = async (req, res) => {
     }
 
     
+    
+    // Unwrap the result if it's nested
+    if (result && result.value) {
+      result = result.value;
+    }
     const io = req.app.get('io');
     if (io) {
       io.emit('db_item_change', { type: 'delete', id: id, timestamp: new Date() });
@@ -143,6 +158,11 @@ export const patchAppData = async (req, res) => {
       );
     }
 
+    
+    // Unwrap the result if it's nested
+    if (result && result.value) {
+      result = result.value;
+    }
     const io = req.app.get('io');
     if (io) {
       io.emit('db_item_change', { type: 'update', data: result, id: result._id, timestamp: new Date() });
