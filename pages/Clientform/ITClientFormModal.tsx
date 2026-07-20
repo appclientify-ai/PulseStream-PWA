@@ -81,13 +81,19 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
       if (match) {
         setFormData(prev => ({
+          ...match,
           ...prev,
+          id: match.id,
           legalName: match.legalName || prev.legalName,
           tradeName: match.tradeName || prev.tradeName,
           mobile: match.mobile || prev.mobile,
           email: match.email || prev.email,
           bankDetails: match.bankDetails || prev.bankDetails,
-          remarks: match.remarks || prev.remarks
+          remarks: match.remarks || prev.remarks,
+          itProfile: {
+            ...match.itProfile,
+            ...prev.itProfile
+          }
         }));
         setIsDataLinked(true);
       } else {
@@ -105,10 +111,12 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
     if (!panRegex.test(profile.pan)) return setError("Invalid PAN format (e.g. ABCDE1234F).");
     if (formData.mobile && !/^\d{10}$/.test(formData.mobile)) return setError("Mobile must be 10 digits.");
 
-    const isDuplicate = existingClients.some(c => 
-      c.itProfile?.pan === profile.pan && c.id !== initialData?.id
-    );
-    if (isDuplicate) return setError(`PAN ${profile.pan} is already archived in IT records.`);
+    if (!initialData && existingClients.some(c => c.itProfile?.pan === profile.pan)) {
+      return setError(`PAN ${profile.pan} is already archived in IT records.`);
+    }
+    if (initialData && existingClients.some(c => c.itProfile?.pan === profile.pan && c.id !== formData.id)) {
+      return setError(`PAN ${profile.pan} is already archived in IT records.`);
+    }
 
     setIsSaving(true);
     try {

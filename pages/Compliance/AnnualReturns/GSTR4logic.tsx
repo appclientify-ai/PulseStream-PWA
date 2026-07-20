@@ -1,3 +1,4 @@
+import { socketService } from '../../../services/socket.ts';
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../services/api';
 
@@ -47,7 +48,7 @@ export const useGSTR4Logic = (selectedYear: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -59,7 +60,7 @@ export const useGSTR4Logic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';

@@ -23,6 +23,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [existingClients, setExistingClients] = useState<Client[]>([]);
+  const [isDataLinked, setIsDataLinked] = useState(false);
 
   const createStakeholder = (): Stakeholder => ({
     id: Math.random().toString(36).substr(2, 9),
@@ -69,6 +71,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
 
   useEffect(() => {
     if (isOpen) {
+      api.getClients().then(setExistingClients);
       if (initialData) {
         setFormData({
           ...initialData,
@@ -117,16 +120,48 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
       remarks: ''
     });
     setError(null);
+    setIsDataLinked(false);
   };
 
   const handleGstinChange = (val: string) => {
     const gstin = val.trim().slice(0, 15);
     let pan = formData.gstProfile?.pan || '';
-    if (gstin.length >= 12) pan = gstin.substring(2, 12);
+    if (gstin.length >= 12) {
+      pan = gstin.substring(2, 12);
+    }
+    
     setFormData(prev => ({
       ...prev,
       gstProfile: { ...prev.gstProfile!, gstin, pan }
     }));
+
+    if (!initialData && pan.length === 10) {
+      const match = existingClients.find(c => 
+         (c.itProfile?.pan === pan || c.gstProfile?.pan === pan || c.gstProfile?.gstin?.substring(2, 12) === pan)
+      );
+      if (match) {
+        setFormData(prev => ({
+          ...match,
+          ...prev,
+          id: match.id,
+          legalName: match.legalName || prev.legalName,
+          tradeName: match.tradeName || prev.tradeName,
+          mobile: match.mobile || prev.mobile,
+          email: match.email || prev.email,
+          bankDetails: match.bankDetails || prev.bankDetails,
+          remarks: match.remarks || prev.remarks,
+          gstProfile: {
+            ...match.gstProfile,
+            ...prev.gstProfile,
+            gstin,
+            pan
+          }
+        }));
+        setIsDataLinked(true);
+      } else {
+        setIsDataLinked(false);
+      }
+    }
   };
 
   const handleRegTypeChange = (type: GstRegType) => {

@@ -1,3 +1,4 @@
+import { socketService } from '../../../services/socket.ts';
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../services/api';
 
@@ -58,7 +59,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -70,7 +71,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       clientData.date = date;
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -86,7 +87,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -104,7 +105,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
       
       yearData[clientId] = clientData;
       const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [selectedAY]);
@@ -116,7 +117,7 @@ export const useITRReturnLogic = (selectedAY: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedAY]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedAY}`]: val }).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedAY}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedAY] || '';

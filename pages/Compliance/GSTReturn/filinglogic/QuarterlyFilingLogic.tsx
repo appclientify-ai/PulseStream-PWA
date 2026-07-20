@@ -1,3 +1,4 @@
+import { socketService } from '../../../../services/socket.ts';
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
 
@@ -45,7 +46,7 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
       clientData[type] = newVal;
       periodData[clientId] = clientData;
       const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).catch(console.error);
+      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   }, [periodKey]);
@@ -57,7 +58,7 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
   };
 
   const getDueDate = () => dueDates[periodKey] || '';

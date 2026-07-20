@@ -56,7 +56,7 @@ class ApiService {
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
     const url = this.getFullUrl(endpoint);
     try {
-      const res = await fetch(url, { method: 'GET', headers });
+      const res = await fetch(url, { method: 'GET', headers, cache: 'no-store' });
       return this.handleResponse(res);
     } catch (err: any) {
       throw new Error(`Connection Failed: Could not reach ${url}. Check VITE_BACKEND_URL.`);

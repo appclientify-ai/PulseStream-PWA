@@ -1,3 +1,4 @@
+import { socketService } from '../../../services/socket.ts';
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../services/api';
 
@@ -69,7 +70,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
     yearData[clientId] = clientData;
     const next = { ...filingData, [selectedYear]: yearData };
     setFilingData(next);
-    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
   }, [filingData, selectedYear]);
 
   const getStatus = useCallback((clientId: string): GSTR9FilingStatus => {
@@ -81,7 +82,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       const current = prev[selectedYear] || [];
       if (current.includes(clientId)) return prev;
       const next = { ...prev, [selectedYear]: [...current, clientId] };
-      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] }).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
     updateConfig({ ...config, [clientId]: { gstr9cApplicable: is9CApplicable } });
@@ -97,7 +98,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
       Object.keys(prev).forEach(year => {
         next[year] = prev[year].filter(id => id !== clientId);
       });
-      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).then(() => socketService.emit('data_updated')).catch(console.error);
       return next;
     });
   };
@@ -114,7 +115,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';
