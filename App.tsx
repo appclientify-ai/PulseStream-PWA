@@ -55,9 +55,9 @@ const AppContent: React.FC = () => {
         <Route path="/login" element={<Login onSwitch={() => navigate('/signup')} onBackToHome={() => navigate('/')} />} />
         <Route path="/signup" element={<Signup onSwitch={() => navigate('/login')} onBackToHome={() => navigate('/')} />} />
         <Route path="/:view" element={
-          <ProtectedRoute fallback={<Navigate to="/login" replace />}>
+          <>
             <Dashboard />
-          </ProtectedRoute>
+          </>
         } />
       </Routes>
       {isLoading && <div className="fixed inset-0 z-[9999] bg-slate-950/20 backdrop-blur-sm"><Loader /></div>}

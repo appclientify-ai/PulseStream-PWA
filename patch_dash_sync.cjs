@@ -1,47 +1,44 @@
 const fs = require('fs');
-let content = fs.readFileSync('pages/Primary/Dashboard.tsx', 'utf8');
+let c = fs.readFileSync('pages/Primary/Dashboard.tsx', 'utf8');
 
-// Patch first useEffect: loadData
-const loadDataPatch = `
-  useEffect(() => {
-    if (isOnline) { 
-      loadData(); 
-      socketService.connect(); 
-      const syncHandler = () => { console.log('Syncing main dashboard data...'); loadData(); };
-      window.addEventListener('clientify_db_change', syncHandler);
-      return () => {
-        window.removeEventListener('clientify_db_change', syncHandler);
-        socketService.disconnect();
-      };
-    }
-  }, [isOnline, loadData]);
-`;
-content = content.replace(/useEffect\(\(\) => \{\s*if \(isOnline\) \{ loadData\(\); socketService\.connect\(\); \}\s*return \(\) => socketService\.disconnect\(\);\s*\}, \[isOnline, loadData\]\);/, loadDataPatch.trim());
+const replacement = `      const syncHandler = (e: any) => { 
+        console.log('Real-time sync event received:', e.detail);
+        if (!e || !e.detail || !e.detail.data) {
+          loadData(true);
+          return;
+        }
+        
+        const payload = e.detail;
+        const { type, data } = payload;
+        const id = data._id || payload.id;
+        
+        // Format to match API responses
+        const item = { ...data.data, id: id, createdAt: data.createdAt, updatedAt: data.updatedAt };
+        
+        const applyUpdate = (setter: any) => {
+          setter((prev: any[]) => {
+            if (type === 'insert') return [item, ...prev];
+            if (type === 'update') return prev.map(p => (p.id === id ? { ...p, ...item } : p));
+            if (type === 'delete') return prev.filter(p => p.id !== id);
+            return prev;
+          });
+        };
 
-// Patch second useEffect: loadFilingData
-const filingDataPatch = `
-  useEffect(() => {
-    const loadFilingData = async () => {
-      const keys = ['clientify_monthly_filing_v3', 'clientify_quarterly_filing_v3', 'clientify_composition_filing_v3', 'clientify_gstr4_filing_v1', 'clientify_gstr9_filing_data_v2', 'clientify_itr_filing_data_v2', 'clientify_audit_fin_data_v3', 'clientify_gstr9_watchlist_v2'];
-      const data: Record<string, any> = {};
-      for (const k of keys) {
-        data[k] = await api.getAppData(k) || {};
-      }
-      setFilingDataCache(data);
-    };
-    loadFilingData();
-    const syncHandler = () => { console.log('Syncing filing data...'); loadFilingData(); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
-`;
+        switch (data.name) {
+          case 'client': applyUpdate(setClients); break;
+          case 'invoice': applyUpdate(setInvoices); break;
+          case 'litigation': applyUpdate(setLitigation); break;
+          case 'work': applyUpdate(setMiscWork); break;
+          case 'gstReg': applyUpdate(setGstReg); break;
+          case 'foodLic': applyUpdate(setFoodLic); break;
+          case 'msme': applyUpdate(setMsme); break;
+          case 'payment': applyUpdate(setPayments); break;
+          default: 
+            console.log('Unknown slice, reloading all data');
+            loadData(true);
+        }
+      };`;
 
-// we need to find the `const loadFilingData = async () => {` block.
-const fdStart = content.indexOf(`  useEffect(() => {`);
-const fdEnd = content.indexOf(`  }, []);`, fdStart) + 9;
+c = c.replace(/const syncHandler = \(\) => \{ console\.log\('Syncing main dashboard data\.\.\.'\); loadData\(true\); \};/g, replacement);
 
-// Replace the filing data useEffect if found, but make sure it's the right one.
-// Let's use regex for filing data.
-content = content.replace(/useEffect\(\(\) => \{\s*const loadFilingData = async \(\) => \{[\s\S]*?\}\s*loadFilingData\(\);\s*\}, \[\]\);/, filingDataPatch.trim());
-
-fs.writeFileSync('pages/Primary/Dashboard.tsx', content);
+fs.writeFileSync('pages/Primary/Dashboard.tsx', c);

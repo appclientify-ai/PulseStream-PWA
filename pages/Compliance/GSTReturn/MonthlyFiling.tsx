@@ -60,8 +60,8 @@ const MonthlyFiling: React.FC = () => {
 
   const getClientDisplayId = useCallback((client: Client) => {
     if (!client || !client.gstProfile) return '---';
-    const isState = client.gstProfile.jurisdictionType === 'State';
-    const val = isState ? client.gstProfile.sector : client.gstProfile.range;
+    const isState = client?.gstProfile?.jurisdictionType === 'State';
+    const val = isState ? client?.gstProfile?.sector : client?.gstProfile?.range;
     const prefix = isState ? 'S' : 'C';
     const sameGroup = allClientsBase.filter(c => c && 
       c.gstProfile?.jurisdictionType === client.gstProfile?.jurisdictionType &&

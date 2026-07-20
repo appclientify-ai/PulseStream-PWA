@@ -1,17 +1,8 @@
 const fs = require('fs');
-let content = fs.readFileSync('services/socket.ts', 'utf8');
+let c = fs.readFileSync('backend/src/sockets/socket.js', 'utf8');
 
-const updated = `
-      this.socket.on('db_item_change', (payload) => {
-        console.debug('Real-time update received:', payload);
-        window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
-      });
-`;
+c = c.replace(/socket\.on\('disconnect', \(\) => \{/g,
+  `socket.on('data_updated', () => {\n      console.log('Received data_updated, broadcasting sync_data');\n      socket.broadcast.emit('sync_data');\n      io.emit('db_item_change', { type: 'update' });\n    });\n    socket.on('disconnect', () => {`
+);
 
-const insertIndex = content.indexOf(`this.socket.on('disconnect',`);
-if (insertIndex > -1) {
-  content = content.substring(0, insertIndex) + updated + '\n      ' + content.substring(insertIndex);
-  fs.writeFileSync('services/socket.ts', content);
-} else {
-  console.log('Could not find insert index');
-}
+fs.writeFileSync('backend/src/sockets/socket.js', c);

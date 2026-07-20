@@ -22,6 +22,11 @@ export function initSocket(server) {
       });
     });
 
+    socket.on('data_updated', () => {
+      console.log('Received data_updated, broadcasting sync_data');
+      socket.broadcast.emit('sync_data');
+      io.emit('db_item_change', { type: 'update' });
+    });
     socket.on('disconnect', () => {
       console.log('🔌 Practitioner Disconnected');
     });

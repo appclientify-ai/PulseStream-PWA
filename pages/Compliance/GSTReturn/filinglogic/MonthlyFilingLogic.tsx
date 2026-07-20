@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Client } from '../../../../types';
 
 export interface FilingStatus {
@@ -48,6 +48,7 @@ export const QUARTERS = [...FY_QUARTERS];
  * HELPER: Convert FY + Month Name to a comparable Date object (1st of month)
  */
 export const periodToDate = (fy: string, monthName: string) => {
+  if (!fy) return new Date();
   const [startYearStr] = fy.split('-');
   let year = parseInt(startYearStr);
   const monthIdx = MONTHS.indexOf(monthName);
