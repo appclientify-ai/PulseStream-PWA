@@ -183,35 +183,10 @@ const CompositionFiling: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(() => {
-                  let globalIdx = 0;
-                  return groupedClients.map(group => (
-                    <React.Fragment key={group.sector}>
-                      <tr>
-                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
-                          Sector: {group.sector}
-                        </td>
-                      </tr>
-                      {group.clients.map((client) => {
-                        const idx = globalIdx++;
+              {filteredClients.map((client, idx) => {
                 const st = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
-                
-  const groupedClients = useMemo(() => {
-    const groups = {};
-    filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Unassigned';
-      if (!groups[sector]) groups[sector] = [];
-      groups[sector].push(c);
-    });
-    return Object.keys(groups).sort((a, b) => {
-      if (a === 'Unassigned') return 1;
-      if (b === 'Unassigned') return -1;
-      return a.localeCompare(b);
-    }).map(s => ({ sector: s, clients: groups[s] }));
-  }, [filteredClients]);
-
-return (
+                return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] font-black truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
@@ -262,10 +237,6 @@ return (
                   </tr>
                 );
               })}
-                    </React.Fragment>
-                  ));
-                })()
-              }
             </tbody>
           </table>
         </div>

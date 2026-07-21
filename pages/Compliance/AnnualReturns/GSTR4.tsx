@@ -202,17 +202,7 @@ const handleExportPDF = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(() => {
-                  let globalIdx = 0;
-                  return groupedClients.map(group => (
-                    <React.Fragment key={group.sector}>
-                      <tr>
-                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
-                          Sector: {group.sector}
-                        </td>
-                      </tr>
-                      {group.clients.map((client) => {
-                        const idx = globalIdx++;
+              {filteredClients.map((client, idx) => {
                 const status = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
@@ -244,22 +234,7 @@ const handleExportPDF = () => {
                           { label: 'Q4', q: 'January-March (Q4)' }
                         ].map(qInfo => {
                            const isFiled = cmp08Data[`${selectedYear}_${qInfo.q}`]?.[client.id]?.cmp08;
-                           
-  const groupedClients = useMemo(() => {
-    const groups = {};
-    filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Unassigned';
-      if (!groups[sector]) groups[sector] = [];
-      groups[sector].push(c);
-    });
-    return Object.keys(groups).sort((a, b) => {
-      if (a === 'Unassigned') return 1;
-      if (b === 'Unassigned') return -1;
-      return a.localeCompare(b);
-    }).map(s => ({ sector: s, clients: groups[s] }));
-  }, [filteredClients]);
-
-return (
+                           return (
                              <span key={qInfo.label} title={qInfo.q} className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${isFiled ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                                {qInfo.label}
                              </span>
@@ -293,10 +268,6 @@ return (
                   </tr>
                 );
               })}
-                    </React.Fragment>
-                  ));
-                })()
-              }
             </tbody>
           </table>
         </div>

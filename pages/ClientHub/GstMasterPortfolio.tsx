@@ -161,22 +161,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     </div>
   );
 
-  
-  const groupedClients = useMemo(() => {
-    const groups = {};
-    filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Unassigned';
-      if (!groups[sector]) groups[sector] = [];
-      groups[sector].push(c);
-    });
-    return Object.keys(groups).sort((a, b) => {
-      if (a === 'Unassigned') return 1;
-      if (b === 'Unassigned') return -1;
-      return a.localeCompare(b);
-    }).map(s => ({ sector: s, clients: groups[s] }));
-  }, [filteredClients]);
-
-return (
+  return (
     <div className="w-full h-full flex flex-col min-h-0">
       <div className="overflow-x-auto no-scrollbar flex-1 w-full">
         <table className="w-full text-left border-collapse table-auto min-w-full">
@@ -208,21 +193,10 @@ return (
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredClients.length === 0 ? (
-              <tr><td colSpan={15} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
-              (() => {
-                let globalIdx = 0;
-                return groupedClients.map(group => (
-                  <React.Fragment key={group.sector}>
-                    <tr>
-                      <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
-                        Sector: {group.sector}
-                      </td>
-                    </tr>
-                    {group.clients.map((client) => {
-                      const idx = globalIdx++;
-                      return (
-                        <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
+              filteredClients.map((client, idx) => (
+                <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
                   <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
                     {(idx + 1).toString().padStart(2, '0')}
                   </td>
@@ -283,11 +257,7 @@ return (
                      </div>
                   </td>
                 </tr>
-                      );
-                    })}
-                  </React.Fragment>
-                ));
-              })()
+              ))
             )}
           </tbody>
         </table>

@@ -368,23 +368,17 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {formData.gstProfile?.jurisdictionType === 'State' ? (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Sector</label>
                     <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} placeholder="Sector" />
                   </div>
                 ) : (
-                  <>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Sector</label>
-                      <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} placeholder="Sector" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Range</label>
-                      <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} placeholder="Range" />
-                    </div>
-                  </>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Range</label>
+                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} placeholder="Range" />
+                  </div>
                 )}
                 {formData.gstProfile?.gstStatus === 'Closed' && (
                   <div className="space-y-1.5 animate-in slide-in-from-top-2">

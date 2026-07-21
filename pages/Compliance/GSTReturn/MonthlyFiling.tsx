@@ -140,20 +140,6 @@ const MonthlyFiling: React.FC = () => {
     printList(`Monthly Filing - ${selectedMonth} ${selectedYear}`, headers, rows);
   };
 
-  const groupedClients = useMemo(() => {
-    const groups = {};
-    filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Unassigned';
-      if (!groups[sector]) groups[sector] = [];
-      groups[sector].push(c);
-    });
-    return Object.keys(groups).sort((a, b) => {
-      if (a === 'Unassigned') return 1;
-      if (b === 'Unassigned') return -1;
-      return a.localeCompare(b);
-    }).map(s => ({ sector: s, clients: groups[s] }));
-  }, [filteredClients]);
-
   if (isLoading) return <Loader />;
 
   return (
@@ -221,23 +207,11 @@ const MonthlyFiling: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.length === 0 ? (
-                <tr><td colSpan={15} className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found</td></tr>
-              ) : (
-                (() => {
-                  let globalIdx = 0;
-                  return groupedClients.map(group => (
-                    <React.Fragment key={group.sector}>
-                      <tr>
-                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
-                          Sector: {group.sector}
-                        </td>
-                      </tr>
-                      {group.clients.map((client) => {
-                        const idx = globalIdx++;
-                        
-                        return (
-                          <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
+              {filteredClients.map((client, idx) => {
+                const st = getStatus(client.id);
+                const isEditingPass = editingPasswordId === client.id;
+                return (
+                  <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
      <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
@@ -299,12 +273,8 @@ const MonthlyFiling: React.FC = () => {
                        </div>
                     </td>
                   </tr>
-                        );
-                      })}
-                    </React.Fragment>
-                  ));
-                })()
-              )}
+                );
+              })}
             </tbody>
           </table>
         </div>
