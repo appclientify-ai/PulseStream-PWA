@@ -9,7 +9,7 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [settings, setSettings] = useState<InvoiceSettings>({
     firmName: '', firmAddress: '', firmMobile: '', firmEmail: '', firmGstin: '',
     accountName: '', bankName: '', accountNo: '', ifsc: '', upiId: '', invoicePrefix: 'INV/',
-    terms: '', isGstEnabled: true, firmLogo: '', firmSignature: '', whatsappNumber: ''
+    terms: '', isGstEnabled: true, firmLogo: '', firmSignature: '', watermark: '', whatsappNumber: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,7 +34,7 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   
-  const handleDeleteImage = async (field: 'firmLogo' | 'firmSignature') => {
+  const handleDeleteImage = async (field: 'firmLogo' | 'firmSignature' | 'watermark') => {
     const updatedSettings = { ...settings, [field]: '' };
     setSettings(updatedSettings);
     setIsSaving(true);
@@ -46,7 +46,7 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setIsSaving(false);
     }
   };
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'firmLogo' | 'firmSignature') => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'firmLogo' | 'firmSignature' | 'watermark') => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -164,6 +164,21 @@ const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 ) : (
                   <div className="flex items-center gap-4">
                     <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'firmSignature')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
+                  </div>
+                )}
+             </div>
+             <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Watermark (Center Logo)</label>
+                {settings.watermark ? (
+                  <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <button type="button" onClick={() => handleDeleteImage('watermark')} className="h-10 w-10 shrink-0 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors" title="Delete Watermark">
+                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                    <img src={settings.watermark} alt="Watermark" className="h-12 object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'watermark')} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-3 font-black text-xs" />
                   </div>
                 )}
              </div>

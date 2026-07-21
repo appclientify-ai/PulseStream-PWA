@@ -213,8 +213,32 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
     };
     const storageKey = keys[type];
     const data = filingDataCache[storageKey] || {};
-    const periodData = data[periodKey] || {};
     
+    let year = '';
+    let month = '';
+    let qrmpIsQuarterEnd = false;
+    
+    if (type === 'quarterly' || type === 'composition') {
+      const [y, q] = periodKey.split('_');
+      year = y;
+      if (q && q.includes('Q1')) month = 'June';
+      else if (q && q.includes('Q2')) month = 'September';
+      else if (q && q.includes('Q3')) month = 'December';
+      else if (q && q.includes('Q4')) month = 'March';
+      else month = q || '';
+      qrmpIsQuarterEnd = true;
+    } else if (type === 'monthly') {
+      const parts = periodKey.split('_');
+      year = parts[0] || '';
+      month = parts[1] || '';
+    } else {
+      year = periodKey; // annual
+      month = 'March'; // default to end of FY
+    }
+
+    const actualPeriodKey = type === 'quarterly' ? `${year}_${month}` : periodKey;
+    const periodData = data[actualPeriodKey] || {};
+        
     let total = 0;
     let filed = 0;
     let r1 = 0;
@@ -222,19 +246,34 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
     let cmp08 = 0;
     
     if (type === 'monthly') {
-      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly' && isClientVisibleInPeriod(c, year, month));
       total = applicable.length;
       r1 = applicable.filter(c => periodData[c.id]?.r1).length;
       r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
       filed = r3b;
     } else if (type === 'quarterly') {
-      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
+      const checkQrmpVisibility = (c: Client) => {
+        if (!c || !c.gstProfile) return false;
+        const visibleInMonth = isClientVisibleInPeriod(c, year, month);
+        if (qrmpIsQuarterEnd) {
+          if (c.gstProfile.cancelDate && c.gstProfile.gstStatus === 'Closed') {
+            const cancelDate = new Date(c.gstProfile.cancelDate);
+            if (!isNaN(cancelDate.getTime())) {
+              const periodDate = periodToDate(year, month);
+              const lastVisibleMonthDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
+              if (periodDate > lastVisibleMonthDate) return true;
+            }
+          }
+        }
+        return visibleInMonth;
+      };
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly' && checkQrmpVisibility(c));
       total = applicable.length;
       r1 = applicable.filter(c => periodData[c.id]?.r1).length;
       r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
       filed = r3b;
     } else if (type === 'composition') {
-      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
+      const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition' && isClientVisibleInPeriod(c, year, month));
       total = applicable.length;
       cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
       filed = cmp08;
@@ -243,13 +282,13 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
       total = applicable.length;
       filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr4') {
-       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition');
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition' && (c.status === 'Active' || c.status === 'Active Filing'));
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.filed).length;
     } else if (type === 'gstr9') {
        const watchlistObj = filingDataCache['clientify_gstr9_watchlist_v2'] || {};
        const currentWatchlist: string[] = watchlistObj[periodKey] || [];
-       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id));
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id) && (c.status === 'Active' || c.status === 'Active Filing'));
        total = applicable.length;
        filed = applicable.filter(c => periodData[c.id]?.gstr9).length;
     } else if (type === 'audit') {

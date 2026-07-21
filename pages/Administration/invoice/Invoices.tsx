@@ -346,6 +346,11 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
               
               <div className="flex-1 overflow-y-auto bg-white">
               <div className="p-8 relative" ref={printRef}>
+                 {settings?.watermark && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0 overflow-hidden">
+                       <img src={settings.watermark} alt="Watermark" className="w-[80%] object-contain mix-blend-multiply grayscale" />
+                    </div>
+                 )}
 
                  {/* Printable Content */}
                  <div className="space-y-8 relative z-10">

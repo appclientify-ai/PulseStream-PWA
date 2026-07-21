@@ -166,6 +166,7 @@ export interface InvoiceSettings {
   isGstEnabled: boolean;
   firmLogo?: string;
   firmSignature?: string;
+  watermark?: string;
   whatsappNumber?: string;
 }
 

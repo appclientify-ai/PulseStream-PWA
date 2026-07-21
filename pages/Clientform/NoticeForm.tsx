@@ -42,7 +42,10 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
     if (initialData) {
       if (isReissue) {
         // Strip id to create a NEW record, keep previous as history
-        const { id, _id, isDemandPaid, ...rest } = initialData as any;
+        const { _id, isDemandPaid, ...rest } = initialData as any;
+        if (category !== initialData.category) {
+          delete rest.id;
+        }
         const prevDetails = `\n\n--- PREVIOUS ${initialData.category || 'RECORD'} DETAILS ---\nRef: ${initialData.referenceNo}\nIssued: ${initialData.issuedDate}\nDue: ${initialData.dueDate}\nFiled: ${initialData.filedDate || 'N/A'}`;
         setFormData({
           ...rest,
