@@ -29,7 +29,7 @@ const ITRReturn: React.FC = () => {
   const [selectedAY, setSelectedAY] = useState(getPreviousAY());
   
   // Filters
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Filed' | 'Prepared' | 'Pending'>('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [refundStatusFilter, setRefundStatusFilter] = useState<'All' | 'Pending' | 'Received' | 'No Refund'>('All');
   const [isRefundFilterOpen, setIsRefundFilterOpen] = useState(false);
@@ -86,11 +86,14 @@ const ITRReturn: React.FC = () => {
     const total = clients.length;
     let filed = 0;
     let pending = 0;
+    let prepared = 0;
     clients.forEach(c => {
-      if (getStatus(c.id).filed) filed++;
+      const st = getStatus(c.id);
+      if (st.filed) filed++;
+      else if (st.prepared) prepared++;
       else pending++;
     });
-    return { total, filed, pending };
+    return { total, filed, prepared, pending };
   }, [clients, getStatus]);
 
   const filteredClients = useMemo(() => {
@@ -101,7 +104,13 @@ const ITRReturn: React.FC = () => {
     );
     
     if (statusFilter !== 'All') {
-      list = list.filter(c => statusFilter === 'Filed' ? getStatus(c.id).filed : !getStatus(c.id).filed);
+      list = list.filter(c => {
+         const st = getStatus(c.id);
+         if (statusFilter === 'Filed') return st.filed;
+         if (statusFilter === 'Prepared') return st.prepared && !st.filed;
+         if (statusFilter === 'Pending') return !st.filed && !st.prepared;
+         return true;
+      });
     }
 
     if (refundStatusFilter !== 'All') {
@@ -125,7 +134,7 @@ const ITRReturn: React.FC = () => {
         getClientDisplayId(c),
         c.legalName,
         c.itProfile?.fatherName || '---',
-        s.filed ? 'Filed' : 'Pending',
+        s.filed ? 'Filed' : (s.prepared ? 'Prepared' : 'Pending'),
         s.date || '---',
         s.refundStatus || 'N/A',
         c.itProfile?.pan || '---',
@@ -143,7 +152,7 @@ const ITRReturn: React.FC = () => {
         getClientDisplayId(c),
         c.legalName,
         c.itProfile?.fatherName || '---',
-        s.filed ? 'Filed' : 'Pending',
+        s.filed ? 'Filed' : (s.prepared ? 'Prepared' : 'Pending'),
         s.date || '---',
         s.refundStatus || 'N/A',
         c.itProfile?.pan || '---'
@@ -199,6 +208,10 @@ const ITRReturn: React.FC = () => {
             <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Prepared</p>
+            <p className="text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
             <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
@@ -231,7 +244,7 @@ const ITRReturn: React.FC = () => {
                 <th className=" px-4 py-3 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
-                      {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setStatusFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}
+                      {['All', 'Filed', 'Prepared', 'Pending'].map(f => <button key={f} onClick={() => setStatusFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}
                     </TableFilter>
                   </div>
                 </th>
@@ -261,7 +274,7 @@ const ITRReturn: React.FC = () => {
                     <td className=" px-4 py-[2px] font-black text-slate-900 truncate" title={client.legalName}>{client.legalName}</td>
                     <td className=" px-4 py-[2px] font-bold text-slate-500 truncate">{client.itProfile?.fatherName || '---'}</td>
                     <td className=" px-4 py-[2px] text-center">
-                       <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>{status.filed ? 'Filed' : 'Pending'}</button>
+                       <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : (status.prepared ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200')}`}>{status.filed ? 'Filed' : (status.prepared ? 'Prepared' : 'Pending')}</button>
                     </td>
                     <td className=" px-4 py-[2px]">
                        {status.filed ? (

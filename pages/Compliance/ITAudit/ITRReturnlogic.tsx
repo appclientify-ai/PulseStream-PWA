@@ -5,6 +5,7 @@ import { api } from '../../../services/api';
 export type RefundStatus = 'Pending' | 'Processed' | 'Issued' | 'Adjusted' | 'Rejected' | 'N/A';
 
 export interface ITRFilingStatus {
+  prepared?: boolean;
   filed: boolean;
   date?: string;
   refundStatus?: RefundStatus;
@@ -44,17 +45,23 @@ export const useITRReturnLogic = (selectedAY: string) => {
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {
       const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false, refundStatus: 'N/A' }) };
+      const clientData = { ...(yearData[clientId] || { filed: false, prepared: false, refundStatus: 'N/A' }) };
       
-      clientData.filed = !clientData.filed;
       if (clientData.filed) {
+        clientData.filed = false;
+        clientData.prepared = false;
+        delete clientData.date;
+        clientData.refundStatus = 'N/A';
+      } else if (clientData.prepared) {
+        clientData.filed = true;
+        clientData.prepared = false;
         clientData.date = new Date().toISOString().split('T')[0];
         if (!clientData.refundStatus || clientData.refundStatus === 'N/A') {
           clientData.refundStatus = 'Pending';
         }
       } else {
-        delete clientData.date;
-        clientData.refundStatus = 'N/A';
+        clientData.prepared = true;
+        clientData.filed = false;
       }
       
       yearData[clientId] = clientData;

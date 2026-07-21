@@ -16,7 +16,7 @@ import InstallBanner from '../../components/InstallBanner.tsx';
 import CommandPalette from '../../components/CommandPalette.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
-import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
+import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
 
 // Lazy loading sub-pages
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
