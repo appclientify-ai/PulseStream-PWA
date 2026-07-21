@@ -1,29 +1,48 @@
 const fs = require('fs');
-let c = fs.readFileSync('pages/Compliance/AnnualReturns/GSTR9_9Clogic.tsx', 'utf8');
 
-c = c.replace(/yearData\[clientId\] = clientData;\s*const next = \{ \.\.\.filingData, \[selectedYear\]: yearData \};\s*updateFilingData\(next\);/g,
-  `yearData[clientId] = clientData;\n    const next = { ...filingData, [selectedYear]: yearData };\n    setFilingData(next);\n    api.patchAppData(STORAGE_KEY_DATA, { [\`data.\${selectedYear}.\${clientId}\`]: clientData }).catch(console.error);`
-);
+let c = fs.readFileSync('pages/Compliance/AnnualReturns/GSTR9_9C.tsx', 'utf8');
 
-c = c.replace(/const updateFilingData = \(newData: Record<string, Record<string, GSTR9FilingStatus>>\) => \{\s*setFilingData\(newData\);\s*api\.saveAppData\(STORAGE_KEY_DATA, newData\)\.catch\(console\.error\);\s*\};\s*const updateConfig/g,
-  `const updateFilingData = (newData: Record<string, Record<string, GSTR9FilingStatus>>) => {\n    setFilingData(newData);\n  };\n\n  const updateConfig`
-);
+// I will extract the <tr> template from the file
+let trStart = c.indexOf('<tr key={client.id}');
+if (trStart === -1) trStart = c.indexOf('<tr key={');
+let lastTrEnd = c.lastIndexOf('</tr>', c.indexOf('</tbody>'));
 
-c = c.replace(/const newConfig = \{ \.\.\.config, \[clientId\]: \{ gstr9cApplicable: isApplicable \} \};\s*updateConfig\(newConfig\);/g,
-  `const newConfig = { ...config, [clientId]: { gstr9cApplicable: isApplicable } };\n    setConfig(newConfig);\n    api.patchAppData(STORAGE_KEY_CONFIG, { [\`data.\${clientId}.gstr9cApplicable\`]: isApplicable }).catch(console.error);`
-);
+const trContent = c.slice(trStart, lastTrEnd + 5);
 
-c = c.replace(/const updateConfig = \(newConfig: Record<string, \{ gstr9cApplicable: boolean \}\>\) => \{\s*setConfig\(newConfig\);\s*api\.saveAppData\(STORAGE_KEY_CONFIG, newConfig\)\.catch\(console\.error\);\s*\};/g,
-  `const updateConfig = (newConfig: Record<string, { gstr9cApplicable: boolean }>) => {\n    setConfig(newConfig);\n  };`
-);
+// The empty state TR is usually <tr><td colSpan={10} ...>No records found</td></tr>
+// I can just hardcode it or find it
+const emptyState = '<tr><td colSpan={15} className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found</td></tr>';
 
+const newTbodyContent = `
+              {filteredClients.length === 0 ? (
+                ${emptyState}
+              ) : (
+                (() => {
+                  let globalIdx = 0;
+                  return groupedClients.map(group => (
+                    <React.Fragment key={group.sector}>
+                      <tr>
+                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
+                          Sector: {group.sector}
+                        </td>
+                      </tr>
+                      {group.clients.map((client) => {
+                        const idx = globalIdx++;
+                        const status = getFilingStatus(client.id);
+                        return (
+                          ${trContent}
+                        );
+                      })}
+                    </React.Fragment>
+                  ));
+                })()
+              )}
+            `;
 
-c = c.replace(/const next = \{ \.\.\.prev, \[selectedYear\]: \[\.\.\.current, clientId\] \};\s*api\.saveAppData\(STORAGE_KEY_WATCHLIST, next\)\.catch\(console\.error\);/g,
-  `const next = { ...prev, [selectedYear]: [...current, clientId] };\n      api.patchAppData(STORAGE_KEY_WATCHLIST, { [\`data.\${selectedYear}\`]: next[selectedYear] }).catch(console.error);`
-);
+const tbodyStart = c.indexOf('<tbody className="divide-y divide-slate-100">');
+const tbodyEnd = c.indexOf('</tbody>');
 
-c = c.replace(/next\[year\] = prev\[year\]\.filter\(id => id !== clientId\);\s*\}\);\s*api\.saveAppData\(STORAGE_KEY_WATCHLIST, next\)\.catch\(console\.error\);/g,
-  `next[year] = prev[year].filter(id => id !== clientId);\n      });\n      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).catch(console.error);`
-);
+c = c.slice(0, tbodyStart + '<tbody className="divide-y divide-slate-100">'.length) + newTbodyContent + c.slice(tbodyEnd);
 
-fs.writeFileSync('pages/Compliance/AnnualReturns/GSTR9_9Clogic.tsx', c);
+fs.writeFileSync('pages/Compliance/AnnualReturns/GSTR9_9C.tsx', c);
+console.log('Fixed GSTR9_9C.tsx');

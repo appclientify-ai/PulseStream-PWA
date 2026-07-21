@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../services/api';
 
 export interface GSTR9FilingStatus {
+  remark?: string;
   gstr9: boolean;
   gstr9c: boolean;
   gstr9Date?: string;

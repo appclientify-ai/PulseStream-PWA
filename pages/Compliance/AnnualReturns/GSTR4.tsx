@@ -202,14 +202,29 @@ const handleExportPDF = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client, idx) => {
+              {(() => {
+                  let globalIdx = 0;
+                  return groupedClients.map(group => (
+                    <React.Fragment key={group.sector}>
+                      <tr>
+                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
+                          Sector: {group.sector}
+                        </td>
+                      </tr>
+                      {group.clients.map((client) => {
+                        const idx = globalIdx++;
                 const status = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] font-black truncate">{client.tradeName || '---'}</td>
-                    <td className=" px-4 py-[2px] font-bold text-slate-500 truncate">{client.legalName}</td>
+                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
+     <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
+     <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
+   </td>
+   <td className=" px-4 py-[2px] truncate max-w-[150px]">
+     <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+   </td>
                     <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
@@ -229,7 +244,22 @@ const handleExportPDF = () => {
                           { label: 'Q4', q: 'January-March (Q4)' }
                         ].map(qInfo => {
                            const isFiled = cmp08Data[`${selectedYear}_${qInfo.q}`]?.[client.id]?.cmp08;
-                           return (
+                           
+  const groupedClients = useMemo(() => {
+    const groups = {};
+    filteredClients.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Unassigned';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    return Object.keys(groups).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    }).map(s => ({ sector: s, clients: groups[s] }));
+  }, [filteredClients]);
+
+return (
                              <span key={qInfo.label} title={qInfo.q} className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${isFiled ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                                {qInfo.label}
                              </span>
@@ -263,6 +293,10 @@ const handleExportPDF = () => {
                   </tr>
                 );
               })}
+                    </React.Fragment>
+                  ));
+                })()
+              }
             </tbody>
           </table>
         </div>

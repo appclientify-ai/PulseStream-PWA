@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
 
 export interface FilingStatus {
+  remark?: string;
   cmp08: boolean;
 }
 

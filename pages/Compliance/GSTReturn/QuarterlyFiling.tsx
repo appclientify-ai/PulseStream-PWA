@@ -113,11 +113,11 @@ const QuarterlyFiling: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'IFF/R1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
+    const headers = ['S.No.', 'Trade Name', 'Remark', 'Mobile No.', 'GSTIN', 'IFF/R1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
     const rows = filteredClients.map((client, index) => [
       (index + 1).toString().padStart(2, '0'),
       client.tradeName,
-      client.legalName,
+      getStatus(client.id).remark || '---',
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).r1 ? 'Filed' : 'Pending',
@@ -129,11 +129,11 @@ const QuarterlyFiling: React.FC = () => {
   };
 
   const handlePrint = () => {
-    const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', 'IFF/R1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
+    const headers = ['S.No.', 'Trade Name', 'Remark', 'Mobile No.', 'GSTIN', 'IFF/R1 Status', 'GSTR-3B Status', 'User ID', 'Password'];
     const rows = filteredClients.map((client, index) => [
       (index + 1).toString().padStart(2, '0'),
       client.tradeName,
-      client.legalName,
+      getStatus(client.id).remark || '---',
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).r1 ? 'Filed' : 'Pending',
@@ -187,7 +187,7 @@ const QuarterlyFiling: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
                 <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
+                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Remark</th>
                 <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
                 <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
                 <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
@@ -210,14 +210,44 @@ const QuarterlyFiling: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client, idx) => {
+              {(() => {
+                  let globalIdx = 0;
+                  return groupedClients.map(group => (
+                    <React.Fragment key={group.sector}>
+                      <tr>
+                        <td colSpan={15} className="px-4 py-2 bg-indigo-50/50 text-[10px] font-black uppercase text-indigo-700 tracking-widest border-y border-indigo-100">
+                          Sector: {group.sector}
+                        </td>
+                      </tr>
+                      {group.clients.map((client) => {
+                        const idx = globalIdx++;
                 const st = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
-                return (
+                
+  const groupedClients = useMemo(() => {
+    const groups = {};
+    filteredClients.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Unassigned';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    return Object.keys(groups).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    }).map(s => ({ sector: s, clients: groups[s] }));
+  }, [filteredClients]);
+
+return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className=" px-4 py-[2px] font-bold text-slate-500 truncate text-[12px]" title={client.legalName}>{client.legalName}</td>
+                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
+     <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
+     <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
+   </td>
+   <td className=" px-4 py-[2px] truncate max-w-[150px]">
+     <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+   </td>
                     <td className=" px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
                     <td className=" px-4 py-[2px] font-black font-mono tracking-widest uppercase text-[12px] text-indigo-600">
                       <div className="flex items-center gap-2">
@@ -275,6 +305,10 @@ const QuarterlyFiling: React.FC = () => {
                   </tr>
                 );
               })}
+                    </React.Fragment>
+                  ));
+                })()
+              }
             </tbody>
           </table>
         </div>

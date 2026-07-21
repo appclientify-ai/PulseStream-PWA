@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Client } from '../../../../types';
 
 export interface FilingStatus {
+  remark?: string;
   r1: boolean;
   r3b: boolean;
 }

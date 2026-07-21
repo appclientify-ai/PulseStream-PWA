@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
 
 export interface FilingStatus {
+  remark?: string;
   r1: boolean;
   r3b: boolean;
 }
