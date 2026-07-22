@@ -57,10 +57,14 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     } catch (err) { console.error("Fetch failed", err); } finally { setIsLoading(false); }
   };
 
-  useEffect(() => { fetchClients();
+    useEffect(() => {
+    fetchClients();
     const syncHandler = () => { console.log('Syncing in background...'); fetchClients(true); };
     window.addEventListener('clientify_db_change', syncHandler);
-      const groupedClients = useMemo(() => {
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
+
+  const groupedClients = useMemo(() => {
     const groups: Record<string, typeof filteredClients> = {};
     filteredClients.forEach(c => {
       const sector = c.gstProfile?.sector || 'Uncategorized';
@@ -74,9 +78,6 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     });
     return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));
   }, [filteredClients]);
-
-  return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {
