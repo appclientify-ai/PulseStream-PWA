@@ -64,20 +64,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
-  const groupedClients = useMemo(() => {
-    const groups: Record<string, typeof filteredClients> = {};
-    filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Uncategorized';
-      if (!groups[sector]) groups[sector] = [];
-      groups[sector].push(c);
-    });
-    const sortedKeys = Object.keys(groups).sort((a, b) => {
-       if (a === 'Uncategorized') return 1;
-       if (b === 'Uncategorized') return -1;
-       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-    });
-    return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));
-  }, [filteredClients]);
+
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {
