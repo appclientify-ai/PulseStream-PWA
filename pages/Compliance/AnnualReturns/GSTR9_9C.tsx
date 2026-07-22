@@ -138,8 +138,23 @@ const GSTR9_9C: React.FC = () => {
   }, [allClients, search, selectedYear, watchlist, gstr9Filter, gstr9cFilter, getStatus, is9CApplicable]);
 
 
+    const groupedClients = useMemo(() => {
+    const groups: Record<string, typeof filteredDisplayList> = {};
+    filteredDisplayList.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Uncategorized';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+       if (a === 'Uncategorized') return 1;
+       if (b === 'Uncategorized') return -1;
+       return a.localeCompare(b);
+    });
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+  }, [filteredDisplayList]);
+
   const handleExportCSV = () => {
-    const headers = ["ID", "Trader", "GSTIN", "GSTR-9", "GSTR-9C", "User ID", "Password"].join(",");
+    const headers = ["ID", "Trader", "GSTIN", "GSTR-9", "GSTR-9C", "User ID", "Password", "Remark"].join(",");
     const rows = filteredDisplayList.map(c => {
       const s = getStatus(c.id);
       const app9c = is9CApplicable(c.id);
@@ -158,6 +173,7 @@ const GSTR9_9C: React.FC = () => {
 
   const handleExportPDF = () => {
     const headers = ["ID", "Trader", "GSTIN", "GSTR-9", "GSTR-9C"];
+    headers.push("Remark");
     const rows = filteredDisplayList.map(c => {
       const s = getStatus(c.id);
       const app9c = is9CApplicable(c.id);
@@ -261,7 +277,12 @@ const GSTR9_9C: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredDisplayList.map((client, idx) => {
+              {groupedClients.map(({ sector, clients: sectorClients }) => (
+                <React.Fragment key={sector}>
+                  <tr>
+                    <td colSpan={12} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                  </tr>
+                  {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
                 const app9c = is9CApplicable(client.id);
                                 const isEditingPass = editingPasswordId === client.id;
@@ -272,9 +293,7 @@ const GSTR9_9C: React.FC = () => {
      <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
      <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
    </td>
-   <td className=" px-4 py-[2px] truncate max-w-[150px]">
-     <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
-   </td>
+   
                     <td className=" px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/gstin">
                           <span className="font-black text-indigo-600 font-mono tracking-widest uppercase">{client.gstProfile?.gstin}</span>
@@ -321,8 +340,10 @@ const GSTR9_9C: React.FC = () => {
                        </div>
                     </td>
                   </tr>
-                );
-              })}
+                  );
+                })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>

@@ -228,7 +228,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 overflow-hidden animate-in fade-in duration-300">
       <div className="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[95vh] overflow-hidden border border-slate-200">
         
         <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
@@ -369,17 +369,18 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {formData.gstProfile?.jurisdictionType === 'State' ? (
+                <>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Sector</label>
-                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} placeholder="Sector" />
+                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.sector || ''} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, sector: e.target.value}})} placeholder="Sector" />
                   </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Range</label>
-                    <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} placeholder="Range" />
-                  </div>
-                )}
+                  {formData.gstProfile?.jurisdictionType === 'Center' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Range</label>
+                      <input className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold outline-none" value={formData.gstProfile?.range || ''} onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, range: e.target.value}})} placeholder="Range" />
+                    </div>
+                  )}
+                </>
                 {formData.gstProfile?.gstStatus === 'Closed' && (
                   <div className="space-y-1.5 animate-in slide-in-from-top-2">
                     <label className="text-[10px] font-black uppercase text-rose-400 tracking-widest ml-1">Cancellation Date</label>

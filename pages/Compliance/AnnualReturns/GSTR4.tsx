@@ -120,8 +120,23 @@ useEffect(() => {
     } catch (err) { toast.error("Update failed."); }
   };
 
-const handleExportCSV = () => {
-    const headers = ["ID", "Trader", "GSTIN", "Status", "User ID", "Password"].join(",");
+  const groupedClients = useMemo(() => {
+    const groups: Record<string, typeof filteredClients> = {};
+    filteredClients.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Uncategorized';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+       if (a === 'Uncategorized') return 1;
+       if (b === 'Uncategorized') return -1;
+       return a.localeCompare(b);
+    });
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+  }, [filteredClients]);
+
+  const handleExportCSV = () => {
+    const headers = ["ID", "Trader", "GSTIN", "Status", "User ID", "Password", "Remark"].join(",");
     const rows = filteredClients.map(c => [
       getClientDisplayId(c), 
       c.tradeName, 
@@ -135,6 +150,7 @@ const handleExportCSV = () => {
 
 const handleExportPDF = () => {
     const headers = ["ID", "Trader", "GSTIN", "Status"];
+    headers.push("Remark");
     const rows = filteredClients.map(c => [
       getClientDisplayId(c), 
       c.tradeName, 
@@ -202,7 +218,12 @@ const handleExportPDF = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client, idx) => {
+              {groupedClients.map(({ sector, clients: sectorClients }) => (
+                <React.Fragment key={sector}>
+                  <tr>
+                    <td colSpan={12} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                  </tr>
+                  {sectorClients.map((client, idx) => {
                 const status = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
@@ -212,9 +233,7 @@ const handleExportPDF = () => {
      <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
      <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
    </td>
-   <td className=" px-4 py-[2px] truncate max-w-[150px]">
-     <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
-   </td>
+   
                     <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{client.gstProfile?.gstin}</span>
@@ -266,8 +285,10 @@ const handleExportPDF = () => {
                        </div>
                     </td>
                   </tr>
-                );
-              })}
+                  );
+                })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>

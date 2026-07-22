@@ -346,8 +346,8 @@ const NoticePending: React.FC = () => {
       {/* Detail Modals */}
       {isViewModalOpen && viewingRecord && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
-              <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+           <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl flex flex-col animate-in zoom-in-95 max-h-[90vh] overflow-hidden">
+              <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
                     <p className="text-[10px] font-bold text-slate-500 tracking-widest mt-1">Ref: {viewingRecord.referenceNo}</p>
@@ -357,7 +357,7 @@ const NoticePending: React.FC = () => {
                     <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
                  </div>
               </div>
-              <div className="p-10 grid grid-cols-2 gap-8">
+              <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Entity GSTIN</p><p className="text-base font-black text-indigo-600 font-mono">{clients.find(c => c.id === viewingRecord.clientId)?.gstProfile?.gstin || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
@@ -385,7 +385,7 @@ const NoticePending: React.FC = () => {
                     <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p>
                  </div>
               </div>
-              <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button></div>
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button></div>
            </div>
         </div>
       )}

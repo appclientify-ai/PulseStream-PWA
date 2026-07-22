@@ -16,6 +16,7 @@ const GSTViewIcon: React.FC<GSTViewIconProps> = ({ client, className = '', onEdi
   const [currentClient, setCurrentClient] = useState(client);
 
   const handleEditClick = (c: Client) => {
+    setIsOpen(false);
     if (onEdit) {
       onEdit(c);
     } else {

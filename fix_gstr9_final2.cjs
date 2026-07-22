@@ -6,10 +6,5 @@ c = c.replace(/<\/React\.Fragment>\s*\}\)\}\s*<\/React\.Fragment>\s*\}\)\}\s*<\/
 `</React.Fragment>
               ))}
             </tbody>`);
-            
-c = c.replace(/<\/React\.Fragment>\s*\}\)\}\s*<\/tbody>/,
-`</React.Fragment>
-              ))}
-            </tbody>`);
 
 fs.writeFileSync('pages/Compliance/AnnualReturns/GSTR9_9C.tsx', c);

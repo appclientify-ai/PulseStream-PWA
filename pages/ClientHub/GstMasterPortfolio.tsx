@@ -60,7 +60,22 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
   useEffect(() => { fetchClients();
     const syncHandler = () => { console.log('Syncing in background...'); fetchClients(true); };
     window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
+      const groupedClients = useMemo(() => {
+    const groups: Record<string, typeof filteredClients> = {};
+    filteredClients.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Uncategorized';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+       if (a === 'Uncategorized') return 1;
+       if (b === 'Uncategorized') return -1;
+       return a.localeCompare(b);
+    });
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+  }, [filteredClients]);
+
+  return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   // Handle closing menu on click outside or scroll
@@ -195,7 +210,12 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
             {filteredClients.length === 0 ? (
               <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
-              filteredClients.map((client, idx) => (
+              groupedClients.map(({ sector, clients: sectorClients }) => (
+                <React.Fragment key={sector}>
+                  <tr>
+                    <td colSpan={8} className="bg-slate-100 font-bold text-slate-700 py-2 px-[5.5px] uppercase text-[10px] tracking-widest">{sector}</td>
+                  </tr>
+                  {sectorClients.map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
                   <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
                     {(idx + 1).toString().padStart(2, '0')}
@@ -257,8 +277,9 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                      </div>
                   </td>
                 </tr>
-              ))
-            )}
+                  ))}
+                </React.Fragment>
+              )))}
           </tbody>
         </table>
       </div>

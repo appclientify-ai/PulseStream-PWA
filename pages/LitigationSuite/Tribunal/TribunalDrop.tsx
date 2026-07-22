@@ -159,7 +159,7 @@ const TribunalDrop: React.FC = () => {
 
       {isViewModalOpen && viewingRecord && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
+           <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl flex flex-col animate-in zoom-in-95 max-h-[90vh] overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
@@ -167,7 +167,7 @@ const TribunalDrop: React.FC = () => {
                  </div>
                  <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors shrink-0"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
-              <div className="p-10 grid grid-cols-2 gap-8">
+              <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Final Result</p><p className={`text-base font-black uppercase ${viewingRecord.isDemandPaid ? 'text-orange-600' : 'text-emerald-600'}`}>{viewingRecord.isDemandPaid ? 'DEPOSIT SETTLED' : 'ORDER QUASHED'}</p></div>
                  <div><p className="text-[10px] font-black text-slate-400 mb-1">AIO/OIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.aioArn || viewingRecord.oioRefNo || viewingRecord.referenceNo || '---'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.aioDate || viewingRecord.oioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>

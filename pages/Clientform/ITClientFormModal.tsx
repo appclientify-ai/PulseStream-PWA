@@ -133,7 +133,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden animate-in fade-in duration-300">
       <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-slate-200">
         
         <header className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">

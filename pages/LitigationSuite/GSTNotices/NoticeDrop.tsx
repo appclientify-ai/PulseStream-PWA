@@ -212,7 +212,7 @@ const NoticeDrop: React.FC = () => {
 
       {isViewModalOpen && viewingRecord && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl flex flex-col animate-in zoom-in-95 flex flex-col gap-1">
+           <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl flex flex-col animate-in zoom-in-95 max-h-[90vh] overflow-hidden">
               <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                  <div className="min-w-0">
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
@@ -220,7 +220,7 @@ const NoticeDrop: React.FC = () => {
                  </div>
                  <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors shrink-0"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
               </div>
-              <div className="p-10 grid grid-cols-2 gap-8">
+              <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Outcome Status</p><p className={`text-base font-black uppercase ${viewingRecord.isDemandPaid ? 'text-orange-600' : 'text-emerald-600'}`}>{viewingRecord.isDemandPaid ? 'DEMAND PAID' : 'CLOSED / RELIEF'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notice Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.issuedDate)}</p></div>
@@ -231,7 +231,7 @@ const NoticeDrop: React.FC = () => {
                     <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p>
                  </div>
               </div>
-              <div className="p-8 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <div className="p-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                  <button onClick={() => { setSelectedRecord(viewingRecord); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg">Modify</button>
                  <button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-slate-100 text-slate-600 font-black uppercase text-[10px] rounded-xl transition-colors">Close</button>
               </div>

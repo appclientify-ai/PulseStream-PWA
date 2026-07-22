@@ -99,12 +99,26 @@ const CompositionFiling: React.FC = () => {
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
+    const groupedClients = useMemo(() => {
+    const groups: Record<string, typeof filteredClients> = {};
+    filteredClients.forEach(c => {
+      const sector = c.gstProfile?.sector || 'Uncategorized';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+       if (a === 'Uncategorized') return 1;
+       if (b === 'Uncategorized') return -1;
+       return a.localeCompare(b);
+    });
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+  }, [filteredClients]);
+
   const handleExportCSV = () => {
-    const headers = ['S.No.', 'Trade Name', 'Remark', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password'];
+    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
     const rows = filteredClients.map((client, index) => [
       (index + 1).toString().padStart(2, '0'),
       client.tradeName,
-      getStatus(client.id).remark || '---',
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
@@ -115,11 +129,10 @@ const CompositionFiling: React.FC = () => {
   };
 
   const handlePrint = () => {
-    const headers = ['S.No.', 'Trade Name', 'Remark', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password'];
+    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
     const rows = filteredClients.map((client, index) => [
       (index + 1).toString().padStart(2, '0'),
       client.tradeName,
-      getStatus(client.id).remark || '---',
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
@@ -183,7 +196,12 @@ const CompositionFiling: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredClients.map((client, idx) => {
+              {groupedClients.map(({ sector, clients: sectorClients }) => (
+                <React.Fragment key={sector}>
+                  <tr>
+                    <td colSpan={12} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                  </tr>
+                  {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
@@ -235,8 +253,10 @@ const CompositionFiling: React.FC = () => {
                        </div>
                     </td>
                   </tr>
-                );
-              })}
+                  );
+                })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>

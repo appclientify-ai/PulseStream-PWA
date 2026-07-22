@@ -16,6 +16,7 @@ const ITViewIcon: React.FC<ITViewIconProps> = ({ client, className = '', onEdit,
   const [currentClient, setCurrentClient] = useState(client);
 
   const handleEditClick = (c: Client) => {
+    setIsOpen(false);
     if (onEdit) {
       onEdit(c);
     } else {
