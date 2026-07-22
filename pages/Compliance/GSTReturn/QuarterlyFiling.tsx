@@ -122,9 +122,9 @@ const QuarterlyFiling: React.FC = () => {
     const sortedKeys = Object.keys(groups).sort((a, b) => {
        if (a === 'Uncategorized') return 1;
        if (b === 'Uncategorized') return -1;
-       return a.localeCompare(b);
+       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
-    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));
   }, [filteredClients]);
 
   const handleExportCSV = () => {
@@ -286,7 +286,10 @@ const QuarterlyFiling: React.FC = () => {
                           )}
                        </div>
                     </td>
-                    <td className=" px-4 py-[2px] text-right">
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                       <input type="text" value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+                     </td>
+                     <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">

@@ -130,9 +130,9 @@ useEffect(() => {
     const sortedKeys = Object.keys(groups).sort((a, b) => {
        if (a === 'Uncategorized') return 1;
        if (b === 'Uncategorized') return -1;
-       return a.localeCompare(b);
+       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
-    return sortedKeys.map(k => ({ sector: k, clients: groups[k] }));
+    return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));
   }, [filteredClients]);
 
   const handleExportCSV = () => {
