@@ -262,8 +262,10 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     try {
       if (entryToDelete.type === 'Invoice') {
         await api.deleteInvoice(entryToDelete.id);
+        toast.success('Invoice entry deleted successfully');
       } else if (entryToDelete.type === 'Payment') {
         await api.deletePayment(entryToDelete.id);
+        toast.success('Payment entry deleted successfully');
       }
       
       const [invs, pmts] = await Promise.all([
@@ -273,8 +275,10 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
       setInvoices(invs);
       setPayments(pmts);
       setEntryToDelete(null);
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
     } catch (err) {
       console.error('Error deleting entry:', err);
+      toast.error('Failed to delete entry.');
     } finally {
       setIsDeleting(false);
     }
@@ -564,6 +568,67 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
              </div>
            </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {entryToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" data-html2pdf-ignore="true">
+            <div className="bg-white rounded-[2rem] max-w-md w-full border border-slate-100 shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-4 text-rose-600">
+                <div className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Delete Ledger Entry?</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Permanently remove record</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase text-[10px]">Entry Details:</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Type:</span>
+                    <p className="font-black text-slate-900 uppercase">{entryToDelete.type}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Reference:</span>
+                    <p className="font-black text-slate-900">{entryToDelete.ref}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs font-bold text-slate-500 uppercase leading-relaxed text-slate-500">
+                Are you sure? This action will permanently delete this {entryToDelete.type.toLowerCase()} from the database. This cannot be undone.
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setEntryToDelete(null)}
+                  disabled={isDeleting}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting}
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-md"
+                >
+                  {isDeleting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Yes, Delete</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

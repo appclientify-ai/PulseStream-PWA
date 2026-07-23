@@ -127,22 +127,45 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     }
   ];
 
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+  const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
+  const toggleGroup = (id: string) => {
+    setExpandedGroups(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const handleItemClick = (e: React.MouseEvent, item: NavItem) => {
     if (item.children?.length) {
-      if (hoveredItem?.id === item.id) {
-        setHoveredItem(null);
+      if (!isCollapsed) {
+        toggleGroup(item.id);
       } else {
-        const rect = e.currentTarget.getBoundingClientRect();
-        setHoveredItem({ id: item.id, top: rect.top, item });
+        if (hoveredItem?.id === item.id) {
+          setHoveredItem(null);
+        } else {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setHoveredItem({ id: item.id, top: rect.top, item });
+        }
       }
     } else {
       onViewChange(item.id as ActiveView);
+      if (isMobile() && !isCollapsed) {
+        onToggle();
+      }
+    }
+  };
+
+  const handleChildClick = (childId: string) => {
+    onViewChange(childId as ActiveView);
+    setHoveredItem(null);
+    if (isMobile() && !isCollapsed) {
+      onToggle();
     }
   };
 
   const handleMouseEnter = (e: React.MouseEvent, item: NavItem) => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-    if (!isCollapsed && (!item.children || item.children.length === 0)) return;
+    if (!isCollapsed) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredItem({ id: item.id, top: rect.top, item });
   };
@@ -150,21 +173,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
   const renderItem = (item: NavItem) => {
     const isActive = activeView === item.id || item.children?.some(c => c.id === activeView);
     const hasChildren = !!item.children?.length;
+    const isExpanded = expandedGroups[item.id] ?? isActive;
 
     return (
-      <div key={item.id} className="w-full relative px-2">
+      <div key={item.id} className="w-full relative px-2 space-y-1">
         <button
           onClick={(e) => handleItemClick(e, item)}
           onMouseEnter={(e) => handleMouseEnter(e, item)}
           onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}
-          className={`flex w-full items-center gap-4 rounded-2xl transition-all duration-300 group/item ${
-            isCollapsed ? 'justify-center py-4' : 'px-4 py-3'
+          className={`flex w-full items-center gap-3.5 rounded-2xl transition-all duration-300 group/item ${
+            isCollapsed ? 'justify-center py-3.5' : 'px-4 py-3'
           } ${
-            isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
           {item.icon && (
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 shrink-0 transition-transform group-hover/item:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover/item:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 shrink-0 transition-transform group-hover/item:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover/item:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {item.icon}
             </svg>
           )}
@@ -176,11 +200,34 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           )}
           
           {!isCollapsed && hasChildren && (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7-7" />
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-indigo-200' : 'opacity-40'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
             </svg>
           )}
         </button>
+
+        {/* Inline Sub-Menu Accordion for expanded view */}
+        {!isCollapsed && hasChildren && isExpanded && (
+          <div className="pl-9 pr-2 space-y-1 my-1 border-l-2 border-indigo-100 ml-5 animate-in slide-in-from-top-2 duration-200">
+            {item.children!.map(child => {
+              const isChildActive = activeView === child.id;
+              return (
+                <button
+                  key={child.id}
+                  onClick={() => handleChildClick(child.id)}
+                  className={`w-full text-left py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors flex items-center justify-between ${
+                    isChildActive 
+                      ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/60' 
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <span className="truncate">{child.label}</span>
+                  {isChildActive && <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
