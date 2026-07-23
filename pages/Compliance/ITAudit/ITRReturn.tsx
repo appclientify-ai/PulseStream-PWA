@@ -124,7 +124,7 @@ const ITRReturn: React.FC = () => {
       });
     }
 
-    return list;
+    return [...list].sort((a, b) => (a.legalName || '').localeCompare(b.legalName || ''));
   }, [clients, search, statusFilter, refundStatusFilter, getStatus]);
 
   const handleExportCSV = () => {

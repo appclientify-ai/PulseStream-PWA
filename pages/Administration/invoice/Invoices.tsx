@@ -31,6 +31,33 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceRecord | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  const previousDues = useMemo(() => {
+    if (!previewInvoice) return [];
+    // Find all other invoices for this client that are unpaid and created before this one
+    return invoices.filter(i => {
+      const isClientMatch = (i.clientId && previewInvoice.clientId && i.clientId === previewInvoice.clientId && i.clientId !== 'misc') ||
+                            (i.clientName && previewInvoice.clientName && i.clientName.trim().toLowerCase() === previewInvoice.clientName.trim().toLowerCase());
+      
+      const isPrior = new Date(i.date).getTime() < new Date(previewInvoice.date).getTime() || 
+                      (new Date(i.date).getTime() === new Date(previewInvoice.date).getTime() && i.invoiceNo < previewInvoice.invoiceNo);
+
+      return isClientMatch && i.id !== previewInvoice.id && i.status !== 'Paid' && isPrior;
+    });
+  }, [previewInvoice, invoices]);
+
+  const getOutstandingBalance = (inv: InvoiceRecord) => {
+    if (inv.status === 'Paid') return 0;
+    if (inv.status === 'Partial' && inv.balanceDue !== undefined) {
+      return inv.balanceDue;
+    }
+    const paid = inv.amountPaid || 0;
+    return inv.totalAmount - paid;
+  };
+
+  const totalPreviousDues = useMemo(() => {
+    return previousDues.reduce((sum, inv) => sum + getOutstandingBalance(inv), 0);
+  }, [previousDues]);
+
   const fetchAll = async (isSync = false) => {
     if (!isSync) setIsLoading(true);
     try {
@@ -272,7 +299,23 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   </td>
                 </tr>
               ))}
-            </tbody>
+            
+                           {previousDues.map((prevInv) => {
+                              const outstanding = getOutstandingBalance(prevInv);
+                              if (outstanding <= 0) return null;
+                              return (
+                                 <tr key={`prev-${prevInv.id}`} className="bg-rose-50/20 border-t border-slate-200">
+                                    <td className=" py-4 text-center text-xs font-black text-rose-600">P</td>
+                                    <td className=" py-4 text-[10px] font-bold text-rose-700 uppercase">{prevInv.date.split('-').reverse().join('-')}</td>
+                                    <td className=" py-4 text-[10px] font-black text-rose-700">Previous Outstanding Due (Inv: {prevInv.invoiceNo})</td>
+                                    <td className=" py-4 text-center text-[10px] font-bold text-rose-700">1</td>
+                                    <td className=" py-4 text-right text-[10px] font-bold text-rose-700">{outstanding.toLocaleString()}</td>
+                                    {settings?.isGstEnabled && <td className=" py-4 text-center text-[10px] font-bold text-rose-700">0%</td>}
+                                    <td className=" py-4 text-right text-[10px] font-black text-rose-700">{outstanding.toLocaleString()}</td>
+                                 </tr>
+                              );
+                           })}
+                        </tbody>
           </table>
         </div>
       </div>
@@ -420,7 +463,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        <div className="flex flex-row gap-6 pt-2 items-start">
                           {settings?.upiId && (
                             <div className="flex flex-col items-center gap-2">
-                              <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
+                              <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount + totalPreviousDues}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
                               <span className="text-[9px] font-black uppercase text-slate-500">Scan to Pay</span>
                             </div>
                           )}
@@ -433,23 +476,29 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           </div>
                        </div>
                        <div className="w-64 space-y-3">
-                          <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
-                             <span>Sub Total</span>
-                             <span>₹{previewInvoice.subTotal.toLocaleString()}</span>
-                          </div>
-                          {settings?.isGstEnabled && (
-                             <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
-                                <span>Total Tax</span>
-                                <span>₹{previewInvoice.totalTax.toLocaleString()}</span>
-                             </div>
-                          )}
-                          <div className="h-px bg-slate-200" />
-                          <div className="flex justify-between text-lg font-black text-slate-900 uppercase">
-                             <span>Grand Total</span>
-                             <span>₹{previewInvoice.totalAmount.toLocaleString()}</span>
-                          </div>
-                       </div>
-                    </div>
+                           <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                              <span>Sub Total</span>
+                              <span>₹{previewInvoice.subTotal.toLocaleString()}</span>
+                           </div>
+                           {settings?.isGstEnabled && (
+                              <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
+                                 <span>Total Tax</span>
+                                 <span>₹{previewInvoice.totalTax.toLocaleString()}</span>
+                              </div>
+                           )}
+                           {totalPreviousDues > 0 && (
+                              <div className="flex justify-between text-xs font-black text-rose-600 uppercase">
+                                 <span>Previous Dues</span>
+                                 <span>₹{totalPreviousDues.toLocaleString()}</span>
+                              </div>
+                           )}
+                           <div className="h-px bg-slate-200" />
+                           <div className="flex justify-between text-lg font-black text-slate-900 uppercase">
+                              <span>Grand Total</span>
+                              <span>₹{(previewInvoice.totalAmount + totalPreviousDues).toLocaleString()}</span>
+                           </div>
+                        </div>
+                     </div>
 
                     <div className="pt-8 border-t border-slate-100 mt-8">
                        <div className="flex justify-between items-end">

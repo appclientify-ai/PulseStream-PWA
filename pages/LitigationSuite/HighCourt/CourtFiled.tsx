@@ -6,6 +6,7 @@ import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
+import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 
 
 const CourtFiled: React.FC = () => {
@@ -126,7 +127,7 @@ const CourtFiled: React.FC = () => {
             <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Matter U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Hearing Date</th>
@@ -233,6 +234,15 @@ const CourtFiled: React.FC = () => {
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">TIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.tioRefNo || viewingRecord.referenceNo || "---"}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Filing Date</p><p className="text-base font-black text-emerald-600">{formatDisplayDate(viewingRecord.filedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Scheduled Hearing</p><p className="text-base font-black text-indigo-600">{formatDisplayDate(viewingRecord.hearingDate)}</p></div>
+                 <EditableCaseHistory 
+                    value={viewingRecord.caseHistory || ''} 
+                    onSave={async (val) => {
+                      const updated = { ...viewingRecord, caseHistory: val };
+                      await api.saveLitigationRecord(updated);
+                      setViewingRecord(updated);
+                      fetchAll(true);
+                    }}
+                 />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Case Log</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close View</button></div>

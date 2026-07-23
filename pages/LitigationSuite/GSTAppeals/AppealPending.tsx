@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { EditableRemark } from '../../../components/EditableRemark';
+import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 
 
 const AppealPending: React.FC = () => {
@@ -126,11 +127,16 @@ const AppealPending: React.FC = () => {
 
   const filteredRecords = useMemo(() => {
     const s = search.toLowerCase();
-    return records.filter(r => {
+    const list = records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
              (r.referenceNo || '').toLowerCase().includes(s) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
+    });
+    return [...list].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate);
     });
   }, [records, clients, search]);
 
@@ -199,7 +205,7 @@ const AppealPending: React.FC = () => {
             <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
@@ -300,6 +306,15 @@ const AppealPending: React.FC = () => {
                  <div><p className="text-[10px] font-black text-slate-400 mb-1">Tax Period</p><p className="text-base font-black text-slate-900">{viewingRecord.taxPeriod || 'N/A'}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Final Appeal Due</p><p className="text-base font-black text-red-500">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
+                 <EditableCaseHistory 
+                    value={viewingRecord.caseHistory || ''} 
+                    onSave={async (val) => {
+                      const updated = { ...viewingRecord, caseHistory: val };
+                      await api.saveLitigationRecord(updated);
+                      setViewingRecord(updated);
+                      fetchAll(true);
+                    }}
+                 />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No internal history logged.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Dismiss View</button></div>

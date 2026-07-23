@@ -25,7 +25,8 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
     filedDate: '',
     orderDate: '',
     remarks: '',
-    isReissued: false
+    isReissued: false,
+    caseHistory: ''
   });
 
   const [dbClients, setDbClients] = useState<Client[]>(propClients || []);
@@ -62,7 +63,8 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
           category: category,
           status: initialData.status || 'Pending',
           filedDate: initialData.filedDate || '',
-          orderDate: initialData.orderDate || ''
+          orderDate: initialData.orderDate || '',
+          caseHistory: initialData.caseHistory || ''
         });
       }
       setSearchQuery(initialData.clientName || '');
@@ -78,7 +80,8 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
         filedDate: '',
         orderDate: '',
         remarks: '',
-        isReissued: false
+        isReissued: false,
+        caseHistory: ''
       });
       setSearchQuery('');
     }
@@ -282,6 +285,11 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
               )}
             </div>
           )}
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Case History</label>
+            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20" value={formData.caseHistory || ''} onChange={e => setFormData({...formData, caseHistory: e.target.value})} placeholder="Case status updates and history..." />
+          </div>
 
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Internal Notes</label>

@@ -6,6 +6,7 @@ import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
+import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 
 
 const NoticeDemand: React.FC = () => {
@@ -245,6 +246,15 @@ const NoticeDemand: React.FC = () => {
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p><p className="text-base font-black text-red-600 uppercase">SUSTAINED DEMAND</p></div>
                  <div><p className="text-[10px] font-black text-slate-400 mb-1">Order Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.referenceNo}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Order Date</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
+                 <EditableCaseHistory 
+                    value={viewingRecord.caseHistory || ''} 
+                    onSave={async (val) => {
+                      const updated = { ...viewingRecord, caseHistory: val };
+                      await api.saveLitigationRecord(updated);
+                      setViewingRecord(updated);
+                      fetchAll(true);
+                    }}
+                 />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>
               <div className="p-4 border-t border-slate-100 flex justify-end gap-3 shrink-0">

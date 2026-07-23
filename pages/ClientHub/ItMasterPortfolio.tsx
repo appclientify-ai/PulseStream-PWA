@@ -102,13 +102,14 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
       list = list.filter(c => c?.status === statusFilter);
     }
     const s = (externalSearch || '').toLowerCase();
-    return list.filter(c => {
+    const result = list.filter(c => {
       if (!c) return false;
       return (c.legalName || '').toLowerCase().includes(s) || 
       (c.itProfile?.pan || '').toLowerCase().includes(s) ||
       (c.itProfile?.fatherName || '').toLowerCase().includes(s) ||
       String(c.mobile || '').toLowerCase().includes(s);
     });
+    return [...result].sort((a, b) => (a.legalName || '').localeCompare(b.legalName || ''));
   }, [clients, externalSearch, statusFilter]);
 
   const togglePassword = (id: string) => {

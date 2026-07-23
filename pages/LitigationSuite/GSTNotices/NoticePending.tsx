@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { EditableRemark } from '../../../components/EditableRemark';
+import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 
 
 const NoticePending: React.FC = () => {
@@ -49,29 +50,6 @@ const NoticePending: React.FC = () => {
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
-
-  const getClientDisplayId = useCallback((clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return '---';
-    
-    if (client.gstProfile) {
-      const isState = client.gstProfile.jurisdictionType === 'State';
-      const val = isState ? client.gstProfile.sector : client.gstProfile.range;
-      const prefix = isState ? 'S' : 'C';
-      const sameGroup = clients.filter(c => 
-        c.gstProfile &&
-        c.gstProfile.jurisdictionType === client.gstProfile?.jurisdictionType &&
-        (isState ? c.gstProfile.sector === val : c.gstProfile.range === val)
-      ).sort((a, b) => (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime()));
-      const rank = sameGroup.findIndex(c => c.id === client.id) + 1;
-      return `${prefix}/${val || '?'}/${rank}`;
-    } else if (client.itProfile) {
-      const itGroup = clients.filter(c => !!c.itProfile).sort((a, b) => (new Date(a.createdAt || 0).getTime()) - (new Date(b.createdAt || 0).getTime()));
-      const rank = itGroup.findIndex(c => c.id === client.id) + 1;
-      return `IT/${rank.toString().padStart(2, '0')}`;
-    }
-    return '---';
-  }, [clients]);
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
     if (!data.clientId || !data.referenceNo) { toast.error("Missing Client or Reference No."); return; }
@@ -147,16 +125,20 @@ const NoticePending: React.FC = () => {
         return daysLeftFilter === 'Critical' ? dl <= 7 : dl > 7;
       });
     }
-    return list;
+    return [...list].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate);
+    });
   }, [records, clients, search, sectionFilter, daysLeftFilter]);
 
 
   const handleExportCSV = () => {
-    const headers = ['ID', 'Trade Name', 'GSTIN', 'Section', 'Tax Period', 'Notice Date', 'Due Date', 'Status'];
-    const rows = filteredRecords.map(r => {
+    const headers = ['S.No.', 'Trade Name', 'GSTIN', 'Section', 'Tax Period', 'Notice Date', 'Due Date', 'Status'];
+    const rows = filteredRecords.map((r, idx) => {
       const c = clients.find(cl => cl.id === r.clientId);
       return [
-        r.id.substring(0,6),
+        (idx + 1).toString().padStart(2, '0'),
         r.clientName,
         c?.gstProfile?.gstin || '---',
         'U/s ' + r.section,
@@ -223,7 +205,7 @@ const NoticePending: React.FC = () => {
           <table className="w-full text-left border-collapse table-auto min-w-full">
             <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">ID</th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
                   <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
@@ -268,8 +250,8 @@ const NoticePending: React.FC = () => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group h-[52px]">
-                      <td className=" px-4 py-2 font-black text-indigo-400 font-mono text-[11px] truncate">
-                        {getClientDisplayId(rec.clientId)}
+                      <td className=" px-4 py-2 text-slate-300 font-black font-mono text-[11px]">
+                        {(idx + 1).toString().padStart(2, '0')}
                       </td>
                       <td className=" px-4 py-2">
                         <p className="text-[12px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
@@ -387,6 +369,15 @@ const NoticePending: React.FC = () => {
                       </div>
                    </div>
                  )}
+                 <EditableCaseHistory 
+                    value={viewingRecord.caseHistory || ''} 
+                    onSave={async (val) => {
+                      const updated = { ...viewingRecord, caseHistory: val };
+                      await api.saveLitigationRecord(updated);
+                      setViewingRecord(updated);
+                      fetchAll(true);
+                    }}
+                 />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Remarks</p>
                     <p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p>

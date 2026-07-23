@@ -6,6 +6,7 @@ import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
+import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 
 
 const TribunalPending: React.FC = () => {
@@ -96,11 +97,16 @@ const TribunalPending: React.FC = () => {
 
   const filteredRecords = useMemo(() => {
     const s = search.toLowerCase();
-    return records.filter(r => {
+    const list = records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
              ((r.aioArn || r.oioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
+    });
+    return [...list].sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate);
     });
   }, [records, clients, search]);
 
@@ -132,7 +138,7 @@ const TribunalPending: React.FC = () => {
             <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
@@ -232,6 +238,15 @@ const TribunalPending: React.FC = () => {
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">AIO/OIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.aioArn || viewingRecord.oioRefNo || viewingRecord.referenceNo || "---"}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Adverse Order Date</p><p className="text-base font-black text-slate-900">{formatDisplayDate(viewingRecord.aioDate || viewingRecord.oioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
                  <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Appeal Deadline</p><p className="text-base font-black text-red-500">{formatDisplayDate(viewingRecord.dueDate)}</p></div>
+                 <EditableCaseHistory 
+                    value={viewingRecord.caseHistory || ''} 
+                    onSave={async (val) => {
+                      const updated = { ...viewingRecord, caseHistory: val };
+                      await api.saveLitigationRecord(updated);
+                      setViewingRecord(updated);
+                      fetchAll(true);
+                    }}
+                 />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Staff Case History</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close View</button></div>

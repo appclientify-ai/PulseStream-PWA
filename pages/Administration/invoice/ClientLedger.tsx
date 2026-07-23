@@ -39,16 +39,70 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   }, []);
 
   const clientBalances = useMemo(() => {
-    return clients.map(client => {
-      const clientInvoices = invoices.filter(i => i.clientId === client.id);
-      const clientPayments = payments.filter(p => p.clientId === client.id);
+    // 1. Process regular clients
+    const regularBalances = clients.map(client => {
+      const clientInvoices = invoices.filter(i => 
+        i.clientId === client.id || 
+        (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+        (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
+      );
+      const clientPayments = payments.filter(p => 
+        p.clientId === client.id || 
+        (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+        (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
+      );
       
       const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
       const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
       
-      const balance = totalInvoiced - totalPaid; // positive = debit (they owe us), negative = credit (advance)
+      const balance = totalInvoiced - totalPaid; // positive = debit, negative = credit
       return { client, balance, hasActivity: clientInvoices.length > 0 || clientPayments.length > 0 };
-    }).filter(c => c.hasActivity).sort((a, b) => b.balance - a.balance); // Sort by balance descending
+    });
+
+    // 2. Identify and group unmatched invoices/payments (manual or misc clients)
+    const unmatchedInvoices = invoices.filter(i => 
+      !clients.some(c => 
+        i.clientId === c.id || 
+        (i.clientName && i.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
+        (i.clientTradeName && c.tradeName && i.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase())
+      )
+    );
+
+    const unmatchedPayments = payments.filter(p => 
+      !clients.some(c => 
+        p.clientId === c.id || 
+        (p.clientName && p.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
+        (p.clientTradeName && c.tradeName && p.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase())
+      )
+    );
+
+    const unmatchedNames = new Set<string>();
+    unmatchedInvoices.forEach(i => i.clientName && unmatchedNames.add(i.clientName));
+    unmatchedPayments.forEach(p => p.clientName && unmatchedNames.add(p.clientName));
+
+    const manualBalances = Array.from(unmatchedNames).map(name => {
+      const clientInvoices = unmatchedInvoices.filter(i => i.clientName === name);
+      const clientPayments = unmatchedPayments.filter(p => p.clientName === name);
+
+      const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
+      const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
+      const balance = totalInvoiced - totalPaid;
+
+      const pseudoClient: Client = {
+        id: `manual-${encodeURIComponent(name)}`,
+        legalName: name,
+        tradeName: clientInvoices[0]?.clientTradeName || '',
+        mobile: clientInvoices[0]?.miscMobile || clientPayments[0]?.chequeNo || '',
+        address: clientInvoices[0]?.miscAddress || '',
+        gstProfile: { gstin: clientInvoices[0]?.clientGstin || '' }
+      } as any;
+
+      return { client: pseudoClient, balance, hasActivity: true };
+    });
+
+    return [...regularBalances, ...manualBalances]
+      .filter(c => c.hasActivity)
+      .sort((a, b) => b.balance - a.balance); // Sort by balance descending
   }, [clients, invoices, payments]);
 
   const filteredBalances = useMemo(() => {
@@ -64,7 +118,23 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     type LedgerEntry = { date: string; type: string; ref: string; debit: number; credit: number };
     const entries: LedgerEntry[] = [];
     
-    invoices.filter(i => i.clientId === selectedClient.id).forEach(inv => {
+    const isManual = selectedClient.id.startsWith('manual-');
+    
+    const clientInvoices = invoices.filter(i => {
+      if (isManual) return i.clientName === selectedClient.legalName;
+      return i.clientId === selectedClient.id || 
+        (i.clientName && i.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
+        (i.clientTradeName && selectedClient.tradeName && i.clientTradeName.trim().toLowerCase() === selectedClient.tradeName.trim().toLowerCase());
+    });
+
+    const clientPayments = payments.filter(p => {
+      if (isManual) return p.clientName === selectedClient.legalName;
+      return p.clientId === selectedClient.id || 
+        (p.clientName && p.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
+        (p.clientTradeName && selectedClient.tradeName && p.clientTradeName.trim().toLowerCase() === selectedClient.tradeName.trim().toLowerCase());
+    });
+
+    clientInvoices.forEach(inv => {
        entries.push({
          date: inv.date,
          type: 'Invoice',
@@ -74,7 +144,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
        });
     });
     
-    payments.filter(p => p.clientId === selectedClient.id).forEach(pay => {
+    clientPayments.forEach(pay => {
        entries.push({
          date: pay.date,
          type: 'Payment',
@@ -221,15 +291,30 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                     </td>
                  </tr>
               ) : filteredBalances.map(({ client, balance }) => {
-                 const clientInvoices = invoices.filter(i => i.clientId === client.id);
-                 const clientPayments = payments.filter(p => p.clientId === client.id);
+                 const isManual = client.id.startsWith('manual-');
+                 const clientInvoices = invoices.filter(i => {
+                   if (isManual) return i.clientName === client.legalName;
+                   return i.clientId === client.id || 
+                     (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                     (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+                 });
+                 const clientPayments = payments.filter(p => {
+                   if (isManual) return p.clientName === client.legalName;
+                   return p.clientId === client.id || 
+                     (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                     (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+                 });
+                 
                  const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
                  const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
                  
                  return (
                   <tr key={client.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="font-black text-slate-900 truncate leading-tight text-sm">{client.tradeName || client.legalName}</div>
+                      <div className="font-black text-slate-900 truncate leading-tight text-sm">
+                        {client.tradeName || client.legalName}
+                        {isManual && <span className="ml-2 text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Manual Entry</span>}
+                      </div>
                       {client.tradeName && <div className="font-bold text-[10px] text-slate-500 truncate leading-tight mt-1">{client.legalName}</div>}
                     </td>
                     <td className="px-6 py-4 text-right">
