@@ -7,6 +7,7 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
 import { useGSTR9Logic } from './GSTR9_9Clogic';
+import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
@@ -335,7 +336,7 @@ const GSTR9_9C: React.FC = () => {
                        </div>
                     </td>
                     <td className=" px-4 py-[2px] truncate max-w-[150px]">
-                       <input type="text" value={st?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+                       <EditableRemark value={st?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
@@ -420,7 +421,8 @@ const GSTR9_9C: React.FC = () => {
                                }} 
                                className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
                              >
-                               <p className="text-sm font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
+                               <p className="text-sm font-black text-slate-900 truncate">{c.tradeName || '---'}</p>
+                               <p className="text-xs font-bold text-slate-500 truncate leading-tight">{c.legalName ? `Legal: ${c.legalName}` : '---'}</p>
                                <p className="text-[10px] text-indigo-600 font-mono font-black">{c.gstProfile?.gstin || 'NO GSTIN'}</p>
                              </button>
                            ))}

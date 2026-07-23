@@ -3,6 +3,7 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import { useTaxAuditLogic, BSStatus } from './TAXAuditlogic';
+import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
@@ -254,7 +255,7 @@ const TAXAudit: React.FC = () => {
                         </button>
                       </td>
                       <td className=" px-6 py-5 truncate max-w-[180px]">
-                        <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+                        <EditableRemark value={status.remark || ''} onSave={val => updateRemark(client.id, val)} />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">
@@ -383,7 +384,8 @@ const TAXAudit: React.FC = () => {
                          <button key={c.id} onClick={() => { setPendingClientForAdd(c); setNewCaName(''); }} 
                            className="w-full text-left p-4 rounded-2xl border border-slate-100 hover:border-indigo-600 hover:bg-indigo-50/50 transition-all flex items-center justify-between group">
                             <div className="min-w-0 flex-1">
-                               <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 truncate">{c.legalName}</p>
+                               <p className="text-sm font-black text-slate-900 group-hover:text-indigo-600 truncate">{c.tradeName || c.legalName || '---'}</p>
+                               <p className="text-xs font-bold text-slate-500 truncate leading-tight">{c.legalName ? `Legal: ${c.legalName}` : '---'}</p>
                                <p className="text-[10px] text-slate-400 font-mono tracking-tight mt-1">{c.gstProfile?.gstin || c.itProfile?.pan || 'NO IDENTIFIER'}</p>
                             </div>
                             <svg className="h-5 w-5 text-slate-300 group-hover:text-indigo-600 shrink-0 ml-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
@@ -396,7 +398,8 @@ const TAXAudit: React.FC = () => {
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                   <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Target Entity</p>
-                    <p className="text-base font-black text-indigo-900 leading-tight">{pendingClientForAdd.legalName}</p>
+                    <p className="text-base font-black text-indigo-900 leading-tight">{pendingClientForAdd.tradeName || '---'}</p>
+                    <p className="text-xs font-bold text-indigo-600/70 tracking-tight mt-1">{pendingClientForAdd.legalName ? `Legal Name: ${pendingClientForAdd.legalName}` : '---'}</p>
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block ml-1">Responsible CA Name (Signatory)</label>

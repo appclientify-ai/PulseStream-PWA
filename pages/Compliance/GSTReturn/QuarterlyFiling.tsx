@@ -7,6 +7,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from './filinglogic/MonthlyFilingLogic';
+import { EditableRemark } from '../../../components/EditableRemark';
 import { toast } from 'sonner';
 
 const QuarterlyFiling: React.FC = () => {
@@ -287,7 +288,7 @@ const QuarterlyFiling: React.FC = () => {
                        </div>
                     </td>
                     <td className=" px-4 py-[2px] truncate max-w-[150px]">
-                       <input type="text" value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+                       <EditableRemark value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                      </td>
                      <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">

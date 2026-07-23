@@ -8,6 +8,7 @@ import ITViewIcon from '../../../components/ITViewIcon';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
 import { useITRReturnLogic, RefundStatus } from './ITRReturnlogic';
+import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
@@ -312,7 +313,7 @@ const ITRReturn: React.FC = () => {
                        </div>
                     </td>
                     <td className=" px-4 py-[2px] truncate max-w-[150px]">
-                       <input type="text" value={status?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
+                       <EditableRemark value={status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                     </td>
                     <td className="px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
