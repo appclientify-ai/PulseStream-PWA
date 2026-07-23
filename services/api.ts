@@ -165,6 +165,49 @@ class ApiService {
   }
 
   async deleteClient(id: string): Promise<void> {
+    try {
+      const clients = await this.getClients();
+      const client = clients.find(c => c.id === id);
+      if (client) {
+        const [invoices, payments, litigation, works, gstRegs, foodLics, msmes] = await Promise.all([
+          this.getInvoices(),
+          this.getPayments(),
+          this.getLitigationRecords(),
+          this.getMiscWork(),
+          this.getGSTRegistrations(),
+          this.getFoodLicenses(),
+          this.getMSMERegistrations()
+        ]);
+        
+        const invoicesToDelete = invoices.filter(i => i.clientId === id);
+        const paymentsToDelete = payments.filter(p => p.clientId === id);
+        const litigationToDelete = litigation.filter(l => l.clientId === id);
+        
+        const clientNames = [client.legalName?.trim().toLowerCase(), client.tradeName?.trim().toLowerCase()].filter(Boolean);
+        const matchesClientName = (name?: string) => {
+          if (!name) return false;
+          const cleanName = name.trim().toLowerCase();
+          return clientNames.includes(cleanName);
+        };
+
+        const worksToDelete = works.filter(w => matchesClientName(w.clientName));
+        const gstRegsToDelete = gstRegs.filter(g => matchesClientName(g.clientName));
+        const foodLicsToDelete = foodLics.filter(f => matchesClientName(f.clientName));
+        const msmesToDelete = msmes.filter(m => matchesClientName(m.clientName));
+
+        await Promise.all([
+          ...invoicesToDelete.map(i => this.deleteInvoice(i.id)),
+          ...paymentsToDelete.map(p => this.deletePayment(p.id)),
+          ...litigationToDelete.map(l => this.deleteLitigationRecord(l.id)),
+          ...worksToDelete.map(w => this.deleteMiscWork(w.id)),
+          ...gstRegsToDelete.map(g => this.deleteGSTRegistration(g.id)),
+          ...foodLicsToDelete.map(f => this.deleteFoodLicense(f.id)),
+          ...msmesToDelete.map(m => this.deleteMSMERegistration(m.id))
+        ]);
+      }
+    } catch (err) {
+      console.error('Error during cascade delete client:', err);
+    }
     await this.delete(`/items/${id}`);
   }
 
@@ -259,6 +302,17 @@ class ApiService {
   }
 
   async deleteInvoice(id: string): Promise<void> {
+    try {
+      const invoices = await this.getInvoices();
+      const invoice = invoices.find(i => i.id === id);
+      if (invoice) {
+        const payments = await this.getPayments();
+        const paymentsToDelete = payments.filter(p => p.invoiceNo === invoice.invoiceNo && p.clientId === invoice.clientId);
+        await Promise.all(paymentsToDelete.map(p => this.deletePayment(p.id)));
+      }
+    } catch (err) {
+      console.error('Error during cascade delete invoice payments:', err);
+    }
     await this.delete(`/items/${id}`);
   }
 

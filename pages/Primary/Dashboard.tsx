@@ -380,17 +380,149 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
   const LitigationBlock = ({ forum, label, icon }: any) => {
     const forums: Record<string, string> = { 'Notice': 'lit-notice', 'Appeal': 'lit-appeal', 'Tribunal': 'lit-tribunal', 'HighCourt': 'lit-hc' };
     const prefix = forums[forum];
+
+    const pendingCount = getLitCounts(forum, 'Pending');
+    const filedCount = getLitCounts(forum, 'Filed');
+    const droppedCount = getLitCounts(forum, 'Drop');
+    const demandCount = getLitCounts(forum, 'Demand');
+
+    const sortedPending = useMemo(() => {
+      const pendingList = litigation.filter(r => r.category === forum && r.status === 'Pending');
+      return [...pendingList].sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }).slice(0, 5);
+    }, [forum]);
+
+    const forumSingular = forum === 'HighCourt' ? 'Matter' : forum;
+
+    const items = [
+      { id: 'pending', statusLabel: `Pending ${forumSingular}`, count: pendingCount, color: 'bg-rose-50 border-rose-100 hover:border-rose-300 text-rose-700', bulletColor: 'bg-rose-500', iconPath: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3" /> },
+      { id: 'filed', statusLabel: `Filed ${forumSingular}`, count: filedCount, color: 'bg-indigo-50 border-indigo-100 hover:border-indigo-300 text-indigo-700', bulletColor: 'bg-indigo-500', iconPath: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /> },
+      { id: 'drop', statusLabel: `Dropped ${forumSingular}`, count: droppedCount, color: 'bg-emerald-50 border-emerald-100 hover:border-emerald-300 text-emerald-700', bulletColor: 'bg-emerald-500', iconPath: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4" /> },
+      { id: 'demand', statusLabel: `Demand ${forumSingular}`, count: demandCount, color: 'bg-amber-50 border-amber-100 hover:border-amber-300 text-amber-700', bulletColor: 'bg-amber-500', iconPath: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01" /> }
+    ];
+
+    const isOverdue = (dateStr: string) => {
+      if (!dateStr) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const d = new Date(dateStr);
+      return d < today;
+    };
+
+    const isNearDue = (dateStr: string) => {
+      if (!dateStr) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const d = new Date(dateStr);
+      const diffTime = d.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 5;
+    };
+
     return (
       <div className="space-y-4">
+        {/* Header Title */}
         <div className="flex items-center gap-3 px-2">
-           <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
+           <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icon}</svg>
            <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">{label}</h4>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <CompactCard label="Pending" count={getLitCounts(forum, 'Pending')} viewId={`${prefix}-pending`} color="bg-rose-500" icon={<path d="M12 8v4l3 3" />} />
-          <CompactCard label="Filed" count={getLitCounts(forum, 'Filed')} viewId={`${prefix}-filed`} color="bg-indigo-500" icon={<path d="M5 13l4 4L19 7" />} />
-          <CompactCard label="Dropped" count={getLitCounts(forum, 'Drop')} viewId={`${prefix}-drop`} color="bg-emerald-500" icon={<path d="M9 12l2 2 4-4" />} />
-          <CompactCard label="Demand" count={getLitCounts(forum, 'Demand')} viewId={`${prefix}-demand`} color="bg-orange-500" icon={<path d="M12 9v2m0 4h.01" />} />
+
+        {/* Combined Main Card */}
+        <div className="bg-white border border-slate-200/80 rounded-[2rem] p-6 lg:p-8 shadow-sm hover:shadow-md transition-all">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* Left Side: Vertical list of status routes */}
+            <div className="space-y-3.5 pr-0 lg:pr-4">
+              <div className="mb-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Action Forums</span>
+              </div>
+              {items.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={() => handleViewChange(`${prefix}-${item.id}`)}
+                  className="group/row flex items-center justify-between p-4 rounded-2xl border bg-[#fbfcfd] border-slate-100 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className={`h-8 w-8 rounded-lg ${item.bulletColor} text-white flex items-center justify-center shadow-sm group-hover/row:scale-105 transition-transform`}>
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{item.iconPath}</svg>
+                    </div>
+                    <span className="text-sm font-black text-slate-800 group-hover/row:text-slate-900 uppercase tracking-tight">{item.statusLabel}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-slate-900 bg-white border border-slate-150 px-3 py-1 rounded-xl shadow-xs min-w-[2.5rem] text-center">
+                      {item.count}
+                    </span>
+                    <svg className="w-4 h-4 text-slate-300 group-hover/row:text-slate-500 group-hover/row:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right Side: Top 5 Pending items */}
+            <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-slate-100 pt-6 lg:pt-0 lg:pl-8">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Top 5 Pending Deadlines</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-full px-2.5 py-0.5">
+                  Priority
+                </span>
+              </div>
+              
+              {sortedPending.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-10 text-center">
+                  <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3 border border-emerald-100/50">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-xs font-black text-slate-700 uppercase tracking-tight">All Caught Up</p>
+                  <p className="text-[10px] font-medium text-slate-400 mt-1 max-w-[200px]">No pending items require active responses.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar max-h-[280px]">
+                  {sortedPending.map((item) => {
+                    const overdue = isOverdue(item.dueDate);
+                    const neardue = isNearDue(item.dueDate);
+                    const formattedDate = item.dueDate ? new Date(item.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No Due Date';
+                    
+                    return (
+                      <div 
+                        key={item.id}
+                        onClick={() => handleViewChange(`${prefix}-pending`)}
+                        className="p-3.5 rounded-xl border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/10 transition-all cursor-pointer flex items-center justify-between gap-4"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tight">{item.clientName}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5 truncate uppercase tracking-wider">
+                            Ref: {item.referenceNo || 'N/A'} <span className="mx-1 text-slate-200">|</span> Sec: {item.section || 'N/A'}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                            overdue 
+                              ? 'bg-rose-50 border-rose-100 text-rose-600' 
+                              : neardue 
+                              ? 'bg-amber-50 border-amber-100 text-amber-600' 
+                              : 'bg-slate-50 border-slate-100 text-slate-600'
+                          }`}>
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="whitespace-nowrap">{formattedDate}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
     );
@@ -795,6 +927,7 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
       'admin-add-invoice': { label: 'Draft Invoice', desc: 'New Professional Bill Preparation' },
       'admin-invoicesetting': { label: 'Invoice Settings', desc: 'Configure Firm Billing Details' },
       'admin-payments': { label: 'Payments', desc: 'Collection Realization and History' },
+      'admin-client-ledger': { label: 'Client Ledger', desc: 'Overview of balances' },
       'admin-duedates': { label: 'Due Dates', desc: 'Global Compliance Calendar Matrix' },
       'settings': { label: 'Vault Settings', desc: 'Firm Configuration and Security Protocols' },
       'trash': { label: 'Vault Audit', desc: 'Permanent Record and Activity Logs' }

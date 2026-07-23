@@ -42,9 +42,11 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     // 1. Process regular clients
     const regularBalances = clients.map(client => {
       const clientInvoices = invoices.filter(i => 
-        i.clientId === client.id || 
-        (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-        (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
+        i.status !== 'Cancelled' && (
+          i.clientId === client.id || 
+          (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+          (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
+        )
       );
       const clientPayments = payments.filter(p => 
         p.clientId === client.id || 
@@ -61,6 +63,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
     // 2. Identify and group unmatched invoices/payments (manual or misc clients)
     const unmatchedInvoices = invoices.filter(i => 
+      i.status !== 'Cancelled' &&
       !clients.some(c => 
         i.clientId === c.id || 
         (i.clientName && i.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
@@ -121,6 +124,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     const isManual = selectedClient.id.startsWith('manual-');
     
     const clientInvoices = invoices.filter(i => {
+      if (i.status === 'Cancelled') return false;
       if (isManual) return i.clientName === selectedClient.legalName;
       return i.clientId === selectedClient.id || 
         (i.clientName && i.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
