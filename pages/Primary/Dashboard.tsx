@@ -746,7 +746,10 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
       case 'admin-add-invoice': return <AddInvoice onBack={() => handleViewChange('admin-invoices')} editingInvoice={viewExtra} />;
       case 'admin-invoicesetting': return <InvoiceSetting onBack={() => handleViewChange('admin-invoices')} />;
       case 'admin-payments': return <PaymentReceived onViewChange={handleViewChange} />;
-      case 'admin-client-ledger': return <ClientLedger onBack={() => handleViewChange('admin-payments')} />;
+      case 'admin-client-ledger': {
+        const fromView = (viewExtra && typeof viewExtra === 'string') ? viewExtra : 'admin-payments';
+        return <ClientLedger onBack={() => handleViewChange(fromView as any)} />;
+      }
       case 'admin-duedates': return <DueDateSetting />;
       case 'settings': return <Setting />;
       case 'trash': return <Trash />;

@@ -21,14 +21,14 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [cRes, iRes, pRes] = await Promise.all([
-          api.get('/clients'),
-          api.get('/invoices'),
-          api.get('/payments')
+        const [clis, invs, pmts] = await Promise.all([
+          api.getClients(),
+          api.getInvoices(),
+          api.getPayments()
         ]);
-        setClients(cRes.data);
-        setInvoices(iRes.data);
-        setPayments(pRes.data);
+        setClients(clis);
+        setInvoices(invs);
+        setPayments(pmts);
       } catch (err) {
         console.error('Error fetching ledger data:', err);
       } finally {
