@@ -179,16 +179,16 @@ class ApiService {
           this.getMSMERegistrations()
         ]);
         
-        const invoicesToDelete = invoices.filter(i => i.clientId === id);
-        const paymentsToDelete = payments.filter(p => p.clientId === id);
-        const litigationToDelete = litigation.filter(l => l.clientId === id);
-        
         const clientNames = [client.legalName?.trim().toLowerCase(), client.tradeName?.trim().toLowerCase()].filter(Boolean);
         const matchesClientName = (name?: string) => {
           if (!name) return false;
           const cleanName = name.trim().toLowerCase();
           return clientNames.includes(cleanName);
         };
+
+        const invoicesToDelete = invoices.filter(i => i.clientId === id || matchesClientName(i.clientName) || matchesClientName(i.clientTradeName));
+        const paymentsToDelete = payments.filter(p => p.clientId === id || matchesClientName(p.clientName) || matchesClientName(p.clientTradeName));
+        const litigationToDelete = litigation.filter(l => l.clientId === id);
 
         const worksToDelete = works.filter(w => matchesClientName(w.clientName));
         const gstRegsToDelete = gstRegs.filter(g => matchesClientName(g.clientName));
@@ -307,7 +307,10 @@ class ApiService {
       const invoice = invoices.find(i => i.id === id);
       if (invoice) {
         const payments = await this.getPayments();
-        const paymentsToDelete = payments.filter(p => p.invoiceNo === invoice.invoiceNo && p.clientId === invoice.clientId);
+        const paymentsToDelete = payments.filter(p => 
+          (p.invoiceNo === invoice.invoiceNo && p.clientId === invoice.clientId) ||
+          (p.invoiceNo === invoice.invoiceNo && p.clientName && invoice.clientName && p.clientName.trim().toLowerCase() === invoice.clientName.trim().toLowerCase())
+        );
         await Promise.all(paymentsToDelete.map(p => this.deletePayment(p.id)));
       }
     } catch (err) {

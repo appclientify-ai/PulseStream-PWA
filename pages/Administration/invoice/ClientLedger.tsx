@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../../../services/api';
 import Loader from '../../../components/Loader';
-import { Client, InvoiceRecord, PaymentRecord } from '../../../types';
+import { Client, InvoiceRecord, PaymentRecord, InvoiceSettings } from '../../../types';
 import html2pdf from 'html2pdf.js';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface ClientLedgerProps {
   onBack: () => void;
@@ -12,6 +13,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -21,14 +23,16 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [clis, invs, pmts] = await Promise.all([
+        const [clis, invs, pmts, sets] = await Promise.all([
           api.getClients(),
           api.getInvoices(),
-          api.getPayments()
+          api.getPayments(),
+          api.getInvoiceSettings()
         ]);
         setClients(clis);
         setInvoices(invs);
         setPayments(pmts);
+        setSettings(sets);
       } catch (err) {
         console.error('Error fetching ledger data:', err);
       } finally {
@@ -176,7 +180,6 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   if (isLoading) return <Loader />;
 
   if (selectedClient) {
-    let runningBalance = 0;
     return (
       <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-5xl mx-auto w-full pb-10">
         <div className="flex items-center justify-between shrink-0">
@@ -196,51 +199,179 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
         </div>
 
         <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col p-6">
-           <div ref={printRef} className="bg-white p-4">
-             <div className="mb-6 border-b border-slate-100 pb-4">
-               <h3 className="text-xl font-black text-slate-900 uppercase">{selectedClient.tradeName || selectedClient.legalName}</h3>
-               <p className="text-xs font-bold text-slate-500 uppercase mt-1">Client Ledger Statement</p>
+           <div className="overflow-y-auto flex-1 bg-white">
+             <div ref={printRef} className="bg-white p-8 relative">
+                {settings?.watermark && (
+                   <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none z-0 overflow-hidden">
+                      <img src={settings.watermark} alt="Watermark" className="w-[80%] object-contain mix-blend-multiply grayscale" />
+                   </div>
+                )}
+                
+                <div className="space-y-8 relative z-10">
+                   {/* Firm Header */}
+                   <div className="flex justify-between items-start">
+                      <div className="flex gap-6 items-stretch">
+                         <div className="flex flex-col justify-center py-1">
+                            <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900">{settings?.firmName || 'Your Firm Name'}</h1>
+                            {settings?.firmServices && <p className="text-[10px] font-black text-indigo-500 uppercase mt-0.5 tracking-widest">{settings.firmServices}</p>}
+                            {settings?.professionType && settings?.registrationNo && <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">{settings.professionType === 'CA' ? 'Membership No: ' : 'Bar Registration No: '}{settings.registrationNo}</p>}
+                            {settings?.firmAddress && <p className="text-xs font-bold text-slate-500 uppercase mt-2 max-w-xs whitespace-pre-wrap">{settings.firmAddress}</p>}
+                            {settings?.firmGstin && settings.firmGstin.toLowerCase() !== 'n/a' && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {settings.firmGstin}</p>}
+                            {settings?.firmMobile && <p className="text-xs font-bold text-slate-500 uppercase">Contact: {settings.firmMobile}</p>}
+                            {settings?.firmEmail && <p className="text-xs font-bold text-slate-500 uppercase">Email: {settings.firmEmail}</p>}
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Statement</h2>
+                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1">Client Ledger</p>
+                         <div className="mt-4 space-y-1">
+                            <p className="text-[11px] font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Client Info (Bill To equivalent) */}
+                   <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Statement For / Client Details</p>
+                      <h3 className="text-lg font-black uppercase text-slate-900">{selectedClient.tradeName || selectedClient.legalName}</h3>
+                      {selectedClient.tradeName && <p className="text-xs font-bold text-slate-500 uppercase mt-1">Legal: {selectedClient.legalName}</p>}
+                      {selectedClient.gstProfile?.gstin && <p className="text-xs font-bold text-slate-500 uppercase mt-1">GSTIN: {selectedClient.gstProfile.gstin}</p>}
+                      {selectedClient.address && <p className="text-xs font-bold text-slate-500 uppercase mt-1">{selectedClient.address}</p>}
+                      <p className="text-xs font-bold text-slate-500 uppercase mt-1">Mobile: {selectedClient.mobile || 'N/A'}</p>
+                   </div>
+
+                   {/* Ledger Table */}
+                   <table className="w-full text-left border-collapse table-auto mt-6">
+                     <thead className="bg-slate-50 border-b-2 border-slate-900">
+                       <tr>
+                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Date</th>
+                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
+                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Debit (₹)</th>
+                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Credit (₹)</th>
+                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Balance (₹)</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-100">
+                       {selectedLedgerEntries.length === 0 ? (
+                         <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold text-xs uppercase">No transaction records found.</td></tr>
+                       ) : (() => {
+                         let printRunningBalance = 0;
+                         return selectedLedgerEntries.map((entry, idx) => {
+                           printRunningBalance += (entry.debit - entry.credit);
+                           return (
+                             <tr key={idx} className="hover:bg-slate-50/50">
+                               <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
+                               <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
+                               <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
+                               <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
+                               <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">
+                                 ₹{Math.abs(printRunningBalance).toLocaleString()} {printRunningBalance > 0 ? 'Dr' : printRunningBalance < 0 ? 'Cr' : ''}
+                               </td>
+                             </tr>
+                           );
+                         });
+                       })()}
+                     </tbody>
+                     {selectedLedgerEntries.length > 0 && (() => {
+                        const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
+                        const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
+                        const closingBal = totalDr - totalCr;
+                        return (
+                          <tfoot className="bg-slate-50 border-t-2 border-slate-900">
+                            <tr>
+                              <td colSpan={2} className="px-4 py-4 text-xs font-black text-slate-900 text-right uppercase">Closing Balance Summary</td>
+                              <td className="px-4 py-4 text-xs font-black text-rose-600 text-right">₹{totalDr.toLocaleString()}</td>
+                              <td className="px-4 py-4 text-xs font-black text-emerald-600 text-right">₹{totalCr.toLocaleString()}</td>
+                              <td className={`px-4 py-4 text-xs font-black text-right ${closingBal > 0 ? 'text-rose-600' : closingBal < 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                ₹{Math.abs(closingBal).toLocaleString()} {closingBal > 0 ? 'Dr (Due)' : closingBal < 0 ? 'Cr (Advance)' : 'Nil'}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        );
+                     })()}
+                   </table>
+
+                   {/* Footer Info (Bank, QR and Signature) */}
+                   <div className="flex justify-between items-start mt-8 pt-4">
+                      <div className="flex flex-row gap-6 items-start">
+                         {settings?.upiId && (() => {
+                            const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
+                            const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
+                            const netBal = totalDr - totalCr;
+                            if (netBal > 0) {
+                              return (
+                                <div className="flex flex-col items-center gap-2 shrink-0">
+                                  <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${netBal}&cu=INR&tn=Ledger ${encodeURIComponent(selectedClient.tradeName || selectedClient.legalName)}`} size={80} />
+                                  <span className="text-[9px] font-black uppercase text-slate-500">Scan to Settle (₹{netBal.toLocaleString()})</span>
+                                </div>
+                              );
+                            }
+                            return null;
+                         })()}
+                         <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
+                            <p className="text-[9px] font-bold text-slate-600 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
+                            <p className="text-[9px] font-bold text-slate-600 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
+                            <p className="text-[9px] font-bold text-slate-600 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
+                            <p className="text-[9px] font-bold text-slate-600 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
+                         </div>
+                      </div>
+                      
+                      <div className="w-64 space-y-2 text-right">
+                         {(() => {
+                            const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
+                            const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
+                            const closingBal = totalDr - totalCr;
+                            return (
+                              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left space-y-1">
+                                <p className="text-[9px] font-black uppercase text-slate-400">Statement Summary</p>
+                                <div className="flex justify-between text-xs font-bold text-slate-600">
+                                   <span>Total Invoiced (Debit)</span>
+                                   <span>₹{totalDr.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between text-xs font-bold text-slate-600">
+                                   <span>Total Paid (Credit)</span>
+                                   <span>₹{totalCr.toLocaleString()}</span>
+                                </div>
+                                <div className="h-px bg-slate-200 my-1" />
+                                <div className={`flex justify-between text-sm font-black ${closingBal > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                                   <span>Outstanding Balance</span>
+                                   <span>₹{Math.abs(closingBal).toLocaleString()} {closingBal > 0 ? 'Dr' : closingBal < 0 ? 'Cr' : ''}</span>
+                                </div>
+                              </div>
+                            );
+                         })()}
+                      </div>
+                   </div>
+
+                   {/* Terms & Conditions, Whatsapp QR & Signatory */}
+                   <div className="pt-8 border-t border-slate-100 mt-8">
+                      <div className="flex justify-between items-end">
+                         <div className="text-[8px] leading-tight font-bold text-slate-500 uppercase whitespace-pre-wrap max-w-sm">
+                            <p className="text-slate-900 font-black mb-1">Terms & Conditions:</p>
+                            <p className="mt-1">{settings?.terms || '1. This is a computer-generated account statement.\n2. Please report any discrepancies immediately.'}</p>
+                         </div>
+                         <div className="flex gap-12 items-end">
+                            {settings?.whatsappNumber && (
+                              <div className="flex flex-col items-center gap-2 shrink-0">
+                                <QRCodeSVG value={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`Hello, regarding ledger statement for ${selectedClient.tradeName || selectedClient.legalName}`)}`} size={80} />
+                                <span className="text-[9px] font-black uppercase text-slate-500">WhatsApp Us</span>
+                              </div>
+                            )}
+                            <div className="text-center flex flex-col items-center shrink-0">
+                               {settings?.firmSignature ? (
+                                 <img src={settings.firmSignature} alt="Signature" className="h-16 object-contain mb-2" />
+                               ) : (
+                                 <div className="h-16 mb-2" />
+                               )}
+                               <p className="text-[10px] font-black uppercase text-slate-900">Authorized Signatory</p>
+                               <p className="text-[9px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
              </div>
-             
-             <table className="w-full text-left border-collapse table-auto">
-               <thead className="bg-slate-50 border-b border-slate-200">
-                 <tr>
-                   <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest">Date</th>
-                   <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest">Description</th>
-                   <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Debit (₹)</th>
-                   <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Credit (₹)</th>
-                   <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Balance (₹)</th>
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-slate-100">
-                 {selectedLedgerEntries.length === 0 ? (
-                   <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold text-xs uppercase">No records found.</td></tr>
-                 ) : selectedLedgerEntries.map((entry, idx) => {
-                   runningBalance += (entry.debit - entry.credit);
-                   return (
-                     <tr key={idx} className="hover:bg-slate-50">
-                       <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
-                       <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
-                       <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
-                       <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
-                       <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">{Math.abs(runningBalance).toLocaleString()} {runningBalance > 0 ? 'Dr' : runningBalance < 0 ? 'Cr' : ''}</td>
-                     </tr>
-                   );
-                 })}
-               </tbody>
-               {selectedLedgerEntries.length > 0 && (
-                 <tfoot className="bg-slate-50 border-t-2 border-slate-200">
-                   <tr>
-                     <td colSpan={2} className="px-4 py-4 text-xs font-black text-slate-900 text-right uppercase">Closing Balance</td>
-                     <td className="px-4 py-4 text-xs font-black text-rose-600 text-right">{selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString()}</td>
-                     <td className="px-4 py-4 text-xs font-black text-emerald-600 text-right">{selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString()}</td>
-                     <td className={`px-4 py-4 text-xs font-black text-right ${runningBalance > 0 ? 'text-rose-600' : runningBalance < 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
-                       {Math.abs(runningBalance).toLocaleString()} {runningBalance > 0 ? 'Dr (Due)' : runningBalance < 0 ? 'Cr (Advance)' : 'Nil'}
-                     </td>
-                   </tr>
-                 </tfoot>
-               )}
-             </table>
            </div>
         </div>
       </div>
@@ -297,6 +428,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
               ) : filteredBalances.map(({ client, balance }) => {
                  const isManual = client.id.startsWith('manual-');
                  const clientInvoices = invoices.filter(i => {
+                   if (i.status === 'Cancelled') return false;
                    if (isManual) return i.clientName === client.legalName;
                    return i.clientId === client.id || 
                      (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||

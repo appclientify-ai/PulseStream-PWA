@@ -16,7 +16,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Sent'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Draft' | 'Sent' | 'Partial' | 'Paid' | 'Cancelled'>('Active');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const [settings, setSettings] = useState<InvoiceSettings | null>(null);
@@ -81,12 +81,13 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();
     let list = invoices.filter(i => 
-      (i.status !== 'Paid') && 
       (i.invoiceNo.toLowerCase().includes(s) || 
       i.clientName.toLowerCase().includes(s) || (i.clientTradeName && i.clientTradeName.toLowerCase().includes(s)))
     ).sort((a,b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Active') {
+      list = list.filter(i => i.status !== 'Paid' && i.status !== 'Cancelled');
+    } else if (statusFilter !== 'All') {
       list = list.filter(i => i.status === statusFilter);
     }
     return list;
@@ -241,7 +242,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
     <div className="flex justify-center flex-col items-center">
       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
-         {['All', 'Draft', 'Sent'].map(st => (
+         {['All', 'Active', 'Draft', 'Sent', 'Partial', 'Paid', 'Cancelled'].map(st => (
            <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
          ))}
       </TableFilter>
