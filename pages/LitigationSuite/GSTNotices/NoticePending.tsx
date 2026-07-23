@@ -8,6 +8,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
+import { EditableRemark } from '../../../components/EditableRemark';
 
 
 const NoticePending: React.FC = () => {
@@ -224,7 +225,6 @@ const NoticePending: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">ID</th>
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
                   <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
                   {activeHeaderFilter === 'section' && (
@@ -253,6 +253,7 @@ const NoticePending: React.FC = () => {
                     </div>
                   )}
                 </th>
+                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
                 <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
@@ -272,15 +273,12 @@ const NoticePending: React.FC = () => {
                       </td>
                       <td className=" px-4 py-2">
                         <p className="text-[12px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
-                        <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
-                      </td>
-                      <td className=" px-4 py-2 text-[12px] font-black text-indigo-600 font-mono tracking-widest">
-                        <div className="flex items-center gap-2">
-                          <span>{client?.gstProfile?.gstin || 'N/A'}</span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 font-mono tracking-wider">
+                          <span>{client?.gstProfile?.gstin || '---'}</span>
                           {client?.gstProfile?.gstin && (
                             <button 
                               onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))}
-                              className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
+                              className="p-0.5 hover:bg-indigo-50 rounded text-indigo-400 hover:text-indigo-600 transition-colors"
                               title="Search Taxpayer"
                             >
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -309,6 +307,15 @@ const NoticePending: React.FC = () => {
                               <button onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); setActiveStatusMenuId(null); }} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
                            </div>
                          )}
+                      </td>
+                      <td className="px-4 py-2 truncate max-w-[150px]">
+                        <EditableRemark 
+                          value={rec.remarks || ''} 
+                          onSave={async (val) => {
+                            await api.saveLitigationRecord({ ...rec, remarks: val });
+                            fetchAll(true);
+                          }} 
+                        />
                       </td>
                       <td className="px-4 py-2 text-right ">
                          <div className="flex items-center justify-end gap-2">

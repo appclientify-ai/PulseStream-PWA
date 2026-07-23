@@ -5,6 +5,7 @@ import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
+import { EditableRemark } from '../../../components/EditableRemark';
 
 
 const CourtPending: React.FC = () => {
@@ -130,13 +131,12 @@ const CourtPending: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Identity</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Matter U/s</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Case Ref</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Days</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center">Status</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
@@ -149,14 +149,14 @@ const CourtPending: React.FC = () => {
                   return (
                     <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
                       <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className=" px-6 py-5 font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</td>
-                      <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-widest uppercase">
-                        <div className="flex items-center gap-2">
-                          <span>{clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin || 'N/A'}</span>
+                      <td className=" px-6 py-5">
+                        <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 font-mono tracking-wider">
+                          <span>{clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin || '---'}</span>
                           {clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin && (
                             <button 
                               onClick={() => setSearch(clients.find(c => c.id === rec.clientId)?.gstProfile?.gstin || '')}
-                              className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
+                              className="p-0.5 hover:bg-indigo-50 rounded text-indigo-400 hover:text-indigo-600 transition-colors"
                               title="Search by GSTIN"
                             >
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -165,7 +165,6 @@ const CourtPending: React.FC = () => {
                         </div>
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
-                      <td className=" px-6 py-5 font-black text-slate-700 truncate">{rec.tioRefNo || rec.referenceNo || '---'}</td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.tioDate || rec.orderDate || rec.issuedDate)}</td>
                       <td className=" px-6 py-5 font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate) || '---'}</td>
                       <td className=" px-6 py-5">
@@ -184,6 +183,15 @@ const CourtPending: React.FC = () => {
                               <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
                            </div>
                          )}
+                      </td>
+                      <td className="px-6 py-5 truncate max-w-[150px]">
+                        <EditableRemark 
+                          value={rec.remarks || ''} 
+                          onSave={async (val) => {
+                            await api.saveLitigationRecord({ ...rec, remarks: val });
+                            fetchAll(true);
+                          }} 
+                        />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">

@@ -5,6 +5,7 @@ import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
+import { EditableRemark } from '../../../components/EditableRemark';
 
 
 const NoticeDrop: React.FC = () => {
@@ -120,12 +121,12 @@ const NoticeDrop: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S. No.</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Section</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Tax Period</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Notice Date</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
@@ -140,15 +141,12 @@ const NoticeDrop: React.FC = () => {
                       <td className=" px-4 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-4 py-5">
                         <p className="font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
-                        <p className="text-[8px] font-bold text-slate-400 truncate">{rec.referenceNo}</p>
-                      </td>
-                      <td className=" px-4 py-5 text-[11px] font-black text-indigo-600 font-mono tracking-widest">
-                        <div className="flex items-center gap-2">
-                          <span>{client?.gstProfile?.gstin || 'N/A'}</span>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 font-mono tracking-wider">
+                          <span>{client?.gstProfile?.gstin || '---'}</span>
                           {client?.gstProfile?.gstin && (
                             <button 
                               onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))}
-                              className="p-1 hover:bg-indigo-50 rounded-lg text-indigo-400 hover:text-indigo-600 transition-colors"
+                              className="p-0.5 hover:bg-indigo-50 rounded text-indigo-400 hover:text-indigo-600 transition-colors"
                               title="Search Taxpayer"
                             >
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -176,6 +174,15 @@ const NoticeDrop: React.FC = () => {
                              </div>
                            )}
                         </div>
+                      </td>
+                      <td className="px-4 py-5 truncate max-w-[150px]">
+                        <EditableRemark 
+                          value={rec.remarks || ''} 
+                          onSave={async (val) => {
+                            await api.saveLitigationRecord({ ...rec, remarks: val });
+                            fetchAll(true);
+                          }} 
+                        />
                       </td>
                       <td className="px-4 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
