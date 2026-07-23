@@ -4,6 +4,7 @@ import Loader from '../../../components/Loader';
 import { Client, InvoiceRecord, PaymentRecord, InvoiceSettings } from '../../../types';
 import html2pdf from 'html2pdf.js';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
 
 interface ClientLedgerProps {
   onBack: () => void;
@@ -58,17 +59,45 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
+  const validInvoices = useMemo(() => {
+    return invoices.filter(i => i.status !== 'Cancelled' && i.status !== 'Draft');
+  }, [invoices]);
+
+  const activeInvoiceNos = useMemo(() => {
+    return new Set(validInvoices.map(i => i.invoiceNo ? i.invoiceNo.trim() : ''));
+  }, [validInvoices]);
+
+  const validPayments = useMemo(() => {
+    return payments.filter(p => {
+      if (!p.invoiceNo) return true;
+      return activeInvoiceNos.has(p.invoiceNo.trim());
+    });
+  }, [payments, activeInvoiceNos]);
+
+  const handlePurgeDatabase = async () => {
+    if (window.confirm('Do you want to clean deleted/cancelled invoice data and orphaned payments from the database?')) {
+      setIsLoading(true);
+      try {
+        const res = await api.purgeOrphanAndCancelledRecords();
+        toast.success(`Database cleaned successfully! ${res.purgedCount} orphaned/cancelled item(s) removed.`);
+        await fetchData(true);
+      } catch (err) {
+        toast.error('Failed to clean database.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   const clientBalances = useMemo(() => {
     // 1. Process regular clients
     const regularBalances = clients.map(client => {
-      const clientInvoices = invoices.filter(i => 
-        i.status !== 'Cancelled' && (
-          i.clientId === client.id || 
-          (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-          (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
-        )
+      const clientInvoices = validInvoices.filter(i => 
+        i.clientId === client.id || 
+        (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+        (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
       );
-      const clientPayments = payments.filter(p => 
+      const clientPayments = validPayments.filter(p => 
         p.clientId === client.id || 
         (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
         (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
@@ -82,8 +111,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     });
 
     // 2. Identify and group unmatched invoices/payments (manual or misc clients)
-    const unmatchedInvoices = invoices.filter(i => 
-      i.status !== 'Cancelled' &&
+    const unmatchedInvoices = validInvoices.filter(i => 
       !clients.some(c => 
         i.clientId === c.id || 
         (i.clientName && i.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
@@ -91,7 +119,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
       )
     );
 
-    const unmatchedPayments = payments.filter(p => 
+    const unmatchedPayments = validPayments.filter(p => 
       !clients.some(c => 
         p.clientId === c.id || 
         (p.clientName && p.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
@@ -126,7 +154,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     return [...regularBalances, ...manualBalances]
       .filter(c => c.hasActivity)
       .sort((a, b) => b.balance - a.balance); // Sort by balance descending
-  }, [clients, invoices, payments]);
+  }, [clients, validInvoices, validPayments]);
 
   const filteredBalances = useMemo(() => {
     return clientBalances.filter(c => 
@@ -143,15 +171,14 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     
     const isManual = selectedClient.id.startsWith('manual-');
     
-    const clientInvoices = invoices.filter(i => {
-      if (i.status === 'Cancelled') return false;
+    const clientInvoices = validInvoices.filter(i => {
       if (isManual) return i.clientName === selectedClient.legalName;
       return i.clientId === selectedClient.id || 
         (i.clientName && i.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
         (i.clientTradeName && selectedClient.tradeName && i.clientTradeName.trim().toLowerCase() === selectedClient.tradeName.trim().toLowerCase());
     });
 
-    const clientPayments = payments.filter(p => {
+    const clientPayments = validPayments.filter(p => {
       if (isManual) return p.clientName === selectedClient.legalName;
       return p.clientId === selectedClient.id || 
         (p.clientName && p.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
@@ -567,6 +594,16 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" 
           />
         </div>
+        <button
+          onClick={handlePurgeDatabase}
+          className="h-11 px-4 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors shrink-0"
+          title="Purge deleted invoices and orphaned payments from database"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span className="hidden sm:inline">Clean Database</span>
+        </button>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">

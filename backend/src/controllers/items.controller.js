@@ -1,6 +1,26 @@
 import { getCollection } from '../db/mongo.js';
 import { ObjectId } from 'mongodb';
 
+const buildItemQuery = (id, userId) => {
+  const idMatches = [id];
+  if (id && ObjectId.isValid(id)) {
+    try { idMatches.push(new ObjectId(id)); } catch (e) {}
+  }
+  
+  const userMatches = [userId];
+  if (userId) {
+    userMatches.push(userId.toString());
+    if (ObjectId.isValid(userId)) {
+      try { userMatches.push(new ObjectId(userId)); } catch (e) {}
+    }
+  }
+
+  return {
+    _id: { $in: idMatches },
+    createdBy: { $in: userMatches }
+  };
+};
+
 export const createItem = async (req, res) => {
   const { name, data } = req.body;
 
@@ -21,7 +41,6 @@ export const createItem = async (req, res) => {
 
     const result = await items.insertOne(newItem);
     
-    
     // Unwrap the result if it's nested
     if (result && result.value) {
       result = result.value;
@@ -40,9 +59,15 @@ export const createItem = async (req, res) => {
 
 export const getItems = async (req, res) => {
   try {
-    // Return all items belonging to the authenticated user
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
     const items = await getCollection('items')
-      .find({ createdBy: req.user._id })
+      .find({ createdBy: { $in: userMatches } })
       .sort({ updatedAt: -1 })
       .toArray();
     res.json(items);
@@ -58,11 +83,9 @@ export const updateItem = async (req, res) => {
 
   try {
     const items = getCollection('items');
+    const query = buildItemQuery(id, req.user._id);
     const result = await items.findOneAndUpdate(
-      { 
-        _id: new ObjectId(id), 
-        createdBy: req.user._id 
-      },
+      query,
       { 
         $set: { 
           name, 
@@ -77,8 +100,6 @@ export const updateItem = async (req, res) => {
       return res.status(404).json({ error: 'Record not found or unauthorized' });
     }
 
-    
-    
     // Unwrap the result if it's nested
     if (result && result.value) {
       result = result.value;
@@ -100,21 +121,13 @@ export const deleteItem = async (req, res) => {
 
   try {
     const items = getCollection('items');
-    const result = await items.deleteOne({ 
-      _id: new ObjectId(id), 
-      createdBy: req.user._id 
-    });
+    const query = buildItemQuery(id, req.user._id);
+    const result = await items.deleteOne(query);
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Record not found or unauthorized' });
     }
 
-    
-    
-    // Unwrap the result if it's nested
-    if (result && result.value) {
-      result = result.value;
-    }
     const io = req.app.get('io');
     if (io) {
       io.emit('db_item_change', { type: 'delete', id: id, timestamp: new Date() });

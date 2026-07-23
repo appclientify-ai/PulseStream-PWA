@@ -309,16 +309,52 @@ class ApiService {
       if (invoice) {
         const payments = await this.getPayments();
         const paymentsToDelete = payments.filter(p => 
-          (p.invoiceNo === invoice.invoiceNo && p.clientId === invoice.clientId) ||
-          (p.invoiceNo === invoice.invoiceNo && p.clientName && invoice.clientName && p.clientName.trim().toLowerCase() === invoice.clientName.trim().toLowerCase())
+          (p.invoiceNo && invoice.invoiceNo && p.invoiceNo.trim() === invoice.invoiceNo.trim()) ||
+          (p.clientId && invoice.clientId && p.clientId === invoice.clientId && p.invoiceNo === invoice.invoiceNo)
         );
-        await Promise.all(paymentsToDelete.map(p => this.deletePayment(p.id)));
+        for (const p of paymentsToDelete) {
+          try {
+            await this.delete(`/items/${p.id}`);
+          } catch (e) {
+            console.error('Cascade payment delete error:', e);
+          }
+        }
       }
     } catch (err) {
       console.error('Error during cascade delete invoice payments:', err);
     }
     await this.delete(`/items/${id}`);
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
+  }
+
+  async purgeOrphanAndCancelledRecords(): Promise<{ purgedCount: number }> {
+    try {
+      const rawItems = await this.get('/items');
+      const invoices = rawItems.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i));
+      const activeInvoiceNos = new Set(invoices.filter(i => i.status !== 'Cancelled').map(i => i.invoiceNo));
+
+      let purgedCount = 0;
+
+      for (const item of rawItems) {
+        if (item.name === 'invoice' && item.data?.status === 'Cancelled') {
+          await this.delete(`/items/${item._id}`);
+          purgedCount++;
+        } else if (item.name === 'payment' && item.data?.invoiceNo) {
+          if (!activeInvoiceNos.has(item.data.invoiceNo)) {
+            await this.delete(`/items/${item._id}`);
+            purgedCount++;
+          }
+        }
+      }
+
+      if (purgedCount > 0 && typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('clientify_db_change'));
+      }
+      return { purgedCount };
+    } catch (err) {
+      console.error('Error during database purge:', err);
+      return { purgedCount: 0 };
+    }
   }
 
   async getPayments(): Promise<PaymentRecord[]> {
