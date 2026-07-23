@@ -50,7 +50,7 @@ const GSTR9_9C: React.FC = () => {
   const actionsRef = useRef<HTMLDivElement>(null);
 
   const { 
-    getStatus, toggleStatus, watchlist, addToWatchlist, 
+    getStatus, toggleStatus, updateRemark, watchlist, addToWatchlist, 
     removeFromWatchlist, is9CApplicable, update9CApplicability,
     getDueDate, updateDueDate 
   } = useGSTR9Logic(selectedYear);
@@ -273,6 +273,7 @@ const GSTR9_9C: React.FC = () => {
                 </th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
+                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Remark</th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
               </tr>
             </thead>
@@ -332,6 +333,9 @@ const GSTR9_9C: React.FC = () => {
                             </>
                           )}
                        </div>
+                    </td>
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                       <input type="text" value={st?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">

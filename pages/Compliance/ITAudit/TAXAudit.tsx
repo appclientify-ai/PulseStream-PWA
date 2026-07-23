@@ -35,7 +35,7 @@ const TAXAudit: React.FC = () => {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [editCaName, setEditCaName] = useState('');
 
-  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist } = useTaxAuditLogic(selectedYear);
+  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist } = useTaxAuditLogic(selectedYear);
 
   const fetchClients = async (isSync = false) => {
     if (!isSync) setIsLoading(true);
@@ -166,7 +166,7 @@ const TAXAudit: React.FC = () => {
         </div>
 
         <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search entity, PAN or GSTIN..." value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" placeholder="Search Trade Name, Legal Name, GSTIN, or PAN..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
@@ -214,12 +214,13 @@ const TAXAudit: React.FC = () => {
                     </TableFilter>
                   </div>
                 </th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTracked.length === 0 ? (
-                <tr><td colSpan={7} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No audit records tracked for FY {selectedYear}</td></tr>
+                <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No audit records tracked for FY {selectedYear}</td></tr>
               ) : (
                 filteredTracked.map((client, idx) => {
                   const status = getStatus(client.id);
@@ -233,8 +234,8 @@ const TAXAudit: React.FC = () => {
                     <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
                       <td className=" px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-6 py-5">
-                        <p className="font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</p>
-                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate">{client.legalName}</p>
+                        <p className="font-black text-slate-900 truncate text-[12px] leading-tight" title={client.tradeName}>{client.tradeName || '---'}</p>
+                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</p>
                       </td>
                       <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
                          {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}
@@ -251,6 +252,9 @@ const TAXAudit: React.FC = () => {
                         <button onClick={() => toggleAuditStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${status.auditFiled ? 'bg-indigo-600 text-white shadow-lg border-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'}`}>
                           {status.auditFiled ? 'Filed' : 'Pending'}
                         </button>
+                      </td>
+                      <td className=" px-6 py-5 truncate max-w-[180px]">
+                        <input type="text" value={status.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">

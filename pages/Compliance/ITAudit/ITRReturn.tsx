@@ -47,7 +47,7 @@ const ITRReturn: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(selectedAY);
+  const { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(selectedAY);
 
   const fetchClients = async (isSync = false) => {
     if (!isSync) setIsLoading(true);
@@ -240,7 +240,6 @@ const ITRReturn: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <th className=" px-4 py-3">S.No.</th>
                 <th className=" px-4 py-3">Name</th>
-                <th className=" px-4 py-3">Father Name</th>
                 <th className=" px-4 py-3 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
@@ -260,6 +259,7 @@ const ITRReturn: React.FC = () => {
                 </th>
                 <th className=" px-4 py-3">Pan No.</th>
                 <th className=" px-4 py-3">Password</th>
+                <th className=" px-4 py-3">Remark</th>
                 <th className=" px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
@@ -271,8 +271,12 @@ const ITRReturn: React.FC = () => {
                 return (
                   <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] font-black text-slate-900 truncate" title={client.legalName}>{client.legalName}</td>
-                    <td className=" px-4 py-[2px] font-bold text-slate-500 truncate">{client.itProfile?.fatherName || '---'}</td>
+                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.legalName}>
+                       <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.legalName || '---'}</div>
+                       <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.itProfile?.fatherName || '---'}>
+                         {client.itProfile?.fatherName ? `Father: ${client.itProfile.fatherName}` : '---'}
+                       </div>
+                    </td>
                     <td className=" px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : (status.prepared ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200')}`}>{status.filed ? 'Filed' : (status.prepared ? 'Prepared' : 'Pending')}</button>
                     </td>
@@ -306,6 +310,9 @@ const ITRReturn: React.FC = () => {
                             </>
                           )}
                        </div>
+                    </td>
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                       <input type="text" value={status?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
                     </td>
                     <td className="px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">

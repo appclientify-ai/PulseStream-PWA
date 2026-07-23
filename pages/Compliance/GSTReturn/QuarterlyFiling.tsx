@@ -31,7 +31,7 @@ const QuarterlyFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
+  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
 
   const fetchClients = async (isSync = false) => {
     if (!isSync) setIsLoading(true);

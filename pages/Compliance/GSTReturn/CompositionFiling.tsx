@@ -31,7 +31,7 @@ const CompositionFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
+  const { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
 
   // For Composition, visibility check uses the quarter end month
   const quarterEndMonth = useMemo(() => {
@@ -192,6 +192,7 @@ const CompositionFiling: React.FC = () => {
                 </th>
                 <th className=" px-4 py-3">User ID</th>
                 <th className=" px-4 py-3">Password</th>
+                <th className=" px-4 py-3">Remark</th>
                 <th className=" px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
@@ -243,6 +244,9 @@ const CompositionFiling: React.FC = () => {
                           )}
                         </span>
                       </div>
+                    </td>
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                       <input type="text" value={st?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
                     </td>
                     <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">

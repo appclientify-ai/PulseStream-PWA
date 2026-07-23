@@ -32,7 +32,7 @@ const MonthlyFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus } = useMonthlyFilingLogic(selectedYear, selectedMonth);
+  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(selectedYear, selectedMonth);
 
   const fetchClients = async (isSync = false) => {
     if (!isSync) setIsLoading(true);

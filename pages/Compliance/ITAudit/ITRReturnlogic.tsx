@@ -5,6 +5,7 @@ import { api } from '../../../services/api';
 export type RefundStatus = 'Pending' | 'Processed' | 'Issued' | 'Adjusted' | 'Rejected' | 'N/A';
 
 export interface ITRFilingStatus {
+  remark?: string;
   prepared?: boolean;
   filed: boolean;
   date?: string;
@@ -121,6 +122,17 @@ export const useITRReturnLogic = (selectedAY: string) => {
     return (allData[selectedAY] || {})[clientId] || { filed: false, refundStatus: 'N/A' };
   }, [allData, selectedAY]);
 
+  const updateRemark = useCallback((clientId: string, val: string) => {
+    setAllData(prev => {
+      const yearData = { ...(prev[selectedAY] || {}) };
+      const clientData = { ...(yearData[clientId] || { filed: false }), remark: val };
+      yearData[clientId] = clientData;
+      const next = { ...prev, [selectedAY]: yearData };
+      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+      return next;
+    });
+  }, [selectedAY]);
+
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedAY]: val };
     setDueDates(next);
@@ -129,5 +141,5 @@ export const useITRReturnLogic = (selectedAY: string) => {
 
   const getDueDate = () => dueDates[selectedAY] || '';
 
-  return { getStatus, toggleStatus, updateFilingDate, cycleRefundStatus, updateFileData, updateDueDate, getDueDate, isDataLoaded };
+  return { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateFileData, updateDueDate, getDueDate, isDataLoaded };
 };

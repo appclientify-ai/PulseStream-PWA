@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Client } from '../../../../types';
+import { socketService } from '../../../../services/socket.ts';
 
 export interface FilingStatus {
   remark?: string;
@@ -212,7 +213,19 @@ useEffect(() => {
     api.patchAppData(storageKeyDates, { [`data.${key}`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save due dates', err));
   };
 
+  const updateRemark = useCallback((clientId: string, val: string, customPeriod?: string) => {
+    const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;
+    setAllData(prev => {
+      const periodData = { ...(prev[periodKey] || {}) };
+      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false, cmp08: false }), remark: val };
+      periodData[clientId] = clientData;
+      const next = { ...prev, [periodKey]: periodData };
+      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save remark', err));
+      return next;
+    });
+  }, [selectedYear, selectedMonth, storageKey]);
+
   const getDueDate = () => dueDates[`${selectedYear}_${selectedMonth}`] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
+  return { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate, isDataLoaded };
 };

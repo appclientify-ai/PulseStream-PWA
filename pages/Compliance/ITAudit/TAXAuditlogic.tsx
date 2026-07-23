@@ -5,6 +5,7 @@ import { api } from '../../../services/api';
 export type BSStatus = 'Document Required' | 'In progress' | 'Ready' | 'Pending';
 
 export interface AuditFinancialStatus {
+  remark?: string;
   bsStatus: BSStatus;
   auditFiled: boolean;
   caName?: string;
@@ -120,6 +121,17 @@ export const useTaxAuditLogic = (selectedYear: string) => {
     return (allData[selectedYear] || {})[clientId] || { bsStatus: 'Pending', auditFiled: false };
   }, [allData, selectedYear]);
 
+  const updateRemark = useCallback((clientId: string, val: string) => {
+    setAllData(prev => {
+      const yearData = { ...(prev[selectedYear] || {}) };
+      const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }), remark: val };
+      yearData[clientId] = clientData;
+      const next = { ...prev, [selectedYear]: yearData };
+      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+      return next;
+    });
+  }, [selectedYear]);
+
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
@@ -128,5 +140,5 @@ export const useTaxAuditLogic = (selectedYear: string) => {
 
   const getDueDate = () => dueDates[selectedYear] || '';
 
-  return { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateDueDate, getDueDate, watchlist, yearWatchlist, addToWatchlist, removeFromWatchlist, isDataLoaded };
+  return { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, yearWatchlist, addToWatchlist, removeFromWatchlist, isDataLoaded };
 };

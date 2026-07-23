@@ -38,7 +38,7 @@ const GSTR4: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateDueDate, getDueDate } = useGSTR4Logic(selectedYear);
+  const { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate } = useGSTR4Logic(selectedYear);
 
   const [cmp08Data, setCmp08Data] = useState<Record<string, Record<string, { cmp08: boolean }>>>({});
 
@@ -214,6 +214,7 @@ const handleExportPDF = () => {
                 <th className=" px-4 py-3 text-center">GSTR-4 Status</th>
                 <th className=" px-4 py-3">User ID</th>
                 <th className=" px-4 py-3">Password</th>
+                <th className=" px-4 py-3">Remark</th>
                 <th className=" px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -277,6 +278,9 @@ const handleExportPDF = () => {
                           </button>
                         )}
                       </div>
+                    </td>
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                       <input type="text" value={status?.remark || getStatus?.(client.id)?.remark || ''} onChange={e => updateRemark(client.id, e.target.value)} placeholder="Add remark..." className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-600 focus:ring-0 outline-none placeholder-slate-300" />
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">

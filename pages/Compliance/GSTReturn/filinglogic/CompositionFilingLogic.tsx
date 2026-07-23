@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
+import { socketService } from '../../../../services/socket.ts';
 
 export interface FilingStatus {
   remark?: string;
@@ -52,6 +53,17 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
     return (allData[periodKey] || {})[clientId] || { cmp08: false };
   }, [allData, periodKey]);
 
+  const updateRemark = useCallback((clientId: string, val: string) => {
+    setAllData(prev => {
+      const periodData = { ...(prev[periodKey] || {}) };
+      const clientData = { ...(periodData[clientId] || { cmp08: false }), remark: val };
+      periodData[clientId] = clientData;
+      const next = { ...prev, [periodKey]: periodData };
+      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save composition remark', err));
+      return next;
+    });
+  }, [periodKey]);
+
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
@@ -60,5 +72,5 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
 
   const getDueDate = () => dueDates[periodKey] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
+  return { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate, isDataLoaded };
 };

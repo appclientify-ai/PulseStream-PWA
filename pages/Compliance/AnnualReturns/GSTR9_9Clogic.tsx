@@ -113,6 +113,15 @@ export const useGSTR9Logic = (selectedYear: string) => {
     return data && (data.gstr9 || data.gstr9c);
   }, [filingData]);
 
+  const updateRemark = useCallback((clientId: string, val: string) => {
+    const yearData = { ...(filingData[selectedYear] || {}) };
+    const clientData = { ...(yearData[clientId] || { gstr9: false, gstr9c: false }), remark: val };
+    yearData[clientId] = clientData;
+    const next = { ...filingData, [selectedYear]: yearData };
+    setFilingData(next);
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+  }, [filingData, selectedYear]);
+
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
@@ -122,7 +131,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
   const getDueDate = () => dueDates[selectedYear] || '';
 
   return { 
-    getStatus, toggleStatus, watchlist, addToWatchlist, 
+    getStatus, toggleStatus, updateRemark, watchlist, addToWatchlist, 
     update9CApplicability, removeFromWatchlist, hasFilingInYear, 
     is9CApplicable, updateDueDate, getDueDate, filingData, isDataLoaded 
   };

@@ -56,6 +56,17 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
     return (allData[periodKey] || {})[clientId] || { r1: false, r3b: false };
   }, [allData, periodKey]);
 
+  const updateRemark = useCallback((clientId: string, val: string) => {
+    setAllData(prev => {
+      const periodData = { ...(prev[periodKey] || {}) };
+      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false }), remark: val };
+      periodData[clientId] = clientData;
+      const next = { ...prev, [periodKey]: periodData };
+      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+      return next;
+    });
+  }, [periodKey]);
+
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
@@ -64,5 +75,5 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
 
   const getDueDate = () => dueDates[periodKey] || '';
 
-  return { getStatus, toggleStatus, updateDueDate, getDueDate, isDataLoaded };
+  return { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate, isDataLoaded };
 };
