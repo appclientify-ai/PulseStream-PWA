@@ -29,12 +29,15 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [relFilter, setRelFilter] = useState<string>('All');
   const [activeFilterMenu, setActiveFilterMenu] = useState<'status' | 'rel' | null>(null);
   const [filterMenuPos, setFilterMenuPos] = useState({ top: 0, left: 0 });
+  const filterMenuRef = useRef<HTMLDivElement>(null);
+  const statusFilterBtnRef = useRef<HTMLButtonElement>(null);
+  const relFilterBtnRef = useRef<HTMLButtonElement>(null);
 
   const openFilterMenu = (e: React.MouseEvent, type: 'status' | 'rel') => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     setFilterMenuPos({ top: rect.bottom + 4, left: rect.left });
-    setActiveFilterMenu(activeFilterMenu === type ? null : type);
+    setActiveFilterMenu(prev => prev === type ? null : type);
     setActiveActionsId(null); // close other menus
   };
 
@@ -73,10 +76,19 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   // Handle closing menu on click outside or scroll
   useEffect(() => {
     const handleClose = (event: any) => {
-      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (actionsRef.current && !actionsRef.current.contains(target)) {
         setActiveActionsId(null);
       }
-      setActiveFilterMenu(null);
+      if (filterMenuRef.current && !filterMenuRef.current.contains(target)) {
+        if (
+          (statusFilterBtnRef.current && statusFilterBtnRef.current.contains(target)) ||
+          (relFilterBtnRef.current && relFilterBtnRef.current.contains(target))
+        ) {
+          return;
+        }
+        setActiveFilterMenu(null);
+      }
     };
     const handleScroll = () => {
       setActiveActionsId(null);
@@ -209,7 +221,12 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
-                  <button onClick={(e) => openFilterMenu(e, 'status')} className="p-1 hover:bg-slate-200 rounded transition-colors">
+                  <button 
+                    ref={statusFilterBtnRef}
+                    onClick={(e) => openFilterMenu(e, 'status')} 
+                    className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                    title="Filter Status"
+                  >
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                   </button>
                 </div>
@@ -217,8 +234,13 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Relationship
-                  <button onClick={(e) => openFilterMenu(e, 'rel')} className="p-1 hover:bg-slate-200 rounded transition-colors">
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                  <button 
+                    ref={relFilterBtnRef}
+                    onClick={(e) => openFilterMenu(e, 'rel')} 
+                    className={`p-1 rounded transition-colors ${relFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                    title="Filter Relationship"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 00-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                   </button>
                 </div>
               </th>
@@ -390,7 +412,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
       {/* Fixed Positioning Menus to Avoid Clipping */}
       {activeFilterMenu === 'status' && (
-        <div style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-32 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
+        <div ref={filterMenuRef} style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-32 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
           {['All', 'Active', 'Suspended', 'Closed'].map(f => (
             <button key={f} onClick={() => { setStatusFilter(f); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
           ))}
@@ -398,7 +420,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       )}
 
       {activeFilterMenu === 'rel' && (
-        <div style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-44 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
+        <div ref={filterMenuRef} style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-44 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
           {['All', 'Active', 'Active Filing', 'Litigation', 'Inactive'].map(f => (
             <button key={f} onClick={() => { setRelFilter(f); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${relFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
           ))}

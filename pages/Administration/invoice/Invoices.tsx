@@ -202,10 +202,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Bills</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Active Bills</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">

@@ -100,6 +100,7 @@ const ITRReturn: React.FC = () => {
   const filteredClients = useMemo(() => {
     let list = clients.filter(c => 
       (c.legalName || '').toLowerCase().includes(search.toLowerCase()) || 
+      (c.tradeName || '').toLowerCase().includes(search.toLowerCase()) || 
       (c.itProfile?.pan || '').toLowerCase().includes(search.toLowerCase()) ||
       (c.itProfile?.fatherName || '').toLowerCase().includes(search.toLowerCase())
     );
@@ -199,18 +200,18 @@ const ITRReturn: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 px-2 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total IT Return</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total IT Return</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Filed</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed</p>
+            <p className="text-lg md:text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Prepared</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
+          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Prepared</p>
+            <p className="text-lg md:text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
@@ -274,6 +275,11 @@ const ITRReturn: React.FC = () => {
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.legalName}>
                        <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.legalName || '---'}</div>
+                       {client.tradeName && (
+                         <div className="font-bold text-[9px] text-indigo-600 truncate leading-tight" title={client.tradeName}>
+                           Trade: {client.tradeName}
+                         </div>
+                       )}
                        <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.itProfile?.fatherName || '---'}>
                          {client.itProfile?.fatherName ? `Father: ${client.itProfile.fatherName}` : '---'}
                        </div>

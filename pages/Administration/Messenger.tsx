@@ -26,6 +26,8 @@ const Messenger: React.FC = () => {
   const [isQueueActive, setIsQueueActive] = useState(false);
   const [queueIndex, setQueueIndex] = useState(0);
 
+  const [activeSection, setActiveSection] = useState<'All' | 'GST' | 'ITR' | 'Audit' | 'GSTR-4' | 'GSTR-9/9C'>('All');
+
   useEffect(() => {
     api.getClients().then(data => {
       setClients(data);
@@ -33,20 +35,60 @@ const Messenger: React.FC = () => {
     });
   }, []);
 
-
   useEffect(() => {
     const syncHandler = () => api.getClients().then(setClients);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
+
+  // GSTR 9 Watchlist reader for exact matching
+  const gstr9WatchlistIds = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('clientify_gstr9_watchlist_v2');
+      if (!raw) return new Set<string>();
+      const parsed = JSON.parse(raw);
+      const set = new Set<string>();
+      Object.values(parsed).forEach((arr: any) => {
+        if (Array.isArray(arr)) arr.forEach((id: string) => set.add(id));
+      });
+      return set;
+    } catch {
+      return new Set<string>();
+    }
+  }, []);
+
+  const isClientInCategory = (c: Client, section: 'All' | 'GST' | 'ITR' | 'Audit' | 'GSTR-4' | 'GSTR-9/9C') => {
+    if (section === 'All') return true;
+    if (section === 'GST') {
+      return Boolean(c.gstProfile?.gstin || c.services?.includes('GST') || c.gstProfile?.regType);
+    }
+    if (section === 'ITR') {
+      return Boolean(c.itProfile?.pan || c.services?.includes('IT') || c.itProfile?.fileType);
+    }
+    if (section === 'Audit') {
+      return Boolean(c.itProfile?.auditApplicable || c.services?.includes('Audit') || (c.itProfile?.fileType && c.itProfile.fileType.toLowerCase().includes('audit')));
+    }
+    if (section === 'GSTR-4') {
+      return c.gstProfile?.regType === 'Composition';
+    }
+    if (section === 'GSTR-9/9C') {
+      return gstr9WatchlistIds.has(c.id) || Boolean(c.gstProfile?.gstin);
+    }
+    return true;
+  };
+
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
-    return clients.filter(c => 
-      c.legalName.toLowerCase().includes(s) || 
-      c.tradeName.toLowerCase().includes(s) ||
-      (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
-    );
-  }, [clients, search]);
+    return clients.filter(c => {
+      const matchesSection = isClientInCategory(c, activeSection);
+      if (!matchesSection) return false;
+      return (
+        (c.legalName || '').toLowerCase().includes(s) || 
+        (c.tradeName || '').toLowerCase().includes(s) ||
+        (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
+      );
+    });
+  }, [clients, search, activeSection, gstr9WatchlistIds]);
 
   const selectedClientsList = useMemo(() => clients.filter(c => selectedIds.has(c.id)), [clients, selectedIds]);
 
@@ -112,33 +154,72 @@ const Messenger: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{clients.length}</p>
+      <div className="flex flex-col gap-3 bg-white p-3 md:p-4 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        <div className="flex flex-col lg:flex-row items-center gap-4 w-full">
+          <div className="flex items-center gap-4 px-2 md:px-4 border-r border-slate-100 shrink-0">
+            <div className="text-center">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
+              <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{clients.length}</p>
+            </div>
+            <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
+              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Section</p>
+              <p className="text-lg md:text-xl font-black text-indigo-600 leading-none">{filteredClients.length}</p>
+            </div>
+            <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
+              <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Selected</p>
+              <p className="text-lg md:text-xl font-black text-emerald-600 leading-none">{selectedIds.size}</p>
+            </div>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Selected</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{selectedIds.size}</p>
+
+          <div className="relative flex-1 group w-full">
+            <input type="text" placeholder="Search client name, trade name or GSTIN..." value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+
+          <div className="flex gap-2 shrink-0 w-full lg:w-auto justify-end">
+            <button onClick={toggleAll} className="flex-1 lg:flex-none px-4 h-11 border border-slate-200 text-slate-600 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-slate-50 transition-all">
+              {selectedIds.size === filteredClients.length && filteredClients.length > 0 ? 'Deselect' : 'Select All'}
+            </button>
+            <button disabled={selectedIds.size === 0} onClick={() => setIsComposerOpen(true)}
+              className="flex-1 lg:flex-none bg-indigo-600 text-white font-black uppercase tracking-widest px-6 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-30">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+              <span>Composer ({selectedIds.size})</span>
+            </button>
           </div>
         </div>
 
-        <div className="relative flex-1 group w-full">
-          <input type="text" placeholder="Search targets..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-
-        <div className="flex gap-2 shrink-0">
-          <button onClick={toggleAll} className="px-6 h-11 border border-slate-200 text-slate-500 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-slate-50 transition-all">
-            {selectedIds.size === filteredClients.length ? 'Deselect All' : 'Select All'}
-          </button>
-          <button disabled={selectedIds.size === 0} onClick={() => setIsComposerOpen(true)}
-            className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 disabled:opacity-30">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-            Composer ({selectedIds.size})
-          </button>
+        {/* Section Tabs Below Search Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-slate-100">
+          {[
+            { id: 'All', label: 'All Clients' },
+            { id: 'GST', label: 'GST Portfolio' },
+            { id: 'ITR', label: 'ITR Portfolio' },
+            { id: 'Audit', label: 'Tax Audit' },
+            { id: 'GSTR-4', label: 'Annual Return GSTR-4' },
+            { id: 'GSTR-9/9C', label: 'Annual Return GSTR-9/9C' },
+          ].map(sec => {
+            const secCount = clients.filter(c => isClientInCategory(c, sec.id as any)).length;
+            const isSelected = activeSection === sec.id;
+            return (
+              <button
+                key={sec.id}
+                onClick={() => setActiveSection(sec.id as any)}
+                className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all shrink-0 flex items-center gap-2 ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                    : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200/80'
+                }`}
+              >
+                <span>{sec.label}</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {secCount}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

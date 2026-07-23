@@ -216,18 +216,18 @@ const GSTR9_9C: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 px-2 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">GSTR-9/9C Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">GSTR-9/9C Total</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Filed</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed</p>
+            <p className="text-lg md:text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
+          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-0.5">Pending</p>
+            <p className="text-lg md:text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
@@ -256,7 +256,6 @@ const GSTR9_9C: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trader Name</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
                 <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
@@ -282,7 +281,7 @@ const GSTR9_9C: React.FC = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={12} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                    <td colSpan={9} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);

@@ -219,7 +219,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-y-auto no-scrollbar p-10 space-y-12">
+      <div className="flex-1 bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-200 shadow-sm overflow-y-auto no-scrollbar p-4 sm:p-6 md:p-10 space-y-8 md:space-y-12">
         <section>
           <div className="flex items-center justify-between mb-6">
              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">Billing Target</h4>
@@ -267,7 +267,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
 
               {/* Client Details Card */}
               {clientLegalName && (
-                 <div className="mt-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
+                 <div className="mt-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div>
                           <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest mb-1">Billed To (Legal Name)</p>
@@ -304,90 +304,92 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
              <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">Services Description</h4>
              <div className="h-px flex-1 bg-slate-100 ml-4" />
           </div>
           
           <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden">
-             <table className="w-full text-left border-collapse">
-                <thead>
-                   <tr className="border-b border-slate-200 bg-slate-100/50">
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-12 text-center">#</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32">Period / AY</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Description of Compliance Service</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">Qty / Months</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Rate (/₹)</th>
-                      {settings?.isGstEnabled && (
-                        <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-24 text-center">GST %</th>
-                      )}
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-40 text-right">Total(/₹)</th>
-                      <th className=" p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-16 text-center">Action</th>
-                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                   {items.map((item, idx) => (
-                     <tr key={item.id} className="group hover:bg-white transition-colors">
-                        <td className=" p-4 text-center font-black text-slate-300 text-xs">{idx + 1}</td>
-                        <td className=" p-4">
-                           <input 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.period || ''} 
-                              onChange={e => updateItem(item.id, 'period', e.target.value)} 
-                              placeholder="2023-24..." 
-                           />
-                        </td>
-                        <td className=" p-4">
-                           <input 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.description} 
-                              onChange={e => updateItem(item.id, 'description', e.target.value)} 
-                              placeholder="Enter service description..." 
-                           />
-                        </td>
-                        <td className=" p-4">
-                           <input 
-                              type="number" 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.quantity} 
-                              onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))} 
-                              placeholder="1" 
-                           />
-                        </td>
-                        <td className=" p-4">
-                           <input 
-                              type="number" 
-                              className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-right placeholder:text-slate-300 transition-all text-slate-700"
-                              value={item.rate} 
-                              onChange={e => updateItem(item.id, 'rate', Number(e.target.value))} 
-                              placeholder="0.00" 
-                           />
-                        </td>
+             <div className="overflow-x-auto w-full no-scrollbar">
+               <table className="w-full min-w-[680px] text-left border-collapse">
+                  <thead>
+                     <tr className="border-b border-slate-200 bg-slate-100/50">
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-10 text-center">#</th>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-28">Period / AY</th>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Description of Compliance Service</th>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-20 text-center">Qty</th>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-28 text-right">Rate (₹)</th>
                         {settings?.isGstEnabled && (
-                           <td className=" p-4">
-                              <select
-                                 className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-2 text-xs font-black outline-none text-center text-slate-700 cursor-pointer appearance-none"
-                                 value={item.taxRate}
-                                 onChange={e => updateItem(item.id, 'taxRate', Number(e.target.value))}
-                              >
-                                 {TAX_RATES.map(rate => (
-                                    <option key={rate} value={rate}>{rate}%</option>
-                                 ))}
-                              </select>
-                           </td>
+                          <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-20 text-center">GST %</th>
                         )}
-                        <td className=" p-4 text-right font-black text-slate-900 text-xs">
-                           ₹{(item.rate * item.quantity).toLocaleString()}
-                        </td>
-                        <td className=" p-4 text-center">
-                           <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                           </button>
-                        </td>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-32 text-right">Total (₹)</th>
+                        <th className=" p-3 sm:p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest w-12 text-center">Action</th>
                      </tr>
-                   ))}
-                </tbody>
-             </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                     {items.map((item, idx) => (
+                       <tr key={item.id} className="group hover:bg-white transition-colors">
+                          <td className=" p-3 sm:p-4 text-center font-black text-slate-300 text-xs">{idx + 1}</td>
+                          <td className=" p-3 sm:p-4">
+                             <input 
+                                className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-1.5 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
+                                value={item.period || ''} 
+                                onChange={e => updateItem(item.id, 'period', e.target.value)} 
+                                placeholder="2023-24..." 
+                             />
+                          </td>
+                          <td className=" p-3 sm:p-4">
+                             <input 
+                                className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-1.5 text-xs font-bold outline-none placeholder:text-slate-300 transition-all text-slate-700"
+                                value={item.description} 
+                                onChange={e => updateItem(item.id, 'description', e.target.value)} 
+                                placeholder="Enter service description..." 
+                             />
+                          </td>
+                          <td className=" p-3 sm:p-4">
+                             <input 
+                                type="number" 
+                                className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-1.5 text-xs font-black outline-none text-center placeholder:text-slate-300 transition-all text-slate-700"
+                                value={item.quantity} 
+                                onChange={e => updateItem(item.id, 'quantity', Number(e.target.value))} 
+                                placeholder="1" 
+                             />
+                          </td>
+                          <td className=" p-3 sm:p-4">
+                             <input 
+                                type="number" 
+                                className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-1.5 text-xs font-black outline-none text-right placeholder:text-slate-300 transition-all text-slate-700"
+                                value={item.rate} 
+                                onChange={e => updateItem(item.id, 'rate', Number(e.target.value))} 
+                                placeholder="0.00" 
+                             />
+                          </td>
+                          {settings?.isGstEnabled && (
+                             <td className=" p-3 sm:p-4">
+                                <select
+                                   className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-500 p-1.5 text-xs font-black outline-none text-center text-slate-700 cursor-pointer appearance-none"
+                                   value={item.taxRate}
+                                   onChange={e => updateItem(item.id, 'taxRate', Number(e.target.value))}
+                                >
+                                   {TAX_RATES.map(rate => (
+                                      <option key={rate} value={rate}>{rate}%</option>
+                                   ))}
+                                </select>
+                             </td>
+                          )}
+                          <td className=" p-3 sm:p-4 text-right font-black text-slate-900 text-xs">
+                             ₹{(item.rate * item.quantity).toLocaleString()}
+                          </td>
+                          <td className=" p-3 sm:p-4 text-center">
+                             <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                             </button>
+                          </td>
+                       </tr>
+                     ))}
+                  </tbody>
+               </table>
+             </div>
              <button onClick={addItem} className="w-full py-4 bg-slate-50 hover:bg-indigo-50 border-t border-slate-200 text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center gap-2">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
                 Add Service Item

@@ -15,6 +15,58 @@ const CATEGORIES: { id: ReturnCategory; label: string; icon: React.ReactNode }[]
   { id: 'ANNUAL_RETURNS', label: 'Annual Returns', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
 ];
 
+export const calculateDefaultDueDate = (moduleId: string, yearStr: string, period: string): string => {
+  const startYear = parseInt(yearStr.split('-')[0], 10) || 2024;
+  const endYear = startYear + 1;
+
+  if (moduleId === 'monthly_r1' || moduleId === 'monthly_r3b') {
+    const dueDay = moduleId === 'monthly_r1' ? '11' : '20';
+    const monthMap: Record<string, { year: number; dueMonth: string }> = {
+      April: { year: startYear, dueMonth: '05' },
+      May: { year: startYear, dueMonth: '06' },
+      June: { year: startYear, dueMonth: '07' },
+      July: { year: startYear, dueMonth: '08' },
+      August: { year: startYear, dueMonth: '09' },
+      September: { year: startYear, dueMonth: '10' },
+      October: { year: startYear, dueMonth: '11' },
+      November: { year: startYear, dueMonth: '12' },
+      December: { year: endYear, dueMonth: '01' },
+      January: { year: endYear, dueMonth: '02' },
+      February: { year: endYear, dueMonth: '03' },
+      March: { year: endYear, dueMonth: '04' },
+    };
+    const info = monthMap[period];
+    if (info) {
+      return `${info.year}-${info.dueMonth}-${dueDay}`;
+    }
+  }
+
+  if (moduleId === 'quarterly_iff' || moduleId === 'quarterly_r3b') {
+    const isIff = moduleId === 'quarterly_iff';
+    const day = isIff ? '13' : '22';
+    if (period.includes('Q1')) return `${startYear}-07-${day}`;
+    if (period.includes('Q2')) return `${startYear}-10-${day}`;
+    if (period.includes('Q3')) return `${endYear}-01-${day}`;
+    if (period.includes('Q4')) return `${endYear}-04-${day}`;
+  }
+
+  if (moduleId === 'composition_cmp08') {
+    if (period.includes('Q1')) return `${startYear}-07-18`;
+    if (period.includes('Q2')) return `${startYear}-10-18`;
+    if (period.includes('Q3')) return `${endYear}-01-18`;
+    if (period.includes('Q4')) return `${endYear}-04-18`;
+  }
+
+  if (moduleId === 'audit_bs') return `${endYear}-09-15`;
+  if (moduleId === 'audit_tax') return `${endYear}-09-30`;
+  if (moduleId === 'itr_return') return `${endYear}-07-31`;
+  if (moduleId === 'annual_gstr4') return `${endYear}-04-30`;
+  if (moduleId === 'annual_gstr9') return `${endYear}-12-31`;
+  if (moduleId === 'annual_gstr9c') return `${endYear}-12-31`;
+
+  return '';
+};
+
 const DueDateSetting: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(YEARS[0]);
   const [activeCategory, setActiveCategory] = useState<ReturnCategory>('GST_MONTHLY');
@@ -22,7 +74,7 @@ const DueDateSetting: React.FC = () => {
   const [dates, setDates] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
+  const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
 
   useEffect(() => {
     const load = async () => {
@@ -43,15 +95,74 @@ const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
     setDates(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleAutoSetDefaults = () => {
+    const nextDates = { ...dates };
+    YEARS.forEach(yr => {
+      FY_MONTHS.forEach(m => {
+        const r1Key = `monthly_r1_${yr}_${m}`;
+        const r3bKey = `monthly_r3b_${yr}_${m}`;
+        if (!nextDates[r1Key]) nextDates[r1Key] = calculateDefaultDueDate('monthly_r1', yr, m);
+        if (!nextDates[r3bKey]) nextDates[r3bKey] = calculateDefaultDueDate('monthly_r3b', yr, m);
+      });
+      FY_QUARTERS.forEach(q => {
+        const iffKey = `quarterly_iff_${yr}_${q}`;
+        const q3bKey = `quarterly_r3b_${yr}_${q}`;
+        const cmpKey = `composition_cmp08_${yr}_${q}`;
+        if (!nextDates[iffKey]) nextDates[iffKey] = calculateDefaultDueDate('quarterly_iff', yr, q);
+        if (!nextDates[q3bKey]) nextDates[q3bKey] = calculateDefaultDueDate('quarterly_r3b', yr, q);
+        if (!nextDates[cmpKey]) nextDates[cmpKey] = calculateDefaultDueDate('composition_cmp08', yr, q);
+      });
+      [
+        ['audit_bs', 'Annual'],
+        ['audit_tax', 'Annual'],
+        ['itr_return', 'Annual'],
+        ['annual_gstr4', 'Annual'],
+        ['annual_gstr9', 'Annual'],
+        ['annual_gstr9c', 'Annual'],
+      ].forEach(([mod, p]) => {
+        const k = `${mod}_${yr}_${p}`;
+        if (!nextDates[k]) nextDates[k] = calculateDefaultDueDate(mod, yr, p);
+      });
+    });
+    setDates(nextDates);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
-    await api.patchAppData(STORAGE_KEY, Object.fromEntries(Object.entries(dates).map(([k,v]) => [`data.${k}`, v])));
+    // Ensure currently visible defaults are populated before saving
+    const finalDates = { ...dates };
+    FY_MONTHS.forEach(m => {
+      ['monthly_r1', 'monthly_r3b'].forEach(mod => {
+        const k = `${mod}_${selectedYear}_${m}`;
+        if (!finalDates[k]) finalDates[k] = calculateDefaultDueDate(mod, selectedYear, m);
+      });
+    });
+    FY_QUARTERS.forEach(q => {
+      ['quarterly_iff', 'quarterly_r3b', 'composition_cmp08'].forEach(mod => {
+        const k = `${mod}_${selectedYear}_${q}`;
+        if (!finalDates[k]) finalDates[k] = calculateDefaultDueDate(mod, selectedYear, q);
+      });
+    });
+    [
+      ['audit_bs', 'Annual'],
+      ['audit_tax', 'Annual'],
+      ['itr_return', 'Annual'],
+      ['annual_gstr4', 'Annual'],
+      ['annual_gstr9', 'Annual'],
+      ['annual_gstr9c', 'Annual'],
+    ].forEach(([mod, p]) => {
+      const k = `${mod}_${selectedYear}_${p}`;
+      if (!finalDates[k]) finalDates[k] = calculateDefaultDueDate(mod, selectedYear, p);
+    });
+
+    setDates(finalDates);
+    await api.patchAppData(STORAGE_KEY, Object.fromEntries(Object.entries(finalDates).map(([k,v]) => [`data.${k}`, v])));
     setTimeout(() => setIsSaving(false), 600);
   };
 
   const getDateValue = (moduleId: string, period: string) => {
     const key = `${moduleId}_${selectedYear}_${period}`;
-    return dates[key] || '';
+    return dates[key] || calculateDefaultDueDate(moduleId, selectedYear, period);
   };
 
   if (isLoading) return <Loader />;
@@ -91,10 +202,17 @@ const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
            ))}
         </div>
 
-        <button onClick={handleSave} disabled={isSaving}
-          className="bg-indigo-600 text-white font-black uppercase tracking-[0.2em] px-10 h-12 rounded-xl shadow-xl hover:bg-slate-900 transition-all text-[10px] disabled:opacity-50 shrink-0">
-          {isSaving ? 'Syncing...' : 'Save Matrix'}
-        </button>
+        <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto justify-end">
+          <button onClick={handleAutoSetDefaults} title="Fill all standard statutory default due dates"
+            className="border border-slate-200 text-slate-700 font-black uppercase tracking-wider px-4 h-11 rounded-xl hover:bg-slate-50 transition-all text-[10px] flex items-center gap-1.5">
+            <svg className="h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            Auto-Set Defaults
+          </button>
+          <button onClick={handleSave} disabled={isSaving}
+            className="bg-indigo-600 text-white font-black uppercase tracking-[0.2em] px-6 h-11 rounded-xl shadow-xl hover:bg-slate-900 transition-all text-[10px] disabled:opacity-50">
+            {isSaving ? 'Syncing...' : 'Save Matrix'}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
