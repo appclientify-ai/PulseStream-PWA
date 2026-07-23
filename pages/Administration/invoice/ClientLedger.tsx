@@ -504,18 +504,18 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                                return (
                                  <div className="flex flex-col items-center gap-2 shrink-0">
                                    <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${finalClosingBal}&cu=INR&tn=Ledger ${encodeURIComponent(selectedClient.tradeName || selectedClient.legalName)}`} size={80} />
-                                   <span className="text-[9px] font-black uppercase text-slate-500">Scan to Settle (₹{finalClosingBal.toLocaleString()})</span>
+                                   <span className="text-[11px] font-black uppercase text-slate-500">Scan to Settle (₹{finalClosingBal.toLocaleString()})</span>
                                  </div>
                                );
                              }
                              return null;
                           })()}
-                         <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
-                            <p className="text-[9px] font-bold text-slate-600 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
-                            <p className="text-[9px] font-bold text-slate-600 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
-                            <p className="text-[9px] font-bold text-slate-600 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
-                            <p className="text-[9px] font-bold text-slate-600 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
+                         <div className="flex flex-col gap-1.5">
+                            <p className="text-xs font-black uppercase text-slate-900 tracking-wider">Bank Details</p>
+                            <p className="text-[11px] font-bold text-slate-700 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
+                            <p className="text-[11px] font-bold text-slate-700 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
+                            <p className="text-[11px] font-bold text-slate-700 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
+                            <p className="text-[11px] font-bold text-slate-700 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
                          </div>
                       </div>
                       
@@ -550,7 +550,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                             {settings?.whatsappNumber && (
                               <div className="flex flex-col items-center gap-2 shrink-0">
                                 <QRCodeSVG value={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`Hello, regarding ledger statement for ${selectedClient.tradeName || selectedClient.legalName}`)}`} size={80} />
-                                <span className="text-[9px] font-black uppercase text-slate-500">WhatsApp Us</span>
+                                <span className="text-[11px] font-black uppercase text-slate-500">WhatsApp Us</span>
                               </div>
                             )}
                             <div className="text-center flex flex-col items-center shrink-0">
@@ -559,8 +559,8 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                                ) : (
                                  <div className="h-16 mb-2" />
                                )}
-                               <p className="text-[10px] font-black uppercase text-slate-900">Authorized Signatory</p>
-                               <p className="text-[9px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
+                               <p className="text-xs font-black uppercase text-slate-900">Authorized Signatory</p>
+                               <p className="text-[11px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
                             </div>
                          </div>
                       </div>

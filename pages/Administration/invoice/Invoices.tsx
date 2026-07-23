@@ -441,25 +441,25 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                     <table className="w-full text-left border-collapse">
                        <thead>
                           <tr className="border-b-2 border-slate-900">
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-8 text-center">#</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24">Period / AY</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description of Compliance Service</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty/M</th>
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate(/₹)</th>
-                             {settings?.isGstEnabled && <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>}
-                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Total(/₹)</th>
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-8 text-center">#</th>
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-24">Period / AY</th>
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest">Description of Compliance Service</th>
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty/M</th>
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate(/₹)</th>
+                             {settings?.isGstEnabled && <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-16 text-center">GST</th>}
+                             <th className=" py-3 text-xs font-black uppercase text-slate-900 tracking-widest w-24 text-right">Total(/₹)</th>
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-100">
                           {previewInvoice.items.map((item, i) => (
                              <tr key={i}>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
-                                <td className=" py-4 text-[10px] font-bold text-slate-700">{item.period || '-'}</td>
-                                <td className=" py-4 text-[10px] font-bold text-slate-700">{item.description}</td>
-                                <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{item.quantity}</td>
-                                <td className=" py-4 text-right text-[10px] font-bold text-slate-700">{item.rate}</td>
-                                {settings?.isGstEnabled && <td className=" py-4 text-center text-[10px] font-bold text-slate-700">{item.taxRate}%</td>}
-                                <td className=" py-4 text-right text-[10px] font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
+                                <td className=" py-4 text-xs font-semibold text-slate-700">{item.period || '-'}</td>
+                                <td className=" py-4 text-xs font-semibold text-slate-800">{item.description}</td>
+                                <td className=" py-4 text-center text-xs font-semibold text-slate-700">{item.quantity}</td>
+                                <td className=" py-4 text-right text-xs font-semibold text-slate-700">{item.rate}</td>
+                                {settings?.isGstEnabled && <td className=" py-4 text-center text-xs font-semibold text-slate-700">{item.taxRate}%</td>}
+                                <td className=" py-4 text-right text-xs font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
                              </tr>
                           ))}
                        </tbody>
@@ -470,15 +470,15 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           {settings?.upiId && (
                             <div className="flex flex-col items-center gap-2">
                               <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount + totalPreviousDues}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
-                              <span className="text-[9px] font-black uppercase text-slate-500">Scan to Pay</span>
+                              <span className="text-[11px] font-black uppercase text-slate-500">Scan to Pay</span>
                             </div>
                           )}
-                          <div className="flex flex-col gap-1">
-                             <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
-                             <p className="text-[9px] font-bold text-slate-600 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
-                             <p className="text-[9px] font-bold text-slate-600 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
-                             <p className="text-[9px] font-bold text-slate-600 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
-                             <p className="text-[9px] font-bold text-slate-600 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
+                          <div className="flex flex-col gap-1.5">
+                             <p className="text-xs font-black uppercase text-slate-900 tracking-wider">Bank Details</p>
+                             <p className="text-[11px] font-bold text-slate-700 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
+                             <p className="text-[11px] font-bold text-slate-700 uppercase">Bank: {settings?.bankName || 'N/A'}</p>
+                             <p className="text-[11px] font-bold text-slate-700 uppercase">A/C No: {settings?.accountNo || 'N/A'}</p>
+                             <p className="text-[11px] font-bold text-slate-700 uppercase">IFSC: {settings?.ifsc || 'N/A'}</p>
                           </div>
                        </div>
                        <div className="w-64 space-y-3">
@@ -516,7 +516,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                              {settings?.whatsappNumber && (
                                <div className="flex flex-col items-center gap-2">
                                  <QRCodeSVG value={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`Hello, regarding invoice ${previewInvoice.invoiceNo}`)}`} size={80} />
-                                 <span className="text-[9px] font-black uppercase text-slate-500">WhatsApp Us</span>
+                                 <span className="text-[11px] font-black uppercase text-slate-500">WhatsApp Us</span>
                                </div>
                              )}
                              <div className="text-center flex flex-col items-center">
@@ -525,8 +525,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                                 ) : (
                                   <div className="h-16 mb-2" />
                                 )}
-                                <p className="text-[10px] font-black uppercase text-slate-900">Authorized Signatory</p>
-                                <p className="text-[9px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
+                                <p className="text-xs font-black uppercase text-slate-900">Authorized Signatory</p>
+                                <p className="text-[11px] font-bold uppercase text-slate-400">{settings?.firmName}</p>
                              </div>
                           </div>
                        </div>
