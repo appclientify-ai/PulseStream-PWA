@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { formatDate } from '../../../dateUtils.ts';
 
 interface PaymentReceivedProps {
   onViewChange?: (view: string, extra?: any) => void;
@@ -103,7 +104,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     const modeStr = pay.mode === 'Cheque' && pay.chequeNo ? `Cheque (${pay.chequeNo})` : pay.mode;
-    const text = `*Payment Receipt from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nAmount Paid: ₹${pay.amount.toLocaleString()}\nPayment Mode: ${modeStr}\nDate: ${pay.date.split('-').reverse().join('-')}\n\nThank you for your payment!`;
+    const text = `*Payment Receipt from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nAmount Paid: ₹${pay.amount.toLocaleString()}\nPayment Mode: ${modeStr}\nDate: ${formatDate(pay.date)}\n\nThank you for your payment!`;
     
     html2pdf().from(printRef.current).set(opt).output('blob').then(async (pdfBlob: Blob) => {
       const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
@@ -211,7 +212,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 font-black text-slate-400 text-[11px] uppercase">{pay.invoiceNo || '---'}</td>
                   <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase truncate">{pay.clientTradeName ? `${pay.clientTradeName} (${pay.clientName})` : pay.clientName}</td>
                   <td className=" px-6 py-6 font-black text-emerald-600 text-[12px]">₹{pay.amount.toLocaleString()}</td>
-                  <td className=" px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{pay.date.split('-').reverse().join('-')}</td>
+                  <td className=" px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{formatDate(pay.date)}</td>
                   <td className=" px-4 py-6">
                     <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-100 text-slate-600">{pay.mode}</span>
                   </td>
@@ -280,7 +281,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                           <div className="mt-4 space-y-1">
                              <p className="text-xs font-bold text-emerald-600 uppercase">Payment Mode: <span className="text-emerald-700">{previewPayment.pay.mode === 'Cheque' && previewPayment.pay.chequeNo ? `Cheque (${previewPayment.pay.chequeNo})` : previewPayment.pay.mode}</span></p>
                              <p className="text-xs font-bold text-slate-500 uppercase">Amount Received: <span className="text-slate-900 font-black">₹{previewPayment.pay.amount.toLocaleString()}</span></p>
-                             <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{previewPayment.pay.date.split('-').reverse().join('-')}</span></p>
+                             <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{formatDate(previewPayment.pay.date)}</span></p>
                           </div>
                        </div>
                     </div>

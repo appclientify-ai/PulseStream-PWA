@@ -7,6 +7,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
+import { formatDate } from '../../../dateUtils';
 
 
 const TribunalPending: React.FC = () => {
@@ -73,11 +74,7 @@ const TribunalPending: React.FC = () => {
   };
 
   const formatDisplayDate = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const [y, m, d] = parts;
-    return `${d}-${m}-${y}`;
+    return formatDate(dateStr);
   };
 
   const getTribunalTiming = (dueDate?: string) => {

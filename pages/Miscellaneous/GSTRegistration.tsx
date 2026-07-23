@@ -5,6 +5,7 @@ import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
 import Loader from '../../components/Loader';
 import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
+import { formatDate } from '../../dateUtils.ts';
 
 
 const GSTRegistration: React.FC = () => {
@@ -83,11 +84,7 @@ const GSTRegistration: React.FC = () => {
   };
 
   const formatDateDisplay = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const [y, m, d] = parts;
-    return `${d}-${m}-${y}`;
+    return formatDate(dateStr);
   };
 
   const getStatusColor = (st: GSTRegistrationStatus) => {

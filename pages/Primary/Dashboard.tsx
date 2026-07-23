@@ -18,6 +18,7 @@ import CommandPalette from '../../components/CommandPalette.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
 import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
+import { formatDate } from '../../dateUtils.ts';
 
 // Lazy loading sub-pages
 const GSTPortfolio = lazy(() => import('../ClientHub/GSTPortfolio.tsx'));
@@ -488,7 +489,7 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
                   {sortedPending.map((item) => {
                     const overdue = isOverdue(item.dueDate);
                     const neardue = isNearDue(item.dueDate);
-                    const formattedDate = item.dueDate ? new Date(item.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No Due Date';
+                    const formattedDate = item.dueDate ? formatDate(item.dueDate) : 'No Due Date';
                     
                     return (
                       <div 

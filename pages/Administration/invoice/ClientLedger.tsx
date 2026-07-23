@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../../../services/api';
 import Loader from '../../../components/Loader';
+import { formatDate } from '../../../dateUtils';
 import { Client, InvoiceRecord, PaymentRecord, InvoiceSettings } from '../../../types';
 import html2pdf from 'html2pdf.js';
 import { QRCodeSVG } from 'qrcode.react';
@@ -394,10 +395,10 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                          <h2 className="text-3xl font-black text-slate-200 uppercase tracking-tighter">Statement</h2>
                          <p className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1">Client Ledger</p>
                          <div className="mt-4 space-y-1">
-                            <p className="text-[11px] font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>
+                            <p className="text-[11px] font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{formatDate(new Date())}</span></p>
                             {(startDate || endDate) && (
                               <p className="text-[10px] font-bold text-indigo-600 uppercase">
-                                Period: {startDate ? startDate.split('-').reverse().join('-') : 'Start'} to {endDate ? endDate.split('-').reverse().join('-') : 'Present'}
+                                Period: {startDate ? formatDate(startDate) : 'Start'} to {endDate ? formatDate(endDate) : 'Present'}
                               </p>
                             )}
                          </div>
@@ -430,7 +431,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                         {openingBalanceRow && (
                           <tr className="bg-amber-50/40">
                             <td className="px-4 py-3 text-xs font-bold text-slate-500">
-                              {openingBalanceRow.date ? openingBalanceRow.date.split('-').reverse().join('-') : '-'}
+                              {openingBalanceRow.date ? formatDate(openingBalanceRow.date) : '-'}
                             </td>
                             <td className="px-4 py-3 text-xs font-bold text-slate-700">
                               <span className="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded mr-2 uppercase tracking-wider">Opening</span>
@@ -457,7 +458,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                             printRunningBalance += (entry.debit - entry.credit);
                             return (
                               <tr key={entry.id || idx} className="hover:bg-slate-50/50 group">
-                                <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
+                                <td className="px-4 py-3 text-xs font-bold text-slate-500">{formatDate(entry.date)}</td>
                                 <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
                                 <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
                                 <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>

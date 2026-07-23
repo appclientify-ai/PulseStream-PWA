@@ -10,6 +10,7 @@ import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
+import { formatDate } from '../../../dateUtils';
 
 
 const NoticePending: React.FC = () => {
@@ -92,11 +93,7 @@ const NoticePending: React.FC = () => {
   };
 
   const formatDisplayDate = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const [y, m, d] = parts;
-    return `${d}-${m}-${y}`;
+    return formatDate(dateStr);
   };
 
   const getDaysLeft = (dueDate: string) => {

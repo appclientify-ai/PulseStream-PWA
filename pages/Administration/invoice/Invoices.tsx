@@ -7,6 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 import html2pdf from 'html2pdf.js';
 import { TableFilter } from '../../../components/TableFilter';
+import { formatDate } from '../../../dateUtils.ts';
 
 interface InvoicesProps {
   onViewChange?: (view: string, extra?: any) => void;
@@ -122,7 +123,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   };
 
   const handleWhatsApp = (inv: InvoiceRecord) => {
-    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${inv.date.split('-').reverse().join('-')}\nAmount: ₹${inv.totalAmount.toLocaleString()}\nDue Date: ${inv.dueDate.split('-').reverse().join('-')}\n\nKindly settle the same. Thank you!`;
+    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${formatDate(inv.date)}\nAmount: ₹${inv.totalAmount.toLocaleString()}\nDue Date: ${formatDate(inv.dueDate)}\n\nKindly settle the same. Thank you!`;
     const phone = inv.miscMobile || '';
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -138,7 +139,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${previewInvoice.invoiceNo}\nDate: ${previewInvoice.date.split('-').reverse().join('-')}\nAmount: ₹${previewInvoice.totalAmount.toLocaleString()}\nDue Date: ${previewInvoice.dueDate.split('-').reverse().join('-')}\n\nKindly settle the same. Thank you!`;
+    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${previewInvoice.invoiceNo}\nDate: ${formatDate(previewInvoice.date)}\nAmount: ₹${previewInvoice.totalAmount.toLocaleString()}\nDue Date: ${formatDate(previewInvoice.dueDate)}\n\nKindly settle the same. Thank you!`;
     
     html2pdf().from(printRef.current).set(opt).output('blob').then(async (pdfBlob: Blob) => {
       const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
@@ -256,7 +257,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                 <tr key={inv.id} className="hover:bg-slate-50/50 transition-all group">
                   <td className=" px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
                   <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
-                  <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{inv.date.split('-').reverse().join('-')}</td>
+                  <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{formatDate(inv.date)}</td>
                   <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
                   <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">
                      ₹{inv.totalAmount.toLocaleString()}
@@ -311,7 +312,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                               return (
                                  <tr key={`prev-${prevInv.id}`} className="bg-rose-50/20 border-t border-slate-200">
                                     <td className=" py-4 text-center text-xs font-black text-rose-600">P</td>
-                                    <td className=" py-4 text-[10px] font-bold text-rose-700 uppercase">{prevInv.date.split('-').reverse().join('-')}</td>
+                                    <td className=" py-4 text-[10px] font-bold text-rose-700 uppercase">{formatDate(prevInv.date)}</td>
                                     <td className=" py-4 text-[10px] font-black text-rose-700">Previous Outstanding Due (Inv: {prevInv.invoiceNo})</td>
                                     <td className=" py-4 text-center text-[10px] font-bold text-rose-700">1</td>
                                     <td className=" py-4 text-right text-[10px] font-bold text-rose-700">{outstanding.toLocaleString()}</td>
@@ -423,8 +424,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           )}
                           <div className="mt-4 space-y-1">
                              <p className="text-xs font-bold text-slate-500 uppercase">Invoice No: <span className="text-slate-900">{previewInvoice.invoiceNo}</span></p>
-                             <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{previewInvoice.date.split('-').reverse().join('-')}</span></p>
-                             <p className="text-xs font-bold text-slate-500 uppercase">Due Date: <span className="text-slate-900">{previewInvoice.dueDate.split('-').reverse().join('-')}</span></p>
+                             <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{formatDate(previewInvoice.date)}</span></p>
+                             <p className="text-xs font-bold text-slate-500 uppercase">Due Date: <span className="text-slate-900">{formatDate(previewInvoice.dueDate)}</span></p>
                           </div>
                        </div>
                     </div>

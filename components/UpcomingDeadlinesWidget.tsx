@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDate } from '../dateUtils';
 
 const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
 
@@ -154,7 +155,7 @@ const UpcomingDeadlinesWidget: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-black ${isUrgent ? 'text-red-600' : 'text-indigo-600'}`}>
-                    {d.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    {formatDate(d.date)}
                   </p>
                   <p className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${isUrgent ? 'text-red-400' : 'text-slate-400'}`}>
                     {diffDays === 0 ? 'Today' : `In ${diffDays} Days`}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, MiscWorkRecord } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
+import { formatDate } from '../../dateUtils.ts';
 
 interface UnifiedDeadline {
   id: string;
@@ -169,7 +170,7 @@ const Reminders: React.FC = () => {
                       <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase ${item.origin === 'litigation' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>{item.category}</span>
                     </td>
                     <td className=" px-4 py-5 font-bold text-slate-500 uppercase truncate">{item.title}</td>
-                    <td className=" px-4 py-5 font-black text-slate-700 uppercase">{item.date.split('-').reverse().join('-')}</td>
+                    <td className=" px-4 py-5 font-black text-slate-700 uppercase">{formatDate(item.date)}</td>
                     <td className=" px-4 py-5">
                        <span className={`text-[11px] font-black ${dl < 0 ? 'text-red-600' : dl <= 7 ? 'text-orange-600' : 'text-slate-600'}`}>
                           {dl < 0 ? `${Math.abs(dl)} days overdue` : `${dl} days left`}

@@ -7,6 +7,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
+import { formatDate } from '../../../dateUtils';
 
 
 const CourtFiled: React.FC = () => {
@@ -76,11 +77,7 @@ const CourtFiled: React.FC = () => {
   };
 
   const formatDisplayDate = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const [y, m, d] = parts;
-    return `${d}-${m}-${y}`;
+    return formatDate(dateStr);
   };
 
   const getHearingDaysLeft = (hearingDate?: string) => {

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { LitigationRecord } from '../types';
+import { formatDate } from '../dateUtils';
 
 interface LegalEscalationFeedProps {
   items: LitigationRecord[];
@@ -47,7 +48,7 @@ const LegalEscalationFeed: React.FC<LegalEscalationFeedProps> = ({ items, onActi
               </h4>
               <div className="mt-4 flex items-center justify-between">
                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[150px]">Ref: {item.referenceNo}</p>
-                 <p className="text-[10px] font-black text-slate-900 uppercase">Due: {item.dueDate.split('-').reverse().join('/')}</p>
+                 <p className="text-[10px] font-black text-slate-900 uppercase">Due: {formatDate(item.dueDate)}</p>
               </div>
             </div>
           ))

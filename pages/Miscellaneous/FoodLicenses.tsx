@@ -4,6 +4,7 @@ import { api } from '../../services/api.ts';
 import FoodLicensesForm from '../Clientform/FoodLicensesForm';
 import Loader from '../../components/Loader';
 import { toast } from 'sonner';
+import { formatDate as formatDateUtil } from '../../dateUtils.ts';
 
 
 const FoodLicenses: React.FC = () => {
@@ -69,8 +70,7 @@ const FoodLicenses: React.FC = () => {
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    return dateStr.split('-').reverse().join('-');
+    return formatDateUtil(dateStr);
   };
 
   if (isLoading) return <Loader />;

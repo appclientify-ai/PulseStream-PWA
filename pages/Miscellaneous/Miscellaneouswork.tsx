@@ -4,6 +4,7 @@ import { api } from '../../services/api.ts';
 import WorkForm from '../Clientform/workForm';
 import Loader from '../../components/Loader';
 import { toast } from 'sonner';
+import { formatDate as formatDateUtil } from '../../dateUtils.ts';
 
 
 const Miscellaneouswork: React.FC = () => {
@@ -70,8 +71,7 @@ const Miscellaneouswork: React.FC = () => {
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '---';
-    return dateStr.split('-').reverse().join('-');
+    return formatDateUtil(dateStr);
   };
 
   if (isLoading) return <Loader />;

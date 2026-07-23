@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
+import { formatDate } from '../../dateUtils.ts';
 
 const Trash: React.FC = () => {
   const [trashItems, setTrashItems] = useState<any[]>([]);
@@ -62,7 +63,7 @@ const Trash: React.FC = () => {
                        <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest">{item.name?.replace('_', ' ')}</span>
                     </td>
                     <td className=" px-8 py-6">
-                       <p className="text-sm font-black text-slate-600">{new Date(item.createdAt).toLocaleDateString()}</p>
+                       <p className="text-sm font-black text-slate-600">{formatDate(item.createdAt)}</p>
                     </td>
                     <td className=" px-8 py-6 text-right">
                        <code className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">{item._id}</code>
