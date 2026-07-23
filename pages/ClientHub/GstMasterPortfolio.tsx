@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { formatDate } from '../../exportUtils';
-import { Client, GstStatus, ClientStatus } from '../../types.ts';
+import { Client } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import GSTViewIcon from '../../components/GSTViewIcon';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
 
 interface GstMasterPortfolioProps {
@@ -11,7 +12,7 @@ interface GstMasterPortfolioProps {
   onDataChange?: () => void;
 }
 
-const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({ 
+const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({ 
   externalSearch = '', 
   onDataChange
 }) => {
@@ -54,17 +55,20 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     try {
       const data = await api.getClients();
       setClients((data || []).filter(c => c && c.gstProfile));
-    } catch (err) { console.error("Fetch failed", err); } finally { setIsLoading(false); }
+    } catch (err) { 
+      console.error("Fetch failed", err); 
+      setClients([]);
+    } finally { 
+      setIsLoading(false); 
+    }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     fetchClients();
     const syncHandler = () => { console.log('Syncing in background...'); fetchClients(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
-
-
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {
@@ -94,6 +98,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     if (onDataChange) onDataChange();
   };
 
+  // Filtered clients hook MUST be declared before groupedClients hook
   const filteredClients = useMemo(() => {
     const s = (externalSearch || '').toLowerCase();
     let list = (clients || []).filter(c => {
@@ -116,8 +121,34 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
     return list;
   }, [clients, externalSearch, statusFilter, relFilter]);
 
+  // Grouped clients hook using filteredClients
+  const groupedClients = useMemo(() => {
+    const groups: Record<string, Client[]> = {};
+    (filteredClients || []).forEach(c => {
+      if (!c) return;
+      const sector = c.gstProfile?.sector || 'Uncategorized';
+      if (!groups[sector]) groups[sector] = [];
+      groups[sector].push(c);
+    });
+    const sortedKeys = Object.keys(groups).sort((a, b) => {
+       if (a === 'Uncategorized') return 1;
+       if (b === 'Uncategorized') return -1;
+       return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
+    });
+    return sortedKeys.map(k => ({ 
+      sector: k, 
+      clients: (groups[k] || []).sort((c1, c2) => {
+        const name1 = c1?.tradeName || c1?.legalName || '';
+        const name2 = c2?.tradeName || c2?.legalName || '';
+        return name1.localeCompare(name2);
+      }) 
+    }));
+  }, [filteredClients]);
+
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
   };
 
   const handleShareClick = (text: string) => {
@@ -174,7 +205,7 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No</th>
-                            <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
@@ -195,15 +226,15 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredClients.length === 0 ? (
+            {(!filteredClients || filteredClients.length === 0) ? (
               <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
             ) : (
-              groupedClients.map(({ sector, clients: sectorClients }) => (
+              (groupedClients || []).map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
                     <td colSpan={8} className="bg-slate-100 font-bold text-slate-700 py-2 px-[5.5px] uppercase text-[10px] tracking-widest">{sector}</td>
                   </tr>
-                  {sectorClients.map((client, idx) => (
+                  {(sectorClients || []).map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
                   <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
                     {(idx + 1).toString().padStart(2, '0')}
@@ -217,11 +248,15 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
-                                    <td className=" px-[5.5px] py-[2px]">
+                  <td className=" px-[5.5px] py-[2px]">
                      <div className="flex items-center gap-2 group/gstin">
                         <span className={`font-black font-mono tracking-widest uppercase text-[12px] ${client.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
                         <button 
-                           onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }); }}
+                           onClick={() => { 
+                             if (navigator.clipboard) {
+                               navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
+                             }
+                           }}
                            className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
                            title="Verify Ident."
                         >
@@ -332,11 +367,15 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
             />
             <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4">
                {(() => {
-                 const saved = localStorage.getItem('clientify_custom_templates');
-                 const templates = saved ? JSON.parse(saved) : [];
-                 return templates.map((t: any, i: number) => (
-                   <button key={i} onClick={() => setSelectedNote(t.text)} className="shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-600 hover:bg-slate-200">{t.label}</button>
-                 ));
+                 try {
+                   const saved = localStorage.getItem('clientify_custom_templates');
+                   const templates = saved ? JSON.parse(saved) : [];
+                   return (templates || []).map((t: any, i: number) => (
+                     <button key={i} onClick={() => setSelectedNote(t.text)} className="shrink-0 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-black uppercase text-slate-600 hover:bg-slate-200">{t.label}</button>
+                   ));
+                 } catch (e) {
+                   return null;
+                 }
                })()}
             </div>
             <div className="flex gap-4">
@@ -382,7 +421,11 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
                  <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entity GSTIN</span>
-                       <button onClick={() => (navigator.clipboard.writeText(loginToolClient.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Verify Identity</button>
+                       <button onClick={() => {
+                         if (navigator.clipboard) {
+                           navigator.clipboard.writeText(loginToolClient.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
+                         }
+                       }} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Verify Identity</button>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
                        <code className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{loginToolClient.gstProfile?.gstin}</code>
@@ -438,6 +481,14 @@ const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = ({
       )}
 
     </div>
+  );
+};
+
+const GstMasterPortfolio: React.FC<GstMasterPortfolioProps> = (props) => {
+  return (
+    <ErrorBoundary fallbackTitle="GST Master Portfolio Error">
+      <GstMasterPortfolioContent {...props} />
+    </ErrorBoundary>
   );
 };
 

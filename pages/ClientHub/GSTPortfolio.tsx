@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { formatDate } from '../../exportUtils';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import { api } from '../../services/api.ts';
 import { Client, GstRegType, GstFilingFreq, ConstitutionType, ClientStatus } from '../../types.ts';
+import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
 
-
-const GSTPortfolio: React.FC = () => {
+const GSTPortfolioContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [search, setSearch] = useState('');
@@ -100,7 +99,6 @@ const GSTPortfolio: React.FC = () => {
       if (!text) return;
 
       const lines = text.split('\n');
-      const header = lines[0].split(',');
       const rows = lines.slice(1);
       
       setIsImporting(true);
@@ -112,7 +110,6 @@ const GSTPortfolio: React.FC = () => {
         const values = row.split(',').map(v => v.replace(/^"|"$/g, '').trim());
         
         try {
-          // Minimal column mapping based on template
           const clientData: Partial<Client> = {
             tradeName: values[0] || 'Unknown Client',
             legalName: values[1] || values[0] || 'Unknown Entity',
@@ -144,7 +141,7 @@ const GSTPortfolio: React.FC = () => {
       }
 
       setIsImporting(false);
-      toast.error(`Import sequence finished.\nSuccess: ${successCount}\nErrors: ${errorCount}`);
+      toast.info(`Import finished. Success: ${successCount}, Errors: ${errorCount}`);
       handleRefresh();
       if (fileInputRef.current) fileInputRef.current.value = '';
       setIsUtilityOpen(false);
@@ -254,6 +251,14 @@ const GSTPortfolio: React.FC = () => {
         onSave={() => handleRefresh()} 
       />
     </div>
+  );
+};
+
+const GSTPortfolio: React.FC = () => {
+  return (
+    <ErrorBoundary fallbackTitle="GST Portfolio Module Error">
+      <GSTPortfolioContent />
+    </ErrorBoundary>
   );
 };
 
