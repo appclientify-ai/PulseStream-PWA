@@ -298,6 +298,7 @@ class ApiService {
   async saveInvoice(invoice: Partial<InvoiceRecord>): Promise<InvoiceRecord> {
     const payload = { name: 'invoice', data: invoice };
     const res = invoice.id ? await this.put(`/items/${invoice.id}`, payload) : await this.post('/items', payload);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
     return this.transformItem<InvoiceRecord>(res);
   }
 
@@ -317,6 +318,7 @@ class ApiService {
       console.error('Error during cascade delete invoice payments:', err);
     }
     await this.delete(`/items/${id}`);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
   }
 
   async getPayments(): Promise<PaymentRecord[]> {
@@ -324,10 +326,14 @@ class ApiService {
     return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
   }
 
-  async deletePayment(id: string) { await this.delete(`/items/${id}`); }
+  async deletePayment(id: string) {
+    await this.delete(`/items/${id}`);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
+  }
   async savePayment(payment: Partial<PaymentRecord>): Promise<PaymentRecord> {
     const payload = { name: 'payment', data: payment };
     const res = payment.id ? await this.put(`/items/${payment.id}`, payload) : await this.post('/items', payload);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
     return this.transformItem<PaymentRecord>(res);
   }
 

@@ -18,28 +18,44 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [manualCarryForward, setManualCarryForward] = useState('');
+  const [entryToDelete, setEntryToDelete] = useState<{ id: string; type: string; ref: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [clis, invs, pmts, sets] = await Promise.all([
-          api.getClients(),
-          api.getInvoices(),
-          api.getPayments(),
-          api.getInvoiceSettings()
-        ]);
-        setClients(clis);
-        setInvoices(invs);
-        setPayments(pmts);
-        setSettings(sets);
-      } catch (err) {
-        console.error('Error fetching ledger data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    setStartDate('');
+    setEndDate('');
+    setManualCarryForward('');
+  }, [selectedClient]);
+
+  const fetchData = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const [clis, invs, pmts, sets] = await Promise.all([
+        api.getClients(),
+        api.getInvoices(),
+        api.getPayments(),
+        api.getInvoiceSettings()
+      ]);
+      setClients(clis);
+      setInvoices(invs);
+      setPayments(pmts);
+      setSettings(sets);
+    } catch (err) {
+      console.error('Error fetching ledger data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchData(true); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
 
   const clientBalances = useMemo(() => {
@@ -119,10 +135,10 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     );
   }, [clientBalances, searchTerm]);
 
-  const selectedLedgerEntries = useMemo(() => {
+  const allEntries = useMemo(() => {
     if (!selectedClient) return [];
     
-    type LedgerEntry = { date: string; type: string; ref: string; debit: number; credit: number };
+    type LedgerEntry = { id: string; date: string; type: string; ref: string; debit: number; credit: number };
     const entries: LedgerEntry[] = [];
     
     const isManual = selectedClient.id.startsWith('manual-');
@@ -144,6 +160,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
     clientInvoices.forEach(inv => {
        entries.push({
+         id: inv.id,
          date: inv.date,
          type: 'Invoice',
          ref: inv.invoiceNo,
@@ -154,6 +171,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     
     clientPayments.forEach(pay => {
        entries.push({
+         id: pay.id,
          date: pay.date,
          type: 'Payment',
          ref: pay.mode + (pay.chequeNo ? ` - ${pay.chequeNo}` : ''),
@@ -164,6 +182,76 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     
     return entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [selectedClient, invoices, payments]);
+
+  const { filteredLedgerEntries, openingBalanceRow, finalClosingDr, finalClosingCr, finalClosingBal } = useMemo(() => {
+    const manualCarryNum = parseFloat(manualCarryForward) || 0;
+    let calculatedPriorBalance = 0;
+    
+    let priorEntries: typeof allEntries = [];
+    let visibleEntries = allEntries;
+    
+    if (startDate) {
+      priorEntries = allEntries.filter(e => e.date < startDate);
+      visibleEntries = visibleEntries.filter(e => e.date >= startDate);
+      calculatedPriorBalance = priorEntries.reduce((sum, e) => sum + (e.debit - e.credit), 0);
+    }
+    
+    if (endDate) {
+      visibleEntries = visibleEntries.filter(e => e.date <= endDate);
+    }
+    
+    const totalOpeningBalance = calculatedPriorBalance + manualCarryNum;
+    
+    const openingRow = (startDate || manualCarryNum !== 0 || calculatedPriorBalance !== 0) ? {
+      id: 'opening-balance',
+      date: startDate || (visibleEntries.length > 0 ? visibleEntries[0].date : new Date().toISOString().split('T')[0]),
+      type: 'Opening Balance',
+      ref: 'Balance Carried Forward' + (manualCarryNum !== 0 && calculatedPriorBalance !== 0 ? ' (Prior + Manual)' : manualCarryNum !== 0 ? ' (Manual)' : ' (Prior)'),
+      debit: totalOpeningBalance > 0 ? totalOpeningBalance : 0,
+      credit: totalOpeningBalance < 0 ? Math.abs(totalOpeningBalance) : 0,
+      balance: totalOpeningBalance,
+      isOpening: true
+    } : null;
+    
+    const totalVisibleDr = visibleEntries.reduce((sum, e) => sum + e.debit, 0);
+    const totalVisibleCr = visibleEntries.reduce((sum, e) => sum + e.credit, 0);
+    
+    const closingDr = totalVisibleDr + (totalOpeningBalance > 0 ? totalOpeningBalance : 0);
+    const closingCr = totalVisibleCr + (totalOpeningBalance < 0 ? Math.abs(totalOpeningBalance) : 0);
+    const closingBal = closingDr - closingCr;
+    
+    return {
+      filteredLedgerEntries: visibleEntries,
+      openingBalanceRow: openingRow,
+      finalClosingDr: closingDr,
+      finalClosingCr: closingCr,
+      finalClosingBal: closingBal
+    };
+  }, [allEntries, startDate, endDate, manualCarryForward]);
+
+  const handleDeleteConfirm = async () => {
+    if (!entryToDelete) return;
+    setIsDeleting(true);
+    try {
+      if (entryToDelete.type === 'Invoice') {
+        await api.deleteInvoice(entryToDelete.id);
+      } else if (entryToDelete.type === 'Payment') {
+        await api.deletePayment(entryToDelete.id);
+      }
+      
+      const [invs, pmts] = await Promise.all([
+        api.getInvoices(),
+        api.getPayments()
+      ]);
+      setInvoices(invs);
+      setPayments(pmts);
+      setEntryToDelete(null);
+    } catch (err) {
+      console.error('Error deleting entry:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const exportLedger = () => {
     if (!printRef.current || !selectedClient) return;
@@ -181,7 +269,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
   if (selectedClient) {
     return (
-      <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-5xl mx-auto w-full pb-10">
+      <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 w-full pb-4 min-h-0">
         <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setSelectedClient(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
@@ -196,6 +284,56 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             <span className="font-black text-xs uppercase tracking-widest">Export PDF</span>
           </button>
+        </div>
+
+        {/* Ledger Settings Toolbar */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Start Date</label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/10"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">End Date</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-bold text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/10"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Manual Previous Balance (₹)</label>
+            <div className="relative">
+              <span className="absolute left-3 inset-y-0 flex items-center text-xs font-bold text-slate-400">₹</span>
+              <input 
+                type="number" 
+                placeholder="0"
+                value={manualCarryForward} 
+                onChange={(e) => setManualCarryForward(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-2.5 font-bold text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/10"
+              />
+            </div>
+          </div>
+          {(startDate || endDate || manualCarryForward) && (
+            <div className="md:col-span-3 flex justify-end">
+              <button 
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setManualCarryForward('');
+                }}
+                className="text-rose-600 hover:text-rose-700 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Clear Settings
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col p-6">
@@ -226,6 +364,11 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                          <p className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1">Client Ledger</p>
                          <div className="mt-4 space-y-1">
                             <p className="text-[11px] font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span></p>
+                            {(startDate || endDate) && (
+                              <p className="text-[10px] font-bold text-indigo-600 uppercase">
+                                Period: {startDate ? startDate.split('-').reverse().join('-') : 'Start'} to {endDate ? endDate.split('-').reverse().join('-') : 'Present'}
+                              </p>
+                            )}
                          </div>
                       </div>
                    </div>
@@ -241,73 +384,100 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                    </div>
 
                    {/* Ledger Table */}
-                   <table className="w-full text-left border-collapse table-auto mt-6">
-                     <thead className="bg-slate-50 border-b-2 border-slate-900">
-                       <tr>
-                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Date</th>
-                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
-                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Debit (₹)</th>
-                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Credit (₹)</th>
-                         <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Balance (₹)</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-slate-100">
-                       {selectedLedgerEntries.length === 0 ? (
-                         <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold text-xs uppercase">No transaction records found.</td></tr>
-                       ) : (() => {
-                         let printRunningBalance = 0;
-                         return selectedLedgerEntries.map((entry, idx) => {
-                           printRunningBalance += (entry.debit - entry.credit);
-                           return (
-                             <tr key={idx} className="hover:bg-slate-50/50">
-                               <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
-                               <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
-                               <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
-                               <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
-                               <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">
-                                 ₹{Math.abs(printRunningBalance).toLocaleString()} {printRunningBalance > 0 ? 'Dr' : printRunningBalance < 0 ? 'Cr' : ''}
-                               </td>
-                             </tr>
-                           );
-                         });
-                       })()}
-                     </tbody>
-                     {selectedLedgerEntries.length > 0 && (() => {
-                        const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
-                        const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
-                        const closingBal = totalDr - totalCr;
-                        return (
-                          <tfoot className="bg-slate-50 border-t-2 border-slate-900">
-                            <tr>
-                              <td colSpan={2} className="px-4 py-4 text-xs font-black text-slate-900 text-right uppercase">Closing Balance Summary</td>
-                              <td className="px-4 py-4 text-xs font-black text-rose-600 text-right">₹{totalDr.toLocaleString()}</td>
-                              <td className="px-4 py-4 text-xs font-black text-emerald-600 text-right">₹{totalCr.toLocaleString()}</td>
-                              <td className={`px-4 py-4 text-xs font-black text-right ${closingBal > 0 ? 'text-rose-600' : closingBal < 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
-                                ₹{Math.abs(closingBal).toLocaleString()} {closingBal > 0 ? 'Dr (Due)' : closingBal < 0 ? 'Cr (Advance)' : 'Nil'}
-                              </td>
-                            </tr>
-                          </tfoot>
-                        );
-                     })()}
-                   </table>
+                                       <table className="w-full text-left border-collapse table-auto mt-6">
+                      <thead className="bg-slate-50 border-b-2 border-slate-900">
+                        <tr>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Date</th>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Debit (₹)</th>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Credit (₹)</th>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-right">Balance (₹)</th>
+                          <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest text-center" data-html2pdf-ignore="true">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {openingBalanceRow && (
+                          <tr className="bg-amber-50/40">
+                            <td className="px-4 py-3 text-xs font-bold text-slate-500">
+                              {openingBalanceRow.date ? openingBalanceRow.date.split('-').reverse().join('-') : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-bold text-slate-700">
+                              <span className="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded mr-2 uppercase tracking-wider">Opening</span>
+                              {openingBalanceRow.type}: {openingBalanceRow.ref}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">
+                              {openingBalanceRow.debit > 0 ? openingBalanceRow.debit.toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">
+                              {openingBalanceRow.credit > 0 ? openingBalanceRow.credit.toLocaleString() : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">
+                              ₹{Math.abs(openingBalanceRow.balance).toLocaleString()} {openingBalanceRow.balance > 0 ? 'Dr' : openingBalanceRow.balance < 0 ? 'Cr' : ''}
+                            </td>
+                            <td className="px-4 py-3" data-html2pdf-ignore="true" />
+                          </tr>
+                        )}
+
+                        {filteredLedgerEntries.length === 0 && !openingBalanceRow ? (
+                          <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400 font-bold text-xs uppercase">No transaction records found.</td></tr>
+                        ) : (() => {
+                          let printRunningBalance = openingBalanceRow ? openingBalanceRow.balance : 0;
+                          return filteredLedgerEntries.map((entry, idx) => {
+                            printRunningBalance += (entry.debit - entry.credit);
+                            return (
+                              <tr key={entry.id || idx} className="hover:bg-slate-50/50 group">
+                                <td className="px-4 py-3 text-xs font-bold text-slate-500">{entry.date.split('-').reverse().join('-')}</td>
+                                <td className="px-4 py-3 text-xs font-black text-slate-700">{entry.type}: {entry.ref}</td>
+                                <td className="px-4 py-3 text-xs font-black text-rose-600 text-right">{entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
+                                <td className="px-4 py-3 text-xs font-black text-emerald-600 text-right">{entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
+                                <td className="px-4 py-3 text-xs font-black text-slate-900 text-right">
+                                  ₹{Math.abs(printRunningBalance).toLocaleString()} {printRunningBalance > 0 ? 'Dr' : printRunningBalance < 0 ? 'Cr' : ''}
+                                </td>
+                                <td className="px-4 py-3 text-center" data-html2pdf-ignore="true">
+                                  <button 
+                                    onClick={() => setEntryToDelete({ id: entry.id, type: entry.type, ref: entry.ref })}
+                                    className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                                    title={`Delete ${entry.type}`}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                      {(filteredLedgerEntries.length > 0 || openingBalanceRow) && (
+                        <tfoot className="bg-slate-50 border-t-2 border-slate-900">
+                          <tr>
+                            <td colSpan={2} className="px-4 py-4 text-xs font-black text-slate-900 text-right uppercase">Closing Balance Summary</td>
+                            <td className="px-4 py-4 text-xs font-black text-rose-600 text-right">₹{finalClosingDr.toLocaleString()}</td>
+                            <td className="px-4 py-4 text-xs font-black text-emerald-600 text-right">₹{finalClosingCr.toLocaleString()}</td>
+                            <td className={`px-4 py-4 text-xs font-black text-right ${finalClosingBal > 0 ? 'text-rose-600' : finalClosingBal < 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
+                              ₹{Math.abs(finalClosingBal).toLocaleString()} {finalClosingBal > 0 ? 'Dr (Due)' : finalClosingBal < 0 ? 'Cr (Advance)' : 'Nil'}
+                            </td>
+                            <td className="px-4 py-4" data-html2pdf-ignore="true" />
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
 
                    {/* Footer Info (Bank, QR and Signature) */}
                    <div className="flex justify-between items-start mt-8 pt-4">
                       <div className="flex flex-row gap-6 items-start">
                          {settings?.upiId && (() => {
-                            const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
-                            const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
-                            const netBal = totalDr - totalCr;
-                            if (netBal > 0) {
-                              return (
-                                <div className="flex flex-col items-center gap-2 shrink-0">
-                                  <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${netBal}&cu=INR&tn=Ledger ${encodeURIComponent(selectedClient.tradeName || selectedClient.legalName)}`} size={80} />
-                                  <span className="text-[9px] font-black uppercase text-slate-500">Scan to Settle (₹{netBal.toLocaleString()})</span>
-                                </div>
-                              );
-                            }
-                            return null;
-                         })()}
+                             if (finalClosingBal > 0) {
+                               return (
+                                 <div className="flex flex-col items-center gap-2 shrink-0">
+                                   <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${finalClosingBal}&cu=INR&tn=Ledger ${encodeURIComponent(selectedClient.tradeName || selectedClient.legalName)}`} size={80} />
+                                   <span className="text-[9px] font-black uppercase text-slate-500">Scan to Settle (₹{finalClosingBal.toLocaleString()})</span>
+                                 </div>
+                               );
+                             }
+                             return null;
+                          })()}
                          <div className="flex flex-col gap-1">
                             <p className="text-[10px] font-black uppercase text-slate-900">Bank Details</p>
                             <p className="text-[9px] font-bold text-slate-600 uppercase">A/C Name: {settings?.accountName || 'N/A'}</p>
@@ -318,31 +488,24 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                       </div>
                       
                       <div className="w-64 space-y-2 text-right">
-                         {(() => {
-                            const totalDr = selectedLedgerEntries.reduce((sum, e) => sum + e.debit, 0);
-                            const totalCr = selectedLedgerEntries.reduce((sum, e) => sum + e.credit, 0);
-                            const closingBal = totalDr - totalCr;
-                            return (
-                              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left space-y-1">
-                                <p className="text-[9px] font-black uppercase text-slate-400">Statement Summary</p>
-                                <div className="flex justify-between text-xs font-bold text-slate-600">
-                                   <span>Total Invoiced (Debit)</span>
-                                   <span>₹{totalDr.toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between text-xs font-bold text-slate-600">
-                                   <span>Total Paid (Credit)</span>
-                                   <span>₹{totalCr.toLocaleString()}</span>
-                                </div>
-                                <div className="h-px bg-slate-200 my-1" />
-                                <div className={`flex justify-between text-sm font-black ${closingBal > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                                   <span>Outstanding Balance</span>
-                                   <span>₹{Math.abs(closingBal).toLocaleString()} {closingBal > 0 ? 'Dr' : closingBal < 0 ? 'Cr' : ''}</span>
-                                </div>
-                              </div>
-                            );
-                         })()}
-                      </div>
-                   </div>
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left space-y-1">
+                            <p className="text-[9px] font-black uppercase text-slate-400">Statement Summary</p>
+                            <div className="flex justify-between text-xs font-bold text-slate-600">
+                               <span>Total Invoiced (Debit)</span>
+                               <span>₹{finalClosingDr.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-xs font-bold text-slate-600">
+                               <span>Total Paid (Credit)</span>
+                               <span>₹{finalClosingCr.toLocaleString()}</span>
+                            </div>
+                            <div className="h-px bg-slate-200 my-1" />
+                            <div className={`flex justify-between text-sm font-black ${finalClosingBal > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                               <span>Outstanding Balance</span>
+                               <span>₹{Math.abs(finalClosingBal).toLocaleString()} {finalClosingBal > 0 ? 'Dr' : finalClosingBal < 0 ? 'Cr' : ''}</span>
+                            </div>
+                          </div>
+                       </div>
+                    </div>
 
                    {/* Terms & Conditions, Whatsapp QR & Signatory */}
                    <div className="pt-8 border-t border-slate-100 mt-8">
@@ -379,30 +542,30 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-5xl mx-auto w-full pb-10">
-      <div className="flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
-            <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Client Ledgers</h2>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Overview of balances</p>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 w-full pb-4 min-h-0">
       <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+        <button 
+          onClick={onBack} 
+          className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0"
+          title="Go Back"
+        >
+          <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
           <input 
             type="text" 
-            placeholder="Search clients..." 
+            placeholder="Search client ledgers by trade or legal name..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" />
+            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" 
+          />
         </div>
       </div>
 
@@ -479,7 +642,69 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
             </tbody>
           </table>
         </div>
-      </div>
+      
+
+        {/* Delete Confirmation Modal */}
+        {entryToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" data-html2pdf-ignore="true">
+            <div className="bg-white rounded-[2rem] max-w-md w-full border border-slate-100 shadow-xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-4 text-rose-600">
+                <div className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Delete Ledger Entry?</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Permanently remove record</p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                <p className="text-xs font-bold text-slate-500 uppercase text-[10px]">Entry Details:</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Type:</span>
+                    <p className="font-black text-slate-900 uppercase">{entryToDelete.type}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Reference:</span>
+                    <p className="font-black text-slate-900">{entryToDelete.ref}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs font-bold text-slate-500 uppercase leading-relaxed text-slate-500">
+                Are you sure? This action will permanently delete this {entryToDelete.type.toLowerCase()} from the database. This cannot be undone.
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <button 
+                  onClick={() => setEntryToDelete(null)}
+                  disabled={isDeleting}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting}
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2 shadow-md"
+                >
+                  {isDeleting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Yes, Delete</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+</div>
     </div>
   );
 };
