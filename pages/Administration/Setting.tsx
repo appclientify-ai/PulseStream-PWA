@@ -2,15 +2,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { api } from '../../services/api.ts';
-import { usePWA } from '../../hooks/usePWA';
+import { usePWA, DeviceCategory } from '../../hooks/usePWA';
 import Loader from '../../components/Loader';
 
 const Setting: React.FC = () => {
   const { user, token } = useAuth();
-  const { canInstall, isStandalone, isIOS, triggerInstall } = usePWA();
+  const { canInstall, isStandalone, isIOS, isAndroid, isMac, isWindows, isTablet, isMobile, detectedCategory, triggerInstall } = usePWA();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'app' | 'data'>('profile');
+  const [selectedDevice, setSelectedDevice] = useState<DeviceCategory>('desktop');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  useEffect(() => {
+    if (detectedCategory) {
+      setSelectedDevice(detectedCategory);
+    }
+  }, [detectedCategory]);
 
   // Form states
   const [profileData, setProfileData] = useState({
@@ -141,7 +148,7 @@ const Setting: React.FC = () => {
            { id: 'profile', label: 'Firm' },
            { id: 'security', label: 'Security' },
            { id: 'appearance', label: 'UI' },
-           { id: 'app', label: 'Native App' },
+           { id: 'app', label: 'Install App' },
            { id: 'data', label: 'Data' }
          ].map(tab => (
            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
@@ -252,49 +259,341 @@ const Setting: React.FC = () => {
          )}
 
          {activeTab === 'app' && (
-            <div className="max-w-2xl space-y-10 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="max-w-4xl space-y-8 animate-in slide-in-from-bottom-4 duration-300">
+               {/* Header Banner */}
                <section className="bg-slate-900 p-8 md:p-10 rounded-[3rem] text-white relative overflow-hidden shadow-2xl">
                   <div className="absolute -top-10 -right-10 h-40 w-40 bg-indigo-500/20 rounded-full blur-3xl" />
                   <div className="relative z-10 space-y-6">
-                     <div className="flex items-center gap-6">
-                        <div className="h-16 w-16 bg-white/10 rounded-2xl flex items-center justify-center">
-                           <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                           <div className="h-16 w-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0">
+                              <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                           </div>
+                           <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-2xl font-black uppercase tracking-tight">Install Clientify App</h3>
+                              </div>
+                              <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest mt-1">Cross-Platform Native PWA Experience</p>
+                           </div>
                         </div>
-                        <div>
-                           <h3 className="text-2xl font-black uppercase tracking-tight">Vault Everywhere</h3>
-                           <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest mt-1">Cross-Platform Native Experience</p>
+
+                        {/* Status Badge */}
+                        <div className="shrink-0 flex items-center gap-2 bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-[11px] font-black uppercase tracking-wider text-indigo-200">
+                           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                           <span>Detected: {detectedCategory === 'macbook' ? 'MacBook / macOS' : detectedCategory === 'mobile' ? 'Mobile Device' : detectedCategory === 'tablet' ? 'Tablet' : 'Laptop / Desktop'}</span>
                         </div>
                      </div>
 
+                     {/* Main Install Trigger Card */}
                      <div className="p-6 bg-white/5 rounded-2xl border border-white/10 space-y-4">
                         {isStandalone ? (
                            <div className="flex items-center gap-3 text-emerald-400">
-                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                              <span className="text-xs font-black uppercase tracking-widest">Application Already Installed</span>
-                           </div>
-                        ) : canInstall ? (
-                           <div className="space-y-4">
-                              <p className="text-slate-300 text-sm font-medium">Install Clientify for high-speed offline access and a dedicated app window on your device.</p>
-                              <button onClick={triggerInstall} className="w-full bg-indigo-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-white hover:text-slate-900 transition-all text-[10px]">
-                                 Install Application Now
-                              </button>
-                           </div>
-                        ) : isIOS ? (
-                           <div className="space-y-6">
-                              <p className="text-slate-300 text-sm font-medium leading-relaxed">To install on your iPhone/iPad:</p>
-                              <ol className="space-y-4 text-xs font-bold text-slate-400 uppercase tracking-widest list-decimal pl-5">
-                                 <li>Tap the <span className="text-indigo-400">Share</span> icon at the bottom center of Safari.</li>
-                                 <li>Scroll down and select <span className="text-indigo-400">"Add to Home Screen"</span>.</li>
-                                 <li>Tap <span className="text-indigo-400">Add</span> in the top right corner.</li>
-                              </ol>
-                              <div className="pt-4 flex justify-center">
-                                 <svg className="h-10 w-10 text-indigo-400 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                              <div>
+                                <span className="text-sm font-black uppercase tracking-widest block">App Installed & Active</span>
+                                <p className="text-xs text-slate-300 font-medium normal-case mt-0.5">You are currently using Clientify as a standalone native app.</p>
                               </div>
                            </div>
+                        ) : canInstall ? (
+                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                              <div className="space-y-1 text-center sm:text-left">
+                                 <p className="text-white text-base font-black">1-Click Direct Install Ready</p>
+                                 <p className="text-slate-300 text-xs font-medium">Click below to instantly install Clientify on your device desktop / home screen.</p>
+                              </div>
+                              <button 
+                                 onClick={triggerInstall} 
+                                 className="w-full sm:w-auto bg-indigo-600 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-xl hover:bg-white hover:text-slate-900 transition-all text-xs shrink-0 active:scale-95 flex items-center justify-center gap-2"
+                              >
+                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                 <span>Install Clientify Now</span>
+                              </button>
+                           </div>
                         ) : (
-                           <p className="text-slate-500 text-sm font-medium">Native installation is not supported on this browser. Try Chrome or Edge for the best experience.</p>
+                           <div className="text-xs font-medium text-slate-300">
+                              <p className="font-bold text-white mb-1">Installation Guide Below:</p>
+                              <p>Follow the step-by-step instructions for your specific device platform below to add Clientify to your Home Screen, Dock, or Desktop.</p>
+                           </div>
                         )}
                      </div>
+                  </div>
+               </section>
+
+               {/* Device Selection Tabs */}
+               <section className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                     <div>
+                        <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Installation Guides by Device</h4>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">Select your device type for step-by-step setup</p>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                     {[
+                        { 
+                          id: 'mobile', 
+                          label: 'Mobile', 
+                          sub: 'iPhone & Android',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          )
+                        },
+                        { 
+                          id: 'tablet', 
+                          label: 'Tablet', 
+                          sub: 'iPad & Android Tab',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          )
+                        },
+                        { 
+                          id: 'desktop', 
+                          label: 'Laptop / PC', 
+                          sub: 'Windows / Linux',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          )
+                        },
+                        { 
+                          id: 'macbook', 
+                          label: 'MacBook', 
+                          sub: 'macOS & Safari',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2 2 0 01-2 2H5a2 2 0 01-2-2V5.25a2 2 0 012-2h14a2 2 0 012 2z" />
+                            </svg>
+                          )
+                        }
+                     ].map(dev => {
+                        const isSelected = selectedDevice === dev.id;
+                        const isAutoDetected = detectedCategory === dev.id;
+                        return (
+                           <button
+                              key={dev.id}
+                              onClick={() => setSelectedDevice(dev.id as DeviceCategory)}
+                              className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center text-center relative ${
+                                 isSelected 
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-200' 
+                                    : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:border-slate-300 hover:bg-slate-100/70'
+                              }`}
+                           >
+                              {isAutoDetected && (
+                                 <span className={`absolute -top-2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                                    isSelected ? 'bg-amber-400 text-slate-900' : 'bg-indigo-600 text-white'
+                                 }`}>
+                                    Your Device
+                                 </span>
+                              )}
+                              <div className={`mb-2 ${isSelected ? 'text-white' : 'text-indigo-600'}`}>
+                                 {dev.icon}
+                              </div>
+                              <span className="text-xs font-black uppercase tracking-tight">{dev.label}</span>
+                              <span className={`text-[9px] font-bold mt-0.5 ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>{dev.sub}</span>
+                           </button>
+                        );
+                     })}
+                  </div>
+
+                  {/* Selected Device Step-By-Step Guide */}
+                  <div className="bg-slate-50 rounded-[2.5rem] border border-slate-200 p-6 md:p-8 space-y-6">
+                     {selectedDevice === 'mobile' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                           <div className="flex items-center gap-3 pb-4 border-b border-slate-200/60">
+                              <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">📱</div>
+                              <div>
+                                 <h5 className="font-black text-slate-900 text-sm uppercase tracking-tight">Mobile Phone Installation (iPhone & Android)</h5>
+                                 <p className="text-xs font-medium text-slate-500">Install Clientify as a native app on your mobile home screen</p>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* iPhone / iOS */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-slate-900" /> Apple iPhone (iOS)
+                                    </span>
+                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Safari</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Open Clientify in <strong>Safari</strong> browser on your iPhone.</li>
+                                    <li>Tap the <strong>Share</strong> button (<svg className="inline w-4 h-4 text-indigo-600 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>) in Safari's bottom toolbar.</li>
+                                    <li>Scroll down the menu and select <strong>"Add to Home Screen"</strong>.</li>
+                                    <li>Tap <strong>"Add"</strong> in the top right corner to finish.</li>
+                                 </ol>
+                              </div>
+
+                              {/* Android Phone */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-emerald-500" /> Android Smartphone
+                                    </span>
+                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Chrome / Edge</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Tap the <strong>"Install Application Now"</strong> button above if visible.</li>
+                                    <li>Or tap the 3-dot menu (<strong>⋮</strong>) in Chrome/Edge top right.</li>
+                                    <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                                    <li>Confirm by tapping <strong>"Install"</strong> to place on your app grid.</li>
+                                 </ol>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
+                     {selectedDevice === 'tablet' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                           <div className="flex items-center gap-3 pb-4 border-b border-slate-200/60">
+                              <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">📱</div>
+                              <div>
+                                 <h5 className="font-black text-slate-900 text-sm uppercase tracking-tight">Tablet Installation (iPad & Android Tabs)</h5>
+                                 <p className="text-xs font-medium text-slate-500">Optimized tablet interface with full touch & stylus support</p>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* iPad */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-slate-900" /> Apple iPad (iPadOS)
+                                    </span>
+                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Safari</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Open Clientify in <strong>Safari</strong> on your iPad.</li>
+                                    <li>Tap the <strong>Share</strong> button (<svg className="inline w-4 h-4 text-indigo-600 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>) near top address bar.</li>
+                                    <li>Tap <strong>"Add to Home Screen"</strong> from the options.</li>
+                                    <li>Tap <strong>"Add"</strong> to place Clientify on your iPad dock.</li>
+                                 </ol>
+                              </div>
+
+                              {/* Android Tablet */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-emerald-500" /> Android Tablet
+                                    </span>
+                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Chrome / Edge</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Tap the <strong>"Install Application Now"</strong> button above.</li>
+                                    <li>Or click the <strong>Install Icon</strong> in the browser URL bar.</li>
+                                    <li>Or tap 3-dot menu (<strong>⋮</strong>) -&gt; <strong>"Install app"</strong>.</li>
+                                    <li>Launch directly from your Android Tablet app drawer.</li>
+                                 </ol>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
+                     {selectedDevice === 'desktop' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                           <div className="flex items-center gap-3 pb-4 border-b border-slate-200/60">
+                              <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">💻</div>
+                              <div>
+                                 <h5 className="font-black text-slate-900 text-sm uppercase tracking-tight">Laptop & PC Installation (Windows / Linux / Chrome OS)</h5>
+                                 <p className="text-xs font-medium text-slate-500">Standalone window experience with keyboard shortcuts & Taskbar integration</p>
+                              </div>
+                           </div>
+
+                           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                 <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full bg-blue-600" /> Windows / Linux / Chromebook
+                                 </span>
+                                 <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">Chrome / Edge / Brave</span>
+                              </div>
+                              <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                 <li>Click the <strong>"Install Application Now"</strong> button in the banner above.</li>
+                                 <li>Or look for the <strong>Install Icon</strong> (<svg className="inline w-4 h-4 text-indigo-600 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4 4m4-4v12" /></svg> or <strong>⊕</strong>) on the right side of your browser address bar.</li>
+                                 <li>Alternatively, click Browser Menu (<strong>⋮</strong>) -&gt; <strong>"Save and Share"</strong> -&gt; <strong>"Install Clientify..."</strong>.</li>
+                                 <li>Pin the app icon to your <strong>Windows Taskbar</strong> or Linux dock for instant launch!</li>
+                              </ol>
+                           </div>
+                        </div>
+                     )}
+
+                     {selectedDevice === 'macbook' && (
+                        <div className="space-y-6 animate-in fade-in duration-300">
+                           <div className="flex items-center gap-3 pb-4 border-b border-slate-200/60">
+                              <div className="h-10 w-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">💻</div>
+                              <div>
+                                 <h5 className="font-black text-slate-900 text-sm uppercase tracking-tight">MacBook & macOS Installation (MacBook Air / Pro / iMac)</h5>
+                                 <p className="text-xs font-medium text-slate-500">Native Mac Dock app with dedicated window & macOS Launchpad support</p>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* macOS Safari */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-slate-900" /> macOS Safari (Sonoma+)
+                                    </span>
+                                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Safari 17+</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Open Clientify in <strong>Safari</strong> on your MacBook.</li>
+                                    <li>Click <strong>File</strong> in the top Mac menu bar -&gt; select <strong>"Add to Dock..."</strong>.</li>
+                                    <li>Or click the <strong>Share</strong> button in Safari toolbar -&gt; <strong>"Add to Dock"</strong>.</li>
+                                    <li>Click <strong>Add</strong> to create a dedicated Mac App in your Dock & Launchpad.</li>
+                                 </ol>
+                              </div>
+
+                              {/* macOS Chrome */}
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 space-y-4 shadow-sm">
+                                 <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                                       <span className="h-2 w-2 rounded-full bg-blue-600" /> macOS Chrome / Edge
+                                    </span>
+                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">Chrome / Edge</span>
+                                 </div>
+                                 <ol className="space-y-3 text-xs font-medium text-slate-700 list-decimal pl-4">
+                                    <li>Click <strong>"Install Application Now"</strong> button above.</li>
+                                    <li>Or click the <strong>Install Icon</strong> in Chrome's address bar.</li>
+                                    <li>Or Chrome Menu (<strong>⋮</strong>) -&gt; <strong>"Save and Share"</strong> -&gt; <strong>"Install Clientify..."</strong>.</li>
+                                    <li>Open anytime directly from <strong>Mac Applications</strong> or Launchpad!</li>
+                                 </ol>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+                  </div>
+               </section>
+
+               {/* App Capabilities Grid */}
+               <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 space-y-2">
+                     <div className="h-9 w-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">⚡</div>
+                     <h6 className="font-black text-slate-900 text-xs uppercase tracking-tight">Offline Resilience</h6>
+                     <p className="text-[11px] text-slate-500 font-medium">Full offline support for client records, ledger, and tax filing lists.</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 space-y-2">
+                     <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">🖥️</div>
+                     <h6 className="font-black text-slate-900 text-xs uppercase tracking-tight">Dedicated Window</h6>
+                     <p className="text-[11px] text-slate-500 font-medium">Runs in clean standalone mode without browser tabs or address bar clutter.</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 space-y-2">
+                     <div className="h-9 w-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">🔒</div>
+                     <h6 className="font-black text-slate-900 text-xs uppercase tracking-tight">Instant Vault Access</h6>
+                     <p className="text-[11px] text-slate-500 font-medium">Fast 1-tap app launch directly from your Home Screen, Dock, or Taskbar.</p>
+                  </div>
+
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 space-y-2">
+                     <div className="h-9 w-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-sm">🔄</div>
+                     <h6 className="font-black text-slate-900 text-xs uppercase tracking-tight">Auto Sync</h6>
+                     <p className="text-[11px] text-slate-500 font-medium">Automatic cloud sync in background whenever device goes online.</p>
                   </div>
                </section>
             </div>
