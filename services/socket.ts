@@ -7,38 +7,56 @@ class SocketService {
   private handlers: { [key: string]: ((...args: any[]) => void)[] } = {};
 
   connect() {
-    if (this.socket) return;
-    
-    try {
-      // Fix: Added 'as any' to io options to bypass the transports type error
-      this.socket = io(SOCKET_URL, {
-        transports: ['websocket'],
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-      } as any);
+    if (this.socket && this.socket.connected) return;
 
-      this.socket.on('connect', () => {
-        console.debug('⚡ Unified Vault Sync Connected');
-        this.trigger('connect', {});
-      });
+    if (!this.socket) {
+      try {
+        this.socket = io(SOCKET_URL, {
+          transports: ['polling', 'websocket'],
+          reconnection: true,
+          reconnectionAttempts: Infinity,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          timeout: 10000,
+        } as any);
 
-      this.socket.onAny((event, ...args) => {
-        this.trigger(event, args[0]);
-      });
+        this.socket.on('connect', () => {
+          console.debug('⚡ Unified Vault Sync Connected');
+          this.trigger('connect', {});
+        });
 
-      
-      this.socket.on('db_item_change', (payload) => {
-        console.debug('Real-time update received:', payload);
-        window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
-      });
+        this.socket.onAny((event, ...args) => {
+          this.trigger(event, args[0]);
+        });
 
-      this.socket.on('disconnect', () => {
-        console.warn('🔌 Vault Sync Interrupted');
-        this.trigger('disconnect', {});
-      });
+        this.socket.on('db_item_change', (payload) => {
+          console.debug('Real-time update received:', payload);
+          window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
+        });
 
-    } catch (e) {
-      console.warn('Socket connection error. Real-time features may be limited.');
+        this.socket.on('disconnect', (reason) => {
+          console.warn('🔌 Vault Sync Interrupted:', reason);
+          this.trigger('disconnect', { reason });
+        });
+
+        // Reconnect automatically when returning to tab/window
+        if (typeof window !== 'undefined') {
+          window.addEventListener('focus', () => {
+            if (this.socket && !this.socket.connected) {
+              this.socket.connect();
+            }
+          });
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && this.socket && !this.socket.connected) {
+              this.socket.connect();
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Socket connection error. Real-time features may be limited.');
+      }
+    } else {
+      this.socket.connect();
     }
   }
 
@@ -68,3 +86,4 @@ class SocketService {
 }
 
 export const socketService = new SocketService();
+

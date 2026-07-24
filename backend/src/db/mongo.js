@@ -221,7 +221,9 @@ export async function connectDB() {
     const db = realClient.db(dbName);
     await db.collection('users').createIndex({ user_id: 1 }, { unique: true });
     await db.collection('users').createIndex({ email_id: 1 }, { unique: true });
-    await db.collection('items').createIndex({ createdBy: 1, name: 1 });
+    await db.collection('items').createIndex({ createdBy: 1, name: 1, updatedAt: -1 });
+    await db.collection('items').createIndex({ createdBy: 1, updatedAt: -1 });
+    await db.collection('items').createIndex({ name: 1, updatedAt: -1 });
     return db;
   } catch (error) {
     console.warn('⚠️ Connection to remote MongoDB cluster failed:', error.message);

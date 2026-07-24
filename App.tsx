@@ -47,9 +47,38 @@ const AppContent: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const handleDbChange = () => {
+    const handleDbChange = (e: Event) => {
       api.invalidateCache();
-      queryClient.invalidateQueries();
+      const customEv = e as CustomEvent;
+      const payload = customEv.detail;
+
+      if (payload && payload.data && payload.data.name) {
+        const category = payload.data.name;
+        const itemId = payload.data._id || payload.id;
+
+        queryClient.setQueriesData<any>(
+          { queryKey: ['category_items', category] },
+          (oldData: any) => {
+            if (!oldData || !oldData.items) return oldData;
+            let updated = [...oldData.items];
+            if (payload.type === 'delete') {
+              updated = updated.filter((item: any) => item._id !== itemId && item.id !== itemId);
+            } else if (payload.type === 'insert') {
+              const exists = updated.some((item: any) => item._id === itemId || item.id === itemId);
+              if (!exists) {
+                updated = [payload.data, ...updated];
+              }
+            } else {
+              updated = updated.map((item: any) =>
+                item._id === itemId || item.id === itemId ? { ...item, ...payload.data } : item
+              );
+            }
+            return { ...oldData, items: updated };
+          }
+        );
+      }
+
+      queryClient.invalidateQueries({ refetchType: 'active' });
     };
     window.addEventListener('clientify_db_change', handleDbChange);
     return () => window.removeEventListener('clientify_db_change', handleDbChange);
