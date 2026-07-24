@@ -170,6 +170,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
                             <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
@@ -205,11 +206,9 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                           Trade: {client.tradeName}
                         </p>
                      )}
-                     {client.itProfile?.fatherName && (
-                        <p className="font-semibold text-slate-500 text-[9px] truncate leading-tight" title={client.itProfile.fatherName}>
-                          Father: {client.itProfile.fatherName}
-                        </p>
-                     )}
+                  </td>
+                  <td className=" px-[5.5px] py-[2px]">
+                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
