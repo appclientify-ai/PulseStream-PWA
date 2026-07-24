@@ -6,8 +6,6 @@ import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import GSTViewIcon from '../../components/GSTViewIcon';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
-import { usePaginatedCategory } from '../../hooks/usePaginatedData';
-import { ServerPagination } from '../../components/ServerPagination';
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -25,21 +23,6 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [shareText, setShareText] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState('');
-  
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(25);
-  const { data: paginatedData, isFetching } = usePaginatedCategory<Client>('client', page, limit, externalSearch);
-
-  useEffect(() => {
-    setPage(1);
-  }, [externalSearch]);
-
-  useEffect(() => {
-    if (paginatedData?.items) {
-      setClients((paginatedData.items || []).filter(c => c && c.gstProfile));
-      setIsLoading(false);
-    }
-  }, [paginatedData]);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -226,16 +209,16 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col min-h-0">
-      <div className="overflow-x-auto no-scrollbar flex-1 w-full">
+      <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
         <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className=" sticky top-0 z-20">
+          <thead className="sticky top-0 z-30 bg-slate-100">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Legal Name</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Legal Name</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
                 <div className="flex items-center gap-1">
                   Status
                   <button 
@@ -248,7 +231,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
                 <div className="flex items-center gap-1">
                   Relationship
                   <button 
@@ -261,7 +244,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Actions</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -271,7 +254,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
               (groupedClients || []).map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={8} className="bg-slate-100 font-bold text-slate-700 py-2 px-[5.5px] uppercase text-[10px] tracking-widest">{sector}</td>
+                    <td colSpan={8} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {(sectorClients || []).map((client, idx) => (
                 <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
@@ -345,15 +328,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
           </tbody>
         </table>
       </div>
-      <ServerPagination
-        currentPage={page}
-        totalPages={paginatedData?.totalPages || 1}
-        totalRecords={paginatedData?.total || 0}
-        pageSize={limit}
-        onPageChange={setPage}
-        onPageSizeChange={setLimit}
-        isLoading={isFetching}
-      />
+      
 
       {/* Global Actions Menu - Fixed Positioned to avoid clipping */}
       {activeActionsId && selectedClient && (

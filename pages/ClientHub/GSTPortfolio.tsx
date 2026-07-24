@@ -41,7 +41,8 @@ const GSTPortfolioContent: React.FC = () => {
       total: (clients || []).length,
       active: (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length,
       litigation: (clients || []).filter(c => c?.status === 'Litigation').length,
-      inactive: (clients || []).filter(c => c?.status === 'Inactive').length
+      inactive: (clients || []).filter(c => c?.status === 'Inactive').length,
+      monthly: (clients || []).filter(c => !c?.gstProfile?.filingFreq || c?.gstProfile?.filingFreq === 'Monthly').length
     };
   }, [clients]);
 
@@ -150,21 +151,28 @@ const GSTPortfolioContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-4 pb-4 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+      {/* Mobile-only compact stats strip showing Monthly counts */}
+      <div className="flex items-center justify-between w-full md:hidden gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Monthly: <strong className="font-black text-indigo-900">{stats.monthly}</strong></span>
+        <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
+        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Active: <strong className="font-black text-emerald-900">{stats.active}</strong></span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Active</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.active}</p>
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Monthly</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.monthly}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Litigation</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.litigation}</p>
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Active</p>
+            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Inactive</p>
@@ -178,23 +186,23 @@ const GSTPortfolioContent: React.FC = () => {
             placeholder="Search GST Portfolio by Trade Name, GSTIN or PAN..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3.5 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-4 focus:ring-indigo-50 transition-all outline-none" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-100 transition-all outline-none" 
           />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative">
             <button 
               onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className={`h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ${isImporting ? 'animate-pulse' : ''}`}
+              className={`h-10 landscape:h-8 w-10 landscape:w-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ${isImporting ? 'animate-pulse' : ''}`}
               title="Bulk Utilities"
               disabled={isImporting}
             >
               {isImporting ? (
-                <div className="h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <svg className="h-5 w-5 landscape:h-4 landscape:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               )}
             </button>
             
@@ -229,9 +237,9 @@ const GSTPortfolioContent: React.FC = () => {
 
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-12 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs shrink-0 flex items-center gap-2"
+            className="bg-indigo-600 text-white font-black uppercase tracking-widest px-5 landscape:px-3 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-[11px] landscape:text-[10px] shrink-0 flex items-center gap-1.5"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add GST Client
           </button>
         </div>
