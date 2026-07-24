@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/AuthContext';
 import { api } from '../../services/api.ts';
 import { usePWA, DeviceCategory } from '../../hooks/usePWA';
 import Loader from '../../components/Loader';
 
 const Setting: React.FC = () => {
+  const queryClient = useQueryClient();
   const { user, token } = useAuth();
   const { canInstall, isStandalone, isIOS, isAndroid, isMac, isWindows, isTablet, isMobile, detectedCategory, triggerInstall } = usePWA();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'app' | 'data'>('profile');
@@ -138,6 +140,15 @@ const Setting: React.FC = () => {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleClearCache = () => {
+    if (confirm('Are you sure you want to clear local cache? This will purge cached data and refresh from the server.')) {
+      queryClient.clear();
+      localStorage.removeItem('CLIENTIFY_QUERY_CACHE');
+      api.invalidateCache();
+      setMessage({ type: 'success', text: 'Local query cache purged successfully.' });
+    }
   };
 
   return (
@@ -596,6 +607,19 @@ const Setting: React.FC = () => {
                      <p className="text-[11px] text-slate-500 font-medium">Automatic cloud sync in background whenever device goes online.</p>
                   </div>
                </section>
+
+               <section className="bg-rose-50/60 p-6 md:p-10 rounded-[3rem] border border-rose-100/80">
+                  <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+                     <div className="h-14 w-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center shadow-lg"><svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
+                     <div className="text-center md:text-left">
+                        <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Purge Local Query Cache</h4>
+                        <p className="text-slate-500 text-sm font-medium">Manually clear local client data cache if experiencing synchronization issues.</p>
+                     </div>
+                  </div>
+                  <button onClick={handleClearCache} className="w-full bg-white border-2 border-rose-600 text-rose-600 font-black uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-rose-100 hover:bg-rose-600 hover:text-white transition-all text-xs">
+                     Purge Cache (queryClient.clear)
+                  </button>
+               </section>
             </div>
          )}
 
@@ -665,6 +689,19 @@ const Setting: React.FC = () => {
                     Select Restore File
                  </button>
                  <input type="file" ref={restoreInputRef} onChange={handleRestore} className="hidden" accept=".json" />
+              </section>
+
+              <section className="bg-rose-50/60 p-6 md:p-10 rounded-[3rem] border border-rose-100/80">
+                 <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+                    <div className="h-14 w-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center shadow-lg"><svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
+                    <div className="text-center md:text-left">
+                       <h4 className="text-xl font-black text-slate-900 uppercase tracking-tight">Purge Local Query Cache</h4>
+                       <p className="text-slate-500 text-sm font-medium">Manually clear local client data cache if experiencing synchronization issues.</p>
+                    </div>
+                 </div>
+                 <button onClick={handleClearCache} className="w-full bg-white border-2 border-rose-600 text-rose-600 font-black uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-rose-100 hover:bg-rose-600 hover:text-white transition-all text-xs">
+                    Purge Cache (queryClient.clear)
+                 </button>
               </section>
            </div>
          )}

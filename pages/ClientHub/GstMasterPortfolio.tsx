@@ -6,6 +6,8 @@ import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import GSTViewIcon from '../../components/GSTViewIcon';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
+import { usePaginatedCategory } from '../../hooks/usePaginatedData';
+import { ServerPagination } from '../../components/ServerPagination';
 
 interface GstMasterPortfolioProps {
   externalSearch?: string;
@@ -23,6 +25,21 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [shareText, setShareText] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState('');
+  
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const { data: paginatedData, isFetching } = usePaginatedCategory<Client>('client', page, limit, externalSearch);
+
+  useEffect(() => {
+    setPage(1);
+  }, [externalSearch]);
+
+  useEffect(() => {
+    if (paginatedData?.items) {
+      setClients((paginatedData.items || []).filter(c => c && c.gstProfile));
+      setIsLoading(false);
+    }
+  }, [paginatedData]);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -328,6 +345,15 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
           </tbody>
         </table>
       </div>
+      <ServerPagination
+        currentPage={page}
+        totalPages={paginatedData?.totalPages || 1}
+        totalRecords={paginatedData?.total || 0}
+        pageSize={limit}
+        onPageChange={setPage}
+        onPageSizeChange={setLimit}
+        isLoading={isFetching}
+      />
 
       {/* Global Actions Menu - Fixed Positioned to avoid clipping */}
       {activeActionsId && selectedClient && (

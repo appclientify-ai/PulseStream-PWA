@@ -8,6 +8,13 @@ import { QRCodeSVG } from 'qrcode.react';
 import html2pdf from 'html2pdf.js';
 import { TableFilter } from '../../../components/TableFilter';
 import { formatDate } from '../../../dateUtils.ts';
+import {
+  usePaginatedCategory,
+  useUpdateInvoiceMutation,
+  useDeleteInvoiceMutation,
+  useSettleInvoiceMutation
+} from '../../../hooks/usePaginatedData';
+import { ServerPagination } from '../../../components/ServerPagination';
 
 interface InvoicesProps {
   onViewChange?: (view: string, extra?: any) => void;
@@ -20,6 +27,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Draft' | 'Sent' | 'Partial' | 'Paid' | 'Cancelled'>('Active');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const { data: paginatedData, isLoading: isQueryLoading, isFetching } = usePaginatedCategory<InvoiceRecord>('invoice', page, limit, search);
+
+  const updateInvoiceMutation = useUpdateInvoiceMutation();
+  const deleteInvoiceMutation = useDeleteInvoiceMutation();
+  const settleInvoiceMutation = useSettleInvoiceMutation();
+
   const [settings, setSettings] = useState<InvoiceSettings | null>(null);
 
   const [settlingInvoice, setSettlingInvoice] = useState<InvoiceRecord | null>(null);
@@ -34,7 +49,6 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
   const previousDues = useMemo(() => {
     if (!previewInvoice) return [];
-    // Find all other invoices for this client that are unpaid and created before this one
     return invoices.filter(i => {
       const isClientMatch = (i.clientId && previewInvoice.clientId && i.clientId === previewInvoice.clientId && i.clientId !== 'misc') ||
                             (i.clientName && previewInvoice.clientName && i.clientName.trim().toLowerCase() === previewInvoice.clientName.trim().toLowerCase());
@@ -59,24 +73,19 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     return previousDues.reduce((sum, inv) => sum + getOutstandingBalance(inv), 0);
   }, [previousDues]);
 
-  const fetchAll = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [invs, sets] = await Promise.all([
-        api.getInvoices(),
-        api.getInvoiceSettings()
-      ]);
-      setInvoices(invs);
-      setSettings(sets);
-    } finally {
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
+  useEffect(() => {
+    if (paginatedData?.items) {
+      setInvoices(paginatedData.items);
       setIsLoading(false);
     }
-  };
+  }, [paginatedData]);
 
-  useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  useEffect(() => {
+    api.getInvoiceSettings().then(sets => setSettings(sets)).catch(() => {});
   }, []);
 
   const filteredInvoices = useMemo(() => {
@@ -97,24 +106,28 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const handleReceiveConfirm = async () => {
     if (!settlingInvoice || isSaving) return;
     setIsSaving(true);
-    try {
-      await api.migrateToPayment(settlingInvoice.id, {
-        date: payDate,
-        mode: payMode,
-        chequeNo: payMode === 'Cheque' ? chequeNo : undefined,
-        amount: Number(payAmount)
-      });
-      setSettlingInvoice(null);
-      await fetchAll();
-    } finally {
-      setIsSaving(false);
-    }
+    settleInvoiceMutation.mutate(
+      {
+        id: settlingInvoice.id,
+        paymentData: {
+          date: payDate,
+          mode: payMode,
+          chequeNo: payMode === 'Cheque' ? chequeNo : undefined,
+          amount: Number(payAmount)
+        }
+      },
+      {
+        onSettled: () => {
+          setSettlingInvoice(null);
+          setIsSaving(false);
+        }
+      }
+    );
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this invoice?')) {
-      await api.deleteInvoice(id);
-      fetchAll();
+      deleteInvoiceMutation.mutate(id);
     }
   };
 
@@ -268,15 +281,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 text-center">
                      <select
                        value={inv.status}
-                       onChange={async (e) => {
+                       onChange={(e) => {
                          const val = e.target.value;
                          if (val === 'Paid' || val === 'Partial') {
                            setSettlingInvoice(inv);
                            setPayAmount(inv.totalAmount - (inv.amountPaid || 0));
                          } else {
                            const updated = { ...inv, status: val as any };
-                           await api.saveInvoice(updated);
-                           fetchAll();
+                           updateInvoiceMutation.mutate(updated);
                          }
                        }}
                        className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
@@ -324,6 +336,15 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                         </tbody>
           </table>
         </div>
+        <ServerPagination
+          currentPage={page}
+          totalPages={paginatedData?.totalPages || 1}
+          totalRecords={paginatedData?.total || 0}
+          pageSize={limit}
+          onPageChange={setPage}
+          onPageSizeChange={setLimit}
+          isLoading={isFetching}
+        />
       </div>
 
       

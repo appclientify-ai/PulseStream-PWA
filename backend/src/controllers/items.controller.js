@@ -66,10 +66,59 @@ export const getItems = async (req, res) => {
         try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
       }
     }
-    const items = await getCollection('items')
-      .find({ createdBy: { $in: userMatches } })
+
+    const query = { createdBy: { $in: userMatches } };
+
+    const nameParam = req.query.name || req.query.category;
+    if (nameParam) {
+      query.name = nameParam;
+    }
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query.$or = [
+        { name: searchRegex },
+        { 'data.name': searchRegex },
+        { 'data.clientName': searchRegex },
+        { 'data.clientTradeName': searchRegex },
+        { 'data.invoiceNo': searchRegex },
+        { 'data.firmName': searchRegex },
+        { 'data.gstin': searchRegex },
+        { 'data.tradeName': searchRegex }
+      ];
+    }
+
+    const itemsColl = getCollection('items');
+
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+
+    if (!isNaN(page) && !isNaN(limit) && page > 0 && limit > 0) {
+      const total = await itemsColl.countDocuments(query);
+      const skip = (page - 1) * limit;
+      const items = await itemsColl
+        .find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+      res.set('X-Total-Count', total.toString());
+      return res.json({
+        items,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      });
+    }
+
+    const items = await itemsColl
+      .find(query)
       .sort({ updatedAt: -1 })
       .toArray();
+
+    res.set('X-Total-Count', items.length.toString());
     res.json(items);
   } catch (err) {
     console.error('Get Items Error:', err);

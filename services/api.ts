@@ -7,9 +7,37 @@ import {
 
 class ApiService {
   private token: string | null = null;
+  private itemsCacheData: any[] | null = null;
+  private itemsInflightPromise: Promise<any[]> | null = null;
 
   setToken(token: string | null) {
     this.token = token;
+  }
+
+  public invalidateCache() {
+    this.itemsCacheData = null;
+    this.itemsInflightPromise = null;
+  }
+
+  async getItems(forceRefresh = false): Promise<any[]> {
+    if (!forceRefresh && this.itemsCacheData) {
+      return this.itemsCacheData;
+    }
+    if (!forceRefresh && this.itemsInflightPromise) {
+      return this.itemsInflightPromise;
+    }
+
+    this.itemsInflightPromise = (async () => {
+      try {
+        const items = await this.get('/items');
+        this.itemsCacheData = Array.isArray(items) ? items : [];
+        return this.itemsCacheData;
+      } finally {
+        this.itemsInflightPromise = null;
+      }
+    })();
+
+    return this.itemsInflightPromise;
   }
 
   private getFullUrl(endpoint: string): string {
@@ -41,6 +69,7 @@ class ApiService {
 
   
   async patch(endpoint: string, data: any) {
+    this.invalidateCache();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
     const url = this.getFullUrl(endpoint);
@@ -64,6 +93,7 @@ class ApiService {
   }
 
   async post(endpoint: string, data: any) {
+    this.invalidateCache();
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
@@ -82,6 +112,7 @@ class ApiService {
   }
 
   async put(endpoint: string, data: any) {
+    this.invalidateCache();
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
@@ -96,6 +127,7 @@ class ApiService {
   }
 
   async delete(endpoint: string) {
+    this.invalidateCache();
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
     const url = this.getFullUrl(endpoint);
     const res = await fetch(url, { method: 'DELETE', headers });
@@ -116,7 +148,7 @@ class ApiService {
   }
 
   async backupAllData(): Promise<string> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return JSON.stringify(items, null, 2);
   }
 
@@ -128,31 +160,22 @@ class ApiService {
   }
 
   async getDashboardSummary() {
-    const results = await Promise.allSettled([
-      this.getClients(),
-      this.getLitigationRecords(),
-      this.getInvoices(),
-      this.getMiscWork(),
-      this.getGSTRegistrations(),
-      this.getFoodLicenses(),
-      this.getMSMERegistrations(),
-      this.getPayments()
-    ]);
+    const items = await this.getItems();
     return {
-      clients: results[0].status === 'fulfilled' ? results[0].value : [],
-      litigation: results[1].status === 'fulfilled' ? results[1].value : [],
-      invoices: results[2].status === 'fulfilled' ? results[2].value : [],
-      work: results[3].status === 'fulfilled' ? results[3].value : [],
-      gstReg: results[4].status === 'fulfilled' ? results[4].value : [],
-      foodLic: results[5].status === 'fulfilled' ? results[5].value : [],
-      msme: results[6].status === 'fulfilled' ? results[6].value : [],
-      payments: results[7].status === 'fulfilled' ? results[7].value : []
+      clients: items.filter((i: any) => i.name === 'client').map((i: any) => this.transformItem<Client>(i)),
+      litigation: items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i)),
+      invoices: items.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i)),
+      work: items.filter((i: any) => i.name === 'misc_work').map((i: any) => this.transformItem<MiscWorkRecord>(i)),
+      gstReg: items.filter((i: any) => i.name === 'gst_reg').map((i: any) => this.transformItem<GSTRegistrationRecord>(i)),
+      foodLic: items.filter((i: any) => i.name === 'food_lic').map((i: any) => this.transformItem<FoodLicenseRecord>(i)),
+      msme: items.filter((i: any) => i.name === 'msme').map((i: any) => this.transformItem<MSMERegistrationRecord>(i)),
+      payments: items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i))
     };
   }
 
   // --- Clients ---
   async getClients(): Promise<Client[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'client').map((i: any) => this.transformItem<Client>(i));
   }
 
@@ -213,7 +236,7 @@ class ApiService {
 
   // --- Litigation ---
   async getLitigationRecords(): Promise<LitigationRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i));
   }
 
@@ -227,9 +250,37 @@ class ApiService {
   }
 
   // --- Invoices & Billing ---
+  async getPaginatedCategory<T>(category: string, page = 1, limit = 25, search = ''): Promise<{ items: T[]; total: number; page: number; limit: number; totalPages: number }> {
+    const params = new URLSearchParams({ name: category, page: page.toString(), limit: limit.toString() });
+    if (search) params.append('search', search);
+    const res = await this.get(`/items?${params.toString()}`);
+    if (res && Array.isArray(res.items)) {
+      return {
+        ...res,
+        items: res.items.map((i: any) => this.transformItem<T>(i))
+      };
+    }
+    const itemsArray = Array.isArray(res) ? res : [];
+    return {
+      items: itemsArray.map((i: any) => this.transformItem<T>(i)),
+      total: itemsArray.length,
+      page,
+      limit,
+      totalPages: Math.ceil(itemsArray.length / limit) || 1
+    };
+  }
+
   async getInvoices(): Promise<InvoiceRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i));
+  }
+
+  async getInvoicesPaginated(page = 1, limit = 25, search = '') {
+    return this.getPaginatedCategory<InvoiceRecord>('invoice', page, limit, search);
+  }
+
+  async getClientsPaginated(page = 1, limit = 25, search = '') {
+    return this.getPaginatedCategory<Client>('client', page, limit, search);
   }
 
   async generateNextInvoiceNo(): Promise<string> {
@@ -329,7 +380,7 @@ class ApiService {
 
   async purgeOrphanAndCancelledRecords(): Promise<{ purgedCount: number }> {
     try {
-      const rawItems = await this.get('/items');
+      const rawItems = await this.getItems();
       const invoices = rawItems.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i));
       const activeInvoiceNos = new Set(invoices.filter(i => i.status !== 'Cancelled').map(i => i.invoiceNo));
 
@@ -358,7 +409,7 @@ class ApiService {
   }
 
   async getPayments(): Promise<PaymentRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
   }
 
@@ -374,7 +425,7 @@ class ApiService {
   }
 
   async getInvoiceSettings(): Promise<InvoiceSettings> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     const set = items.find((i: any) => i.name === 'invoice_settings');
     if (set) return this.transformItem<InvoiceSettings>(set);
     return {
@@ -386,7 +437,7 @@ class ApiService {
   }
 
   async saveInvoiceSettings(settings: InvoiceSettings): Promise<void> {
-    const all = await this.get('/items');
+    const all = await this.getItems();
     const existing = all.find((i: any) => i.name === 'invoice_settings');
     const payload = { name: 'invoice_settings', data: settings };
     if (existing) await this.put(`/items/${existing._id}`, payload);
@@ -395,7 +446,7 @@ class ApiService {
 
   // --- Miscellaneous ---
   async getGSTRegistrations(): Promise<GSTRegistrationRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'gst_reg').map((i: any) => this.transformItem<GSTRegistrationRecord>(i));
   }
   async saveGSTRegistration(reg: Partial<GSTRegistrationRecord>) {
@@ -405,7 +456,7 @@ class ApiService {
   async deleteGSTRegistration(id: string) { await this.delete(`/items/${id}`); }
 
   async getFoodLicenses(): Promise<FoodLicenseRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'food_lic').map((i: any) => this.transformItem<FoodLicenseRecord>(i));
   }
   async saveFoodLicense(lic: Partial<FoodLicenseRecord>) {
@@ -415,7 +466,7 @@ class ApiService {
   async deleteFoodLicense(id: string) { await this.delete(`/items/${id}`); }
 
   async getMSMERegistrations(): Promise<MSMERegistrationRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'msme').map((i: any) => this.transformItem<MSMERegistrationRecord>(i));
   }
   async saveMSMERegistration(reg: Partial<MSMERegistrationRecord>) {
@@ -425,7 +476,7 @@ class ApiService {
   async deleteMSMERegistration(id: string) { await this.delete(`/items/${id}`); }
 
   async getMiscWork(): Promise<MiscWorkRecord[]> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     return items.filter((i: any) => i.name === 'misc_work').map((i: any) => this.transformItem<MiscWorkRecord>(i));
   }
   async saveMiscWork(work: Partial<MiscWorkRecord>) {
@@ -434,20 +485,17 @@ class ApiService {
   }
   async deleteMiscWork(id: string) { await this.delete(`/items/${id}`); }
 
-
-
-  
   async patchAppData(key: string, updates: Record<string, any>): Promise<any> {
     return this.patch(`/items/app_data/${key}/patch`, { updates });
   }
   
   async getAppData(key: string): Promise<any> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     const existing = items.find((i: any) => i.name === 'app_data_' + key);
     return existing ? existing.data : null;
   }
   async saveAppData(key: string, data: any): Promise<void> {
-    const items = await this.get('/items');
+    const items = await this.getItems();
     const existing = items.find((i: any) => i.name === 'app_data_' + key);
     const payload = { name: 'app_data_' + key, data: data };
     if (existing) {
