@@ -4,6 +4,8 @@ import { LitigationRecord, Client, LitigationStatus, LitigationCategory } from '
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
 import NoticeForm from '../Clientform/NoticeForm';
+import { toast } from 'sonner';
+import { formatISOToDDMMYYYY } from '../../dateUtils';
 
 interface LitigationModuleProps {
   category: LitigationCategory;
@@ -79,31 +81,45 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
   if (isLoading) return <Loader />;
 
   return (
-    <div className="animate-in fade-in duration-500 h-full flex flex-col space-y-4 overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+    <div className="animate-in fade-in duration-500 h-full flex flex-col space-y-2 landscape:space-y-1 pb-2 overflow-hidden">
+      
+      {/* Mobile & Tablet Compact Stats Strip */}
+      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Category: <strong className="font-black text-slate-900">{category} ({status})</strong></span>
+        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Cases: <strong className="font-black text-indigo-900">{filteredRecords.length}</strong></span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
+          <div className="text-center">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{category}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{filteredRecords.length} <span className="text-[10px] text-indigo-600 font-bold uppercase">{status}</span></p>
+          </div>
+        </div>
+
         <div className="relative flex-1 group w-full">
           <input type="text" placeholder={`Search ${category}...`} value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         {status === 'Pending' && (
-          <button onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+          <button onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-6 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5 shrink-0">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add Case
           </button>
         )}
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
           <table className="w-full text-left border-collapse table-auto min-w-full">
-            <thead className=" sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Entity</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Ref No</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+            <thead className="sticky top-0 z-30 bg-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Ref No</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -112,7 +128,7 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
                   <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                   <td className=" px-6 py-5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
                   <td className=" px-6 py-5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
-                  <td className=" px-6 py-5 font-black text-slate-400">{rec.issuedDate}</td>
+                  <td className=" px-6 py-5 font-black text-slate-400">{formatISOToDDMMYYYY(rec.issuedDate || '')}</td>
                   <td className="px-6 py-5 text-right ">
                      <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>

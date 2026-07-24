@@ -93,7 +93,19 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     let list = invoices.filter(i => 
       (i.invoiceNo.toLowerCase().includes(s) || 
       i.clientName.toLowerCase().includes(s) || (i.clientTradeName && i.clientTradeName.toLowerCase().includes(s)))
-    ).sort((a,b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
+    ).sort((a, b) => {
+      // Latest date first
+      const timeA = new Date(a.date || 0).getTime();
+      const timeB = new Date(b.date || 0).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+      
+      // Extract numeric part from invoice number if present (e.g. INV-002 -> 2)
+      const numA = parseInt((a.invoiceNo || '').replace(/\D/g, '')) || 0;
+      const numB = parseInt((b.invoiceNo || '').replace(/\D/g, '')) || 0;
+      if (numB !== numA) return numB - numA;
+
+      return (b.invoiceNo || '').localeCompare(a.invoiceNo || '', undefined, { numeric: true });
+    });
 
     if (statusFilter === 'Active') {
       list = list.filter(i => i.status !== 'Paid' && i.status !== 'Cancelled');
@@ -214,46 +226,53 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
+    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
+      
+      {/* Mobile & Tablet Compact Stats Strip */}
+      <div className="flex items-center justify-between w-full md:hidden gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total Invoices: <strong className="font-black text-slate-900">{invoices.length}</strong></span>
+        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Active Bills: <strong className="font-black text-indigo-900">{invoices.filter(i => i.status !== 'Paid').length}</strong></span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Active Bills</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
           <input type="text" placeholder="Search by Invoice No or Client..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} className="bg-slate-900 text-white font-black uppercase tracking-widest px-6 h-11 rounded-xl hover:bg-slate-800 transition-all text-[10px] flex items-center gap-2 shrink-0 shadow-md">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Client Ledger
+        <div className="flex gap-1.5 shrink-0">
+          <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} className="bg-slate-900 text-white font-black uppercase tracking-widest px-4 h-10 landscape:h-8 rounded-xl hover:bg-slate-800 transition-all text-[10px] flex items-center gap-1.5 shrink-0 shadow-sm">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Ledger
           </button>
-          <button onClick={() => onViewChange?.('admin-invoicesetting')} className="bg-slate-100 text-slate-600 font-black uppercase tracking-widest px-6 h-11 rounded-xl hover:bg-slate-200 transition-all text-[10px] flex items-center gap-2 shrink-0">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <button onClick={() => onViewChange?.('admin-invoicesetting')} className="bg-slate-100 text-slate-600 font-black uppercase tracking-widest px-3 h-10 landscape:h-8 rounded-xl hover:bg-slate-200 transition-all text-[10px] flex items-center gap-1.5 shrink-0">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             Settings
           </button>
-          <button onClick={() => onViewChange?.('admin-add-invoice')} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            Create Invoice
+          <button onClick={() => onViewChange?.('admin-add-invoice')} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-5 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5 shrink-0">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            Create
           </button>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
-            <thead className=" sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Inv. No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client (Trade/Legal)</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Amount</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Inv. No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Client (Trade/Legal)</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Amount</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
     <div className="flex justify-center flex-col items-center">
       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
          {['All', 'Active', 'Draft', 'Sent', 'Partial', 'Paid', 'Cancelled'].map(st => (
@@ -262,7 +281,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
       </TableFilter>
     </div>
   </th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

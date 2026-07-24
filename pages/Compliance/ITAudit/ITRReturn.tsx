@@ -13,7 +13,8 @@ import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
-
+import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
+import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const ITRReturn: React.FC = () => {
   const getPreviousAY = () => {
@@ -28,6 +29,9 @@ const ITRReturn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedAY, setSelectedAY] = useState(getPreviousAY());
+  
+  const { getGlobalDueDate } = useGlobalDueDates(selectedAY);
+  const itrDueDate = getGlobalDueDate('itr_return', 'Annual');
   
   // Filters
   const [statusFilter, setStatusFilter] = useState<'All' | 'Filed' | 'Prepared' | 'Pending'>('All');
@@ -197,60 +201,73 @@ const ITRReturn: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 px-2 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
+      {/* Mobile & Tablet Compact Stats Strip */}
+      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
+          <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Filed: <strong className="font-black text-indigo-900">{stats.filed}</strong></span>
+          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Prepared: <strong className="font-black text-amber-900">{stats.prepared}</strong></span>
+          <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Pending: <strong className="font-black text-rose-900">{stats.pending}</strong></span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
+          {itrDueDate && <span>ITR Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(itrDueDate)}</strong></span>}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total IT Return</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed</p>
-            <p className="text-lg md:text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Prepared</p>
-            <p className="text-lg md:text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Pending</p>
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed {itrDueDate && `(Due: ${formatISOToDDMMYYYY(itrDueDate)})`}</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Prepared</p>
+            <p className="text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-0.5">Pending</p>
             <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
         </div>
 
         <div className="relative flex-1 group w-full">
           <input type="text" placeholder="Search active IT client, PAN, or Father Name..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
-          <select value={selectedAY} onChange={e => setSelectedAY(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>AY {y}</option>)}</select>
-          <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
-            <span className="text-[9px] font-black text-slate-400 uppercase ">Due:</span>
-            <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
+          <select value={selectedAY} onChange={e => setSelectedAY(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>AY {y}</option>)}</select>
+          <div className="flex items-center bg-slate-50 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 border border-slate-200 focus-within:border-indigo-200 transition-all">
+            <span className="text-[9px] font-black text-slate-400 uppercase">Due:</span>
+            <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-700 outline-none cursor-pointer uppercase" />
           </div>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
-            <thead className=" sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[14px] font-bold uppercase tracking-widest text-slate-900">
-                <th className=" px-4 py-3">S.No.</th>
-                <th className=" px-4 py-3">Name</th>
-                <th className=" px-4 py-3 text-center">
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[12px] font-bold uppercase tracking-widest text-slate-900">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                       {['All', 'Filed', 'Prepared', 'Pending'].map(f => <button key={f} onClick={() => setStatusFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>)}
                     </TableFilter>
                   </div>
                 </th>
-                <th className=" px-4 py-3">Filing Date</th>
-                <th className=" px-4 py-3 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Filing Date</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Refund Status" isActive={refundStatusFilter !== 'All'}>
                       {['All', 'Pending', 'Received', 'No Refund'].map(f => (
@@ -259,10 +276,10 @@ const ITRReturn: React.FC = () => {
                     </TableFilter>
                   </div>
                 </th>
-                <th className=" px-4 py-3">Pan No.</th>
-                <th className=" px-4 py-3">Password</th>
-                <th className=" px-4 py-3">Remark</th>
-                <th className=" px-4 py-3 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Pan No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Password</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

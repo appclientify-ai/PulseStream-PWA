@@ -164,17 +164,17 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col min-h-0">
-      <div className="overflow-x-auto no-scrollbar flex-1 w-full">
+      <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
         <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className=" sticky top-0 z-20">
+          <thead className="sticky top-0 z-30 bg-slate-100">
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
-                            <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Name</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Father Name</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Pan No.</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Address</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
                 <div className="flex items-center gap-1">
                   Status
                   <button 
@@ -187,7 +187,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   </button>
                 </div>
               </th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

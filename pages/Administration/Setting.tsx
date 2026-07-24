@@ -142,12 +142,19 @@ const Setting: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleClearCache = () => {
-    if (confirm('Are you sure you want to clear local cache? This will purge cached data and refresh from the server.')) {
-      queryClient.clear();
-      localStorage.removeItem('CLIENTIFY_QUERY_CACHE');
-      api.invalidateCache();
-      setMessage({ type: 'success', text: 'Local query cache purged successfully.' });
+  const downloadAppShortcut = () => {
+    try {
+      const shortcutContent = `[InternetShortcut]\nURL=${window.location.origin}\nIconIndex=0\nIconFile=${window.location.origin}/favicon.ico\n`;
+      const blob = new Blob([shortcutContent], { type: 'application/x-mswinurl' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Clientify_App.url`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMessage({ type: 'success', text: 'App shortcut downloaded! You can pin this to your desktop.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Shortcut download failed.' });
     }
   };
 
@@ -159,7 +166,17 @@ const Setting: React.FC = () => {
            { id: 'profile', label: 'Firm' },
            { id: 'security', label: 'Security' },
            { id: 'appearance', label: 'UI' },
-           { id: 'app', label: 'Install App' },
+           { 
+             id: 'app', 
+             label: (
+               <span className="flex items-center gap-1.5">
+                 <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                 </svg>
+                 Download App
+               </span>
+             ) 
+           },
            { id: 'data', label: 'Data' }
          ].map(tab => (
            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
@@ -187,6 +204,21 @@ const Setting: React.FC = () => {
                          <img src={profileData.avatar} alt="DP" className="h-full w-full object-cover" />
                        ) : user?.username?.substring(0,2)}
                     </div>
+                    {profileData.avatar && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setProfileData({ ...profileData, avatar: null });
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="absolute top-[-10px] right-[-10px] h-10 w-10 bg-white border border-rose-200 rounded-xl shadow-lg flex items-center justify-center text-rose-500 hover:text-rose-700 transition-all hover:scale-110 z-10"
+                        title="Remove profile photo"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                     <button 
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -299,34 +331,31 @@ const Setting: React.FC = () => {
 
                      {/* Main Install Trigger Card */}
                      <div className="p-6 bg-white/5 rounded-2xl border border-white/10 space-y-4">
-                        {isStandalone ? (
-                           <div className="flex items-center gap-3 text-emerald-400">
-                              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                              <div>
-                                <span className="text-sm font-black uppercase tracking-widest block">App Installed & Active</span>
-                                <p className="text-xs text-slate-300 font-medium normal-case mt-0.5">You are currently using Clientify as a standalone native app.</p>
-                              </div>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                           <div className="space-y-1 text-center sm:text-left">
+                              <p className="text-white text-base font-black">Download & Install Application</p>
+                              <p className="text-slate-300 text-xs font-medium">Install Clientify directly onto your home screen or download a launcher shortcut for instant access.</p>
                            </div>
-                        ) : canInstall ? (
-                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                              <div className="space-y-1 text-center sm:text-left">
-                                 <p className="text-white text-base font-black">1-Click Direct Install Ready</p>
-                                 <p className="text-slate-300 text-xs font-medium">Click below to instantly install Clientify on your device desktop / home screen.</p>
-                              </div>
+                           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto shrink-0">
+                              {canInstall && (
+                                 <button 
+                                    onClick={triggerInstall} 
+                                    className="flex-1 sm:flex-initial bg-indigo-600 text-white font-black uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-xl hover:bg-white hover:text-slate-900 transition-all text-xs active:scale-95 flex items-center justify-center gap-2"
+                                 >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    <span>Install App</span>
+                                 </button>
+                              )}
                               <button 
-                                 onClick={triggerInstall} 
-                                 className="w-full sm:w-auto bg-indigo-600 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-xl hover:bg-white hover:text-slate-900 transition-all text-xs shrink-0 active:scale-95 flex items-center justify-center gap-2"
+                                 onClick={downloadAppShortcut} 
+                                 className="flex-1 sm:flex-initial bg-white/10 hover:bg-white/20 border border-white/20 text-white font-black uppercase tracking-widest px-6 py-3.5 rounded-xl transition-all text-xs active:scale-95 flex items-center justify-center gap-2"
+                                 title="Download Desktop Launcher Shortcut"
                               >
-                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                 <span>Install Clientify Now</span>
+                                 <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                 <span>Download Shortcut</span>
                               </button>
                            </div>
-                        ) : (
-                           <div className="text-xs font-medium text-slate-300">
-                              <p className="font-bold text-white mb-1">Installation Guide Below:</p>
-                              <p>Follow the step-by-step instructions for your specific device platform below to add Clientify to your Home Screen, Dock, or Desktop.</p>
-                           </div>
-                        )}
+                        </div>
                      </div>
                   </div>
                </section>

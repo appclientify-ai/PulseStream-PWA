@@ -12,7 +12,8 @@ import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFili
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
-
+import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
+import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const GSTR9_9C: React.FC = () => {
   const getPreviousFY = () => {
@@ -27,6 +28,10 @@ const GSTR9_9C: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
+  
+  const { getGlobalDueDate } = useGlobalDueDates(selectedYear);
+  const gstr9DueDate = getGlobalDueDate('annual_gstr9', 'Annual');
+  const gstr9cDueDate = getGlobalDueDate('annual_gstr9c', 'Annual');
   
   // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -213,75 +218,94 @@ const GSTR9_9C: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4 px-2 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
+    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-3 md:gap-6 px-2 md:px-4 border-r border-slate-100 shrink-0">
+      {/* Mobile & Tablet Compact Stats Strip */}
+      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
+          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Filed: <strong className="font-black text-indigo-900">{stats.filed}</strong></span>
+          <span className="bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Pending: <strong className="font-black text-rose-900">{stats.pending}</strong></span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
+          {gstr9DueDate && <span>GSTR-9: <strong className="text-indigo-600">{formatISOToDDMMYYYY(gstr9DueDate)}</strong></span>}
+          {gstr9cDueDate && <span>9C: <strong className="text-emerald-600">{formatISOToDDMMYYYY(gstr9cDueDate)}</strong></span>}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">GSTR-9/9C Total</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+          <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed</p>
-            <p className="text-lg md:text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
+            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-3 md:pl-6">
+          <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-0.5">Pending</p>
-            <p className="text-lg md:text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
+            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
           </div>
         </div>
         <div className="relative flex-1 group w-full">
           <input type="text" placeholder="Search entity in audit list..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
-          <button onClick={() => { setSelectedClient(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-11 px-6 bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-slate-900 transition-all flex items-center gap-2">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+          <button onClick={() => { setSelectedClient(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-5 landscape:px-3 bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Track Entity
           </button>
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
-          <div className="flex items-center bg-slate-50 rounded-xl px-4 py-3 gap-2 border border-transparent focus-within:border-indigo-100 transition-all">
-            <span className="text-[9px] font-black text-slate-400 uppercase ">Due:</span>
-            <input type="date" value={getDueDate()} onChange={e => updateDueDate(e.target.value)} className="bg-transparent border-none p-0 text-[11px] font-black text-slate-600 outline-none cursor-pointer uppercase" />
-          </div>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
+          {gstr9DueDate && (
+            <div className="flex items-center bg-indigo-50 border border-indigo-100 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 text-indigo-700 font-bold text-[10px] uppercase shrink-0">
+              <span>9 Due: <strong>{formatISOToDDMMYYYY(gstr9DueDate)}</strong></span>
+            </div>
+          )}
+          {gstr9cDueDate && (
+            <div className="flex items-center bg-emerald-50 border border-emerald-100 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 text-emerald-700 font-bold text-[10px] uppercase shrink-0">
+              <span>9C Due: <strong>{formatISOToDDMMYYYY(gstr9cDueDate)}</strong></span>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden">
-            <thead className=" sticky top-0 z-20">
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Trader Name</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trader Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-9" isActive={gstr9Filter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setGstr9Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${gstr9Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-9C" isActive={gstr9cFilter !== 'All'}>
                        {['All', 'Filed', 'Pending', 'N/A'].map(f => <button key={f} onClick={() => setGstr9cFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${gstr9cFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Remark</th>
-                <th className=" px-4 py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">User ID</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={9} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                    <td colSpan={9} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);

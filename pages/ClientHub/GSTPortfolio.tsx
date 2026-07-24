@@ -153,11 +153,12 @@ const GSTPortfolioContent: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Mobile-only compact stats strip showing Monthly counts */}
-      <div className="flex items-center justify-between w-full md:hidden gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Monthly: <strong className="font-black text-indigo-900">{stats.monthly}</strong></span>
-        <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Active: <strong className="font-black text-emerald-900">{stats.active}</strong></span>
+      {/* Compact stats strip for Mobile & Tablet */}
+      <div className="flex items-center justify-between w-full md:hidden gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0 overflow-x-auto no-scrollbar">
+        <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
+        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Active: <strong className="font-black text-emerald-900">{stats.active}</strong></span>
+        <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Inactive: <strong className="font-black text-amber-900">{stats.inactive}</strong></span>
+        <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Litigation: <strong className="font-black text-rose-900">{stats.litigation}</strong></span>
       </div>
 
       <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
@@ -167,16 +168,16 @@ const GSTPortfolioContent: React.FC = () => {
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">Monthly</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.monthly}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Active</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">Inactive</p>
-            <p className="text-xl font-black text-slate-400 leading-none">{stats.inactive}</p>
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Inactive</p>
+            <p className="text-xl font-black text-amber-600 leading-none">{stats.inactive}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Litigation</p>
+            <p className="text-xl font-black text-rose-600 leading-none">{stats.litigation}</p>
           </div>
         </div>
 

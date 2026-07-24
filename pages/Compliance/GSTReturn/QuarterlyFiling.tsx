@@ -9,6 +9,8 @@ import { TableFilter } from '../../../components/TableFilter';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from './filinglogic/MonthlyFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { toast } from 'sonner';
+import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
+import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -23,6 +25,17 @@ const QuarterlyFiling: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
   const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
   
+  const currentQuarter = useMemo(() => {
+    if (['April', 'May', 'June'].includes(selectedMonth)) return 'April-June (Q1)';
+    if (['July', 'August', 'September'].includes(selectedMonth)) return 'July-September (Q2)';
+    if (['October', 'November', 'December'].includes(selectedMonth)) return 'October-December (Q3)';
+    return 'January-March (Q4)';
+  }, [selectedMonth]);
+
+  const { getGlobalDueDate } = useGlobalDueDates(selectedYear);
+  const iffDueDate = getGlobalDueDate('quarterly_iff', currentQuarter);
+  const q3bDueDate = getGlobalDueDate('quarterly_r3b', currentQuarter);
+
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
@@ -161,74 +174,87 @@ const QuarterlyFiling: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-4">
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
+      
+      {/* Mobile & Tablet Compact Stats Strip */}
+      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">QRMP Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
+          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">IFF Filed: <strong className="font-black text-indigo-900">{stats.r1}</strong></span>
+          <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Filed: <strong className="font-black text-emerald-900">{isQuarterEnd ? stats.r3b : '---'}</strong></span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
+          {iffDueDate && <span>IFF Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(iffDueDate)}</strong></span>}
+          {q3bDueDate && <span>3B Due: <strong className="text-emerald-600">{formatISOToDDMMYYYY(q3bDueDate)}</strong></span>}
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">QRMP Total</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">QRMP Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1">IFF Filed</p>
+            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">IFF Filed {iffDueDate && `(Due: ${formatISOToDDMMYYYY(iffDueDate)})`}</p>
             <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">3B Filed</p>
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">3B Filed {q3bDueDate && `(Due: ${formatISOToDDMMYYYY(q3bDueDate)})`}</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{isQuarterEnd ? stats.r3b : '---'}</p>
           </div>
         </div>
         <div className="flex-1 relative group w-full">
           <input type="text" placeholder="Search QRMP..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex gap-2 shrink-0 items-center">
-           <button onClick={handlePrint} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors" title="Print List">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+           <button onClick={handlePrint} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center" title="Print List">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
            </button>
-           <button onClick={handleExportCSV} className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors" title="Export Excel / CSV">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+           <button onClick={handleExportCSV} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center" title="Export Excel / CSV">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
            </button>
-           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border-none rounded-xl px-4 py-3 text-[11px] font-black uppercase text-slate-600 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1 w-full min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden">
-            <thead className=" sticky top-0 z-20">
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Trade Name</th>
-                
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">GSTIN</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="IFF/R1" isActive={r1Filter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
                        {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">User ID</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Password</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900">Remark</th>
-                <th className=" px-4 py-3 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">User ID</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={12} className="bg-slate-100 font-bold text-slate-700 py-2 px-4 uppercase text-[10px] tracking-widest">{sector}</td>
+                    <td colSpan={12} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);

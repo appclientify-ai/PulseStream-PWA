@@ -65,3 +65,14 @@ export const formatDate = (dateInput: string | Date | undefined | null): string 
   return str;
 };
 
+export const formatISOToDDMMYYYY = (isoStr: string | null | undefined): string => {
+  if (!isoStr || !isoStr.trim()) return 'DD/MM/YYYY';
+  const str = isoStr.trim();
+  const parts = str.split(/[-/]/);
+  if (parts.length === 3 && parts[0].length === 4) {
+    // YYYY-MM-DD
+    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+  }
+  return formatDate(str);
+};
+
