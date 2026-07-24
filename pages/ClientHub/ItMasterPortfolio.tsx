@@ -170,10 +170,9 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">S.No.</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Name</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Father Name</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Mobile No.</th>
                             <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Pan No.</th>
-              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Password</th>
+              <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">Address</th>
               <th className=" px-[5.5px] py-3 text-[14px] font-bold uppercase tracking-widest text-slate-900">
                 <div className="flex items-center gap-1">
                   Status
@@ -213,9 +212,6 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                      )}
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
                      <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
                   </td>
                                     <td className=" px-[5.5px] py-[2px]">
@@ -230,15 +226,10 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         </button>
                      </div>
                   </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <div className="flex items-center gap-2 group/pass">
-                        <span className="font-black text-slate-400 text-[12px] tracking-widest">
-                           {visiblePasswords.has(client.id) ? client.itProfile?.password : '••••••••'}
-                        </span>
-                        <button onClick={() => togglePassword(client.id)} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all">
-                           {visiblePasswords.has(client.id) ? '🙈' : '👁️'}
-                        </button>
-                     </div>
+                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
+                     <p className="font-bold text-slate-500 text-[11px] truncate" title={client.itProfile?.address}>
+                        {client.itProfile?.address || '---'}
+                     </p>
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${

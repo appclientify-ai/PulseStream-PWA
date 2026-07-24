@@ -33,7 +33,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   const [items, setItems] = useState<InvoiceLineItem[]>([
     { id: '1', description: '', quantity: 1, rate: 0, taxRate: 18, amount: 0 }
   ]);
-  const [status, setStatus] = useState<InvoiceRecord['status']>('Draft');
+  const [status, setStatus] = useState<InvoiceRecord['status']>('Sent');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {

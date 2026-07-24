@@ -91,41 +91,55 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   };
 
   const clientBalances = useMemo(() => {
+    // 0. Group clients by tradeName (or legalName if no tradeName)
+    const groupedClientsMap = new Map<string, Client & { _allIds: string[], _allLegalNames: string[] }>();
+    clients.forEach(c => {
+      const key = (c.tradeName || c.legalName).trim().toLowerCase();
+      if (!groupedClientsMap.has(key)) {
+        groupedClientsMap.set(key, { ...c, _allIds: [c.id], _allLegalNames: [c.legalName.trim().toLowerCase()] });
+      } else {
+        const existing = groupedClientsMap.get(key)!;
+        existing._allIds.push(c.id);
+        existing._allLegalNames.push(c.legalName.trim().toLowerCase());
+      }
+    });
+    const groupedClients = Array.from(groupedClientsMap.values());
+
     // 1. Process regular clients
-    const regularBalances = clients.map(client => {
-      const clientInvoices = validInvoices.filter(i => 
-        i.clientId === client.id || 
-        (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-        (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
-      );
-      const clientPayments = validPayments.filter(p => 
-        p.clientId === client.id || 
-        (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-        (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase())
-      );
+    const regularBalances = groupedClients.map(client => {
+      const clientInvoices = validInvoices.filter(i => {
+        if (i.clientId && i.clientId !== 'misc') return client._allIds.includes(i.clientId);
+        return (i.clientName && client._allLegalNames.includes(i.clientName.trim().toLowerCase())) ||
+          (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+      });
+      const clientPayments = validPayments.filter(p => {
+        if (p.clientId && p.clientId !== 'misc') return client._allIds.includes(p.clientId);
+        return (p.clientName && client._allLegalNames.includes(p.clientName.trim().toLowerCase())) ||
+          (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+      });
       
       const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
       const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
       
       const balance = totalInvoiced - totalPaid; // positive = debit, negative = credit
-      return { client, balance, hasActivity: clientInvoices.length > 0 || clientPayments.length > 0 };
+      return { client: client as Client, balance, hasActivity: clientInvoices.length > 0 || clientPayments.length > 0 };
     });
 
     // 2. Identify and group unmatched invoices/payments (manual or misc clients)
     const unmatchedInvoices = validInvoices.filter(i => 
-      !clients.some(c => 
-        i.clientId === c.id || 
-        (i.clientName && i.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
-        (i.clientTradeName && c.tradeName && i.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase())
-      )
+      !groupedClients.some(c => {
+        if (i.clientId && i.clientId !== 'misc') return c._allIds.includes(i.clientId);
+        return (i.clientName && c._allLegalNames.includes(i.clientName.trim().toLowerCase())) ||
+          (i.clientTradeName && c.tradeName && i.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase());
+      })
     );
 
     const unmatchedPayments = validPayments.filter(p => 
-      !clients.some(c => 
-        p.clientId === c.id || 
-        (p.clientName && p.clientName.trim().toLowerCase() === c.legalName.trim().toLowerCase()) ||
-        (p.clientTradeName && c.tradeName && p.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase())
-      )
+      !groupedClients.some(c => {
+        if (p.clientId && p.clientId !== 'misc') return c._allIds.includes(p.clientId);
+        return (p.clientName && c._allLegalNames.includes(p.clientName.trim().toLowerCase())) ||
+          (p.clientTradeName && c.tradeName && p.clientTradeName.trim().toLowerCase() === c.tradeName.trim().toLowerCase());
+      })
     );
 
     const unmatchedNames = new Set<string>();
@@ -174,15 +188,19 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
     
     const clientInvoices = validInvoices.filter(i => {
       if (isManual) return i.clientName === selectedClient.legalName;
-      return i.clientId === selectedClient.id || 
-        (i.clientName && i.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
+      const allIds = (selectedClient as any)._allIds || [selectedClient.id];
+      const allLegalNames = (selectedClient as any)._allLegalNames || [selectedClient.legalName.trim().toLowerCase()];
+      if (i.clientId && i.clientId !== 'misc') return allIds.includes(i.clientId);
+      return (i.clientName && allLegalNames.includes(i.clientName.trim().toLowerCase())) ||
         (i.clientTradeName && selectedClient.tradeName && i.clientTradeName.trim().toLowerCase() === selectedClient.tradeName.trim().toLowerCase());
     });
 
     const clientPayments = validPayments.filter(p => {
       if (isManual) return p.clientName === selectedClient.legalName;
-      return p.clientId === selectedClient.id || 
-        (p.clientName && p.clientName.trim().toLowerCase() === selectedClient.legalName.trim().toLowerCase()) ||
+      const allIds = (selectedClient as any)._allIds || [selectedClient.id];
+      const allLegalNames = (selectedClient as any)._allLegalNames || [selectedClient.legalName.trim().toLowerCase()];
+      if (p.clientId && p.clientId !== 'misc') return allIds.includes(p.clientId);
+      return (p.clientName && allLegalNames.includes(p.clientName.trim().toLowerCase())) ||
         (p.clientTradeName && selectedClient.tradeName && p.clientTradeName.trim().toLowerCase() === selectedClient.tradeName.trim().toLowerCase());
     });
 
