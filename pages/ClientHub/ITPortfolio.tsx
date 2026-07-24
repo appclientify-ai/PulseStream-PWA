@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ItMasterPortfolio from './ItMasterPortfolio';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
 import { api } from '../../services/api.ts';
@@ -7,29 +8,25 @@ import { Client } from '../../types';
 
 const ITPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [search, setSearch] = useState('');
-  const [clients, setClients] = useState<Client[]>([]);
+  const queryClient = useQueryClient();
 
-  const loadData = useCallback(async () => {
-    try {
-      const data = await api.getClients();
-      setClients((data || []).filter(c => c && c.itProfile));
-    } catch (err) {
-      console.error("IT Vault Sync Error:", err);
-    }
-  }, []);
+  const { data: clientsData } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [refreshTrigger, loadData]);
-
+  const clients = useMemo(() => {
+    return (clientsData || []).filter(c => c && c.itProfile);
+  }, [clientsData]);
 
   useEffect(() => {
-    const syncHandler = () => loadData();
+    const syncHandler = () => queryClient.invalidateQueries({ queryKey: ['clients'] });
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [loadData]);
+  }, [queryClient]);
+
   const stats = useMemo(() => {
     const total = clients.length;
     const active = (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;
@@ -38,7 +35,7 @@ const ITPortfolio: React.FC = () => {
   }, [clients]);
 
   const handleRefresh = () => {
-    setRefreshTrigger(p => p + 1);
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
   };
 
   return (

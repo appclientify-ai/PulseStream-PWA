@@ -2,6 +2,7 @@ import { ErrorBoundary } from '../../components/ErrorBoundary.tsx';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { useOffline } from '../../hooks/useOffline.ts';
@@ -72,20 +73,58 @@ const Dashboard: React.FC = () => {
   const [viewExtra, setViewExtra] = useState<any>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
+  const queryClient = useQueryClient();
+
   // Quick Nav Modal State
   const [navigationFolder, setNavigationFolder] = useState<NavItem | null>(null);
 
-  // Data State
-  const [clients, setClients] = useState<Client[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [litigation, setLitigation] = useState<LitigationRecord[]>([]);
-  const [miscWork, setMiscWork] = useState<any[]>([]);
-  const [gstReg, setGstReg] = useState<any[]>([]);
-  const [foodLic, setFoodLic] = useState<any[]>([]);
-  const [msme, setMsme] = useState<any[]>([]);
+  // React Query for Dashboard Summary
+  const {
+    data: summary,
+    isLoading: isSummaryLoading
+  } = useQuery({
+    queryKey: ['dashboard_summary'],
+    queryFn: () => api.getDashboardSummary(),
+    enabled: !!token,
+    staleTime: 1000 * 60 * 5, // 5 minutes fresh
+  });
+
+  // React Query for Filing Data Cache
+  const {
+    data: filingDataCache = {}
+  } = useQuery<Record<string, any>>({
+    queryKey: ['filing_data_cache'],
+    queryFn: async () => {
+      const keys = [
+        'clientify_monthly_filing_v3',
+        'clientify_quarterly_filing_v3',
+        'clientify_composition_filing_v3',
+        'clientify_gstr4_filing_v1',
+        'clientify_gstr9_filing_data_v2',
+        'clientify_itr_filing_data_v2',
+        'clientify_audit_fin_data_v3',
+        'clientify_gstr9_watchlist_v2'
+      ];
+      const data: Record<string, any> = {};
+      for (const k of keys) {
+        data[k] = (await api.getAppData(k)) || {};
+      }
+      return data;
+    },
+    enabled: !!token,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const clients: Client[] = useMemo(() => summary?.clients || [], [summary]);
+  const invoices: InvoiceRecord[] = useMemo(() => summary?.invoices || [], [summary]);
+  const litigation: LitigationRecord[] = useMemo(() => summary?.litigation || [], [summary]);
+  const miscWork: any[] = useMemo(() => summary?.work || [], [summary]);
+  const gstReg: any[] = useMemo(() => summary?.gstReg || [], [summary]);
+  const foodLic: any[] = useMemo(() => summary?.foodLic || [], [summary]);
+  const msme: any[] = useMemo(() => summary?.msme || [], [summary]);
+  const payments: any[] = useMemo(() => summary?.payments || [], [summary]);
+
+  const isInitialLoad = isSummaryLoading && !summary;
 
   // Form Modals
   const [isGstModalOpen, setIsGstModalOpen] = useState(false);
@@ -118,61 +157,13 @@ const Dashboard: React.FC = () => {
   const [annualFilter, setAnnualFilter] = useState({ year: getPrevFY(def.year) });
   const [itrFilter, setItrFilter] = useState({ ay: getCurrentAY() });
 
-  const loadData = useCallback(async (isSync = false) => {
-    if (!token) return;
-    try {
-      const summary = await api.getDashboardSummary();
-      setClients(summary.clients);
-      setInvoices(summary.invoices);
-      setLitigation(summary.litigation);
-      setMiscWork(summary.work);
-      setGstReg(summary.gstReg || []);
-      setFoodLic(summary.foodLic || []);
-      setMsme(summary.msme || []);
-      setPayments(summary.payments || []);
-    } catch (err) { console.error('Dashboard Sync Failed:', err); } finally { setIsInitialLoad(false); }
-  }, [token]);
-
   useEffect(() => {
     if (isOnline) { 
-      loadData(); 
       socketService.connect(); 
-            const syncHandler = (e: any) => { 
+      const syncHandler = (e: any) => { 
         console.log('Real-time sync event received:', e.detail);
-        if (!e || !e.detail || !e.detail.data) {
-          loadData(true); loadFilingData();
-          return;
-        }
-        
-        const payload = e.detail;
-        const { type, data } = payload;
-        const id = data._id || payload.id;
-        
-        // Format to match API responses
-        const item = { ...data.data, id: id, createdAt: data.createdAt, updatedAt: data.updatedAt };
-        
-        const applyUpdate = (setter: any) => {
-          setter((prev: any[]) => {
-            if (type === 'insert') return [item, ...prev];
-            if (type === 'update') return prev.map(p => (p.id === id ? { ...p, ...item } : p));
-            if (type === 'delete') return prev.filter(p => p.id !== id);
-            return prev;
-          });
-        };
-
-        switch (data.name) {
-          case 'client': applyUpdate(setClients); break;
-          case 'invoice': applyUpdate(setInvoices); break;
-          case 'litigation': applyUpdate(setLitigation); break;
-          case 'work': applyUpdate(setMiscWork); break;
-          case 'gstReg': applyUpdate(setGstReg); break;
-          case 'foodLic': applyUpdate(setFoodLic); break;
-          case 'msme': applyUpdate(setMsme); break;
-          case 'payment': applyUpdate(setPayments); break;
-          default: 
-            console.log('Unknown slice, reloading all data');
-            loadData(true); loadFilingData();
-        }
+        queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
+        queryClient.invalidateQueries({ queryKey: ['filing_data_cache'] });
       };
       window.addEventListener('clientify_db_change', syncHandler);
       return () => {
@@ -180,7 +171,7 @@ const Dashboard: React.FC = () => {
         socketService.disconnect();
       };
     }
-  }, [isOnline, loadData]);
+  }, [isOnline, queryClient]);
 
   const handleViewChange = (view: ActiveView, extra?: any) => {
     navigate(`/${view}`);
@@ -188,21 +179,6 @@ const Dashboard: React.FC = () => {
     setNavigationFolder(null);
     window.scrollTo(0, 0);
   };
-
-const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
-  
-  const loadFilingData = async () => {
-    const keys = ['clientify_monthly_filing_v3', 'clientify_quarterly_filing_v3', 'clientify_composition_filing_v3', 'clientify_gstr4_filing_v1', 'clientify_gstr9_filing_data_v2', 'clientify_itr_filing_data_v2', 'clientify_audit_fin_data_v3', 'clientify_gstr9_watchlist_v2'];
-    const data: Record<string, any> = {};
-    for (const k of keys) {
-      data[k] = await api.getAppData(k) || {};
-    }
-    setFilingDataCache(data);
-  };
-  
-  useEffect(() => {
-    loadFilingData();
-  }, []);
 
   const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
     const keys: Record<string, string> = {
@@ -970,8 +946,8 @@ const [filingDataCache, setFilingDataCache] = useState<Record<string, any>>({});
 
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} onViewChange={handleViewChange} />
       
-      <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => loadData()} />
-      <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => loadData()} />
+      <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] })} />
+      <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] })} />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -16,9 +17,7 @@ import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const CompositionFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [isCmp08FilterOpen, setIsCmp08FilterOpen] = useState(false);
@@ -47,20 +46,26 @@ const CompositionFiling: React.FC = () => {
     return 'March';
   }, [selectedQuarter]);
 
-  const fetchClients = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const data = await api.getClients();
-      setAllClientsBase(data);
-      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Composition'));
-    } finally { setIsLoading(false); }
-  };
+  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => { fetchClients();
-    const syncHandler = () => fetchClients(true);
+  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
+  const clients = useMemo(() => {
+    return allClientsBase.filter(c => c && c.gstProfile?.regType === 'Composition');
+  }, [allClientsBase]);
+
+  const isLoading = isClientsLoading && !clientsData;
+
+  useEffect(() => {
+    const syncHandler = () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -101,7 +106,7 @@ const CompositionFiling: React.FC = () => {
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as any) : c));
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };

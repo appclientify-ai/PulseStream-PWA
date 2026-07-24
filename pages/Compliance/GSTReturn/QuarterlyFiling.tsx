@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -14,9 +15,7 @@ import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
@@ -47,21 +46,26 @@ const QuarterlyFiling: React.FC = () => {
 
   const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
 
-  const fetchClients = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const data = await api.getClients();
-      setAllClientsBase(data);
-      // AUTOMATIC ROUTING: Quarterly Return list only shows taxpayers with Quarterly frequency
-      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
-    } finally { setIsLoading(false); }
-  };
+  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => { fetchClients();
-    const syncHandler = () => fetchClients(true);
+  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
+  const clients = useMemo(() => {
+    return allClientsBase.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
+  }, [allClientsBase]);
+
+  const isLoading = isClientsLoading && !clientsData;
+
+  useEffect(() => {
+    const syncHandler = () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -114,7 +118,7 @@ const QuarterlyFiling: React.FC = () => {
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
