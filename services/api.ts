@@ -206,6 +206,19 @@ class ApiService {
     }
   }
 
+  async getDashboardData(): Promise<{ summary: any; filingDataCache: Record<string, any> }> {
+    try {
+      const res = await this.get('/items/dashboard/summary');
+      if (res && res.summary) {
+        return res;
+      }
+    } catch (e) {
+      console.warn('Dedicated dashboard endpoint failed, falling back:', e);
+    }
+    const summary = await this.getDashboardSummary();
+    return { summary, filingDataCache: {} };
+  }
+
   async getDashboardSummary() {
     const [clients, litigation, invoices, work, gstReg, foodLic, msme, payments] = await Promise.all([
       this.getClients(),

@@ -236,3 +236,75 @@ export const patchAppData = async (req, res) => {
     res.status(500).json({ error: 'Failed to patch app data' });
   }
 };
+
+export const getDashboardSummaryData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+
+    const appDataKeys = [
+      'clientify_monthly_filing_v3',
+      'clientify_quarterly_filing_v3',
+      'clientify_composition_filing_v3',
+      'clientify_gstr4_filing_v1',
+      'clientify_gstr9_filing_data_v2',
+      'clientify_itr_filing_data_v2',
+      'clientify_audit_fin_data_v3',
+      'clientify_gstr9_watchlist_v2'
+    ];
+    const appDataNames = appDataKeys.map(k => 'app_data_' + k);
+    const categoryNames = ['client', 'litigation', 'invoice', 'work', 'gstReg', 'foodLic', 'msme', 'payment'];
+
+    const query = {
+      createdBy: { $in: userMatches },
+      name: { $in: [...categoryNames, ...appDataNames] }
+    };
+
+    const rawItems = await itemsColl.find(query).toArray();
+
+    const summary = {
+      clients: [],
+      litigation: [],
+      invoices: [],
+      work: [],
+      gstReg: [],
+      foodLic: [],
+      msme: [],
+      payments: []
+    };
+    const filingDataCache = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') summary.clients.push(transformed);
+      else if (item.name === 'litigation') summary.litigation.push(transformed);
+      else if (item.name === 'invoice') summary.invoices.push(transformed);
+      else if (item.name === 'work') summary.work.push(transformed);
+      else if (item.name === 'gstReg') summary.gstReg.push(transformed);
+      else if (item.name === 'foodLic') summary.foodLic.push(transformed);
+      else if (item.name === 'msme') summary.msme.push(transformed);
+      else if (item.name === 'payment') summary.payments.push(transformed);
+      else if (item.name.startsWith('app_data_')) {
+        const key = item.name.replace('app_data_', '');
+        filingDataCache[key] = item.data || {};
+      }
+    }
+
+    res.json({ summary, filingDataCache });
+  } catch (err) {
+    console.error('Get Dashboard Summary Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve dashboard summary data' });
+  }
+};

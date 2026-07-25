@@ -78,44 +78,19 @@ const Dashboard: React.FC = () => {
   // Quick Nav Modal State
   const [navigationFolder, setNavigationFolder] = useState<NavItem | null>(null);
 
-  // React Query for Dashboard Summary
+  // Single optimized React Query for Dashboard Data
   const {
-    data: summary,
-    isLoading: isSummaryLoading
+    data: dashboardResponse,
+    isLoading: isDashboardLoading
   } = useQuery({
-    queryKey: ['dashboard_summary'],
-    queryFn: () => api.getDashboardSummary(),
+    queryKey: ['dashboard_data'],
+    queryFn: () => api.getDashboardData(),
     enabled: !!token,
     staleTime: 1000 * 60 * 5, // 5 minutes fresh
   });
 
-  // React Query for Filing Data Cache
-  const {
-    data: filingDataCache = {}
-  } = useQuery<Record<string, any>>({
-    queryKey: ['filing_data_cache'],
-    queryFn: async () => {
-      const keys = [
-        'clientify_monthly_filing_v3',
-        'clientify_quarterly_filing_v3',
-        'clientify_composition_filing_v3',
-        'clientify_gstr4_filing_v1',
-        'clientify_gstr9_filing_data_v2',
-        'clientify_itr_filing_data_v2',
-        'clientify_audit_fin_data_v3',
-        'clientify_gstr9_watchlist_v2'
-      ];
-      const results = await Promise.all(
-        keys.map(async (k) => {
-          const val = await api.getAppData(k);
-          return [k, val || {}];
-        })
-      );
-      return Object.fromEntries(results);
-    },
-    enabled: !!token,
-    staleTime: 1000 * 60 * 5,
-  });
+  const summary = dashboardResponse?.summary;
+  const filingDataCache = useMemo(() => dashboardResponse?.filingDataCache || {}, [dashboardResponse]);
 
   const clients: Client[] = useMemo(() => summary?.clients || [], [summary]);
   const invoices: InvoiceRecord[] = useMemo(() => summary?.invoices || [], [summary]);
@@ -126,7 +101,7 @@ const Dashboard: React.FC = () => {
   const msme: any[] = useMemo(() => summary?.msme || [], [summary]);
   const payments: any[] = useMemo(() => summary?.payments || [], [summary]);
 
-  const isInitialLoad = isSummaryLoading && !summary;
+  const isInitialLoad = isDashboardLoading && !dashboardResponse;
 
   // Form Modals
   const [isGstModalOpen, setIsGstModalOpen] = useState(false);
@@ -164,6 +139,7 @@ const Dashboard: React.FC = () => {
       socketService.connect(); 
       const syncHandler = (e: any) => { 
         console.log('Real-time sync event received:', e.detail);
+        queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
         queryClient.invalidateQueries({ queryKey: ['filing_data_cache'] });
       };
