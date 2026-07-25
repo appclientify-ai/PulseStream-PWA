@@ -16,22 +16,16 @@ interface LitigationModuleProps {
 const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status }) => {
   const queryClient = useQueryClient();
 
-  const { data: litigationData, isLoading: isLitigationLoading } = useQuery({
-    queryKey: ['litigationRecords'],
-    queryFn: () => api.getLitigationRecords(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['litigation_filing_page_data'],
+    queryFn: () => api.getLitigationFilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const allRecords = useMemo(() => litigationData || [], [litigationData]);
-  const clients = useMemo(() => clientsData || [], [clientsData]);
-  const records = useMemo(() => allRecords.filter(r => r.category === category && r.status === status), [allRecords, category, status]);
-  const isLoading = isLitigationLoading || isClientsLoading;
+  const allRecords = useMemo(() => pageData?.litigation || [], [pageData]);
+  const clients = useMemo(() => pageData?.clients || [], [pageData]);
+  const records = useMemo(() => allRecords.filter(r => r.category === category && (r.status === status || (status === 'Drop' && r.status === 'Dropped') || (status === 'Dropped' && r.status === 'Drop'))), [allRecords, category, status]);
+  const isLoading = isPageLoading && !pageData;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -40,6 +34,7 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
 
   const refreshData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['litigation_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);

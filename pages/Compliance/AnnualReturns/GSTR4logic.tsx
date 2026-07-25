@@ -11,12 +11,23 @@ export interface GSTR4FilingStatus {
 const STORAGE_KEY = 'clientify_gstr4_filing_v1';
 const STORAGE_KEY_DATES = 'clientify_gstr4_due_dates_v1';
 
-export const useGSTR4Logic = (selectedYear: string) => {
-  const [allData, setAllData] = useState<Record<string, Record<string, GSTR4FilingStatus>>>({});
-  const [dueDates, setDueDates] = useState<Record<string, string>>({});
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+export const useGSTR4Logic = (
+  selectedYear: string,
+  initialData?: Record<string, Record<string, GSTR4FilingStatus>>,
+  initialDates?: Record<string, string>
+) => {
+  const [allData, setAllData] = useState<Record<string, Record<string, GSTR4FilingStatus>>>(initialData || {});
+  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
+  const [isDataLoaded, setIsDataLoaded] = useState(!!initialData);
 
   useEffect(() => {
+    if (initialData) setAllData(initialData);
+    if (initialDates) setDueDates(initialDates);
+    if (initialData || initialDates) setIsDataLoaded(true);
+  }, [initialData, initialDates]);
+
+  useEffect(() => {
+    if (initialData) return;
     const load = async () => {
       try {
         const data = await api.getAppData(STORAGE_KEY);
@@ -33,7 +44,7 @@ export const useGSTR4Logic = (selectedYear: string) => {
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [initialData]);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {

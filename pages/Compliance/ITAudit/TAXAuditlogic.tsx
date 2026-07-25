@@ -17,13 +17,26 @@ const STORAGE_KEY_DATA = 'clientify_audit_fin_data_v3';
 const STORAGE_KEY_WATCHLIST = 'clientify_audit_watchlist_v3';
 const STORAGE_KEY_DATES = 'clientify_audit_due_dates_v1';
 
-export const useTaxAuditLogic = (selectedYear: string) => {
-  const [watchlist, setWatchlist] = useState<Record<string, string[]>>({});
-  const [allData, setAllData] = useState<Record<string, Record<string, AuditFinancialStatus>>>({});
-  const [dueDates, setDueDates] = useState<Record<string, string>>({});
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+export const useTaxAuditLogic = (
+  selectedYear: string,
+  initialWatchlist?: Record<string, string[]>,
+  initialData?: Record<string, Record<string, AuditFinancialStatus>>,
+  initialDates?: Record<string, string>
+) => {
+  const [watchlist, setWatchlist] = useState<Record<string, string[]>>(initialWatchlist || {});
+  const [allData, setAllData] = useState<Record<string, Record<string, AuditFinancialStatus>>>(initialData || {});
+  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
+  const [isDataLoaded, setIsDataLoaded] = useState(!!initialWatchlist || !!initialData);
 
   useEffect(() => {
+    if (initialWatchlist) setWatchlist(initialWatchlist);
+    if (initialData) setAllData(initialData);
+    if (initialDates) setDueDates(initialDates);
+    if (initialWatchlist || initialData) setIsDataLoaded(true);
+  }, [initialWatchlist, initialData, initialDates]);
+
+  useEffect(() => {
+    if (initialWatchlist || initialData) return;
     const load = async () => {
       try {
         const [w, d, dates] = await Promise.all([
@@ -44,7 +57,7 @@ export const useTaxAuditLogic = (selectedYear: string) => {
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [initialWatchlist, initialData]);
 
   const yearWatchlist = watchlist[selectedYear] || [];
 

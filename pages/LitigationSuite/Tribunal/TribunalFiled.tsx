@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -9,11 +10,22 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 import { formatDate } from '../../../dateUtils';
 
-
 const TribunalFiled: React.FC = () => {
-  const [records, setRecords] = useState<LitigationRecord[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: allRecords = [], isLoading: isRecordsLoading } = useQuery({
+    queryKey: ['tribunal_records'],
+    queryFn: () => api.getTribunalRecords(true),
+  });
+
+  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+  });
+
+  const records = useMemo(() => allRecords.filter(r => r.status === 'Filed'), [allRecords]);
+  const isLoading = isRecordsLoading || isClientsLoading;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
@@ -21,59 +33,73 @@ const TribunalFiled: React.FC = () => {
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
 
-  const fetchAll = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [recs, clis] = await Promise.all([
-        api.getLitigationRecords(),
-        api.getClients()
-      ]);
-      setRecords(recs.filter(r => r.category === 'Tribunal' && r.status === 'Filed'));
-      setClients(clis);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Outcome Transition Modal state
+  const [isOutcomeModalOpen, setIsOutcomeModalOpen] = useState(false);
+  const [recordToUpdate, setRecordToUpdate] = useState<LitigationRecord | null>(null);
+  const [outcomeStatus, setOutcomeStatus] = useState<LitigationStatus>('Drop');
+  const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [outcomeRefNo, setOutcomeRefNo] = useState('');
 
-  useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  const refreshData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['tribunal_records'] });
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+  }, [queryClient]);
 
-  
   const handleDelete = async (id: string) => {
     try {
-      await api.deleteLitigationRecord(id);
+      await api.deleteTribunalRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      fetchAll();
+      refreshData();
     } catch (error) {
       toast.error('Failed to delete record');
     }
   };
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    await api.saveLitigationRecord({ ...data, category: 'Tribunal' });
+    await api.saveTribunalRecord({ ...data, category: 'Tribunal' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
-    fetchAll();
+    refreshData();
   };
 
   const updateHearingDate = async (record: LitigationRecord, date: string) => {
     try {
-      await api.saveLitigationRecord({ ...record, hearingDate: date });
-      setRecords(prev => prev.map(r => r.id === record.id ? { ...r, hearingDate: date } : r));
-    } catch (err) { toast.error("Hearing date sync failed."); }
+      await api.saveTribunalRecord({ ...record, hearingDate: date });
+      refreshData();
+      toast.success("Hearing date scheduled");
+    } catch (err) {
+      toast.error("Hearing date update failed.");
+    }
   };
 
-  const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
-    try {
-      const updated = { ...record, status: newStatus };
-      await api.saveLitigationRecord(updated);
-      fetchAll();
-    } catch (err) { toast.error("Status update failed."); }
+  const openOutcomeModal = (record: LitigationRecord, newStatus: LitigationStatus) => {
+    setRecordToUpdate(record);
+    setOutcomeStatus(newStatus);
+    setOutcomeDate(new Date().toISOString().split('T')[0]);
+    setOutcomeRefNo('');
+    setIsOutcomeModalOpen(true);
     setActiveStatusMenuId(null);
+  };
+
+  const handleConfirmOutcome = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recordToUpdate) return;
+    try {
+      const updated = {
+        ...recordToUpdate,
+        status: outcomeStatus,
+        orderDate: outcomeDate,
+        referenceNo: outcomeRefNo || recordToUpdate.referenceNo
+      };
+      await api.saveTribunalRecord(updated);
+      setIsOutcomeModalOpen(false);
+      setRecordToUpdate(null);
+      refreshData();
+      toast.success(`Tribunal Appeal marked as ${outcomeStatus === 'Drop' ? 'Relief / Closed' : 'Sustained'}`);
+    } catch (err) {
+      toast.error("Failed to update outcome");
+    }
   };
 
   const formatDisplayDate = (dateStr?: string) => {
@@ -180,8 +206,8 @@ const TribunalFiled: React.FC = () => {
                            </button>
                            {activeStatusMenuId === rec.id && (
                              <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
-                                <button onClick={() => updateRecordStatus(rec, 'Drop')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Relief Granted</button>
-                                <button onClick={() => updateRecordStatus(rec, 'Demand')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50">Sustained</button>
+                               <button onClick={() => openOutcomeModal(rec, 'Drop')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Relief Granted / Closed</button>
+                               <button onClick={() => openOutcomeModal(rec, 'Demand')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-red-50 text-red-600 border-t border-slate-50">Sustained / Demand</button>
                              </div>
                            )}
                         </div>
@@ -190,14 +216,14 @@ const TribunalFiled: React.FC = () => {
                         <EditableRemark 
                           value={rec.remarks || ''} 
                           onSave={async (val) => {
-                            await api.saveLitigationRecord({ ...rec, remarks: val });
-                            fetchAll(true);
+                            await api.saveTribunalRecord({ ...rec, remarks: val });
+                            refreshData();
                           }} 
                         />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
-                            {client && <GSTViewIcon client={client} onDataChange={fetchAll} />}
+                            {client && <GSTViewIcon client={client} onDataChange={refreshData} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto" title="View Notice Details">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -235,15 +261,85 @@ const TribunalFiled: React.FC = () => {
                     value={viewingRecord.caseHistory || ''} 
                     onSave={async (val) => {
                       const updated = { ...viewingRecord, caseHistory: val };
-                      await api.saveLitigationRecord(updated);
+                      await api.saveTribunalRecord(updated);
                       setViewingRecord(updated);
-                      fetchAll(true);
+                      refreshData();
                     }}
                  />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Case Log</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close View</button></div>
            </div>
+        </div>
+      )}
+
+      {isOutcomeModalOpen && recordToUpdate && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <form onSubmit={handleConfirmOutcome} className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
+            <div className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Record Tribunal Outcome</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{recordToUpdate.clientName}</p>
+              </div>
+              <button type="button" onClick={() => { setIsOutcomeModalOpen(false); setRecordToUpdate(null); }} className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
+                <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+              </button>
+            </div>
+            <div className="p-8 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Outcome Status <span className="text-red-500">*</span></label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOutcomeStatus('Drop')}
+                    className={`p-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                      outcomeStatus === 'Drop'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-2 ring-emerald-600/10'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Relief / Closed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOutcomeStatus('Demand')}
+                    className={`p-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                      outcomeStatus === 'Demand'
+                        ? 'bg-red-50 text-red-700 border-red-300 ring-2 ring-red-600/10'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Sustained
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Order / Judgment Date <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="date"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
+                  value={outcomeDate}
+                  onChange={e => setOutcomeDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">GSTAT Order / Judgment Reference No <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g. GSTAT-DEL/ORDER/2024/01 or J-123/24"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                  value={outcomeRefNo}
+                  onChange={e => setOutcomeRefNo(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+              <button type="button" onClick={() => { setIsOutcomeModalOpen(false); setRecordToUpdate(null); }} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Cancel</button>
+              <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-black uppercase text-[10px] rounded-xl shadow-lg hover:bg-slate-900 transition-all">Submit Outcome</button>
+            </div>
+          </form>
         </div>
       )}
 

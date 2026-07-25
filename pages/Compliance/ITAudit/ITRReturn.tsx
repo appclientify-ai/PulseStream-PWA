@@ -27,16 +27,14 @@ const ITRReturn: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['itr_filing_page_data'],
+    queryFn: () => api.getITRReturnFilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
-  const clients = useMemo(() => {
-    return allClientsBase.filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing'));
-  }, [allClientsBase]);
+  const clients = useMemo(() => pageData?.clients || [], [pageData]);
+  const allClientsBase = clients;
 
   const [search, setSearch] = useState('');
   const [selectedAY, setSelectedAY] = useState(getPreviousAY());
@@ -63,9 +61,16 @@ const ITRReturn: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate, isDataLoaded } = useITRReturnLogic(selectedAY);
+  const { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(
+    selectedAY,
+    pageData?.filingData,
+    pageData?.dueDates
+  );
+
+  const isClientsLoading = isPageLoading && !pageData;
 
   const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['itr_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 
@@ -202,7 +207,7 @@ const ITRReturn: React.FC = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isClientsLoading || !isDataLoaded) return <Loader />;
+  if (isClientsLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">

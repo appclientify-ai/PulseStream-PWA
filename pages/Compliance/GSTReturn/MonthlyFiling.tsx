@@ -38,24 +38,28 @@ const MonthlyFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(selectedYear, selectedMonth);
-
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['monthly_filing_page_data'],
+    queryFn: () => api.getMonthlyFilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
-  const clients = useMemo(() => {
-    return allClientsBase.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-  }, [allClientsBase]);
+  const clients = useMemo(() => pageData?.clients || [], [pageData]);
+  const allClientsBase = clients;
 
-  const isLoading = isClientsLoading && !clientsData;
+  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(
+    selectedYear, 
+    selectedMonth, 
+    undefined, 
+    pageData?.filingData, 
+    pageData?.dueDates
+  );
+
+  const isLoading = isPageLoading && !pageData;
 
   useEffect(() => {
     const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['monthly_filing_page_data'] });
     };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);

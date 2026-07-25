@@ -36,7 +36,14 @@ const CompositionFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate } = useCompositionFilingLogic(selectedYear, selectedQuarter);
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['composition_filing_page_data'],
+    queryFn: () => api.getCompositionFilingData(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const clients = useMemo(() => pageData?.clients || [], [pageData]);
+  const allClientsBase = clients;
 
   // For Composition, visibility check uses the quarter end month
   const quarterEndMonth = useMemo(() => {
@@ -46,22 +53,18 @@ const CompositionFiling: React.FC = () => {
     return 'March';
   }, [selectedQuarter]);
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-  });
+  const { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate } = useCompositionFilingLogic(
+    selectedYear, 
+    selectedQuarter, 
+    pageData?.filingData, 
+    pageData?.dueDates
+  );
 
-  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
-  const clients = useMemo(() => {
-    return allClientsBase.filter(c => c && c.gstProfile?.regType === 'Composition');
-  }, [allClientsBase]);
-
-  const isLoading = isClientsLoading && !clientsData;
+  const isLoading = isPageLoading && !pageData;
 
   useEffect(() => {
     const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['composition_filing_page_data'] });
     };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
@@ -102,6 +105,7 @@ const CompositionFiling: React.FC = () => {
   }, [filteredClients, getStatus]);
   
   const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['composition_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 

@@ -25,14 +25,14 @@ const GSTR4: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['gstr4_filing_page_data'],
+    queryFn: () => api.getGSTR4FilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
-  const clients = useMemo(() => allClientsBase.filter(c => c && c.gstProfile?.regType === 'Composition'), [allClientsBase]);
+  const clients = useMemo(() => pageData?.clients || [], [pageData]);
+  const allClientsBase = clients;
 
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
@@ -52,16 +52,18 @@ const GSTR4: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark, isDataLoaded } = useGSTR4Logic(selectedYear);
+  const { getStatus, toggleStatus, updateRemark } = useGSTR4Logic(
+    selectedYear,
+    pageData?.filingData,
+    pageData?.dueDates
+  );
 
-  const { data: cmp08DataRaw } = useQuery({
-    queryKey: ['appData', 'clientify_composition_filing_v3'],
-    queryFn: () => api.getAppData('clientify_composition_filing_v3'),
-    staleTime: 1000 * 60 * 5,
-  });
-  const cmp08Data = useMemo<Record<string, Record<string, { cmp08: boolean }>>>(() => cmp08DataRaw || {}, [cmp08DataRaw]);
+  const cmp08Data = useMemo<Record<string, Record<string, { cmp08: boolean }>>>(() => pageData?.cmp08Data || {}, [pageData]);
+
+  const isClientsLoading = isPageLoading && !pageData;
 
   const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['gstr4_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 
@@ -179,7 +181,7 @@ const handleExportPDF = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isClientsLoading || !isDataLoaded) return <Loader />;
+  if (isClientsLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">

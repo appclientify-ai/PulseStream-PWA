@@ -26,13 +26,13 @@ const GSTR9_9C: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['gstr9_filing_page_data'],
+    queryFn: () => api.getGSTR9FilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const allClients = useMemo(() => clientsData || [], [clientsData]);
+  const allClients = useMemo(() => pageData?.clients || [], [pageData]);
 
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
@@ -62,11 +62,19 @@ const GSTR9_9C: React.FC = () => {
 
   const { 
     getStatus, toggleStatus, updateRemark, watchlist, addToWatchlist, 
-    removeFromWatchlist, is9CApplicable, update9CApplicability,
-    isDataLoaded
-  } = useGSTR9Logic(selectedYear);
+    removeFromWatchlist, is9CApplicable, update9CApplicability
+  } = useGSTR9Logic(
+    selectedYear,
+    pageData?.watchlist,
+    pageData?.config,
+    pageData?.filingData,
+    pageData?.dueDates
+  );
+
+  const isClientsLoading = isPageLoading && !pageData;
 
   const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['gstr9_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 
@@ -216,7 +224,7 @@ const GSTR9_9C: React.FC = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isClientsLoading || !isDataLoaded) return <Loader />;
+  if (isClientsLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">

@@ -120,6 +120,19 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Logged Date</label>
+              <input type="date" required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase"
+                value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Completion Date</label>
+              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase"
+                value={formData.completionDate || ''} onChange={e => setFormData({...formData, completionDate: e.target.value})} />
+            </div>
+          </div>
+
           <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Internal Notes</label>
             <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20"

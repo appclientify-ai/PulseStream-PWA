@@ -21,13 +21,13 @@ const TAXAudit: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
+  const { data: pageData, isLoading: isPageLoading } = useQuery({
+    queryKey: ['tax_audit_filing_page_data'],
+    queryFn: () => api.getTaxAuditFilingData(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const allClients = useMemo(() => clientsData || [], [clientsData]);
+  const allClients = useMemo(() => pageData?.clients || [], [pageData]);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
@@ -48,9 +48,17 @@ const TAXAudit: React.FC = () => {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [editCaName, setEditCaName] = useState('');
 
-  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist, isDataLoaded } = useTaxAuditLogic(selectedYear);
+  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist } = useTaxAuditLogic(
+    selectedYear,
+    pageData?.watchlist,
+    pageData?.filingData,
+    pageData?.dueDates
+  );
+
+  const isClientsLoading = isPageLoading && !pageData;
 
   const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['tax_audit_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 
@@ -149,7 +157,7 @@ const TAXAudit: React.FC = () => {
     };
   }, [trackedClients, getStatus]);
 
-  if (isClientsLoading || !isDataLoaded) return <Loader />;
+  if (isClientsLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
