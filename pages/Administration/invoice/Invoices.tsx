@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { InvoiceRecord, Client, InvoiceSettings } from '../../../types';
@@ -35,7 +36,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const deleteInvoiceMutation = useDeleteInvoiceMutation();
   const settleInvoiceMutation = useSettleInvoiceMutation();
 
-  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
+  
+
+  
+  const { data: settings } = useQuery({ queryKey: ['invoice_settings'], queryFn: () => api.getInvoiceSettings(), staleTime: 0 });
 
   const [settlingInvoice, setSettlingInvoice] = useState<InvoiceRecord | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,9 +88,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     }
   }, [paginatedData]);
 
-  useEffect(() => {
-    api.getInvoiceSettings().then(sets => setSettings(sets)).catch(() => {});
-  }, []);
+  
 
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();

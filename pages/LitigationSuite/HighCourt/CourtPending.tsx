@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -9,66 +10,88 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 import { formatDate } from '../../../dateUtils';
 
-
 const CourtPending: React.FC = () => {
-  const [records, setRecords] = useState<LitigationRecord[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: allRecords = [], isLoading: isRecordsLoading } = useQuery({
+    queryKey: ['highcourt_records'],
+    queryFn: () => api.getHighCourtRecords(true),
+    staleTime: 0,
+  });
+
+  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 0,
+  });
+
+  const records = useMemo(() => allRecords.filter(r => r.status === 'Pending'), [allRecords]);
+  const isLoading = isRecordsLoading || isClientsLoading;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeHeaderFilter, setActiveHeaderFilter] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
 
-  const fetchAll = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [recs, clis] = await Promise.all([
-        api.getLitigationRecords(),
-        api.getClients()
-      ]);
-      setRecords(recs.filter(r => r.category === 'HighCourt' && r.status === 'Pending'));
-      setClients(clis);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Filing Transition Modal state
+  const [isFilingModalOpen, setIsFilingModalOpen] = useState(false);
+  const [recordToUpdate, setRecordToUpdate] = useState<LitigationRecord | null>(null);
+  const [filingDate, setFilingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filingRefNo, setFilingRefNo] = useState('');
 
-  useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  const refreshData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['highcourt_records'] });
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+  }, [queryClient]);
 
-  
   const handleDelete = async (id: string) => {
     try {
-      await api.deleteLitigationRecord(id);
+      await api.deleteHighCourtRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      fetchAll();
+      refreshData();
     } catch (error) {
       toast.error('Failed to delete record');
     }
   };
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    await api.saveLitigationRecord({ ...data, category: 'HighCourt' });
+    await api.saveHighCourtRecord({ ...data, category: 'HighCourt' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
-    fetchAll();
+    refreshData();
   };
 
-  const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
-    try {
-      const updated = { ...record, status: newStatus };
-      await api.saveLitigationRecord(updated);
-      fetchAll();
-    } catch (err) { toast.error("Vault update failed."); }
+  const openFilingModal = (record: LitigationRecord) => {
+    setRecordToUpdate(record);
+    setFilingDate(new Date().toISOString().split('T')[0]);
+    setFilingRefNo('');
+    setIsFilingModalOpen(true);
     setActiveStatusMenuId(null);
+  };
+
+  const handleConfirmFiling = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recordToUpdate) return;
+    try {
+      const updated = {
+        ...recordToUpdate,
+        status: 'Filed' as LitigationStatus,
+        filedDate: filingDate,
+        replyReferenceNo: filingRefNo
+      };
+      await api.saveHighCourtRecord(updated);
+      setIsFilingModalOpen(false);
+      setRecordToUpdate(null);
+      refreshData();
+      toast.success('High Court litigation successfully marked as Filed');
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
   const formatDisplayDate = (dateStr?: string) => {
@@ -179,26 +202,26 @@ const CourtPending: React.FC = () => {
                       <td className={` px-6 py-5 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
                          <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)}
                             className="w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-50 text-slate-500 border border-slate-200 hover:bg-white transition-all flex items-center justify-between shadow-sm">
-                             Pending <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                         </button>
-                         {activeStatusMenuId === rec.id && (
-                           <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
-                              <button onClick={() => updateRecordStatus(rec, 'Filed')} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
-                           </div>
-                         )}
+                              Pending <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                          </button>
+                          {activeStatusMenuId === rec.id && (
+                            <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
+                              <button onClick={() => openFilingModal(rec)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">High Court Filed</button>
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-5 truncate max-w-[150px]">
                         <EditableRemark 
                           value={rec.remarks || ''} 
                           onSave={async (val) => {
-                            await api.saveLitigationRecord({ ...rec, remarks: val });
-                            fetchAll(true);
+                            await api.saveHighCourtRecord({ ...rec, remarks: val });
+                            refreshData();
                           }} 
                         />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
-                            {clients.find(c => c.id === rec.clientId) && <GSTViewIcon client={clients.find(c => c.id === rec.clientId)!} onDataChange={fetchAll} />}
+                            {clients.find(c => c.id === rec.clientId) && <GSTViewIcon client={clients.find(c => c.id === rec.clientId)!} onDataChange={refreshData} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto" title="View Notice Details">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -237,15 +260,61 @@ const CourtPending: React.FC = () => {
                     value={viewingRecord.caseHistory || ''} 
                     onSave={async (val) => {
                       const updated = { ...viewingRecord, caseHistory: val };
-                      await api.saveLitigationRecord(updated);
+                      await api.saveHighCourtRecord(updated);
                       setViewingRecord(updated);
-                      fetchAll(true);
+                      refreshData();
                     }}
                  />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>
               </div>
               <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-10 py-4 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Dismiss View</button></div>
            </div>
+        </div>
+      )}
+
+      {/* High Court Filing Transition Modal */}
+      {isFilingModalOpen && recordToUpdate && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
+            <form onSubmit={handleConfirmFiling}>
+              <div className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 tracking-tight">Record High Court Filing</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{recordToUpdate.clientName}</p>
+                </div>
+                <button type="button" onClick={() => { setIsFilingModalOpen(false); setRecordToUpdate(null); }} className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
+                  <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+                </button>
+              </div>
+              <div className="p-8 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Date of Filing (High Court) <span className="text-red-500">*</span></label>
+                  <input
+                    required
+                    type="date"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
+                    value={filingDate}
+                    onChange={e => setFilingDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Writ Petition No. / Appeal No. <span className="text-red-500">*</span></label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. WP-12345/2024 or HC-APPEAL/99/2024"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                    value={filingRefNo}
+                    onChange={e => setFilingRefNo(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
+                <button type="button" onClick={() => { setIsFilingModalOpen(false); setRecordToUpdate(null); }} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Cancel</button>
+                <button type="submit" className="px-6 py-3 bg-indigo-600 text-white font-black uppercase text-[10px] rounded-xl shadow-lg hover:bg-slate-900 transition-all">Submit Filing</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

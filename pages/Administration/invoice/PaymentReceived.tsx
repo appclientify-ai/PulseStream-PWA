@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PaymentRecord, Client, InvoiceSettings, InvoiceRecord } from '../../../types';
@@ -13,36 +14,30 @@ interface PaymentReceivedProps {
 }
 
 const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const handleDelete = async (id: string) => { if(confirm('Delete payment record?')) { await api.deletePayment(id); fetchAll(); } };
-  const [isLoading, setIsLoading] = useState(true);
+  
   const [search, setSearch] = useState('');
-  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  
+  
+  
   const [showLedger, setShowLedger] = useState(false);
   const [selectedLedgerClient, setSelectedLedgerClient] = useState<string>('');
   const [previewPayment, setPreviewPayment] = useState<{pay: PaymentRecord, inv: InvoiceRecord} | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fetchAll = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [pays, sets, invs, clis] = await Promise.all([api.getPayments(), api.getInvoiceSettings(), api.getInvoices(), api.getClients()]);
-      setPayments(pays);
-      setSettings(sets);
-      setInvoices(invs);
-      setClients(clis);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  useEffect(() => { fetchAll();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  const queryClient = useQueryClient();
+  const { data: payments = [], isLoading } = useQuery({ queryKey: ['payments'], queryFn: () => api.getPayments(), staleTime: 0 });
+  const { data: settings } = useQuery({ queryKey: ['invoice_settings'], queryFn: () => api.getInvoiceSettings(), staleTime: 0 });
+  const { data: invoices = [] } = useQuery({ queryKey: ['invoices'], queryFn: () => api.getInvoices(), staleTime: 0 });
+  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => api.getClients(), staleTime: 0 });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deletePayment(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payments'] })
+  });
+
+  const handleDelete = async (id: string) => { if(confirm('Delete payment record?')) { await deleteMutation.mutateAsync(id); } };
+
 
   const filteredPayments = useMemo(() => {
     const s = search.toLowerCase();

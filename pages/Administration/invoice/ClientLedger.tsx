@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../../../services/api';
 import Loader from '../../../components/Loader';
@@ -12,11 +13,11 @@ interface ClientLedgerProps {
 }
 
 const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  
+  
+  
+  
   const [searchTerm, setSearchTerm] = useState('');
   
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -287,12 +288,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
         toast.success('Payment entry deleted successfully');
       }
       
-      const [invs, pmts] = await Promise.all([
-        api.getInvoices(),
-        api.getPayments()
-      ]);
-      setInvoices(invs);
-      setPayments(pmts);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] }); queryClient.invalidateQueries({ queryKey: ['payments'] });
       setEntryToDelete(null);
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
     } catch (err) {

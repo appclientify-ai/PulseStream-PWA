@@ -15,7 +15,7 @@ export function usePaginatedCategory<T>(category: string, page = 1, limit = 25, 
     queryKey: ['category_items', category, page, limit, search],
     queryFn: () => api.getPaginatedCategory<T>(category, page, limit, search),
     placeholderData: keepPreviousData,
-    staleTime: 1000 * 60 * 3, // 3 minutes cache
+    staleTime: 0, // 3 minutes cache
   });
 }
 

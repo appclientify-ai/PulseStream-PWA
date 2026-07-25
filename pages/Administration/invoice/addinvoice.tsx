@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Client, InvoiceRecord, InvoiceLineItem, InvoiceSettings } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -13,10 +14,10 @@ interface AddInvoiceProps {
 }
 
 const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
-  const [clients, setClients] = useState<Client[]>([]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState('');
-  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
+  
   
   const [selectedClientId, setSelectedClientId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,16 +158,23 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
 
   const handleSave = async () => {
     if (isSaving) return;
-    if (!clientLegalName) return toast.success('Specify a billing entity.');
-    
-    // Check for duplicate invoice numbers
-    const allInvs = await api.getInvoices();
-    if (allInvs.some(i => i.invoiceNo === invoiceNo && i.id !== editingInvoice?.id)) {
-       return toast.error('Invoice number already exists. Please use another number.');
-    }
-
     setIsSaving(true);
+    
+    if (!clientLegalName) {
+      toast.error('Specify a billing entity.');
+      setIsSaving(false);
+      return;
+    }
+    
     try {
+      // Check for duplicate invoice numbers
+      const allInvs = await api.getInvoices();
+      if (allInvs.some(i => i.invoiceNo === invoiceNo && i.id !== editingInvoice?.id)) {
+         toast.error('Invoice number already exists. Please use another number.');
+         setIsSaving(false);
+         return;
+      }
+
       const dDate = new Date(invDate);
       dDate.setDate(dDate.getDate() + 15);
       const record: Partial<InvoiceRecord> = {
@@ -188,6 +196,8 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
         status
       };
       await api.saveInvoice(record);
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['category_items', 'invoice'] });
       onBack();
     } catch (e) {
       setIsSaving(false);

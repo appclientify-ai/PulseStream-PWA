@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { socketService } from '../../services/socket';
@@ -138,8 +139,8 @@ const DateField: React.FC<{
 const DueDateSetting: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(YEARS[0]);
   const [activeCategory, setActiveCategory] = useState<ReturnCategory>('GST_MONTHLY');
-  const [isLoading, setIsLoading] = useState(true);
-  const [dates, setDates] = useState<Record<string, string>>({});
+  
+  
   const [isSaving, setIsSaving] = useState(false);
 
   const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
@@ -224,6 +225,7 @@ const DueDateSetting: React.FC = () => {
 
     setDates(finalDates);
     await api.patchAppData(STORAGE_KEY, Object.fromEntries(Object.entries(finalDates).map(([k,v]) => [`data.${k}`, v])));
+      queryClient.invalidateQueries({ queryKey: ['due_dates'] });
     socketService.emit('data_updated');
     window.dispatchEvent(new Event('clientify_db_change'));
     setTimeout(() => setIsSaving(false), 600);

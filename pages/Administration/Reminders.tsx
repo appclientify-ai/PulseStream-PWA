@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LitigationRecord, MiscWorkRecord } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
@@ -16,22 +17,46 @@ interface UnifiedDeadline {
 }
 
 const Reminders: React.FC = () => {
-  const [deadlines, setDeadlines] = useState<UnifiedDeadline[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'All' | 'Litigation' | 'Misc Work'>('All');
 
-  const fetchUnifiedData = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [litigation, work] = await Promise.all([
-        api.getLitigationRecords(),
-        api.getMiscWork()
-      ]);
+  // Separate React Query for each filter/tab, leveraging separate database datasets
+  const { data: reminderData, isLoading } = useQuery({
+    queryKey: ['reminders_data', filter],
+    queryFn: async () => {
+      if (filter === 'Litigation') {
+        const litigation = await api.getRemindersLitigation();
+        const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
+          id: r.id,
+          title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
+          client: r.clientName,
+          date: r.dueDate,
+          category: r.category as any,
+          priority: 'High',
+          status: 'Response Due',
+          origin: 'litigation'
+        }));
+        return mappedLit.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      } else if (filter === 'Misc Work') {
+        const work = await api.getRemindersWork();
+        const mappedWork: UnifiedDeadline[] = work.map(r => ({
+          id: r.id,
+          title: r.description,
+          client: r.clientName,
+          date: r.completionDate || r.startDate,
+          category: 'MISC WORK',
+          priority: 'Medium',
+          status: r.status,
+          origin: 'work'
+        }));
+        return mappedWork.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      } else {
+        const res = await api.getRemindersAll();
+        const litigation = res.litigation || [];
+        const work = res.work || [];
 
-      const mappedLit: UnifiedDeadline[] = litigation
-        .filter(r => r.status === 'Pending')
-        .map(r => ({
+        const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
           id: r.id,
           title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
           client: r.clientName,
@@ -42,9 +67,7 @@ const Reminders: React.FC = () => {
           origin: 'litigation'
         }));
 
-      const mappedWork: UnifiedDeadline[] = work
-        .filter(r => r.status !== 'Completed')
-        .map(r => ({
+        const mappedWork: UnifiedDeadline[] = work.map(r => ({
           id: r.id,
           title: r.description,
           client: r.clientName,
@@ -55,24 +78,56 @@ const Reminders: React.FC = () => {
           origin: 'work'
         }));
 
-      const combined = [...mappedLit, ...mappedWork].sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
+        return [...mappedLit, ...mappedWork].sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+      }
+    },
+    staleTime: 0, // 5 minutes cache TTL
+  });
 
-      setDeadlines(combined);
-    } catch (err) {
-      console.error("Reminder Sync Failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Query all for stats calculation
+  const { data: allReminderData } = useQuery({
+    queryKey: ['reminders_data', 'All'],
+    queryFn: async () => {
+      const res = await api.getRemindersAll();
+      const litigation = res.litigation || [];
+      const work = res.work || [];
+      const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
+        id: r.id,
+        title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
+        client: r.clientName,
+        date: r.dueDate,
+        category: r.category as any,
+        priority: 'High',
+        status: 'Response Due',
+        origin: 'litigation'
+      }));
+      const mappedWork: UnifiedDeadline[] = work.map(r => ({
+        id: r.id,
+        title: r.description,
+        client: r.clientName,
+        date: r.completionDate || r.startDate,
+        category: 'MISC WORK',
+        priority: 'Medium',
+        status: r.status,
+        origin: 'work'
+      }));
+      return [...mappedLit, ...mappedWork];
+    },
+    staleTime: 0,
+  });
 
   useEffect(() => {
-    fetchUnifiedData();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchUnifiedData(true); };
+    const syncHandler = () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders_data'] });
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [queryClient]);
+
+  const deadlines = reminderData || [];
+  const totalDeadlines = allReminderData || deadlines;
 
   const getDaysLeft = (dueDate: string) => {
     const due = new Date(dueDate);
@@ -87,27 +142,23 @@ const Reminders: React.FC = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     return {
-      total: deadlines.length,
-      overdue: deadlines.filter(d => new Date(d.date) < now).length,
-      litigation: deadlines.filter(d => d.origin === 'litigation').length,
-      misc: deadlines.filter(d => d.origin === 'work').length
+      total: totalDeadlines.length,
+      overdue: totalDeadlines.filter(d => new Date(d.date) < now).length,
+      litigation: totalDeadlines.filter(d => d.origin === 'litigation').length,
+      misc: totalDeadlines.filter(d => d.origin === 'work').length
     };
-  }, [deadlines]);
+  }, [totalDeadlines]);
 
   const filteredRecords = useMemo(() => {
-    let list = deadlines;
-    if (filter === 'Litigation') list = list.filter(d => d.origin === 'litigation');
-    if (filter === 'Misc Work') list = list.filter(d => d.origin === 'work');
-    
     const s = search.toLowerCase();
-    return list.filter(d => 
+    return deadlines.filter(d => 
       d.client.toLowerCase().includes(s) || 
       d.title.toLowerCase().includes(s) || 
       d.category.toLowerCase().includes(s)
     );
-  }, [deadlines, filter, search]);
+  }, [deadlines, search]);
 
-  if (isLoading) return <Loader />;
+  if (isLoading && !reminderData) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
@@ -177,7 +228,7 @@ const Reminders: React.FC = () => {
                        </span>
                     </td>
                     <td className="px-4 py-5 text-right ">
-                       <button onClick={fetchUnifiedData} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all">
+                       <button onClick={() => queryClient.invalidateQueries({ queryKey: ['reminders_data'] })} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                        </button>
                     </td>

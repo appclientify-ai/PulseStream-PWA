@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-30">
+    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-[9999]">
       <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
         <button 
           onClick={onMenuClick} 
@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right">
+            <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right z-[10000]">
                <div className="p-3 border-b border-slate-100 mb-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault Session ID</p>
                   <p className="text-xs font-black text-slate-900 truncate">{currentUser?.user_id}</p>

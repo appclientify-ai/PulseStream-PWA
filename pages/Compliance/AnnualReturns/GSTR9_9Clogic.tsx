@@ -15,14 +15,29 @@ const STORAGE_KEY_WATCHLIST = 'clientify_gstr9_watchlist_v2';
 const STORAGE_KEY_CONFIG = 'clientify_gstr9_config_v2';
 const STORAGE_KEY_DATES = 'clientify_gstr9_due_dates_v2';
 
-export const useGSTR9Logic = (selectedYear: string) => {
-  const [watchlist, setWatchlist] = useState<Record<string, string[]>>({});
-  const [config, setConfig] = useState<Record<string, { gstr9cApplicable: boolean }>>({});
-  const [filingData, setFilingData] = useState<Record<string, Record<string, GSTR9FilingStatus>>>({});
-  const [dueDates, setDueDates] = useState<Record<string, string>>({});
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+export const useGSTR9Logic = (
+  selectedYear: string,
+  initialWatchlist?: Record<string, string[]>,
+  initialConfig?: Record<string, { gstr9cApplicable: boolean }>,
+  initialFilingData?: Record<string, Record<string, GSTR9FilingStatus>>,
+  initialDueDates?: Record<string, string>
+) => {
+  const [watchlist, setWatchlist] = useState<Record<string, string[]>>(initialWatchlist || {});
+  const [config, setConfig] = useState<Record<string, { gstr9cApplicable: boolean }>>(initialConfig || {});
+  const [filingData, setFilingData] = useState<Record<string, Record<string, GSTR9FilingStatus>>>(initialFilingData || {});
+  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDueDates || {});
+  const [isDataLoaded, setIsDataLoaded] = useState(!!initialWatchlist || !!initialFilingData);
 
   useEffect(() => {
+    if (initialWatchlist) setWatchlist(initialWatchlist);
+    if (initialConfig) setConfig(initialConfig);
+    if (initialFilingData) setFilingData(initialFilingData);
+    if (initialDueDates) setDueDates(initialDueDates);
+    if (initialWatchlist || initialFilingData) setIsDataLoaded(true);
+  }, [initialWatchlist, initialConfig, initialFilingData, initialDueDates]);
+
+  useEffect(() => {
+    if (initialWatchlist || initialFilingData) return;
     const load = async () => {
       try {
         const [w, c, f, d] = await Promise.all([
@@ -45,7 +60,7 @@ export const useGSTR9Logic = (selectedYear: string) => {
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [initialWatchlist, initialFilingData]);
 
   const updateFilingData = (newData: Record<string, Record<string, GSTR9FilingStatus>>) => {
     setFilingData(newData);

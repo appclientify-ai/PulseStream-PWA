@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { InvoiceSettings } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -6,25 +7,24 @@ import { toast } from 'sonner';
 
 
 const InvoiceSetting: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [settings, setSettings] = useState<InvoiceSettings>({
-    firmName: '', firmAddress: '', firmMobile: '', firmEmail: '', firmGstin: '',
-    accountName: '', bankName: '', accountNo: '', ifsc: '', upiId: '', invoicePrefix: 'INV/',
-    terms: '', isGstEnabled: true, firmLogo: '', firmSignature: '', watermark: '', whatsappNumber: ''
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  
   const [isSaving, setIsSaving] = useState(false);
 
+
+  const queryClient = useQueryClient();
+  const { data: initialSettings, isLoading } = useQuery({ queryKey: ['invoice_settings'], queryFn: () => api.getInvoiceSettings(), staleTime: 0 });
+  const [settings, setSettings] = useState<InvoiceSettings>({} as any);
+
   useEffect(() => {
-    api.getInvoiceSettings().then(data => {
-      setSettings(data);
-      setIsLoading(false);
-    });
-  }, []);
+    if (initialSettings) setSettings(initialSettings);
+  }, [initialSettings]);
+
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await api.saveInvoiceSettings(settings);
+      queryClient.invalidateQueries({ queryKey: ['invoice_settings'] });
       onBack();
     } catch (err) {
       toast.error("Settings update failed.");

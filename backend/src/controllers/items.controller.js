@@ -236,3 +236,827 @@ export const patchAppData = async (req, res) => {
     res.status(500).json({ error: 'Failed to patch app data' });
   }
 };
+
+export const getDashboardSummaryData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+
+    const appDataKeys = [
+      'clientify_monthly_filing_v3',
+      'clientify_quarterly_filing_v3',
+      'clientify_composition_filing_v3',
+      'clientify_gstr4_filing_v1',
+      'clientify_gstr9_filing_data_v2',
+      'clientify_itr_filing_data_v2',
+      'clientify_audit_fin_data_v3',
+      'clientify_gstr9_watchlist_v2'
+    ];
+    const appDataNames = appDataKeys.map(k => 'app_data_' + k);
+    const categoryNames = ['client', 'litigation', 'invoice', 'work', 'gstReg', 'foodLic', 'msme', 'payment'];
+
+    const query = {
+      createdBy: { $in: userMatches },
+      name: { $in: [...categoryNames, ...appDataNames] }
+    };
+
+    const rawItems = await itemsColl.find(query).toArray();
+
+    const summary = {
+      clients: [],
+      litigation: [],
+      invoices: [],
+      work: [],
+      gstReg: [],
+      foodLic: [],
+      msme: [],
+      payments: []
+    };
+    const filingDataCache = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') summary.clients.push(transformed);
+      else if (item.name === 'litigation') summary.litigation.push(transformed);
+      else if (item.name === 'invoice') summary.invoices.push(transformed);
+      else if (item.name === 'work') summary.work.push(transformed);
+      else if (item.name === 'gstReg') summary.gstReg.push(transformed);
+      else if (item.name === 'foodLic') summary.foodLic.push(transformed);
+      else if (item.name === 'msme') summary.msme.push(transformed);
+      else if (item.name === 'payment') summary.payments.push(transformed);
+      else if (item.name.startsWith('app_data_')) {
+        const key = item.name.replace('app_data_', '');
+        filingDataCache[key] = item.data || {};
+      }
+    }
+
+    res.json({ summary, filingDataCache });
+  } catch (err) {
+    console.error('Get Dashboard Summary Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve dashboard summary data' });
+  }
+};
+
+export const getMonthlyFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_monthly_filing_v3',
+      'app_data_clientify_monthly_due_dates_v1'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        const gp = transformed.gstProfile || {};
+        const regType = gp.regType || gp.registrationType || 'Regular';
+        const filingFreq = gp.filingFreq || gp.filingFrequency || 'Monthly';
+        if (regType === 'Regular' && filingFreq === 'Monthly') {
+          clients.push(transformed);
+        }
+      } else if (item.name === 'app_data_clientify_monthly_filing_v3') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_monthly_due_dates_v1') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, filingData, dueDates });
+  } catch (err) {
+    console.error('Get Monthly Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve monthly filing data' });
+  }
+};
+
+export const getQuarterlyFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_quarterly_filing_v3',
+      'app_data_clientify_quarterly_due_dates_v1'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        const gp = transformed.gstProfile || {};
+        const regType = gp.regType || gp.registrationType || 'Regular';
+        const filingFreq = gp.filingFreq || gp.filingFrequency;
+        if (regType === 'Regular' && filingFreq === 'Quarterly') {
+          clients.push(transformed);
+        }
+      } else if (item.name === 'app_data_clientify_quarterly_filing_v3') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_quarterly_due_dates_v1') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, filingData, dueDates });
+  } catch (err) {
+    console.error('Get Quarterly Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve quarterly filing data' });
+  }
+};
+
+export const getCompositionFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_composition_filing_v3',
+      'app_data_clientify_composition_due_dates_v1'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        const gp = transformed.gstProfile || {};
+        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
+        if (regType === 'Composition') {
+          clients.push(transformed);
+        }
+      } else if (item.name === 'app_data_clientify_composition_filing_v3') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_composition_due_dates_v1') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, filingData, dueDates });
+  } catch (err) {
+    console.error('Get Composition Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve composition filing data' });
+  }
+};
+
+export const getGSTR4FilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_gstr4_filing_v1',
+      'app_data_clientify_gstr4_due_dates_v1',
+      'app_data_clientify_composition_filing_v3'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let filingData = {};
+    let dueDates = {};
+    let cmp08Data = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        const gp = transformed.gstProfile || {};
+        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
+        if (regType === 'Composition') {
+          clients.push(transformed);
+        }
+      } else if (item.name === 'app_data_clientify_gstr4_filing_v1') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_gstr4_due_dates_v1') {
+        dueDates = item.data || {};
+      } else if (item.name === 'app_data_clientify_composition_filing_v3') {
+        cmp08Data = item.data || {};
+      }
+    }
+
+    res.json({ clients, filingData, dueDates, cmp08Data });
+  } catch (err) {
+    console.error('Get GSTR-4 Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GSTR-4 filing data' });
+  }
+};
+
+export const getGSTR9FilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_gstr9_watchlist_v2',
+      'app_data_clientify_gstr9_config_v2',
+      'app_data_clientify_gstr9_filing_data_v2',
+      'app_data_clientify_gstr9_due_dates_v2'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let watchlist = {};
+    let config = {};
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        clients.push(transformed);
+      } else if (item.name === 'app_data_clientify_gstr9_watchlist_v2') {
+        watchlist = item.data || {};
+      } else if (item.name === 'app_data_clientify_gstr9_config_v2') {
+        config = item.data || {};
+      } else if (item.name === 'app_data_clientify_gstr9_filing_data_v2') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_gstr9_due_dates_v2') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, watchlist, config, filingData, dueDates });
+  } catch (err) {
+    console.error('Get GSTR-9 Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GSTR-9 filing data' });
+  }
+};
+
+export const getITRReturnFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_itr_filing_data_v2',
+      'app_data_clientify_itr_due_dates_v1'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        if (transformed.itProfile && (transformed.status === 'Active' || transformed.status === 'Active Filing')) {
+          clients.push(transformed);
+        }
+      } else if (item.name === 'app_data_clientify_itr_filing_data_v2') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_itr_due_dates_v1') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, filingData, dueDates });
+  } catch (err) {
+    console.error('Get ITR Return Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve ITR return filing data' });
+  }
+};
+
+export const getTaxAuditFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const appDataNames = [
+      'app_data_clientify_audit_watchlist_v3',
+      'app_data_clientify_audit_fin_data_v3',
+      'app_data_clientify_audit_due_dates_v1'
+    ];
+
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', ...appDataNames] }
+    }).toArray();
+
+    const clients = [];
+    let watchlist = {};
+    let filingData = {};
+    let dueDates = {};
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        clients.push(transformed);
+      } else if (item.name === 'app_data_clientify_audit_watchlist_v3') {
+        watchlist = item.data || {};
+      } else if (item.name === 'app_data_clientify_audit_fin_data_v3') {
+        filingData = item.data || {};
+      } else if (item.name === 'app_data_clientify_audit_due_dates_v1') {
+        dueDates = item.data || {};
+      }
+    }
+
+    res.json({ clients, watchlist, filingData, dueDates });
+  } catch (err) {
+    console.error('Get Tax Audit Filing Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve Tax Audit filing data' });
+  }
+};
+
+export const getLitigationFilingData = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: { $in: ['client', 'litigation'] }
+    }).toArray();
+
+    const clients = [];
+    const litigation = [];
+
+    for (const item of rawItems) {
+      const transformed = {
+        ...item.data,
+        id: item._id,
+        createdAt: item.createdAt
+      };
+
+      if (item.name === 'client') {
+        clients.push(transformed);
+      } else if (item.name === 'litigation') {
+        litigation.push(transformed);
+      }
+    }
+
+    res.json({ clients, litigation });
+  } catch (err) {
+    console.error('Get Litigation Data Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve litigation data' });
+  }
+};
+
+export const getMessengerClientsAll = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: 'client'
+    }).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients All Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve clients' });
+  }
+};
+
+export const getMessengerClientsGst = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: 'client',
+      $or: [
+        { 'data.gstProfile.gstin': { $exists: true, $ne: '' } },
+        { 'data.services': 'GST' },
+        { 'data.gstProfile.regType': { $exists: true, $ne: '' } }
+      ]
+    }).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients Gst Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST clients' });
+  }
+};
+
+export const getMessengerClientsItr = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: 'client',
+      $or: [
+        { 'data.itProfile.pan': { $exists: true, $ne: '' } },
+        { 'data.services': 'IT' },
+        { 'data.services': 'ITR' },
+        { 'data.itProfile.fileType': { $exists: true, $ne: '' } }
+      ]
+    }).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients Itr Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve ITR clients' });
+  }
+};
+
+export const getMessengerClientsAudit = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: 'client',
+      $or: [
+        { 'data.itProfile.auditApplicable': true },
+        { 'data.itProfile.advisoryWork.taxAudit': true },
+        { 'data.services': 'Audit' },
+        { 'data.itProfile.fileType': { $regex: /audit/i } }
+      ]
+    }).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients Audit Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve Audit clients' });
+  }
+};
+
+export const getMessengerClientsGstr4 = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find({
+      createdBy: { $in: userMatches },
+      name: 'client',
+      'data.gstProfile.regType': 'Composition'
+    }).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients Gstr4 Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GSTR-4 clients' });
+  }
+};
+
+export const getMessengerClientsGstr9 = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    
+    // Attempt to load GSTR-9 watchlist
+    const watchlistDoc = await itemsColl.findOne({
+      createdBy: { $in: userMatches },
+      name: 'app_data_clientify_gstr9_watchlist_v2'
+    });
+    
+    const watchlistObj = watchlistDoc ? watchlistDoc.data : {};
+    const watchlistIds = [];
+    if (watchlistObj) {
+      Object.values(watchlistObj).forEach(arr => {
+        if (Array.isArray(arr)) {
+          arr.forEach(id => {
+            try {
+              watchlistIds.push(new ObjectId(id));
+            } catch (e) {
+              watchlistIds.push(id);
+            }
+          });
+        }
+      });
+    }
+
+    const query = {
+      createdBy: { $in: userMatches },
+      name: 'client',
+      $or: [
+        { _id: { $in: watchlistIds } },
+        { 'data.gstProfile.gstin': { $exists: true, $ne: '' } }
+      ]
+    };
+
+    const rawItems = await itemsColl.find(query).toArray();
+
+    const clients = rawItems.map(item => ({
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    }));
+
+    res.json(clients);
+  } catch (err) {
+    console.error('Get Messenger Clients Gstr9 Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GSTR-9 clients' });
+  }
+};
+
+export const getRemindersLitigation = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+    const litColl = getCollection('litigation');
+    const rawLit = await litColl.find({
+      createdBy: { $in: userMatches },
+      'status': 'Pending'
+    }).toArray();
+    
+    let records = rawLit;
+    if (records.length === 0) {
+      const oldLit = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'litigation',
+        'data.status': 'Pending'
+      }).toArray();
+      records = oldLit.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      records = records.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json(records);
+  } catch (err) {
+    console.error('Get Reminders Litigation Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve litigation reminders' });
+  }
+};
+
+export const getRemindersWork = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+    const workColl = getCollection('misc_work');
+    const rawWork = await workColl.find({
+      createdBy: { $in: userMatches },
+      'status': { $ne: 'Completed' }
+    }).toArray();
+
+    let records = rawWork;
+    if (records.length === 0) {
+      const oldWork = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'misc_work',
+        'data.status': { $ne: 'Completed' }
+      }).toArray();
+      records = oldWork.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      records = records.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json(records);
+  } catch (err) {
+    console.error('Get Reminders Work Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve misc work reminders' });
+  }
+};
+
+export const getRemindersAll = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const litColl = getCollection('litigation');
+    let rawLit = await litColl.find({
+      createdBy: { $in: userMatches },
+      'status': 'Pending'
+    }).toArray();
+    if (rawLit.length === 0) {
+      const oldLit = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'litigation',
+        'data.status': 'Pending'
+      }).toArray();
+      rawLit = oldLit.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      rawLit = rawLit.map(item => ({ ...item, id: item._id }));
+    }
+
+    const workColl = getCollection('misc_work');
+    let rawWork = await workColl.find({
+      createdBy: { $in: userMatches },
+      'status': { $ne: 'Completed' }
+    }).toArray();
+    if (rawWork.length === 0) {
+      const oldWork = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'misc_work',
+        'data.status': { $ne: 'Completed' }
+      }).toArray();
+      rawWork = oldWork.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      rawWork = rawWork.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json({ litigation: rawLit, work: rawWork });
+  } catch (err) {
+    console.error('Get Reminders All Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve reminders' });
+  }
+};
+
+
