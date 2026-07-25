@@ -102,12 +102,16 @@ const MonthlyFiling: React.FC = () => {
     return { total: filteredClients.length, r1, r3b };
   }, [filteredClients, getStatus]);
 
+  const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+  }, [queryClient]);
+
   const handleUpdatePassword = async () => {
     if (!selectedClient || !newPassVal.trim()) return;
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
+      handleRefreshClients();
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
@@ -310,7 +314,7 @@ const MonthlyFiling: React.FC = () => {
                      </td>
                      <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} onDataChange={fetchClients} />
+                          <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>

@@ -32,6 +32,13 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
   const [dbClients, setDbClients] = useState<Client[]>(propClients || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && (!propClients || propClients.length === 0)) {
@@ -109,10 +116,24 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
 
   if (!isOpen) return null;
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSave(formData);
+      onClose();
+    } catch (err) {
+      console.error('Failed to save notice:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <form 
-        onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
+        onSubmit={handleSubmit}
         className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
       >
         <div className="flex items-center justify-between shrink-0">
@@ -304,8 +325,10 @@ const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDele
                Delete
             </button>
           )}
-          <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
-          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save</button>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+          <button type="submit" disabled={isSubmitting} className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+            {isSubmitting ? 'Saving...' : 'Save'}
+          </button>
         </div>
       </form>
     </div>

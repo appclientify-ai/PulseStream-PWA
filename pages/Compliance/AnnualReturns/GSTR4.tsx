@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -15,6 +16,7 @@ import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const GSTR4: React.FC = () => {
+  const queryClient = useQueryClient();
   const getPreviousFY = () => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -23,9 +25,15 @@ const GSTR4: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const [clients, setClients] = useState<Client[]>([]);
-  const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const allClientsBase = useMemo(() => clientsData || [], [clientsData]);
+  const clients = useMemo(() => allClientsBase.filter(c => c && c.gstProfile?.regType === 'Composition'), [allClientsBase]);
+
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
@@ -36,7 +44,6 @@ const GSTR4: React.FC = () => {
 
   // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
   
@@ -45,25 +52,18 @@ const GSTR4: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark, updateDueDate, getDueDate } = useGSTR4Logic(selectedYear);
+  const { getStatus, toggleStatus, updateRemark, isDataLoaded } = useGSTR4Logic(selectedYear);
 
-  const [cmp08Data, setCmp08Data] = useState<Record<string, Record<string, { cmp08: boolean }>>>({});
+  const { data: cmp08DataRaw } = useQuery({
+    queryKey: ['appData', 'clientify_composition_filing_v3'],
+    queryFn: () => api.getAppData('clientify_composition_filing_v3'),
+    staleTime: 1000 * 60 * 5,
+  });
+  const cmp08Data = useMemo<Record<string, Record<string, { cmp08: boolean }>>>(() => cmp08DataRaw || {}, [cmp08DataRaw]);
 
-  const fetchClients = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const data = await api.getClients();
-      setAllClientsBase(data);
-      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Composition'));
-    } finally { setIsLoading(false); }
-  };
-
-useEffect(() => { 
-    fetchClients(); 
-    api.getAppData('clientify_composition_filing_v3').then(data => {
-      if (data) setCmp08Data(data);
-    }).catch(console.error);
-  }, []);
+  const handleRefreshClients = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+  }, [queryClient]);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -101,10 +101,11 @@ useEffect(() => {
 
 
   useEffect(() => {
-    const syncHandler = () => fetchClients();
+    const syncHandler = () => handleRefreshClients();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [handleRefreshClients]);
+
   const filteredClients = useMemo(() => {
     let list = clients.filter(c => 
       isClientVisibleInFY(c, selectedYear) &&
@@ -122,7 +123,7 @@ useEffect(() => {
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as any) : c));
+      handleRefreshClients();
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
@@ -178,7 +179,7 @@ const handleExportPDF = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isLoading) return <Loader />;
+  if (isClientsLoading || !isDataLoaded) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
@@ -304,7 +305,7 @@ const handleExportPDF = () => {
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} onDataChange={fetchClients} />
+                          <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>
                     </td>

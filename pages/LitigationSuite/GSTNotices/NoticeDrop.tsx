@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -11,9 +12,25 @@ import { formatDate } from '../../../dateUtils';
 
 
 const NoticeDrop: React.FC = () => {
-  const [records, setRecords] = useState<LitigationRecord[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: litigationData, isLoading: isLitigationLoading } = useQuery({
+    queryKey: ['litigationRecords'],
+    queryFn: () => api.getLitigationRecords(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => api.getClients(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const allRecords = useMemo(() => litigationData || [], [litigationData]);
+  const clients = useMemo(() => clientsData || [], [clientsData]);
+  const records = useMemo(() => allRecords.filter(r => r.category === 'Notice' && r.status === 'Drop'), [allRecords]);
+  const isLoading = isLitigationLoading || isClientsLoading;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -27,28 +44,16 @@ const NoticeDrop: React.FC = () => {
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [selectedClientForLogin, setSelectedClientForLogin] = useState<Client | null>(null);
 
-  const fetchAll = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [recs, clis] = await Promise.all([
-        api.getLitigationRecords(),
-        api.getClients()
-      ]);
-      setRecords(recs.filter(r => r.category === 'Notice' && r.status === 'Drop'));
-      setClients(clis);
-    } catch (err) {
-      console.error("Vault sync failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const refreshData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+  }, [queryClient]);
 
   useEffect(() => {
-    fetchAll();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
+    const syncHandler = () => { refreshData(); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
+  }, [refreshData]);
 
   
   const handleDelete = async (id: string) => {
@@ -56,7 +61,7 @@ const NoticeDrop: React.FC = () => {
       await api.deleteLitigationRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      fetchAll();
+      refreshData();
     } catch (error) {
       toast.error('Failed to delete record');
     }
@@ -66,14 +71,14 @@ const NoticeDrop: React.FC = () => {
     await api.saveLitigationRecord({ ...data, category: 'Notice' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
-    fetchAll();
+    refreshData();
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
     try {
       const updated = { ...record, status: newStatus };
       await api.saveLitigationRecord(updated);
-      fetchAll();
+      refreshData();
     } catch (err) {
       toast.error("Revert failed.");
     }
