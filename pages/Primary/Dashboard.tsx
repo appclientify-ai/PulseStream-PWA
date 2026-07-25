@@ -105,11 +105,13 @@ const Dashboard: React.FC = () => {
         'clientify_audit_fin_data_v3',
         'clientify_gstr9_watchlist_v2'
       ];
-      const data: Record<string, any> = {};
-      for (const k of keys) {
-        data[k] = (await api.getAppData(k)) || {};
-      }
-      return data;
+      const results = await Promise.all(
+        keys.map(async (k) => {
+          const val = await api.getAppData(k);
+          return [k, val || {}];
+        })
+      );
+      return Object.fromEntries(results);
     },
     enabled: !!token,
     staleTime: 1000 * 60 * 5,

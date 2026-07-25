@@ -20,9 +20,11 @@ export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter:
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await api.getAppData(STORAGE_KEY);
+        const [data, dates] = await Promise.all([
+          api.getAppData(STORAGE_KEY),
+          api.getAppData(STORAGE_KEY_DATES)
+        ]);
         if (data) setAllData(data);
-        const dates = await api.getAppData(STORAGE_KEY_DATES);
         if (dates) setDueDates(dates);
       } catch (err) {
         console.error('Failed to load composition data', err);

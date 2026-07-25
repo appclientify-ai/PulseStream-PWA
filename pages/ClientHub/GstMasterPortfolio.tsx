@@ -182,7 +182,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       await api.saveClient(updated);
       setLoginToolClient(updated as Client);
       setIsEditingLoginPass(false);
-      fetchClients();
+      handleDataChange();
     } catch (err) { toast.error("Vault update failed."); }
   };
 

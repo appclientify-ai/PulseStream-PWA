@@ -171,9 +171,11 @@ export const useMonthlyFilingLogic = (selectedYear: string, selectedMonth: strin
 useEffect(() => {
     const load = async () => {
       try {
-        const data = await api.getAppData(storageKey);
+        const [data, dates] = await Promise.all([
+          api.getAppData(storageKey),
+          api.getAppData(storageKeyDates)
+        ]);
         if (data) setAllData(data);
-        const dates = await api.getAppData(storageKeyDates);
         if (dates) setDueDates(dates);
       } catch (err) {
         console.error('Failed to load filing data', err);

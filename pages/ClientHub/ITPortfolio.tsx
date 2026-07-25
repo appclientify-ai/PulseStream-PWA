@@ -89,7 +89,6 @@ const ITPortfolio: React.FC = () => {
 
       <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <ItMasterPortfolio 
-          key={refreshTrigger} 
           externalSearch={search} 
           onDataChange={handleRefresh}
         />
