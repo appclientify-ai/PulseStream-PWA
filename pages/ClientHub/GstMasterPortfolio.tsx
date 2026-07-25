@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../exportUtils';
 import { Client } from '../../types.ts';
 import { api } from '../../services/api.ts';
@@ -17,25 +16,14 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   externalSearch = '', 
   onDataChange
 }) => {
-  const queryClient = useQueryClient();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [shareText, setShareText] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState('');
-
-  const { data: clientsData, isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const clients = useMemo(() => {
-    return (clientsData || []).filter(c => c && c.gstProfile);
-  }, [clientsData]);
-
-  const isLoading = isClientsLoading && !clientsData;
-
+  
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [relFilter, setRelFilter] = useState<string>('All');
@@ -65,13 +53,25 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      setClients((data || []).filter(c => c && c.gstProfile));
+    } catch (err) { 
+      console.error("Fetch failed", err); 
+      setClients([]);
+    } finally { 
+      setIsLoading(false); 
+    }
+  };
+
   useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-    };
+    fetchClients();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchClients(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
+  }, []);
 
   // Handle closing menu on click outside or scroll
   useEffect(() => {
@@ -106,8 +106,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   }, [activeActionsId, activeFilterMenu]);
 
   const handleDataChange = () => {
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
+    fetchClients();
     if (onDataChange) onDataChange();
   };
 
@@ -182,7 +181,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       await api.saveClient(updated);
       setLoginToolClient(updated as Client);
       setIsEditingLoginPass(false);
-      handleDataChange();
+      fetchClients();
     } catch (err) { toast.error("Vault update failed."); }
   };
 
@@ -369,7 +368,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
               <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Modify Record</span>
           </button>
-          <button onClick={() => { if(confirm('Delete client permanently from vault?')) api.deleteClient(selectedClient!.id).then(handleDataChange); setActiveActionsId(null); }} 
+          <button onClick={() => { if(confirm('Delete client permanently from vault?')) api.deleteClient(selectedClient!.id).then(fetchClients); setActiveActionsId(null); }} 
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 rounded-xl transition-colors text-left group">
               <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete Permanently</span>

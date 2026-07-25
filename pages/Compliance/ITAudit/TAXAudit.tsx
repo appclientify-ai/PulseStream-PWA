@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -12,7 +11,6 @@ import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const TAXAudit: React.FC = () => {
-  const queryClient = useQueryClient();
   const getPreviousFY = () => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -21,13 +19,8 @@ const TAXAudit: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['tax_audit_filing_page_data'],
-    queryFn: () => api.getTaxAuditFilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const allClients = useMemo(() => pageData?.clients || [], [pageData]);
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
@@ -48,25 +41,25 @@ const TAXAudit: React.FC = () => {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [editCaName, setEditCaName] = useState('');
 
-  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist } = useTaxAuditLogic(
-    selectedYear,
-    pageData?.watchlist,
-    pageData?.filingData,
-    pageData?.dueDates
-  );
+  const { getStatus, toggleAuditStatus, setBSStatus, updateCaName, updateRemark, updateDueDate, getDueDate, watchlist, addToWatchlist, removeFromWatchlist } = useTaxAuditLogic(selectedYear);
 
-  const isClientsLoading = isPageLoading && !pageData;
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      setAllClients(data);
+    } catch (err) {
+      console.error("Tax Audit Sync Error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleRefreshClients = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['tax_audit_filing_page_data'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
-
-  useEffect(() => {
-    const syncHandler = () => handleRefreshClients();
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [handleRefreshClients]);
+  }, []);
 
   const trackedClients = useMemo(() => {
     const selectedStartYear = parseInt(selectedYear.split('-')[0]);
@@ -157,7 +150,7 @@ const TAXAudit: React.FC = () => {
     };
   }, [trackedClients, getStatus]);
 
-  if (isClientsLoading) return <Loader />;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
@@ -284,7 +277,7 @@ const TAXAudit: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">
-                            {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleRefreshClients} />}
+                            {client.gstProfile && <GSTViewIcon client={client} onDataChange={fetchClients} />}
                             <button onClick={() => { setViewingClient(client); setEditCaName(status.caName || ''); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>

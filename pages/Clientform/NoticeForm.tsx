@@ -13,30 +13,7 @@ interface NoticeFormProps {
   isReissue?: boolean;
 }
 
-const SECTIONS_BY_CATEGORY: Record<string, string[]> = {
-  Notice: ['73', '74', '61', '129', '130', '142', '148', 'DRC-01'],
-  Appeal: ['107', '112', '108', 'APL-01', '107(1)', '107(11)'],
-  Tribunal: ['112', '113', '107', 'APL-05'],
-  'High Court': ['117', '118', 'Art 226', 'Art 227'],
-  HighCourt: ['117', '118', 'Art 226', 'Art 227']
-};
-
-const COMMON_PERIODS = ['2024-25', '2023-24', '2022-23', '2021-22'];
-
-export const NoticeForm: React.FC<NoticeFormProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  onDelete,
-  clients: propClients,
-  category,
-  initialData,
-  isReissue
-}) => {
-  const isAppeal = category === 'Appeal';
-  const isTribunal = category === 'Tribunal';
-  const isHighCourt = category === 'HighCourt' || category === 'High Court';
-
+const NoticeForm: React.FC<NoticeFormProps> = ({ isOpen, onClose, onSave, onDelete, clients: propClients, category, initialData, isReissue }) => {
   const [formData, setFormData] = useState<Partial<LitigationRecord>>({
     status: 'Pending',
     category: category,
@@ -46,7 +23,6 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
     issuedDate: '',
     dueDate: '',
     filedDate: '',
-    replyReferenceNo: '',
     orderDate: '',
     remarks: '',
     isReissued: false,
@@ -56,28 +32,17 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
   const [dbClients, setDbClients] = useState<Client[]>(propClients || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    if (propClients && propClients.length > 0) {
-      setDbClients(propClients);
-    }
-  }, [propClients]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsSubmitting(false);
-      setConfirmDelete(false);
-      if (!propClients || propClients.length === 0) {
-        api.getClients().then(setDbClients);
-      }
+    if (isOpen && (!propClients || propClients.length === 0)) {
+      api.getClients().then(setDbClients);
     }
   }, [isOpen, propClients]);
 
   useEffect(() => {
     if (initialData) {
       if (isReissue) {
+        // Strip id to create a NEW record, keep previous as history
         const { _id, isDemandPaid, ...rest } = initialData as any;
         if (category !== initialData.category) {
           delete rest.id;
@@ -88,7 +53,6 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
           category: category,
           status: 'Pending',
           filedDate: '',
-          replyReferenceNo: '',
           orderDate: '',
           remarks: (rest.remarks || '') + prevDetails,
           isReissued: true
@@ -99,7 +63,6 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
           category: category,
           status: initialData.status || 'Pending',
           filedDate: initialData.filedDate || '',
-          replyReferenceNo: initialData.replyReferenceNo || '',
           orderDate: initialData.orderDate || '',
           caseHistory: initialData.caseHistory || ''
         });
@@ -115,7 +78,6 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
         issuedDate: '',
         dueDate: '',
         filedDate: '',
-        replyReferenceNo: '',
         orderDate: '',
         remarks: '',
         isReissued: false,
@@ -125,16 +87,8 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
     }
   }, [initialData, isOpen, category, isReissue]);
 
-  // Selected client lookup
-  const selectedClient = useMemo(() => {
-    if (formData.clientId) {
-      return dbClients.find(c => c.id === formData.clientId);
-    }
-    return null;
-  }, [dbClients, formData.clientId]);
-
   const filteredClients = useMemo(() => {
-    const s = searchQuery.toLowerCase().trim();
+    const s = searchQuery.toLowerCase();
     if (!s) return [];
     return dbClients.filter(c => 
       (c.tradeName || '').toLowerCase().includes(s) || 
@@ -144,608 +98,214 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
   }, [dbClients, searchQuery]);
 
   const handleClientSelect = (client: Client) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData({ 
+      ...formData, 
       clientId: client.id, 
       clientName: client.tradeName || client.legalName 
-    }));
+    });
     setSearchQuery(client.tradeName || client.legalName);
     setIsDropdownOpen(false);
   };
 
-  const handleClearClient = () => {
-    setFormData(prev => ({
-      ...prev,
-      clientId: '',
-      clientName: ''
-    }));
-    setSearchQuery('');
-    setIsDropdownOpen(true);
-  };
-
-  const addDaysToDate = (baseDateStr: string, days: number) => {
-    if (!baseDateStr) return;
-    const d = new Date(baseDateStr);
-    if (isNaN(d.getTime())) return;
-    d.setDate(d.getDate() + days);
-    const newDueDate = d.toISOString().split('T')[0];
-    setFormData(prev => ({ ...prev, dueDate: newDueDate }));
-  };
-
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-    
-    if (!formData.clientId && !formData.clientName) {
-      alert('Please select a Taxpayer / Client.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await onSave(formData);
-      onClose();
-    } catch (err) {
-      console.error('Failed to save record:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const isEditing = !!initialData?.id && !isReissue;
-  const sectionSuggestions = SECTIONS_BY_CATEGORY[category] || SECTIONS_BY_CATEGORY['Notice'];
-
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <form 
-        onSubmit={handleSubmit}
-        className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95"
+        onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
+        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
       >
-        {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-black text-[10px] uppercase tracking-wider">
-                {category} Module
-              </span>
-              {isEditing && (
-                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] uppercase">
-                  Editing Mode
-                </span>
-              )}
-            </div>
-            <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
-              {isEditing 
-                ? `Modify GST ${category}` 
-                : isReissue 
-                ? `Escalate / Move to ${category}` 
-                : `Add New GST ${category}`}
-            </h3>
-          </div>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between shrink-0">
+           <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+             {category} Documentation
+           </h3>
+           <button type="button" onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100">
+              <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <div className="p-5 sm:p-6 space-y-6 overflow-y-auto no-scrollbar flex-1 text-slate-900">
-          
-          {isTribunal && (
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
-              <span className="text-xl">💡</span>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">GSTAT Tribunal Litigation Guideline</h4>
-                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Appeals before the GST Appellate Tribunal (GSTAT) must typically be filed within <strong>90 days (3 months)</strong> of receiving the Order-In-Appeal (OIA). For delay condonation petitions, GSTAT allows up to 180 days with valid grounds.
-                </p>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar pr-1">
+          <div className="relative">
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Lookup</label>
+            <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all uppercase"
+              placeholder="Trade Name or GSTIN..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }} />
+            {isDropdownOpen && filteredClients.length > 0 && (
+              <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto no-scrollbar">
+                {filteredClients.map(c => (
+                  <button key={c.id} type="button" onClick={() => handleClientSelect(c)} className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0">
+                    <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
+                    <p className="text-[10px] text-indigo-600 font-mono font-black">{c.gstProfile?.gstin || 'NO GSTIN'}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Section</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.section || ''} onChange={e => setFormData({...formData, section: e.target.value})} placeholder="E.G. 73" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Tax Period</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.taxPeriod || ''} onChange={e => setFormData({...formData, taxPeriod: e.target.value})} placeholder="E.G. 2023-24" />
+            </div>
+          </div>
+
+          {(category === 'Notice' || category === 'Appeal') && (
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reference No</label>
+              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.referenceNo || ''} onChange={e => setFormData({...formData, referenceNo: e.target.value})} placeholder="Notice/Order No" />
+            </div>
+          )}
+
+          {(category === 'Notice' || category === 'Appeal') && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">{category === 'Appeal' ? 'Order Date' : 'Issued Date'}</label>
+                <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.issuedDate || ''} onChange={e => {
+                  const newDate = e.target.value;
+                  if (category === 'Appeal' && newDate) {
+                    const date = new Date(newDate);
+                    date.setDate(date.getDate() + 90);
+                    const dueDate = date.toISOString().split('T')[0];
+                    setFormData({...formData, issuedDate: newDate, orderDate: newDate, dueDate: dueDate});
+                  } else {
+                    setFormData({...formData, issuedDate: newDate, orderDate: newDate});
+                  }
+                }} />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
               </div>
             </div>
           )}
 
-          {isHighCourt && (
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
-              <span className="text-xl">💡</span>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">High Court Litigation Guideline</h4>
-                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Writ Petitions (Article 226) or Appeals in the High Court are typically filed within <strong>90 days</strong> of receiving the Impugned Order/Decision. Make sure grounds such as violations of principles of natural justice, constitutional validity, or errors apparent on face of record are documented.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* SECTION 1: Taxpayer / Client Selection */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                1. Select Taxpayer / Client
-              </label>
-              {selectedClient && (
-                <button
-                  type="button"
-                  onClick={handleClearClient}
-                  className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-all flex items-center gap-1"
-                >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                  Change Taxpayer
-                </button>
-              )}
-            </div>
-
-            {selectedClient ? (
-              <div className="bg-white p-3.5 rounded-xl border border-indigo-200 shadow-xs flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-slate-900 truncate">{selectedClient.tradeName || selectedClient.legalName}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[11px] font-mono font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                      {selectedClient.gstProfile?.gstin || 'NO GSTIN'}
-                    </span>
-                    {selectedClient.legalName && selectedClient.tradeName && (
-                      <span className="text-[10px] font-bold text-slate-400 truncate">
-                        ({selectedClient.legalName})
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                </div>
-              </div>
-            ) : formData.clientName && !formData.clientId ? (
-              <div className="bg-white p-3.5 rounded-xl border border-amber-200 shadow-xs flex items-center justify-between gap-3">
+          {category === 'Tribunal' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-black text-slate-900">{formData.clientName}</p>
-                  <p className="text-[10px] text-amber-600 font-bold">Unlinked client record</p>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">OIO Ref No</label>
+                  <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.oioRefNo || ''} onChange={e => setFormData({...formData, oioRefNo: e.target.value})} placeholder="OIO Ref" />
                 </div>
-                <button
-                  type="button"
-                  onClick={handleClearClient}
-                  className="text-xs font-bold text-indigo-600 hover:underline"
-                >
-                  Search & Link
-                </button>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">OIO Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.oioDate || ''} onChange={e => setFormData({...formData, oioDate: e.target.value})} />
+                </div>
               </div>
-            ) : (
-              <div className="relative">
-                <div className="relative">
-                  <input
-                    required
-                    type="text"
-                    className="w-full bg-white border border-slate-300 rounded-xl py-3 pl-10 pr-4 font-bold text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all uppercase"
-                    placeholder="Type Trade Name, Legal Name, or GSTIN..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setIsDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsDropdownOpen(true)}
-                  />
-                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">AIO ARN No</label>
+                  <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.aioArn || ''} onChange={e => setFormData({...formData, aioArn: e.target.value})} placeholder="AIO ARN" />
                 </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">AIO Order Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.aioDate || ''} onChange={e => {
+                    const newDate = e.target.value;
+                    if (newDate) {
+                      const date = new Date(newDate);
+                      date.setDate(date.getDate() + 90);
+                      const dueDate = date.toISOString().split('T')[0];
+                      setFormData({...formData, aioDate: newDate, dueDate: dueDate});
+                    } else {
+                      setFormData({...formData, aioDate: newDate});
+                    }
+                  }} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                </div>
+              </div>
+            </>
+          )}
 
-                {isDropdownOpen && filteredClients.length > 0 && (
-                  <div className="absolute top-full mt-1.5 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto divide-y divide-slate-100">
-                    {filteredClients.map(c => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => handleClientSelect(c)}
-                        className="w-full text-left px-4 py-3 hover:bg-indigo-50/80 transition-colors flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
-                          {c.legalName && c.tradeName && <p className="text-[10px] text-slate-400 font-medium truncate">{c.legalName}</p>}
-                        </div>
-                        <span className="text-[10px] font-mono font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shrink-0">
-                          {c.gstProfile?.gstin || 'NO GSTIN'}
-                        </span>
-                      </button>
-                    ))}
+          {category === 'HighCourt' && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">TIO Ref No</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-indigo-100" value={formData.tioRefNo || ''} onChange={e => setFormData({...formData, tioRefNo: e.target.value})} placeholder="TIO Ref" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">TIO Order Date</label>
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.tioDate || ''} onChange={e => {
+                    const newDate = e.target.value;
+                    if (newDate) {
+                      const date = new Date(newDate);
+                      date.setDate(date.getDate() + 90);
+                      const dueDate = date.toISOString().split('T')[0];
+                      setFormData({...formData, tioDate: newDate, dueDate: dueDate});
+                    } else {
+                      setFormData({...formData, tioDate: newDate, dueDate: ''});
+                    }
+                  }} />
+                </div>
+              </div>
+              {formData.dueDate && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Due Date</label>
+                    <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.dueDate || ''} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
                   </div>
-                )}
-                {isDropdownOpen && searchQuery && filteredClients.length === 0 && (
-                  <div className="absolute top-full mt-1.5 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-4 text-center text-xs font-bold text-slate-400">
-                    No clients found matching "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </>
+          )}
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Status</label>
+            <select 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase"
+              value={formData.status || 'Pending'}
+              onChange={e => setFormData({...formData, status: e.target.value as LitigationStatus})}
+            >
+              <option value="Pending">Pending</option>
+              <option value="Filed">Filed</option>
+              <option value="Dropped">Dropped</option>
+            </select>
           </div>
 
-          {/* SECTION 2: Notice / Appeal Specifications */}
-          <div className="space-y-4">
-            <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-              <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              2. {category} Specifications & Provisions
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Section */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                  {isTribunal ? 'Tribunal Provision / Section / Form' : isAppeal ? 'Appeal Provision / Section / Form' : 'Act / Section'} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 uppercase"
-                  placeholder={isTribunal ? 'e.g. 112, 113, APL-05, GSTAT-01...' : isAppeal ? 'e.g. 107, APL-01, 107(1)...' : 'e.g. 73, 74, 129, 61...'}
-                  value={formData.section || ''}
-                  onChange={e => setFormData({ ...formData, section: e.target.value })}
-                />
-                {/* Quick Section Chips */}
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {sectionSuggestions.map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, section: s }))}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
-                        formData.section === s 
-                          ? 'bg-indigo-600 text-white font-black' 
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {s.startsWith('APL') || s.startsWith('GSTAT') || s.startsWith('Art') ? s : `U/s ${s}`}
-                    </button>
-                  ))}
+          {(formData.status === 'Filed' || formData.status === 'Dropped') && (
+            <div className="grid grid-cols-2 gap-4">
+              {formData.status === 'Filed' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Reply Filed Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.filedDate || ''} onChange={e => setFormData({...formData, filedDate: e.target.value})} />
                 </div>
-              </div>
-
-              {/* Tax Period */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                  Tax Period / FY <span className="text-red-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 uppercase"
-                  placeholder="e.g. 2023-24, Apr-23 to Mar-24..."
-                  value={formData.taxPeriod || ''}
-                  onChange={e => setFormData({ ...formData, taxPeriod: e.target.value })}
-                />
-                {/* Quick Period Chips */}
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {COMMON_PERIODS.map(p => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, taxPeriod: p }))}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all ${
-                        formData.taxPeriod === p 
-                          ? 'bg-indigo-600 text-white font-black' 
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      FY {p}
-                    </button>
-                  ))}
+              )}
+              {formData.status === 'Dropped' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Order Date</label>
+                  <input required type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-100 uppercase" value={formData.orderDate || ''} onChange={e => setFormData({...formData, orderDate: e.target.value})} />
                 </div>
-              </div>
+              )}
             </div>
+          )}
 
-            {/* Reference / DIN Number */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                {isHighCourt ? 'Impugned GSTAT Order No / Decision Reference' : isTribunal ? 'Order-In-Appeal (OIA) No / Impugned Order Ref No' : isAppeal ? 'Appeal ARN / Order-In-Original No / APL-01 Ref' : 'Notice Reference No / DIN / Order No'} <span className="text-red-500">*</span>
-              </label>
-              <input
-                required
-                type="text"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
-                placeholder={isHighCourt ? 'e.g. GSTAT-DEL/ORDER/2024/01 or J-123/24' : isTribunal ? 'e.g. OIA-GSTAT-2023-24/105 or APL-01/Ref/789' : isAppeal ? 'e.g. APL-01 ARN / OIO-1234/2023-24' : 'e.g. ZD2703241234567 or DRC-01/2023-24/102'}
-                value={formData.referenceNo || ''}
-                onChange={e => setFormData({ ...formData, referenceNo: e.target.value })}
-              />
-            </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Case History</label>
+            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20" value={formData.caseHistory || ''} onChange={e => setFormData({...formData, caseHistory: e.target.value})} placeholder="Case status updates and history..." />
           </div>
 
-          {/* SECTION 3: Key Timeline & Dates */}
-          <div className="space-y-4 pt-2 border-t border-slate-100">
-            <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-              <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              3. Key Timelines & Statutory Deadlines
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Notice / OIO Issued Date */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                    {isHighCourt ? 'Impugned Order/Decision Date' : isTribunal ? 'Order-In-Appeal (OIA) Date' : isAppeal ? 'Order-In-Original Date' : 'Issued Date'} <span className="text-red-500">*</span>
-                  </label>
-                </div>
-                <input
-                  required
-                  type="date"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 uppercase font-mono"
-                  value={formData.issuedDate || ''}
-                  onChange={e => {
-                    const newIssued = e.target.value;
-                    setFormData(prev => ({ ...prev, issuedDate: newIssued, orderDate: newIssued }));
-                  }}
-                />
-              </div>
-
-              {/* Due Date */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black uppercase text-red-600 tracking-wider block flex items-center gap-1">
-                    {isHighCourt ? 'High Court Petition / WP Filing Deadline' : isTribunal ? 'Tribunal Appeal Filing Deadline' : isAppeal ? 'Appeal Filing Deadline' : 'Due Date (Deadline)'} <span className="text-red-500">*</span>
-                  </label>
-                  {formData.issuedDate && (
-                    <div className="flex gap-1">
-                      {isHighCourt ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 90)}
-                            className="text-[9px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100"
-                            title="Add 90 Days"
-                          >
-                            +90d (3 Mo)
-                          </button>
-                        </>
-                      ) : isTribunal ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 90)}
-                            className="text-[9px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100"
-                            title="Add 90 Days (3 Months Standard Limit)"
-                          >
-                            +90d (3 Mo)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 180)}
-                            className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 hover:bg-amber-100"
-                            title="Add 180 Days (6 Months Extended Limit)"
-                          >
-                            +180d (6 Mo)
-                          </button>
-                        </>
-                      ) : isAppeal ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 30)}
-                            className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 hover:bg-amber-100"
-                            title="Add 30 Days"
-                          >
-                            +30d
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 90)}
-                            className="text-[9px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100"
-                            title="Add 90 Days (Standard Appeal Window)"
-                          >
-                            +90d (3 Mo)
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 15)}
-                            className="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 hover:bg-amber-100"
-                            title="Add 15 Days from Notice Date"
-                          >
-                            +15d
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => addDaysToDate(formData.issuedDate!, 30)}
-                            className="text-[9px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100"
-                            title="Add 30 Days from Notice Date"
-                          >
-                            +30d
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <input
-                  required
-                  type="date"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 uppercase font-mono text-red-600"
-                  value={formData.dueDate || ''}
-                  onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* Conditional Dates depending on status */}
-            {formData.status === 'Filed' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
-                    {isHighCourt ? 'Date of Filing (High Court)' : isTribunal ? 'Date of Filing (Tribunal)' : isAppeal ? 'Appeal Filing Date (APL-01)' : 'Reply Filed Date'}
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono"
-                    value={formData.filedDate || ''}
-                    onChange={e => setFormData({ ...formData, filedDate: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
-                    {isHighCourt ? 'Writ Petition No / High Court Appeal No' : isTribunal ? 'Tribunal Appeal No / GSTAT ARN' : isAppeal ? 'APL-01 ARN / Acknowledgment No' : 'Reply ARN / Reference'}
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono uppercase"
-                    placeholder={isHighCourt ? 'e.g. WP-12345/2024 or HC-APPEAL/99/2024' : isTribunal ? 'e.g. GSTAT-DEL/2024/0091 or APL-05/ARN...' : 'e.g. AA2703241234567'}
-                    value={formData.replyReferenceNo || ''}
-                    onChange={e => setFormData({ ...formData, replyReferenceNo: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
-
-            {(formData.status === 'Dropped' || formData.status === 'Demand') && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-100/80 p-3.5 rounded-xl border border-slate-200">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-700 tracking-wider block">
-                    {formData.status === 'Dropped' 
-                      ? (isHighCourt ? 'High Court Judgment / Relief Date' : isTribunal ? 'Tribunal Order / Relief Date' : isAppeal ? 'Appeal Order / Relief Date' : 'Order / Drop Date') 
-                      : (isHighCourt ? 'High Court Judgment Date' : isTribunal ? 'Tribunal Order Date' : isAppeal ? 'Appellate Order Date' : 'Demand Order Date')}
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full bg-white border border-slate-300 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-600/20 font-mono"
-                    value={formData.orderDate || ''}
-                    onChange={e => setFormData({ ...formData, orderDate: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Internal Notes</label>
+            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-20" value={formData.remarks || ''} onChange={e => setFormData({...formData, remarks: e.target.value})} placeholder="Staff instructions..." />
           </div>
-
-          {/* SECTION 4: Case Status */}
-          <div className="space-y-3 pt-2 border-t border-slate-100">
-            <label className="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-              <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              4. Current Stage & Status
-            </label>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { status: 'Pending', label: isHighCourt ? 'Pending Filing' : isTribunal ? 'Pending Filing' : isAppeal ? 'Pending Filing' : 'Pending', color: 'amber' },
-                { status: 'Filed', label: isHighCourt ? 'HC Filed' : isTribunal ? 'Tribunal Filed' : isAppeal ? 'Appeal Filed' : 'Reply Filed', color: 'emerald' },
-                { status: 'Demand', label: isHighCourt ? 'Sustained / Demand' : isTribunal ? 'Sustained / Order' : isAppeal ? 'Order Passed' : 'Demand Raised', color: 'red' },
-                { status: 'Dropped', label: isHighCourt ? 'Relief / Closed' : isTribunal ? 'Relief / Closed' : isAppeal ? 'Appeal Allowed' : 'Case Dropped', color: 'slate' }
-              ].map(opt => {
-                const isSelected = formData.status === opt.status;
-                return (
-                  <button
-                    key={opt.status}
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, status: opt.status as LitigationStatus }))}
-                    className={`py-3 px-2 rounded-xl border text-center font-black text-xs transition-all uppercase tracking-wider flex items-center justify-center gap-1.5 ${
-                      isSelected
-                        ? opt.color === 'amber'
-                          ? 'bg-amber-500 text-white border-amber-600 shadow-md scale-[1.02]'
-                          : opt.color === 'emerald'
-                          ? 'bg-emerald-600 text-white border-emerald-700 shadow-md scale-[1.02]'
-                          : opt.color === 'red'
-                          ? 'bg-red-600 text-white border-red-700 shadow-md scale-[1.02]'
-                          : 'bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SECTION 5: Case History & Staff Remarks */}
-          <div className="space-y-4 pt-2 border-t border-slate-100">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                {isHighCourt ? 'Writ Petition Grounds, HC Bench Notes & Proceedings' : isTribunal ? 'Tribunal Appeal Grounds, Bench Notes & Proceedings' : isAppeal ? 'Appeal Grounds & Hearing History' : 'Case History & Proceedings'}
-              </label>
-              <textarea
-                rows={2}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-medium text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
-                placeholder={isHighCourt ? "Record Writ Petition grounds to High Court, bench notes, hearing dates, advocate remarks..." : isTribunal ? "Record grounds of appeal to GSTAT, bench notes, hearing dates, advocate remarks..." : isAppeal ? "Record appeal grounds, hearing dates, appellate officer notes..." : "Record officer hearing notes, submissions, or timeline updates..."}
-                value={formData.caseHistory || ''}
-                onChange={e => setFormData({ ...formData, caseHistory: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                Internal Staff Notes & Remarks
-              </label>
-              <textarea
-                rows={2}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-medium text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600"
-                placeholder="Internal office remarks, team assignments, or follow-up instructions..."
-                value={formData.remarks || ''}
-                onChange={e => setFormData({ ...formData, remarks: e.target.value })}
-              />
-            </div>
-          </div>
-
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div>
-            {onDelete && isEditing && (
-              confirmDelete ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-red-600 uppercase">Confirm Delete?</span>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(initialData.id!)}
-                    className="px-3 py-1.5 bg-red-600 text-white rounded-lg font-black text-[10px] uppercase tracking-wider hover:bg-red-700"
-                  >
-                    Yes, Remove
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(false)}
-                    className="px-2 py-1.5 text-slate-500 font-bold text-[10px] hover:underline"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(true)}
-                  className="px-3 py-2 text-red-600 font-black uppercase tracking-wider text-[10px] bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-colors flex items-center gap-1.5"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  Delete Record
-                </button>
-              )
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 sm:flex-none px-5 py-3 text-slate-600 font-black uppercase tracking-wider text-[10px] border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors disabled:opacity-50"
-            >
-              Cancel
+        <div className="flex gap-4 pt-4 shrink-0">
+          {onDelete && initialData?.id && (
+            <button type="button" onClick={() => onDelete(initialData.id!)} className="flex-1 py-4 text-red-500 font-black uppercase tracking-widest text-[10px] border border-red-200 bg-red-50 rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
+               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+               Delete
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 sm:flex-none px-7 py-3 bg-indigo-600 text-white font-black uppercase tracking-wider text-[10px] rounded-xl shadow-lg hover:bg-slate-900 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  Saving...
-                </>
-              ) : isEditing ? (
-                `Update ${category} Record`
-              ) : (
-                `Save ${category} Record`
-              )}
-            </button>
-          </div>
+          )}
+          <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
+          <button type="submit" className="flex-[2] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save</button>
         </div>
       </form>
     </div>

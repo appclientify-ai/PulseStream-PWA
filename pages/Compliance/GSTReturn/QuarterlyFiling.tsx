@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -15,7 +14,9 @@ import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
-  const queryClient = useQueryClient();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [allClientsBase, setAllClientsBase] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
@@ -44,32 +45,23 @@ const QuarterlyFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['quarterly_filing_page_data'],
-    queryFn: () => api.getQuarterlyFilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
+  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(selectedYear, selectedMonth, 'clientify_quarterly_filing_v3');
 
-  const clients = useMemo(() => pageData?.clients || [], [pageData]);
-  const allClientsBase = clients;
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      setAllClientsBase(data);
+      // AUTOMATIC ROUTING: Quarterly Return list only shows taxpayers with Quarterly frequency
+      setClients((data || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly'));
+    } finally { setIsLoading(false); }
+  };
 
-  const { getStatus, toggleStatus, updateRemark } = useMonthlyFilingLogic(
-    selectedYear, 
-    selectedMonth, 
-    'clientify_quarterly_filing_v3', 
-    pageData?.filingData, 
-    pageData?.dueDates
-  );
-
-  const isLoading = isPageLoading && !pageData;
-
-  useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['quarterly_filing_page_data'] });
-    };
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
+  }, []);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -117,16 +109,12 @@ const QuarterlyFiling: React.FC = () => {
     return { total: filteredClients.length, r1, r3b };
   }, [filteredClients, getStatus]);
 
-  const handleRefreshClients = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
-
   const handleUpdatePassword = async () => {
     if (!selectedClient || !newPassVal.trim()) return;
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      handleRefreshClients();
+      setClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
@@ -330,7 +318,7 @@ const QuarterlyFiling: React.FC = () => {
                      </td>
                      <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>

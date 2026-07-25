@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Client } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
@@ -13,9 +12,9 @@ const DEFAULT_TEMPLATES = [
 ];
 
 const Messenger: React.FC = () => {
-  const queryClient = useQueryClient();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [selectedClients, setSelectedClients] = useState<Record<string, Client>>({});
   const [templateText, setTemplateText] = useState('');
   const [search, setSearch] = useState('');
   const [userTemplates, setUserTemplates] = useState<{label: string, text: string}[]>(() => {
@@ -29,37 +28,18 @@ const Messenger: React.FC = () => {
 
   const [activeSection, setActiveSection] = useState<'All' | 'GST' | 'ITR' | 'Audit' | 'GSTR-4' | 'GSTR-9/9C'>('All');
 
-  // Specific query for each segment to achieve fast access and database-level pre-filtering
-  const { data: clientsData = [], isLoading } = useQuery<Client[]>({
-    queryKey: ['messenger_clients', activeSection],
-    queryFn: () => {
-      switch (activeSection) {
-        case 'All': return api.getMessengerClientsAll();
-        case 'GST': return api.getMessengerClientsGst();
-        case 'ITR': return api.getMessengerClientsItr();
-        case 'Audit': return api.getMessengerClientsAudit();
-        case 'GSTR-4': return api.getMessengerClientsGstr4();
-        case 'GSTR-9/9C': return api.getMessengerClientsGstr9();
-        default: return api.getMessengerClientsAll();
-      }
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache TTL
-  });
-
-  // Query all clients to derive counts for segment tabs
-  const { data: allClients = [] } = useQuery<Client[]>({
-    queryKey: ['messenger_clients', 'All'],
-    queryFn: () => api.getMessengerClientsAll(),
-    staleTime: 1000 * 60 * 5,
-  });
+  useEffect(() => {
+    api.getClients().then(data => {
+      setClients(data);
+      setIsLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['messenger_clients'] });
-    };
+    const syncHandler = () => api.getClients().then(setClients);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
+  }, []);
 
   // GSTR 9 Watchlist reader for exact matching
   const gstr9WatchlistIds = useMemo(() => {
@@ -83,10 +63,10 @@ const Messenger: React.FC = () => {
       return Boolean(c.gstProfile?.gstin || c.services?.includes('GST') || c.gstProfile?.regType);
     }
     if (section === 'ITR') {
-      return Boolean(c.itProfile?.pan || c.services?.includes('IT') || c.services?.includes('ITR') || c.itProfile?.fileType);
+      return Boolean(c.itProfile?.pan || c.services?.includes('IT') || c.itProfile?.fileType);
     }
     if (section === 'Audit') {
-      return Boolean(c.itProfile?.auditApplicable || c.itProfile?.advisoryWork?.taxAudit || c.services?.includes('Audit') || (c.itProfile?.fileType && c.itProfile.fileType.toLowerCase().includes('audit')));
+      return Boolean(c.itProfile?.auditApplicable || c.services?.includes('Audit') || (c.itProfile?.fileType && c.itProfile.fileType.toLowerCase().includes('audit')));
     }
     if (section === 'GSTR-4') {
       return c.gstProfile?.regType === 'Composition';
@@ -99,53 +79,29 @@ const Messenger: React.FC = () => {
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
-    return clientsData.filter(c => {
+    return clients.filter(c => {
+      const matchesSection = isClientInCategory(c, activeSection);
+      if (!matchesSection) return false;
       return (
         (c.legalName || '').toLowerCase().includes(s) || 
         (c.tradeName || '').toLowerCase().includes(s) ||
         (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
       );
     });
-  }, [clientsData, search]);
+  }, [clients, search, activeSection, gstr9WatchlistIds]);
 
-  const selectedClientsList = useMemo(() => {
-    return Object.values(selectedClients);
-  }, [selectedClients]);
+  const selectedClientsList = useMemo(() => clients.filter(c => selectedIds.has(c.id)), [clients, selectedIds]);
 
   const toggleAll = () => {
-    if (selectedIds.size === filteredClients.length) {
-      const nextIds = new Set(selectedIds);
-      const nextClients = { ...selectedClients };
-      filteredClients.forEach(c => {
-        nextIds.delete(c.id);
-        delete nextClients[c.id];
-      });
-      setSelectedIds(nextIds);
-      setSelectedClients(nextClients);
-    } else {
-      const nextIds = new Set(selectedIds);
-      const nextClients = { ...selectedClients };
-      filteredClients.forEach(c => {
-        nextIds.add(c.id);
-        nextClients[c.id] = c;
-      });
-      setSelectedIds(nextIds);
-      setSelectedClients(nextClients);
-    }
+    if (selectedIds.size === filteredClients.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filteredClients.map(c => c.id)));
   };
 
-  const toggleClient = (client: Client) => {
-    const nextIds = new Set(selectedIds);
-    const nextClients = { ...selectedClients };
-    if (nextIds.has(client.id)) {
-      nextIds.delete(client.id);
-      delete nextClients[client.id];
-    } else {
-      nextIds.add(client.id);
-      nextClients[client.id] = client;
-    }
-    setSelectedIds(nextIds);
-    setSelectedClients(nextClients);
+  const toggleClient = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
   };
 
   const formatMessage = (rawText: string, client: Client) => {
@@ -203,7 +159,7 @@ const Messenger: React.FC = () => {
           <div className="flex items-center gap-4 px-2 md:px-4 border-r border-slate-100 shrink-0">
             <div className="text-center">
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
-              <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{allClients.length}</p>
+              <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{clients.length}</p>
             </div>
             <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
               <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Section</p>
@@ -243,7 +199,7 @@ const Messenger: React.FC = () => {
             { id: 'GSTR-4', label: 'Annual Return GSTR-4' },
             { id: 'GSTR-9/9C', label: 'Annual Return GSTR-9/9C' },
           ].map(sec => {
-            const secCount = allClients.filter(c => isClientInCategory(c, sec.id as any)).length;
+            const secCount = clients.filter(c => isClientInCategory(c, sec.id as any)).length;
             const isSelected = activeSection === sec.id;
             return (
               <button
@@ -283,7 +239,7 @@ const Messenger: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredClients.map((c, idx) => (
-                <tr key={c.id} onClick={() => toggleClient(c)} className={`cursor-pointer transition-all group ${selectedIds.has(c.id) ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
+                <tr key={c.id} onClick={() => toggleClient(c.id)} className={`cursor-pointer transition-all group ${selectedIds.has(c.id) ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
                   <td className=" px-4 py-5 text-center">
                     <div className={`h-5 w-5 mx-auto rounded-md border-2 transition-all flex items-center justify-center ${selectedIds.has(c.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-200 bg-white group-hover:border-indigo-400'}`}>
                       {selectedIds.has(c.id) && <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" /></svg>}

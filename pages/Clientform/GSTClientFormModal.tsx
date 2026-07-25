@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { 
   Client, 
   ConstitutionType, 
@@ -21,35 +20,11 @@ interface GSTClientFormModalProps {
 }
 
 const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [existingClients, setExistingClients] = useState<Client[]>([]);
   const [isDataLinked, setIsDataLinked] = useState(false);
-
-  const { data: existingClientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-    enabled: isOpen,
-  });
-
-  const existingClients = useMemo(() => existingClientsData || [], [existingClientsData]);
-
-  const saveMutation = useMutation({
-    mutationFn: (clientData: Partial<Client>) => api.saveClient(clientData),
-    onSuccess: (saved) => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
-      toast.success(initialData ? 'Client profile updated!' : 'Client added to GST Vault!');
-      onSave(saved);
-      onClose();
-    },
-    onError: (err: any) => {
-      setError(err.message || "Failed to sync vault.");
-    }
-  });
-
-  const isSaving = saveMutation.isPending;
 
   const createStakeholder = (): Stakeholder => ({
     id: Math.random().toString(36).substr(2, 9),
@@ -96,6 +71,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
 
   useEffect(() => {
     if (isOpen) {
+      api.getClients().then(setExistingClients);
       if (initialData) {
         setFormData({
           ...initialData,
@@ -232,12 +208,21 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setError(null);
     if (!formData.tradeName) return setError("Trade Name is required.");
     if (!formData.gstProfile?.gstin) return setError("GSTIN is required.");
     
-    saveMutation.mutate(formData);
+    setIsSaving(true);
+    try {
+      const saved = await api.saveClient(formData);
+      onSave(saved);
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to sync vault.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isOpen) return null;

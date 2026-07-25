@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -17,7 +16,6 @@ import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const GSTR9_9C: React.FC = () => {
-  const queryClient = useQueryClient();
   const getPreviousFY = () => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -26,14 +24,8 @@ const GSTR9_9C: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['gstr9_filing_page_data'],
-    queryFn: () => api.getGSTR9FilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const allClients = useMemo(() => pageData?.clients || [], [pageData]);
-
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
@@ -43,17 +35,20 @@ const GSTR9_9C: React.FC = () => {
   
   // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditApplicabilityOpen, setIsEditApplicabilityOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
   const [is9CApplicableState, setIs9CApplicableState] = useState(true);
   const [turnoverState, setTurnoverState] = useState('');
-  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+    const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [newPassVal, setNewPassVal] = useState('');
 
   // Filters
   const [gstr9Filter, setGstr9Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [gstr9cFilter, setGstr9cFilter] = useState<'All' | 'Filed' | 'Pending' | 'N/A'>('All');
+  const [is9FilterOpen, setIs9FilterOpen] = useState(false);
+  const [is9cFilterOpen, setIs9cFilterOpen] = useState(false);
 
   // Actions Menu State
   const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
@@ -62,27 +57,23 @@ const GSTR9_9C: React.FC = () => {
 
   const { 
     getStatus, toggleStatus, updateRemark, watchlist, addToWatchlist, 
-    removeFromWatchlist, is9CApplicable, update9CApplicability
-  } = useGSTR9Logic(
-    selectedYear,
-    pageData?.watchlist,
-    pageData?.config,
-    pageData?.filingData,
-    pageData?.dueDates
-  );
+    removeFromWatchlist, is9CApplicable, update9CApplicability,
+    getDueDate, updateDueDate 
+  } = useGSTR9Logic(selectedYear);
 
-  const isClientsLoading = isPageLoading && !pageData;
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      setAllClients(data);
+    } finally { setIsLoading(false); }
+  };
 
-  const handleRefreshClients = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['gstr9_filing_page_data'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
-
-  useEffect(() => {
-    const syncHandler = () => handleRefreshClients();
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [handleRefreshClients]);
+  }, []);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -215,7 +206,7 @@ const GSTR9_9C: React.FC = () => {
     try {
       const updated = { ...selectedClient, gstProfile: { ...selectedClient.gstProfile!, password: newPassVal } };
       await api.saveClient(updated);
-      handleRefreshClients();
+      setAllClients(prev => prev.map(c => c.id === selectedClient.id ? (updated as Client) : c));
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
@@ -224,7 +215,7 @@ const GSTR9_9C: React.FC = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isClientsLoading) return <Loader />;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
@@ -372,7 +363,7 @@ const GSTR9_9C: React.FC = () => {
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
-                          <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
+                          <GSTViewIcon client={client} onDataChange={fetchClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>
                     </td>

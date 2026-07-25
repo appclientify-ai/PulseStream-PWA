@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -18,7 +17,6 @@ import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const ITRReturn: React.FC = () => {
-  const queryClient = useQueryClient();
   const getPreviousAY = () => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -27,15 +25,8 @@ const ITRReturn: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['itr_filing_page_data'],
-    queryFn: () => api.getITRReturnFilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const clients = useMemo(() => pageData?.clients || [], [pageData]);
-  const allClientsBase = clients;
-
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedAY, setSelectedAY] = useState(getPreviousAY());
   
@@ -61,24 +52,24 @@ const ITRReturn: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(
-    selectedAY,
-    pageData?.filingData,
-    pageData?.dueDates
-  );
+  const { getStatus, toggleStatus, updateRemark, updateFilingDate, cycleRefundStatus, updateDueDate, getDueDate } = useITRReturnLogic(selectedAY);
 
-  const isClientsLoading = isPageLoading && !pageData;
+  const fetchClients = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getClients();
+      // Automatically show all active IT clients
+      setClients(data.filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing')));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleRefreshClients = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['itr_filing_page_data'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
-
-  useEffect(() => {
-    const syncHandler = () => handleRefreshClients();
+  useEffect(() => { fetchClients();
+    const syncHandler = () => fetchClients(true);
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [handleRefreshClients]);
+  }, []);
 
   useEffect(() => {
     const handleClose = (event: any) => {
@@ -187,7 +178,7 @@ const ITRReturn: React.FC = () => {
     try {
       const updated = { ...client, itProfile: { ...client.itProfile!, password: newPasswordValue } };
       await api.saveClient(updated);
-      handleRefreshClients();
+      setClients(prev => prev.map(c => c.id === client.id ? (updated as Client) : c));
       setEditingPasswordId(null);
     } catch (err) { toast.error("Update failed."); }
   };
@@ -207,7 +198,7 @@ const ITRReturn: React.FC = () => {
     window.location.href = `whatsapp://send?text=${encodeURIComponent(text)}`;
   };
 
-  if (isClientsLoading) return <Loader />;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
@@ -349,8 +340,8 @@ const ITRReturn: React.FC = () => {
                     </td>
                     <td className="px-4 py-[2px] text-right  overflow-visible">
                        <div className="flex items-center justify-end gap-1">
-                          <ITViewIcon client={client} onDataChange={handleRefreshClients} />
-                          {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleRefreshClients} />}
+                          <ITViewIcon client={client} onDataChange={fetchClients} />
+                          {client.gstProfile && <GSTViewIcon client={client} onDataChange={fetchClients} />}
                           <button onClick={() => { setSelectedClient(client); setIsLoginBoxOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm" title="Login Tool"><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
                           <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>

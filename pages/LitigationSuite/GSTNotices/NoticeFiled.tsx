@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -13,19 +12,9 @@ import { formatDate } from '../../../dateUtils';
 
 
 const NoticeFiled: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['litigation_filing_page_data'],
-    queryFn: () => api.getLitigationFilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const allRecords = useMemo(() => pageData?.litigation || [], [pageData]);
-  const clients = useMemo(() => pageData?.clients || [], [pageData]);
-  const records = useMemo(() => allRecords.filter(r => r.category === 'Notice' && r.status === 'Filed'), [allRecords]);
-  const isLoading = isPageLoading && !pageData;
-
+  const [records, setRecords] = useState<LitigationRecord[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
@@ -49,17 +38,28 @@ const NoticeFiled: React.FC = () => {
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [selectedClientForLogin, setSelectedClientForLogin] = useState<Client | null>(null);
 
-  const refreshData = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['litigation_filing_page_data'] });
-    queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const [recs, clis] = await Promise.all([
+        api.getLitigationRecords(),
+        api.getClients()
+      ]);
+      setRecords(recs.filter(r => r.category === 'Notice' && r.status === 'Filed'));
+      setClients(clis);
+    } catch (err) {
+      console.error("Vault sync failed:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const syncHandler = () => { refreshData(); };
+    fetchAll();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [refreshData]);
+  }, []);
 
   
   const handleDelete = async (id: string) => {
@@ -67,7 +67,7 @@ const NoticeFiled: React.FC = () => {
       await api.deleteLitigationRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      refreshData();
+      fetchAll();
     } catch (error) {
       toast.error('Failed to delete record');
     }
@@ -78,7 +78,7 @@ const NoticeFiled: React.FC = () => {
     setIsModalOpen(false);
     setIsViewModalOpen(false);
     setIsReissueMode(false);
-    refreshData();
+    fetchAll();
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
@@ -102,7 +102,7 @@ const NoticeFiled: React.FC = () => {
       await api.saveLitigationRecord(updated);
       setIsOutcomeModalOpen(false);
       setRecordToUpdate(null);
-      refreshData();
+      fetchAll();
       toast.success("Outcome updated successfully");
     } catch (err) { toast.error("Outcome update failed."); }
   };
@@ -240,7 +240,7 @@ const NoticeFiled: React.FC = () => {
                           value={rec.remarks || ''} 
                           onSave={async (val) => {
                             await api.saveLitigationRecord({ ...rec, remarks: val });
-                            refreshData();
+                            fetchAll(true);
                           }} 
                         />
                       </td>
@@ -259,7 +259,7 @@ const NoticeFiled: React.FC = () => {
                             >
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
-                            {client && <GSTViewIcon client={client} onDataChange={refreshData} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button 
                               onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }}
                               className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
@@ -304,7 +304,7 @@ const NoticeFiled: React.FC = () => {
                       const updated = { ...viewingRecord, caseHistory: val };
                       await api.saveLitigationRecord(updated);
                       setViewingRecord(updated);
-                      refreshData();
+                      fetchAll(true);
                     }}
                  />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">

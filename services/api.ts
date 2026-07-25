@@ -5,65 +5,18 @@ import {
   MSMERegistrationRecord, MiscWorkRecord, User
 } from '../types.ts';
 
-function getFinancialYear(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  if (month >= 3) {
-    return `${year}-${(year + 1).toString().slice(-2)}`;
-  } else {
-    return `${year - 1}-${year.toString().slice(-2)}`;
-  }
-}
-
 class ApiService {
   private token: string | null = null;
   private itemsCacheData: any[] | null = null;
   private itemsInflightPromise: Promise<any[]> | null = null;
-  private categoryCacheMap: Map<string, { data: any[]; timestamp: number }> = new Map();
-  private categoryInflightPromises: Map<string, Promise<any[]>> = new Map();
 
   setToken(token: string | null) {
     this.token = token;
   }
 
-  public invalidateCache(category?: string) {
-    if (category) {
-      this.categoryCacheMap.delete(category);
-      this.categoryInflightPromises.delete(category);
-    } else {
-      this.categoryCacheMap.clear();
-      this.categoryInflightPromises.clear();
-      this.itemsCacheData = null;
-      this.itemsInflightPromise = null;
-    }
-  }
-
-  async getItemsByCategory(category: string, forceRefresh = false): Promise<any[]> {
-    if (!forceRefresh) {
-      const cached = this.categoryCacheMap.get(category);
-      if (cached && (Date.now() - cached.timestamp < 1000 * 60 * 5)) {
-        return cached.data;
-      }
-      const inflight = this.categoryInflightPromises.get(category);
-      if (inflight) {
-        return inflight;
-      }
-    }
-
-    const promise = (async () => {
-      try {
-        const items = await this.get(`/items?name=${encodeURIComponent(category)}`);
-        const result = Array.isArray(items) ? items : (items && Array.isArray(items.items) ? items.items : []);
-        this.categoryCacheMap.set(category, { data: result, timestamp: Date.now() });
-        return result;
-      } finally {
-        this.categoryInflightPromises.delete(category);
-      }
-    })();
-
-    this.categoryInflightPromises.set(category, promise);
-    return promise;
+  public invalidateCache() {
+    this.itemsCacheData = null;
+    this.itemsInflightPromise = null;
   }
 
   async getItems(forceRefresh = false): Promise<any[]> {
@@ -77,7 +30,7 @@ class ApiService {
     this.itemsInflightPromise = (async () => {
       try {
         const items = await this.get('/items');
-        this.itemsCacheData = Array.isArray(items) ? items : (items && Array.isArray(items.items) ? items.items : []);
+        this.itemsCacheData = Array.isArray(items) ? items : [];
         return this.itemsCacheData;
       } finally {
         this.itemsInflightPromise = null;
@@ -206,253 +159,24 @@ class ApiService {
     }
   }
 
-  async getDashboardData(): Promise<{ summary: any; filingDataCache: Record<string, any> }> {
-    try {
-      const res = await this.get('/items/dashboard/summary');
-      if (res && res.summary) {
-        return res;
-      }
-    } catch (e) {
-      console.warn('Dedicated dashboard endpoint failed, falling back:', e);
-    }
-    const summary = await this.getDashboardSummary();
-    return { summary, filingDataCache: {} };
-  }
-
-  async getMonthlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/monthly');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated monthly filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const monthlyClients = clients.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-    const filingData = (await this.getAppData('clientify_monthly_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_monthly_due_dates_v1')) || {};
-    return { clients: monthlyClients, filingData, dueDates };
-  }
-
-  async getQuarterlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/quarterly');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated quarterly filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const quarterlyClients = clients.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
-    const filingData = (await this.getAppData('clientify_quarterly_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_quarterly_due_dates_v1')) || {};
-    return { clients: quarterlyClients, filingData, dueDates };
-  }
-
-  async getCompositionFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/composition');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated composition filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const compClients = clients.filter(c => c && (c.gstProfile?.regType === 'Composition' || c.gstProfile?.taxpayerType === 'Composition' || c.gstProfile?.registrationType === 'Composition'));
-    const filingData = (await this.getAppData('clientify_composition_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_composition_due_dates_v1')) || {};
-    return { clients: compClients, filingData, dueDates };
-  }
-
-  async getGSTR4FilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any; cmp08Data: any }> {
-    try {
-      const res = await this.get('/items/filing/gstr4');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated GSTR-4 filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const compClients = clients.filter(c => c && (c.gstProfile?.regType === 'Composition' || c.gstProfile?.taxpayerType === 'Composition' || c.gstProfile?.registrationType === 'Composition'));
-    const filingData = (await this.getAppData('clientify_gstr4_filing_v1')) || {};
-    const dueDates = (await this.getAppData('clientify_gstr4_due_dates_v1')) || {};
-    const cmp08Data = (await this.getAppData('clientify_composition_filing_v3')) || {};
-    return { clients: compClients, filingData, dueDates, cmp08Data };
-  }
-
-  async getGSTR9FilingData(): Promise<{ clients: Client[]; watchlist: any; config: any; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/gstr9');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated GSTR-9 filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const watchlist = (await this.getAppData('clientify_gstr9_watchlist_v2')) || {};
-    const config = (await this.getAppData('clientify_gstr9_config_v2')) || {};
-    const filingData = (await this.getAppData('clientify_gstr9_filing_data_v2')) || {};
-    const dueDates = (await this.getAppData('clientify_gstr9_due_dates_v2')) || {};
-    return { clients, watchlist, config, filingData, dueDates };
-  }
-
-  async getITRReturnFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/itr');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated ITR return filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const itrClients = clients.filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing'));
-    const filingData = (await this.getAppData('clientify_itr_filing_data_v2')) || {};
-    const dueDates = (await this.getAppData('clientify_itr_due_dates_v1')) || {};
-    return { clients: itrClients, filingData, dueDates };
-  }
-
-  async getTaxAuditFilingData(): Promise<{ clients: Client[]; watchlist: any; filingData: any; dueDates: any }> {
-    try {
-      const res = await this.get('/items/filing/audit');
-      if (res && res.clients) return res;
-    } catch (e) {
-      console.warn('Dedicated Tax Audit filing endpoint failed, falling back:', e);
-    }
-    const clients = await this.getClients();
-    const watchlist = (await this.getAppData('clientify_audit_watchlist_v3')) || {};
-    const filingData = (await this.getAppData('clientify_audit_fin_data_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_audit_due_dates_v1')) || {};
-    return { clients, watchlist, filingData, dueDates };
-  }
-
-  async getLitigationFilingData(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
-    try {
-      const res = await this.get('/items/filing/litigation');
-      if (res && res.clients && res.litigation) return res;
-    } catch (e) {
-      console.warn('Dedicated litigation endpoint failed, falling back:', e);
-    }
-    const [clients, litigation] = await Promise.all([
-      this.getClients(),
-      this.getLitigationRecords()
-    ]);
-    return { clients, litigation };
-  }
-
-  async getMessengerClientsAll(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/all');
-    } catch (e) {
-      console.warn('Dedicated messenger all endpoint failed, falling back:', e);
-      return this.getClients();
-    }
-  }
-
-  async getMessengerClientsGst(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/gst');
-    } catch (e) {
-      console.warn('Dedicated messenger gst endpoint failed, falling back:', e);
-      const clients = await this.getClients();
-      return clients.filter(c => Boolean(c.gstProfile?.gstin || c.services?.includes('GST') || c.gstProfile?.regType));
-    }
-  }
-
-  async getMessengerClientsItr(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/itr');
-    } catch (e) {
-      console.warn('Dedicated messenger itr endpoint failed, falling back:', e);
-      const clients = await this.getClients();
-      return clients.filter(c => Boolean(c.itProfile?.pan || c.services?.includes('IT') || c.services?.includes('ITR') || c.itProfile?.fileType));
-    }
-  }
-
-  async getMessengerClientsAudit(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/audit');
-    } catch (e) {
-      console.warn('Dedicated messenger audit endpoint failed, falling back:', e);
-      const clients = await this.getClients();
-      return clients.filter(c => Boolean(c.itProfile?.auditApplicable || c.itProfile?.advisoryWork?.taxAudit || c.services?.includes('Audit') || (c.itProfile?.fileType && c.itProfile.fileType.toLowerCase().includes('audit'))));
-    }
-  }
-
-  async getMessengerClientsGstr4(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/gstr4');
-    } catch (e) {
-      console.warn('Dedicated messenger gstr4 endpoint failed, falling back:', e);
-      const clients = await this.getClients();
-      return clients.filter(c => c.gstProfile?.regType === 'Composition');
-    }
-  }
-
-  async getMessengerClientsGstr9(): Promise<Client[]> {
-    try {
-      return await this.get('/items/messenger/gstr9');
-    } catch (e) {
-      console.warn('Dedicated messenger gstr9 endpoint failed, falling back:', e);
-      const [clients, watchlist] = await Promise.all([
-        this.getClients(),
-        this.getAppData('clientify_gstr9_watchlist_v2') || {}
-      ]);
-      const watchlistIds = new Set();
-      Object.values(watchlist).forEach((arr: any) => {
-        if (Array.isArray(arr)) arr.forEach(id => watchlistIds.add(id));
-      });
-      return clients.filter(c => watchlistIds.has(c.id) || Boolean(c.gstProfile?.gstin));
-    }
-  }
-
-  async getRemindersAll(): Promise<{ litigation: LitigationRecord[]; work: MiscWorkRecord[] }> {
-    try {
-      return await this.get('/items/reminders/all');
-    } catch (e) {
-      console.warn('Dedicated reminders all endpoint failed, falling back:', e);
-      const [litigation, work] = await Promise.all([
-        this.getLitigationRecords(),
-        this.getMiscWork()
-      ]);
-      return {
-        litigation: litigation.filter(r => r.status === 'Pending'),
-        work: work.filter(r => r.status !== 'Completed')
-      };
-    }
-  }
-
-  async getRemindersLitigation(): Promise<LitigationRecord[]> {
-    try {
-      return await this.get('/items/reminders/litigation');
-    } catch (e) {
-      console.warn('Dedicated reminders litigation endpoint failed, falling back:', e);
-      const litigation = await this.getLitigationRecords();
-      return litigation.filter(r => r.status === 'Pending');
-    }
-  }
-
-  async getRemindersWork(): Promise<MiscWorkRecord[]> {
-    try {
-      return await this.get('/items/reminders/work');
-    } catch (e) {
-      console.warn('Dedicated reminders work endpoint failed, falling back:', e);
-      const work = await this.getMiscWork();
-      return work.filter(r => r.status !== 'Completed');
-    }
-  }
-
   async getDashboardSummary() {
-    const [clients, litigation, invoices, work, gstReg, foodLic, msme, payments] = await Promise.all([
-      this.getClients(),
-      this.getLitigationRecords(),
-      this.getInvoices(),
-      this.getMiscWork(),
-      this.getGSTRegistrations(),
-      this.getFoodLicenses(),
-      this.getMSMERegistrations(),
-      this.getPayments()
-    ]);
-    return { clients, litigation, invoices, work, gstReg, foodLic, msme, payments };
+    const items = await this.getItems();
+    return {
+      clients: items.filter((i: any) => i.name === 'client').map((i: any) => this.transformItem<Client>(i)),
+      litigation: items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i)),
+      invoices: items.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i)),
+      work: items.filter((i: any) => i.name === 'misc_work').map((i: any) => this.transformItem<MiscWorkRecord>(i)),
+      gstReg: items.filter((i: any) => i.name === 'gst_reg').map((i: any) => this.transformItem<GSTRegistrationRecord>(i)),
+      foodLic: items.filter((i: any) => i.name === 'food_lic').map((i: any) => this.transformItem<FoodLicenseRecord>(i)),
+      msme: items.filter((i: any) => i.name === 'msme').map((i: any) => this.transformItem<MSMERegistrationRecord>(i)),
+      payments: items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i))
+    };
   }
 
   // --- Clients ---
-  async getClients(forceRefresh = false): Promise<Client[]> {
-    const items = await this.getItemsByCategory('client', forceRefresh);
-    return items.map((i: any) => this.transformItem<Client>(i));
+  async getClients(): Promise<Client[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'client').map((i: any) => this.transformItem<Client>(i));
   }
 
   async saveClient(client: Partial<Client>): Promise<Client> {
@@ -468,16 +192,14 @@ class ApiService {
       const clients = await this.getClients();
       const client = clients.find(c => c.id === id);
       if (client) {
-        const [invoices, payments, litigation, works, gstRegs, foodLics, msmes, tribunal, highcourt] = await Promise.all([
+        const [invoices, payments, litigation, works, gstRegs, foodLics, msmes] = await Promise.all([
           this.getInvoices(),
           this.getPayments(),
           this.getLitigationRecords(),
           this.getMiscWork(),
           this.getGSTRegistrations(),
           this.getFoodLicenses(),
-          this.getMSMERegistrations(),
-          this.getTribunalRecords(),
-          this.getHighCourtRecords()
+          this.getMSMERegistrations()
         ]);
         
         const clientNames = [client.legalName?.trim().toLowerCase(), client.tradeName?.trim().toLowerCase()].filter(Boolean);
@@ -495,8 +217,6 @@ class ApiService {
         const gstRegsToDelete = gstRegs.filter(g => matchesClientName(g.clientName));
         const foodLicsToDelete = foodLics.filter(f => matchesClientName(f.clientName));
         const msmesToDelete = msmes.filter(m => matchesClientName(m.clientName));
-        const tribunalToDelete = tribunal.filter(t => t.clientId === id || matchesClientName(t.clientName));
-        const highcourtToDelete = highcourt.filter(h => h.clientId === id || matchesClientName(h.clientName));
 
         await Promise.all([
           ...invoicesToDelete.map(i => this.deleteInvoice(i.id)),
@@ -505,9 +225,7 @@ class ApiService {
           ...worksToDelete.map(w => this.deleteMiscWork(w.id)),
           ...gstRegsToDelete.map(g => this.deleteGSTRegistration(g.id)),
           ...foodLicsToDelete.map(f => this.deleteFoodLicense(f.id)),
-          ...msmesToDelete.map(m => this.deleteMSMERegistration(m.id)),
-          ...tribunalToDelete.map(t => this.deleteTribunalRecord(t.id)),
-          ...highcourtToDelete.map(h => this.deleteHighCourtRecord(h.id))
+          ...msmesToDelete.map(m => this.deleteMSMERegistration(m.id))
         ]);
       }
     } catch (err) {
@@ -517,9 +235,9 @@ class ApiService {
   }
 
   // --- Litigation ---
-  async getLitigationRecords(forceRefresh = false): Promise<LitigationRecord[]> {
-    const items = await this.getItemsByCategory('litigation', forceRefresh);
-    return items.map((i: any) => this.transformItem<LitigationRecord>(i));
+  async getLitigationRecords(): Promise<LitigationRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'litigation').map((i: any) => this.transformItem<LitigationRecord>(i));
   }
 
   async deleteLitigationRecord(id: string): Promise<void> { await this.delete(`/items/${id}`); }
@@ -529,46 +247,6 @@ class ApiService {
       ? await this.put(`/items/${record.id}`, payload)
       : await this.post('/items', payload);
     return this.transformItem<LitigationRecord>(res);
-  }
-
-  // --- Tribunal Records (Separate Dataset) ---
-  async getTribunalRecords(forceRefresh = false): Promise<LitigationRecord[]> {
-    const docs = await this.get('/tribunal_records');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
-  }
-  async saveTribunalRecord(record: Partial<LitigationRecord>): Promise<LitigationRecord> {
-    const payload = { ...record };
-    delete payload.id;
-    const res = record.id 
-      ? await this.put(`/tribunal_records/${record.id}`, payload)
-      : await this.post('/tribunal_records', payload);
-    return { ...res, id: res._id || res.id };
-  }
-  async deleteTribunalRecord(id: string): Promise<void> {
-    await this.delete(`/tribunal_records/${id}`);
-  }
-
-  // --- High Court Records (Separate Dataset) ---
-  async getHighCourtRecords(forceRefresh = false): Promise<LitigationRecord[]> {
-    const docs = await this.get('/highcourt_records');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
-  }
-  async saveHighCourtRecord(record: Partial<LitigationRecord>): Promise<LitigationRecord> {
-    const payload = { ...record };
-    delete payload.id;
-    const res = record.id 
-      ? await this.put(`/highcourt_records/${record.id}`, payload)
-      : await this.post('/highcourt_records', payload);
-    return { ...res, id: res._id || res.id };
-  }
-  async deleteHighCourtRecord(id: string): Promise<void> {
-    await this.delete(`/highcourt_records/${id}`);
   }
 
   // --- Invoices & Billing ---
@@ -592,9 +270,9 @@ class ApiService {
     };
   }
 
-  async getInvoices(forceRefresh = false): Promise<InvoiceRecord[]> {
-    const items = await this.getItemsByCategory('invoice', forceRefresh);
-    return items.map((i: any) => this.transformItem<InvoiceRecord>(i));
+  async getInvoices(): Promise<InvoiceRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'invoice').map((i: any) => this.transformItem<InvoiceRecord>(i));
   }
 
   async getInvoicesPaginated(page = 1, limit = 25, search = '') {
@@ -730,9 +408,9 @@ class ApiService {
     }
   }
 
-  async getPayments(forceRefresh = false): Promise<PaymentRecord[]> {
-    const items = await this.getItemsByCategory('payment', forceRefresh);
-    return items.map((i: any) => this.transformItem<PaymentRecord>(i));
+  async getPayments(): Promise<PaymentRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'payment').map((i: any) => this.transformItem<PaymentRecord>(i));
   }
 
   async deletePayment(id: string) {
@@ -746,9 +424,9 @@ class ApiService {
     return this.transformItem<PaymentRecord>(res);
   }
 
-  async getInvoiceSettings(forceRefresh = false): Promise<InvoiceSettings> {
-    const items = await this.getItemsByCategory('invoice_settings', forceRefresh);
-    const set = items[0];
+  async getInvoiceSettings(): Promise<InvoiceSettings> {
+    const items = await this.getItems();
+    const set = items.find((i: any) => i.name === 'invoice_settings');
     if (set) return this.transformItem<InvoiceSettings>(set);
     return {
       firmName: 'Your Firm',
@@ -759,97 +437,69 @@ class ApiService {
   }
 
   async saveInvoiceSettings(settings: InvoiceSettings): Promise<void> {
-    const all = await this.getItemsByCategory('invoice_settings', true);
-    const existing = all[0];
+    const all = await this.getItems();
+    const existing = all.find((i: any) => i.name === 'invoice_settings');
     const payload = { name: 'invoice_settings', data: settings };
-    if (existing) await this.put(`/items/${existing.id || existing._id}`, payload);
+    if (existing) await this.put(`/items/${existing._id}`, payload);
     else await this.post('/items', payload);
   }
 
   // --- Miscellaneous ---
-  async getGSTRegistrations(forceRefresh = false): Promise<GSTRegistrationRecord[]> {
-    const docs = await this.get('/gst_registrations');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
+  async getGSTRegistrations(): Promise<GSTRegistrationRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'gst_reg').map((i: any) => this.transformItem<GSTRegistrationRecord>(i));
   }
   async saveGSTRegistration(reg: Partial<GSTRegistrationRecord>) {
-    const payload = { ...reg };
-    delete payload.id;
-    const res = reg.id 
-      ? await this.put(`/gst_registrations/${reg.id}`, payload) 
-      : await this.post('/gst_registrations', payload);
-    return { ...res, id: res._id || res.id };
+    const payload = { name: 'gst_reg', data: reg };
+    return this.transformItem<GSTRegistrationRecord>(reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload));
   }
-  async deleteGSTRegistration(id: string) { await this.delete(`/gst_registrations/${id}`); }
+  async deleteGSTRegistration(id: string) { await this.delete(`/items/${id}`); }
 
-  async getFoodLicenses(forceRefresh = false): Promise<FoodLicenseRecord[]> {
-    const docs = await this.get('/food_licenses');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
+  async getFoodLicenses(): Promise<FoodLicenseRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'food_lic').map((i: any) => this.transformItem<FoodLicenseRecord>(i));
   }
   async saveFoodLicense(lic: Partial<FoodLicenseRecord>) {
-    const payload = { ...lic };
-    delete payload.id;
-    const res = lic.id 
-      ? await this.put(`/food_licenses/${lic.id}`, payload) 
-      : await this.post('/food_licenses', payload);
-    return { ...res, id: res._id || res.id };
+    const payload = { name: 'food_lic', data: lic };
+    return this.transformItem<FoodLicenseRecord>(lic.id ? await this.put(`/items/${lic.id}`, payload) : await this.post('/items', payload));
   }
-  async deleteFoodLicense(id: string) { await this.delete(`/food_licenses/${id}`); }
+  async deleteFoodLicense(id: string) { await this.delete(`/items/${id}`); }
 
-  async getMSMERegistrations(forceRefresh = false): Promise<MSMERegistrationRecord[]> {
-    const docs = await this.get('/msme_registrations');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
+  async getMSMERegistrations(): Promise<MSMERegistrationRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'msme').map((i: any) => this.transformItem<MSMERegistrationRecord>(i));
   }
   async saveMSMERegistration(reg: Partial<MSMERegistrationRecord>) {
-    const payload = { ...reg };
-    delete payload.id;
-    const res = reg.id 
-      ? await this.put(`/msme_registrations/${reg.id}`, payload) 
-      : await this.post('/msme_registrations', payload);
-    return { ...res, id: res._id || res.id };
+    const payload = { name: 'msme', data: reg };
+    return this.transformItem<MSMERegistrationRecord>(reg.id ? await this.put(`/items/${reg.id}`, payload) : await this.post('/items', payload));
   }
-  async deleteMSMERegistration(id: string) { await this.delete(`/msme_registrations/${id}`); }
+  async deleteMSMERegistration(id: string) { await this.delete(`/items/${id}`); }
 
-  async getMiscWork(forceRefresh = false): Promise<MiscWorkRecord[]> {
-    const docs = await this.get('/misc_work');
-    return (docs || []).map((d: any) => ({
-      ...d,
-      id: d._id || d.id
-    }));
+  async getMiscWork(): Promise<MiscWorkRecord[]> {
+    const items = await this.getItems();
+    return items.filter((i: any) => i.name === 'misc_work').map((i: any) => this.transformItem<MiscWorkRecord>(i));
   }
   async saveMiscWork(work: Partial<MiscWorkRecord>) {
-    const payload = { ...work };
-    delete payload.id;
-    const res = work.id 
-      ? await this.put(`/misc_work/${work.id}`, payload) 
-      : await this.post('/misc_work', payload);
-    return { ...res, id: res._id || res.id };
+    const payload = { name: 'misc_work', data: work };
+    return this.transformItem<MiscWorkRecord>(work.id ? await this.put(`/items/${work.id}`, payload) : await this.post('/items', payload));
   }
-  async deleteMiscWork(id: string) { await this.delete(`/misc_work/${id}`); }
+  async deleteMiscWork(id: string) { await this.delete(`/items/${id}`); }
 
   async patchAppData(key: string, updates: Record<string, any>): Promise<any> {
     return this.patch(`/items/app_data/${key}/patch`, { updates });
   }
   
-  async getAppData(key: string, forceRefresh = false): Promise<any> {
-    const items = await this.getItemsByCategory('app_data_' + key, forceRefresh);
-    const existing = items[0];
+  async getAppData(key: string): Promise<any> {
+    const items = await this.getItems();
+    const existing = items.find((i: any) => i.name === 'app_data_' + key);
     return existing ? existing.data : null;
   }
   async saveAppData(key: string, data: any): Promise<void> {
-    const items = await this.getItemsByCategory('app_data_' + key, true);
-    const existing = items[0];
+    const items = await this.getItems();
+    const existing = items.find((i: any) => i.name === 'app_data_' + key);
     const payload = { name: 'app_data_' + key, data: data };
     if (existing) {
-      await this.put(`/items/${existing.id || existing._id}`, payload);
+      await this.put(`/items/${existing._id}`, payload);
     } else {
       await this.post('/items', payload);
     }

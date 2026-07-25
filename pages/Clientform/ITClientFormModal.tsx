@@ -1,9 +1,7 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { Client, NatureOfWork, ClientStatus } from '../../types.ts';
 import { api } from '../../services/api.ts';
-import { toast } from 'sonner';
 
 interface ITClientFormModalProps {
   isOpen: boolean;
@@ -14,35 +12,11 @@ interface ITClientFormModalProps {
 }
 
 const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, onSave, initialData, context = 'it' }) => {
-  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [existingClients, setExistingClients] = useState<Client[]>([]);
   const [isDataLinked, setIsDataLinked] = useState(false);
-
-  const { data: existingClientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-    enabled: isOpen,
-  });
-
-  const existingClients = useMemo(() => existingClientsData || [], [existingClientsData]);
-
-  const saveMutation = useMutation({
-    mutationFn: (clientData: Partial<Client>) => api.saveClient(clientData),
-    onSuccess: (saved) => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
-      toast.success(initialData ? 'IT Record Updated' : 'New IT Profile Created');
-      onSave(saved);
-      onClose();
-    },
-    onError: (err: any) => {
-      setError(err.message || "Cloud vault synchronization failed.");
-    }
-  });
-
-  const isSaving = saveMutation.isPending;
 
   const [formData, setFormData] = useState<Partial<Client>>({
     legalName: '',
@@ -67,6 +41,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
 
   useEffect(() => {
     if (isOpen) {
+      api.getClients().then(setExistingClients);
       if (initialData) {
         setFormData(initialData);
         setIsDataLinked(false);
@@ -127,7 +102,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setError(null);
     const profile = formData.itProfile!;
 
@@ -143,7 +118,16 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       return setError(`PAN ${profile.pan} is already archived in IT records.`);
     }
 
-    saveMutation.mutate(formData);
+    setIsSaving(true);
+    try {
+      const saved = await api.saveClient(formData);
+      onSave(saved);
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "Cloud vault synchronization failed.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isOpen) return null;

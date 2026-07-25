@@ -17,23 +17,12 @@ export interface ITRFilingStatus {
 const STORAGE_KEY = 'clientify_itr_filing_data_v2';
 const STORAGE_KEY_DATES = 'clientify_itr_due_dates_v1';
 
-export const useITRReturnLogic = (
-  selectedAY: string,
-  initialData?: Record<string, Record<string, ITRFilingStatus>>,
-  initialDates?: Record<string, string>
-) => {
-  const [allData, setAllData] = useState<Record<string, Record<string, ITRFilingStatus>>>(initialData || {});
-  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
-  const [isDataLoaded, setIsDataLoaded] = useState(!!initialData);
+export const useITRReturnLogic = (selectedAY: string) => {
+  const [allData, setAllData] = useState<Record<string, Record<string, ITRFilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (initialData) setAllData(initialData);
-    if (initialDates) setDueDates(initialDates);
-    if (initialData || initialDates) setIsDataLoaded(true);
-  }, [initialData, initialDates]);
-
-  useEffect(() => {
-    if (initialData) return;
     const load = async () => {
       try {
         const [data, dates] = await Promise.all([
@@ -52,7 +41,7 @@ export const useITRReturnLogic = (
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [initialData]);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {

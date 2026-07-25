@@ -10,33 +10,19 @@ export interface FilingStatus {
 const STORAGE_KEY = 'clientify_composition_filing_v3';
 const STORAGE_KEY_DATES = 'clientify_composition_due_dates_v1';
 
-export const useCompositionFilingLogic = (
-  selectedYear: string, 
-  selectedQuarter: string,
-  initialData?: Record<string, Record<string, FilingStatus>>,
-  initialDates?: Record<string, string>
-) => {
+export const useCompositionFilingLogic = (selectedYear: string, selectedQuarter: string) => {
   const periodKey = `${selectedYear}_${selectedQuarter}`;
   
-  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(initialData || {});
-  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
-  const [isDataLoaded, setIsDataLoaded] = useState(!!initialData);
+  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    if (initialData) setAllData(initialData);
-    if (initialDates) setDueDates(initialDates);
-    if (initialData || initialDates) setIsDataLoaded(true);
-  }, [initialData, initialDates]);
-
-  useEffect(() => {
-    if (initialData) return;
     const load = async () => {
       try {
-        const [data, dates] = await Promise.all([
-          api.getAppData(STORAGE_KEY),
-          api.getAppData(STORAGE_KEY_DATES)
-        ]);
+        const data = await api.getAppData(STORAGE_KEY);
         if (data) setAllData(data);
+        const dates = await api.getAppData(STORAGE_KEY_DATES);
         if (dates) setDueDates(dates);
       } catch (err) {
         console.error('Failed to load composition data', err);
@@ -48,7 +34,7 @@ export const useCompositionFilingLogic = (
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [initialData]);
+  }, []);
 
   const toggleStatus = useCallback((clientId: string) => {
     setAllData(prev => {

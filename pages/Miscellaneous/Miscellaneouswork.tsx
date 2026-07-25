@@ -1,80 +1,46 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MiscWorkRecord, MiscWorkStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import WorkForm from '../Clientform/workForm';
 import Loader from '../../components/Loader';
-import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
 import { formatDate as formatDateUtil } from '../../dateUtils.ts';
 
+
 const Miscellaneouswork: React.FC = () => {
-  const queryClient = useQueryClient();
+  const [records, setRecords] = useState<MiscWorkRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MiscWorkRecord | null>(null);
-  const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['misc_work'],
-    queryFn: () => api.getMiscWork(true),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Partial<MiscWorkRecord>) => api.saveMiscWork(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['misc_work'] });
-    },
-    onError: () => {
-      toast.error("Operation failed.");
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deleteMiscWork(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['misc_work'] });
-      toast.success("Record deleted.");
-    },
-    onError: () => {
-      toast.error("Deletion failed.");
-    }
-  });
-
-  useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['misc_work'] });
-    };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
-
-  const handleInlineUpdate = async (id: string, field: keyof MiscWorkRecord, value: any) => {
-    const updatedRecord = records.find(r => r.id === id);
-    if (!updatedRecord) return;
-    
+  const fetchRecords = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
     try {
-      const newRecord = { ...updatedRecord, [field]: value };
-      await saveMutation.mutateAsync(newRecord);
+      const data = await api.getMiscWork();
+      setRecords(data);
     } catch (err) {
-      console.error(err);
+      console.error("Misc Work Sync Error:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setActiveStatusRowId(null);
   };
 
+  useEffect(() => {
+    fetchRecords();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchRecords(true); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
+
   const filteredRecords = useMemo(() => {
-    let list = records;
-    if (statusFilter !== 'All') {
-      list = list.filter(r => r.status === statusFilter);
-    }
     const s = search.toLowerCase();
-    return list.filter(r => 
+    return records.filter(r => 
       (r.clientName || '').toLowerCase().includes(s) || 
       (String(r.description || '')).toLowerCase().includes(s) ||
       (String(r.assignedTo || '')).toLowerCase().includes(s)
     ).sort((a, b) => (new Date(b.startDate || 0).getTime() || 0) - (new Date(a.startDate || 0).getTime() || 0));
-  }, [records, search, statusFilter]);
+  }, [records, search]);
 
   const stats = useMemo(() => {
     return {
@@ -86,7 +52,12 @@ const Miscellaneouswork: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Delete this work item from the vault permanently?')) {
-      deleteMutation.mutate(id);
+      try {
+        await api.deleteMiscWork(id);
+        fetchRecords();
+      } catch (err) {
+        toast.error("Deletion failed.");
+      }
     }
   };
 
@@ -144,15 +115,7 @@ const Miscellaneouswork: React.FC = () => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Entity Identity</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Task Description</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
-                  <div className="flex justify-center flex-col items-center">
-                    <TableFilter label="Status" isActive={statusFilter !== 'All'}>
-                       {['All', 'Pending', 'In Progress', 'Completed', 'On Hold'].map(st => (
-                         <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
-                       ))}
-                    </TableFilter>
-                  </div>
-                </th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Staff Head</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Logged Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
@@ -169,40 +132,13 @@ const Miscellaneouswork: React.FC = () => {
                        <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
                        <p className="text-[9px] font-bold text-slate-400 uppercase truncate mt-0.5">{rec.mobile || 'No Mobile'}</p>
                     </td>
-                    <td className=" px-6 py-5">
-                       <input 
-                         type="text" 
-                         value={rec.description || ''} 
-                         onChange={e => handleInlineUpdate(rec.id, 'description', e.target.value)}
-                         className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-bold text-slate-700 transition-all uppercase"
-                         placeholder="Description..."
-                       />
+                    <td className=" px-6 py-5 font-bold text-slate-600 uppercase truncate" title={rec.description}>{rec.description}</td>
+                    <td className=" px-6 py-5 text-center">
+                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusColor(rec.status)}`}>
+                         {rec.status}
+                       </span>
                     </td>
-                    <td className=" px-6 py-5 text-center relative overflow-visible">
-                        <button 
-                          onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
-                          className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusColor(rec.status)}`}
-                        >
-                          <span className="truncate">{rec.status}</span>
-                          <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                        </button>
-                        {activeStatusRowId === rec.id && (
-                          <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
-                             {['Pending', 'In Progress', 'Completed', 'On Hold'].map(st => (
-                               <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as MiscWorkStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
-                             ))}
-                          </div>
-                        )}
-                    </td>
-                    <td className=" px-6 py-5">
-                       <input 
-                         type="text" 
-                         value={rec.assignedTo || ''} 
-                         onChange={e => handleInlineUpdate(rec.id, 'assignedTo', e.target.value)}
-                         className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-black text-slate-600 uppercase transition-all"
-                         placeholder="Unassigned"
-                       />
-                    </td>
+                    <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.assignedTo || 'Unassigned'}</td>
                     <td className=" px-6 py-5 font-black text-slate-400 uppercase">{formatDate(rec.startDate)}</td>
                     <td className="px-6 py-5 text-right ">
                       <div className="flex items-center justify-end gap-2">
@@ -226,8 +162,9 @@ const Miscellaneouswork: React.FC = () => {
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         onSave={async (data) => {
-          await saveMutation.mutateAsync(data);
+          await api.saveMiscWork(data);
           setIsFormOpen(false);
+          fetchRecords();
         }} 
         initialData={selectedRecord} 
       />

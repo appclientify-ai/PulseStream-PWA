@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client, LitigationStatus, LitigationCategory } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -10,20 +9,11 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 import { formatDate } from '../../../dateUtils';
 
+
 const AppealDemand: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['litigation_filing_page_data'],
-    queryFn: () => api.getLitigationFilingData(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const allRecords = useMemo(() => pageData?.litigation || [], [pageData]);
-  const clients = useMemo(() => pageData?.clients || [], [pageData]);
-  const records = useMemo(() => allRecords.filter(r => r.category === 'Appeal' && r.status === 'Demand'), [allRecords]);
-  const isLoading = isPageLoading && !pageData;
-
+  const [records, setRecords] = useState<LitigationRecord[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
@@ -34,18 +24,35 @@ const AppealDemand: React.FC = () => {
   const [targetCategory, setTargetCategory] = useState<LitigationCategory>('Appeal');
   const [isReissueMode, setIsReissueMode] = useState(false);
 
-  const refreshData = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['litigation_filing_page_data'] });
-    queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const [recs, clis] = await Promise.all([
+        api.getLitigationRecords(),
+        api.getClients()
+      ]);
+      setRecords(recs.filter(r => r.category === 'Appeal' && r.status === 'Demand'));
+      setClients(clis);
+    } catch (err) {
+      console.error("Appeal Demand Sync Failed:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => { fetchAll();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
+
+  
   const handleDelete = async (id: string) => {
     try {
       await api.deleteLitigationRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      refreshData();
+      fetchAll();
     } catch (error) {
       toast.error('Failed to delete record');
     }
@@ -56,7 +63,7 @@ const AppealDemand: React.FC = () => {
     setIsModalOpen(false);
     setIsViewModalOpen(false);
     setIsReissueMode(false);
-    refreshData();
+    fetchAll();
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus, isPaid: boolean = false) => {
@@ -68,7 +75,7 @@ const AppealDemand: React.FC = () => {
         updated.isDemandPaid = false;
       }
       await api.saveLitigationRecord(updated);
-      refreshData();
+      fetchAll();
     } catch (err) { toast.error("Status update failed."); }
     setActiveStatusMenuId(null);
   };
@@ -165,13 +172,13 @@ const AppealDemand: React.FC = () => {
                           value={rec.remarks || ''} 
                           onSave={async (val) => {
                             await api.saveLitigationRecord({ ...rec, remarks: val });
-                            refreshData();
+                            fetchAll(true);
                           }} 
                         />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-1">
-                            {client?.gstProfile && <GSTViewIcon client={client} onDataChange={refreshData} />}
+                            {client?.gstProfile && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -210,7 +217,7 @@ const AppealDemand: React.FC = () => {
                       const updated = { ...viewingRecord, caseHistory: val };
                       await api.saveLitigationRecord(updated);
                       setViewingRecord(updated);
-                      refreshData();
+                      fetchAll(true);
                     }}
                  />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes found.'}</p></div>

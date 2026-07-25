@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '../../exportUtils';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
@@ -10,33 +9,32 @@ import { toast } from 'sonner';
 
 const GSTPortfolioContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [search, setSearch] = useState('');
+  const [clients, setClients] = useState<Client[]>([]);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
-
-  const { data: clientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const clients = useMemo(() => {
-    return (clientsData || []).filter(c => c && c.gstProfile);
-  }, [clientsData]);
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
+    setRefreshTrigger(p => p + 1);
+  }, []);
 
   useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    const load = async () => {
+      try {
+        const data = await api.getClients();
+        setClients((data || []).filter(c => c && c.gstProfile));
+      } catch (err) {
+        console.error("Vault Sync Error:", err);
+      }
     };
+    load();
+    const syncHandler = () => { console.log('Syncing data...'); load(); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
+  }, [refreshTrigger]);
 
   const stats = useMemo(() => {
     return {
@@ -250,6 +248,7 @@ const GSTPortfolioContent: React.FC = () => {
 
       <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <GstMasterPortfolio 
+          key={refreshTrigger} 
           externalSearch={search} 
           onDataChange={handleRefresh}
         />

@@ -160,35 +160,20 @@ export const getDefaultPeriod = () => {
 
 import { api } from '../../../../services/api';
 
-export const useMonthlyFilingLogic = (
-  selectedYear: string, 
-  selectedMonth: string, 
-  customKey?: string,
-  initialData?: Record<string, Record<string, FilingStatus>>,
-  initialDates?: Record<string, string>
-) => {
+export const useMonthlyFilingLogic = (selectedYear: string, selectedMonth: string, customKey?: string) => {
   const storageKey = customKey || STORAGE_KEY_DEFAULT;
   const storageKeyDates = customKey ? `${customKey}_dates` : STORAGE_KEY_DATES_DEFAULT;
 
-  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>(initialData || {});
-  const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
-  const [isDataLoaded, setIsDataLoaded] = useState(!!initialData);
+  const [allData, setAllData] = useState<Record<string, Record<string, FilingStatus>>>({});
+  const [dueDates, setDueDates] = useState<Record<string, string>>({});
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  useEffect(() => {
-    if (initialData) setAllData(initialData);
-    if (initialDates) setDueDates(initialDates);
-    if (initialData || initialDates) setIsDataLoaded(true);
-  }, [initialData, initialDates]);
-
-  useEffect(() => {
-    if (initialData) return;
+useEffect(() => {
     const load = async () => {
       try {
-        const [data, dates] = await Promise.all([
-          api.getAppData(storageKey),
-          api.getAppData(storageKeyDates)
-        ]);
+        const data = await api.getAppData(storageKey);
         if (data) setAllData(data);
+        const dates = await api.getAppData(storageKeyDates);
         if (dates) setDueDates(dates);
       } catch (err) {
         console.error('Failed to load filing data', err);
@@ -200,7 +185,7 @@ export const useMonthlyFilingLogic = (
     const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [storageKey, storageKeyDates, initialData]);
+  }, [storageKey, storageKeyDates]);
 
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b' | 'cmp08', customPeriod?: string) => {
     const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;

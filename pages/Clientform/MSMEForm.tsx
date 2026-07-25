@@ -113,12 +113,6 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Application Date</label>
-            <input type="date" required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase"
-              value={formData.appDate} onChange={e => setFormData({...formData, appDate: e.target.value})} />
-          </div>
-
-          <div>
             <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Staff Remarks</label>
             <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none h-24"
               value={formData.remarks} onChange={e => setFormData({...formData, remarks: e.target.value})} placeholder="Notes..." />

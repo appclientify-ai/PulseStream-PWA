@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useMemo } from 'react';
 import { LitigationRecord, Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -10,22 +9,11 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 import { formatDate } from '../../../dateUtils';
 
+
 const CourtDemand: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  const { data: allRecords = [], isLoading: isRecordsLoading } = useQuery({
-    queryKey: ['highcourt_records'],
-    queryFn: () => api.getHighCourtRecords(true),
-  });
-
-  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-  });
-
-  const records = useMemo(() => allRecords.filter(r => r.status === 'Demand'), [allRecords]);
-  const isLoading = isRecordsLoading || isClientsLoading;
-
+  const [records, setRecords] = useState<LitigationRecord[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
@@ -33,27 +21,43 @@ const CourtDemand: React.FC = () => {
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
 
-  const refreshData = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['highcourt_records'] });
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-  }, [queryClient]);
+  const fetchAll = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const [recs, clis] = await Promise.all([
+        api.getLitigationRecords(),
+        api.getClients()
+      ]);
+      setRecords(recs.filter(r => r.category === 'HighCourt' && r.status === 'Demand'));
+      setClients(clis);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => { fetchAll();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchAll(true); };
+    window.addEventListener('clientify_db_change', syncHandler);
+    return () => window.removeEventListener('clientify_db_change', syncHandler);
+  }, []);
+
+  
   const handleDelete = async (id: string) => {
     try {
-      await api.deleteHighCourtRecord(id);
+      await api.deleteLitigationRecord(id);
       toast.success('Record deleted successfully');
       setIsModalOpen(false);
-      refreshData();
+      fetchAll();
     } catch (error) {
       toast.error('Failed to delete record');
     }
   };
 
   const handleSave = async (data: Partial<LitigationRecord>) => {
-    await api.saveHighCourtRecord({ ...data, category: 'HighCourt' });
+    await api.saveLitigationRecord({ ...data, category: 'HighCourt' });
     setIsModalOpen(false);
     setIsViewModalOpen(false);
-    refreshData();
+    fetchAll();
   };
 
   const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationRecord['status'], isPaid: boolean = false) => {
@@ -62,12 +66,9 @@ const CourtDemand: React.FC = () => {
       if (newStatus === 'Drop') {
         updated.isDemandPaid = isPaid;
       }
-      await api.saveHighCourtRecord(updated);
-      refreshData();
-      toast.success(newStatus === 'Drop' ? 'Demand marked as Paid & Closed' : 'Status reverted successfully');
-    } catch (err) {
-      toast.error("Outcome update failed.");
-    }
+      await api.saveLitigationRecord(updated);
+      fetchAll();
+    } catch (err) { toast.error("Outcome update failed."); }
     setActiveStatusMenuId(null);
   };
 
@@ -113,7 +114,7 @@ const CourtDemand: React.FC = () => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Section</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Judgment Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center">Outcome</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest">Remark</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
@@ -161,14 +162,14 @@ const CourtDemand: React.FC = () => {
                         <EditableRemark 
                           value={rec.remarks || ''} 
                           onSave={async (val) => {
-                            await api.saveHighCourtRecord({ ...rec, remarks: val });
-                            refreshData();
+                            await api.saveLitigationRecord({ ...rec, remarks: val });
+                            fetchAll(true);
                           }} 
                         />
                       </td>
                       <td className="px-6 py-5 text-right ">
                          <div className="flex items-center justify-end gap-2">
-                            {client && <GSTViewIcon client={client} onDataChange={refreshData} />}
+                            {client && <GSTViewIcon client={client} onDataChange={fetchAll} />}
                             <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ml-auto" title="View Notice Details">
                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
@@ -204,9 +205,9 @@ const CourtDemand: React.FC = () => {
                     value={viewingRecord.caseHistory || ''} 
                     onSave={async (val) => {
                       const updated = { ...viewingRecord, caseHistory: val };
-                      await api.saveHighCourtRecord(updated);
+                      await api.saveLitigationRecord(updated);
                       setViewingRecord(updated);
-                      refreshData();
+                      fetchAll(true);
                     }}
                  />
                  <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>

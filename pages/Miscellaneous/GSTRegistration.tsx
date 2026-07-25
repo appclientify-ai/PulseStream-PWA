@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType } from '../../types';
+import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType, Client } from '../../types';
 import { api } from '../../services/api.ts';
 import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
 import Loader from '../../components/Loader';
@@ -8,47 +7,35 @@ import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
 import { formatDate } from '../../dateUtils.ts';
 
+
 const GSTRegistration: React.FC = () => {
-  const queryClient = useQueryClient();
+  const [registrations, setRegistrations] = useState<GSTRegistrationRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<GSTRegistrationRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: registrations = [], isLoading } = useQuery({
-    queryKey: ['gst_registrations'],
-    queryFn: () => api.getGSTRegistrations(true),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Partial<GSTRegistrationRecord>) => api.saveGSTRegistration(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gst_registrations'] });
-    },
-    onError: () => {
-      toast.error("Operation failed.");
+  const fetchRegistrations = async (isSync = false) => {
+    if (!isSync) setIsLoading(true);
+    try {
+      const data = await api.getGSTRegistrations();
+      setRegistrations(data);
+    } catch (err) {
+      console.error("GST Reg Sync Error:", err);
+    } finally {
+      setIsLoading(false);
     }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deleteGSTRegistration(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gst_registrations'] });
-      toast.success("Application deleted.");
-    },
-    onError: () => {
-      toast.error("Deletion failed.");
-    }
-  });
+  };
 
   useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['gst_registrations'] });
-    };
+    fetchRegistrations();
+    const syncHandler = () => { console.log('Syncing in background...'); fetchRegistrations(true); };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
+  }, []);
 
   const handleInlineUpdate = async (id: string, field: keyof GSTRegistrationRecord, value: any) => {
     const updatedRecord = registrations.find(r => r.id === id);
@@ -56,9 +43,10 @@ const GSTRegistration: React.FC = () => {
     
     try {
       const newRecord = { ...updatedRecord, [field]: value };
-      await saveMutation.mutateAsync(newRecord);
+      await api.saveGSTRegistration(newRecord);
+      setRegistrations(prev => prev.map(r => r.id === id ? newRecord : r));
     } catch (err) {
-      console.error(err);
+      toast.error("Cloud update failed.");
     }
     setActiveStatusRowId(null);
   };
@@ -86,7 +74,12 @@ const GSTRegistration: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (confirm('Permanently delete this application record from the vault?')) {
-      deleteMutation.mutate(id);
+      try {
+        await api.deleteGSTRegistration(id);
+        fetchRegistrations();
+      } catch (err) {
+        toast.error("Deletion failed.");
+      }
     }
   };
 
@@ -190,7 +183,7 @@ const GSTRegistration: React.FC = () => {
                         {activeStatusRowId === rec.id && (
                           <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
                              {['Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
-                               <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as GSTRegistrationStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
+                               <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
                              ))}
                           </div>
                         )}
@@ -227,8 +220,9 @@ const GSTRegistration: React.FC = () => {
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         onSave={async (data) => {
-          await saveMutation.mutateAsync(data);
+          await api.saveGSTRegistration(data);
           setIsFormOpen(false);
+          fetchRegistrations();
         }} 
         initialData={selectedRecord} 
       />

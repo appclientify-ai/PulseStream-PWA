@@ -6,8 +6,6 @@ import { fileURLToPath } from 'url';
 
 import authRoutes from './auth/auth.routes.js';
 import itemRoutes from './routes/items.routes.js';
-import miscRoutes from './routes/miscellaneous.routes.js';
-import litigationRoutes from './routes/litigation.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,8 +24,6 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // 1. API Routes (PRIORITY)
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
-app.use('/api', miscRoutes);
-app.use('/api', litigationRoutes);
 
 // 2. Health Check
 app.get('/api/health', (req, res) => {

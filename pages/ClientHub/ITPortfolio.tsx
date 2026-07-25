@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ItMasterPortfolio from './ItMasterPortfolio';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
 import { api } from '../../services/api.ts';
@@ -8,25 +7,29 @@ import { Client } from '../../types';
 
 const ITPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [search, setSearch] = useState('');
-  const queryClient = useQueryClient();
+  const [clients, setClients] = useState<Client[]>([]);
 
-  const { data: clientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const clients = useMemo(() => {
-    return (clientsData || []).filter(c => c && c.itProfile);
-  }, [clientsData]);
+  const loadData = useCallback(async () => {
+    try {
+      const data = await api.getClients();
+      setClients((data || []).filter(c => c && c.itProfile));
+    } catch (err) {
+      console.error("IT Vault Sync Error:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    const syncHandler = () => queryClient.invalidateQueries({ queryKey: ['clients'] });
+    loadData();
+  }, [refreshTrigger, loadData]);
+
+
+  useEffect(() => {
+    const syncHandler = () => loadData();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
-
+  }, [loadData]);
   const stats = useMemo(() => {
     const total = clients.length;
     const active = (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;
@@ -35,7 +38,7 @@ const ITPortfolio: React.FC = () => {
   }, [clients]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
+    setRefreshTrigger(p => p + 1);
   };
 
   return (
@@ -89,6 +92,7 @@ const ITPortfolio: React.FC = () => {
 
       <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <ItMasterPortfolio 
+          key={refreshTrigger} 
           externalSearch={search} 
           onDataChange={handleRefresh}
         />
