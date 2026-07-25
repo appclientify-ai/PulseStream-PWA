@@ -19,7 +19,10 @@ import {
   getMessengerClientsItr,
   getMessengerClientsAudit,
   getMessengerClientsGstr4,
-  getMessengerClientsGstr9
+  getMessengerClientsGstr9,
+  getRemindersAll,
+  getRemindersLitigation,
+  getRemindersWork
 } from '../controllers/items.controller.js';
 import { authenticate } from '../auth/auth.middleware.js';
 
@@ -44,6 +47,10 @@ router.get('/messenger/itr', getMessengerClientsItr);
 router.get('/messenger/audit', getMessengerClientsAudit);
 router.get('/messenger/gstr4', getMessengerClientsGstr4);
 router.get('/messenger/gstr9', getMessengerClientsGstr9);
+
+router.get('/reminders/all', getRemindersAll);
+router.get('/reminders/litigation', getRemindersLitigation);
+router.get('/reminders/work', getRemindersWork);
 router.patch('/app_data/:key/patch', patchAppData);
 router.get('/', getItems);
 router.post('/', createItem);

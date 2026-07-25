@@ -942,3 +942,121 @@ export const getMessengerClientsGstr9 = async (req, res) => {
   }
 };
 
+export const getRemindersLitigation = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+    const litColl = getCollection('litigation');
+    const rawLit = await litColl.find({
+      createdBy: { $in: userMatches },
+      'status': 'Pending'
+    }).toArray();
+    
+    let records = rawLit;
+    if (records.length === 0) {
+      const oldLit = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'litigation',
+        'data.status': 'Pending'
+      }).toArray();
+      records = oldLit.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      records = records.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json(records);
+  } catch (err) {
+    console.error('Get Reminders Litigation Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve litigation reminders' });
+  }
+};
+
+export const getRemindersWork = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+    const workColl = getCollection('misc_work');
+    const rawWork = await workColl.find({
+      createdBy: { $in: userMatches },
+      'status': { $ne: 'Completed' }
+    }).toArray();
+
+    let records = rawWork;
+    if (records.length === 0) {
+      const oldWork = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'misc_work',
+        'data.status': { $ne: 'Completed' }
+      }).toArray();
+      records = oldWork.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      records = records.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json(records);
+  } catch (err) {
+    console.error('Get Reminders Work Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve misc work reminders' });
+  }
+};
+
+export const getRemindersAll = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const litColl = getCollection('litigation');
+    let rawLit = await litColl.find({
+      createdBy: { $in: userMatches },
+      'status': 'Pending'
+    }).toArray();
+    if (rawLit.length === 0) {
+      const oldLit = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'litigation',
+        'data.status': 'Pending'
+      }).toArray();
+      rawLit = oldLit.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      rawLit = rawLit.map(item => ({ ...item, id: item._id }));
+    }
+
+    const workColl = getCollection('misc_work');
+    let rawWork = await workColl.find({
+      createdBy: { $in: userMatches },
+      'status': { $ne: 'Completed' }
+    }).toArray();
+    if (rawWork.length === 0) {
+      const oldWork = await getCollection('items').find({
+        createdBy: { $in: userMatches },
+        name: 'misc_work',
+        'data.status': { $ne: 'Completed' }
+      }).toArray();
+      rawWork = oldWork.map(item => ({ ...item.data, id: item._id }));
+    } else {
+      rawWork = rawWork.map(item => ({ ...item, id: item._id }));
+    }
+
+    res.json({ litigation: rawLit, work: rawWork });
+  } catch (err) {
+    console.error('Get Reminders All Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve reminders' });
+  }
+};
+
+

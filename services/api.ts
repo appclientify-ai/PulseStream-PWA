@@ -399,6 +399,42 @@ class ApiService {
     }
   }
 
+  async getRemindersAll(): Promise<{ litigation: LitigationRecord[]; work: MiscWorkRecord[] }> {
+    try {
+      return await this.get('/items/reminders/all');
+    } catch (e) {
+      console.warn('Dedicated reminders all endpoint failed, falling back:', e);
+      const [litigation, work] = await Promise.all([
+        this.getLitigationRecords(),
+        this.getMiscWork()
+      ]);
+      return {
+        litigation: litigation.filter(r => r.status === 'Pending'),
+        work: work.filter(r => r.status !== 'Completed')
+      };
+    }
+  }
+
+  async getRemindersLitigation(): Promise<LitigationRecord[]> {
+    try {
+      return await this.get('/items/reminders/litigation');
+    } catch (e) {
+      console.warn('Dedicated reminders litigation endpoint failed, falling back:', e);
+      const litigation = await this.getLitigationRecords();
+      return litigation.filter(r => r.status === 'Pending');
+    }
+  }
+
+  async getRemindersWork(): Promise<MiscWorkRecord[]> {
+    try {
+      return await this.get('/items/reminders/work');
+    } catch (e) {
+      console.warn('Dedicated reminders work endpoint failed, falling back:', e);
+      const work = await this.getMiscWork();
+      return work.filter(r => r.status !== 'Completed');
+    }
+  }
+
   async getDashboardSummary() {
     const [clients, litigation, invoices, work, gstReg, foodLic, msme, payments] = await Promise.all([
       this.getClients(),
