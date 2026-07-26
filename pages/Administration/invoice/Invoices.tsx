@@ -55,6 +55,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const previousDues = useMemo(() => {
     if (!previewInvoice) return [];
     return invoices.filter(i => {
+      if (!i) return false;
       const isClientMatch = (i.clientId && previewInvoice.clientId && i.clientId === previewInvoice.clientId && i.clientId !== 'misc') ||
                             (i.clientName && previewInvoice.clientName && (i.clientName || '').trim().toLowerCase() === (previewInvoice.clientName || '').trim().toLowerCase());
       
@@ -66,12 +67,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   }, [previewInvoice, invoices]);
 
   const getOutstandingBalance = (inv: InvoiceRecord) => {
+    if (!inv) return 0;
     if (inv.status === 'Paid') return 0;
     if (inv.status === 'Partial' && inv.balanceDue !== undefined) {
-      return inv.balanceDue;
+      return inv.balanceDue || 0;
     }
     const paid = inv.amountPaid || 0;
-    return inv.totalAmount - paid;
+    const total = inv.totalAmount || 0;
+    return Math.max(0, total - paid);
   };
 
   const totalPreviousDues = useMemo(() => {
@@ -85,7 +88,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   useEffect(() => {
     if (paginatedData) {
       if (paginatedData.items) {
-        setInvoices(paginatedData.items);
+        setInvoices(paginatedData.items.filter(Boolean));
       }
       setIsLoading(false);
     } else if (!isQueryLoading) {
@@ -98,11 +101,13 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();
     let list = invoices.filter(i => {
+      if (!i) return false;
       const invNo = (i.invoiceNo || '').toLowerCase();
       const cliName = (i.clientName || '').toLowerCase();
       const tradeName = (i.clientTradeName || '').toLowerCase();
       return invNo.includes(s) || cliName.includes(s) || tradeName.includes(s);
     }).sort((a, b) => {
+      if (!a || !b) return 0;
       // Latest date first
       const timeA = new Date(a.date || 0).getTime();
       const timeB = new Date(b.date || 0).getTime();
@@ -117,9 +122,9 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     });
 
     if (statusFilter === 'Active') {
-      list = list.filter(i => i.status !== 'Paid' && i.status !== 'Cancelled');
+      list = list.filter(i => i && i.status !== 'Paid' && i.status !== 'Cancelled');
     } else if (statusFilter !== 'All') {
-      list = list.filter(i => i.status === statusFilter);
+      list = list.filter(i => i && i.status === statusFilter);
     }
     return list;
   }, [invoices, search, statusFilter]);
@@ -157,7 +162,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   };
 
   const handleWhatsApp = (inv: InvoiceRecord) => {
-    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${formatDate(inv.date)}\nAmount: ₹${inv.totalAmount.toLocaleString()}\nDue Date: ${formatDate(inv.dueDate)}\n\nKindly settle the same. Thank you!`;
+    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nDate: ${formatDate(inv.date)}\nAmount: ₹${(inv.totalAmount || 0).toLocaleString()}\nDue Date: ${formatDate(inv.dueDate)}\n\nKindly settle the same. Thank you!`;
     const phone = inv.miscMobile || '';
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -173,7 +178,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${previewInvoice.invoiceNo}\nDate: ${formatDate(previewInvoice.date)}\nAmount: ₹${previewInvoice.totalAmount.toLocaleString()}\nDue Date: ${formatDate(previewInvoice.dueDate)}\n\nKindly settle the same. Thank you!`;
+    const text = `*Invoice from ${settings?.firmName || 'Vault'}*\n\nInv No: ${previewInvoice.invoiceNo}\nDate: ${formatDate(previewInvoice.date)}\nAmount: ₹${(previewInvoice.totalAmount || 0).toLocaleString()}\nDue Date: ${formatDate(previewInvoice.dueDate)}\n\nKindly settle the same. Thank you!`;
     
     html2pdf().from(printRef.current).set(opt).output('blob').then(async (pdfBlob: Blob) => {
       const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
@@ -301,9 +306,9 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{formatDate(inv.date)}</td>
                   <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
                   <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">
-                     ₹{inv.totalAmount.toLocaleString()}
+                     ₹{(inv.totalAmount || 0).toLocaleString()}
                      {inv.status === 'Partial' && inv.balanceDue && (
-                       <div className="text-[9px] text-amber-500 mt-1 uppercase tracking-widest font-black">Due: ₹{inv.balanceDue.toLocaleString()}</div>
+                       <div className="text-[9px] text-amber-500 mt-1 uppercase tracking-widest font-black">Due: ₹{(inv.balanceDue || 0).toLocaleString()}</div>
                      )}
                   </td>
                   <td className=" px-6 py-6 text-center">
@@ -313,7 +318,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                          const val = e.target.value;
                          if (val === 'Paid' || val === 'Partial') {
                            setSettlingInvoice(inv);
-                           setPayAmount(inv.totalAmount - (inv.amountPaid || 0));
+                           setPayAmount((inv.totalAmount || 0) - (inv.amountPaid || 0));
                          } else {
                            const updated = { ...inv, status: val as any };
                            updateInvoiceMutation.mutate(updated);
@@ -484,7 +489,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-slate-100">
-                          {previewInvoice.items.map((item, i) => (
+                          {(previewInvoice.items || []).map((item, i) => (
                              <tr key={i}>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
                                 <td className=" py-4 text-xs font-semibold text-slate-700">{item.period || '-'}</td>
@@ -492,7 +497,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                                 <td className=" py-4 text-center text-xs font-semibold text-slate-700">{item.quantity}</td>
                                 <td className=" py-4 text-right text-xs font-semibold text-slate-700">{item.rate}</td>
                                 {settings?.isGstEnabled && <td className=" py-4 text-center text-xs font-semibold text-slate-700">{item.taxRate}%</td>}
-                                <td className=" py-4 text-right text-xs font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
+                                <td className=" py-4 text-right text-xs font-bold text-slate-900">{((item.rate || 0) * (item.quantity || 1)).toLocaleString()}</td>
                              </tr>
                           ))}
                           {previousDues.map((prevInv) => {
@@ -517,7 +522,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        <div className="flex flex-row gap-6 pt-2 items-start">
                           {settings?.upiId && (
                             <div className="flex flex-col items-center gap-2">
-                              <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${previewInvoice.totalAmount + totalPreviousDues}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
+                              <QRCodeSVG value={`upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.firmName)}&am=${(previewInvoice.totalAmount || 0) + totalPreviousDues}&cu=INR&tn=Invoice ${previewInvoice.invoiceNo}`} size={80} />
                               <span className="text-[11px] font-black uppercase text-slate-500">Scan to Pay</span>
                             </div>
                           )}
@@ -532,12 +537,12 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                        <div className="w-64 space-y-3">
                            <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
                               <span>Sub Total</span>
-                              <span>₹{previewInvoice.subTotal.toLocaleString()}</span>
+                              <span>₹{(previewInvoice.subTotal || 0).toLocaleString()}</span>
                            </div>
                            {settings?.isGstEnabled && (
                               <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
                                  <span>Total Tax</span>
-                                 <span>₹{previewInvoice.totalTax.toLocaleString()}</span>
+                                 <span>₹{(previewInvoice.totalTax || 0).toLocaleString()}</span>
                               </div>
                            )}
                            {totalPreviousDues > 0 && (
@@ -549,7 +554,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                            <div className="h-px bg-slate-200" />
                            <div className="flex justify-between text-lg font-black text-slate-900 uppercase">
                               <span>Grand Total</span>
-                              <span>₹{(previewInvoice.totalAmount + totalPreviousDues).toLocaleString()}</span>
+                              <span>₹{((previewInvoice.totalAmount || 0) + totalPreviousDues).toLocaleString()}</span>
                            </div>
                         </div>
                      </div>

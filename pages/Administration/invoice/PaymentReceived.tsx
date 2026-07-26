@@ -190,7 +190,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     const modeStr = pay.mode === 'Cheque' && pay.chequeNo ? `Cheque (${pay.chequeNo})` : pay.mode;
-    const text = `*Payment Receipt from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nAmount Paid: ₹${pay.amount.toLocaleString()}\nPayment Mode: ${modeStr}\nDate: ${formatDate(pay.date)}\n\nThank you for your payment!`;
+    const text = `*Payment Receipt from ${settings?.firmName || 'Vault'}*\n\nInv No: ${inv.invoiceNo}\nAmount Paid: ₹${(pay.amount || 0).toLocaleString()}\nPayment Mode: ${modeStr}\nDate: ${formatDate(pay.date)}\n\nThank you for your payment!`;
     
     html2pdf().from(printRef.current).set(opt).output('blob').then(async (pdfBlob: Blob) => {
       const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
@@ -352,7 +352,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                   <td className=" px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
                   <td className=" px-6 py-6 font-black text-slate-400 text-[11px] uppercase">{pay.invoiceNo || '---'}</td>
                   <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase truncate">{pay.clientTradeName ? `${pay.clientTradeName} (${pay.clientName})` : pay.clientName}</td>
-                  <td className=" px-6 py-6 font-black text-emerald-600 text-[12px]">₹{pay.amount.toLocaleString()}</td>
+                  <td className=" px-6 py-6 font-black text-emerald-600 text-[12px]">₹{(pay.amount || 0).toLocaleString()}</td>
                   <td className=" px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{formatDate(pay.date)}</td>
                   <td className=" px-4 py-6">
                     <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-100 text-slate-600">{pay.mode}</span>
@@ -424,7 +424,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                           </div>
                           <div className="mt-4 space-y-1">
                              <p className="text-xs font-bold text-emerald-600 uppercase">Payment Mode: <span className="text-emerald-700">{previewPayment.pay.mode === 'Cheque' && previewPayment.pay.chequeNo ? `Cheque (${previewPayment.pay.chequeNo})` : previewPayment.pay.mode}</span></p>
-                             <p className="text-xs font-bold text-slate-500 uppercase">Amount Received: <span className="text-slate-900 font-black">₹{previewPayment.pay.amount.toLocaleString()}</span></p>
+                             <p className="text-xs font-bold text-slate-500 uppercase">Amount Received: <span className="text-slate-900 font-black">₹{(previewPayment.pay.amount || 0).toLocaleString()}</span></p>
                              <p className="text-xs font-bold text-slate-500 uppercase">Date: <span className="text-slate-900">{formatDate(previewPayment.pay.date)}</span></p>
                           </div>
                        </div>
@@ -460,7 +460,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                                 <td className=" py-4 text-right text-xs font-bold text-slate-700">₹{item.rate}</td>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-700">{item.quantity}</td>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-700">{settings?.isGstEnabled ? `${item.taxRate}%` : 'N/A'}</td>
-                                <td className=" py-4 text-right text-xs font-bold text-slate-900">₹{(item.rate * item.quantity).toLocaleString()}</td>
+                                <td className=" py-4 text-right text-xs font-bold text-slate-900">₹{((item.rate || 0) * (item.quantity || 1)).toLocaleString()}</td>
                              </tr>
                           ))}
                        </tbody>
@@ -470,18 +470,18 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                        <div className="w-64 space-y-3">
                           <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
                              <span>Sub Total</span>
-                             <span>₹{previewPayment.inv.subTotal.toLocaleString()}</span>
+                             <span>₹{(previewPayment.inv.subTotal || 0).toLocaleString()}</span>
                           </div>
                           {settings?.isGstEnabled && (
                              <div className="flex justify-between text-xs font-bold text-slate-500 uppercase">
                                 <span>Total Tax</span>
-                                <span>₹{previewPayment.inv.totalTax.toLocaleString()}</span>
+                                <span>₹{(previewPayment.inv.totalTax || 0).toLocaleString()}</span>
                              </div>
                           )}
                           <div className="h-px bg-slate-200" />
                           <div className="flex justify-between text-lg font-black text-slate-900 uppercase">
                              <span>Grand Total</span>
-                             <span>₹{previewPayment.inv.totalAmount.toLocaleString()}</span>
+                             <span>₹{(previewPayment.inv.totalAmount || 0).toLocaleString()}</span>
                           </div>
                        </div>
                     </div>

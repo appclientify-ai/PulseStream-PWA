@@ -132,9 +132,9 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
   };
 
   const totals = useMemo(() => {
-    const subTotal = items.reduce((acc, item) => acc + (item.rate * item.quantity), 0);
+    const subTotal = items.reduce((acc, item) => acc + ((item.rate || 0) * (item.quantity || 1)), 0);
     const totalTax = settings?.isGstEnabled 
-      ? items.reduce((acc, item) => acc + ((item.rate * item.quantity) * (item.taxRate / 100)), 0)
+      ? items.reduce((acc, item) => acc + (((item.rate || 0) * (item.quantity || 1)) * ((item.taxRate || 0) / 100)), 0)
       : 0;
     return { subTotal, totalTax, grandTotal: subTotal + totalTax };
   }, [items, settings]);
@@ -390,7 +390,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
                              </td>
                           )}
                           <td className=" p-3 sm:p-4 text-right font-black text-slate-900 text-xs">
-                             ₹{(item.rate * item.quantity).toLocaleString()}
+                             ₹{((item.rate || 0) * (item.quantity || 1)).toLocaleString()}
                           </td>
                           <td className=" p-3 sm:p-4 text-center">
                              <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
