@@ -14,6 +14,8 @@ interface AddInvoiceProps {
 }
 
 const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [settings, setSettings] = useState<InvoiceSettings | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState('');
