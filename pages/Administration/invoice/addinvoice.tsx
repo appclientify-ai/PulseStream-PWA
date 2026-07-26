@@ -81,7 +81,7 @@ const AddInvoice: React.FC<AddInvoiceProps> = ({ onBack, editingInvoice }) => {
     if (!searchQuery) return [];
     const sq = searchQuery.toLowerCase();
     return clients.filter(c => 
-      c.legalName.toLowerCase().includes(sq) ||
+      (c.legalName || '').toLowerCase().includes(sq) ||
       (c.tradeName || '').toLowerCase().includes(sq) ||
       (c.gstProfile?.gstin || '').toLowerCase().includes(sq) ||
       (c.itProfile?.pan || '').toLowerCase().includes(sq) ||

@@ -42,11 +42,13 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
   const filteredPayments = useMemo(() => {
     const s = search.toLowerCase();
-    return payments.filter(p => 
-      p.clientName.toLowerCase().includes(s) || (p.clientTradeName && p.clientTradeName.toLowerCase().includes(s)) || 
-      (p.referenceNo && p.referenceNo.toLowerCase().includes(s)) ||
-      (p.invoiceNo && p.invoiceNo.toLowerCase().includes(s))
-    ).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return payments.filter(p => {
+      const cliName = (p.clientName || '').toLowerCase();
+      const tradeName = (p.clientTradeName || '').toLowerCase();
+      const refNo = (p.referenceNo || '').toLowerCase();
+      const invNo = (p.invoiceNo || '').toLowerCase();
+      return cliName.includes(s) || tradeName.includes(s) || refNo.includes(s) || invNo.includes(s);
+    }).sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   }, [payments, search]);
 
   

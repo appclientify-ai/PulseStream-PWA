@@ -56,10 +56,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     if (!previewInvoice) return [];
     return invoices.filter(i => {
       const isClientMatch = (i.clientId && previewInvoice.clientId && i.clientId === previewInvoice.clientId && i.clientId !== 'misc') ||
-                            (i.clientName && previewInvoice.clientName && i.clientName.trim().toLowerCase() === previewInvoice.clientName.trim().toLowerCase());
+                            (i.clientName && previewInvoice.clientName && (i.clientName || '').trim().toLowerCase() === (previewInvoice.clientName || '').trim().toLowerCase());
       
-      const isPrior = new Date(i.date).getTime() < new Date(previewInvoice.date).getTime() || 
-                      (new Date(i.date).getTime() === new Date(previewInvoice.date).getTime() && i.invoiceNo < previewInvoice.invoiceNo);
+      const isPrior = new Date(i.date || 0).getTime() < new Date(previewInvoice.date || 0).getTime() || 
+                      (new Date(i.date || 0).getTime() === new Date(previewInvoice.date || 0).getTime() && (i.invoiceNo || '') < (previewInvoice.invoiceNo || ''));
 
       return isClientMatch && i.id !== previewInvoice.id && i.status !== 'Paid' && isPrior;
     });
@@ -93,10 +93,12 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
   const filteredInvoices = useMemo(() => {
     const s = search.toLowerCase();
-    let list = invoices.filter(i => 
-      (i.invoiceNo.toLowerCase().includes(s) || 
-      i.clientName.toLowerCase().includes(s) || (i.clientTradeName && i.clientTradeName.toLowerCase().includes(s)))
-    ).sort((a, b) => {
+    let list = invoices.filter(i => {
+      const invNo = (i.invoiceNo || '').toLowerCase();
+      const cliName = (i.clientName || '').toLowerCase();
+      const tradeName = (i.clientTradeName || '').toLowerCase();
+      return invNo.includes(s) || cliName.includes(s) || tradeName.includes(s);
+    }).sort((a, b) => {
       // Latest date first
       const timeA = new Date(a.date || 0).getTime();
       const timeB = new Date(b.date || 0).getTime();
@@ -339,23 +341,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                   </td>
                 </tr>
               ))}
-            
-                           {previousDues.map((prevInv) => {
-                              const outstanding = getOutstandingBalance(prevInv);
-                              if (outstanding <= 0) return null;
-                              return (
-                                 <tr key={`prev-${prevInv.id}`} className="bg-rose-50/20 border-t border-slate-200">
-                                    <td className=" py-4 text-center text-xs font-black text-rose-600">P</td>
-                                    <td className=" py-4 text-[10px] font-bold text-rose-700 uppercase">{formatDate(prevInv.date)}</td>
-                                    <td className=" py-4 text-[10px] font-black text-rose-700">Previous Outstanding Due (Inv: {prevInv.invoiceNo})</td>
-                                    <td className=" py-4 text-center text-[10px] font-bold text-rose-700">1</td>
-                                    <td className=" py-4 text-right text-[10px] font-bold text-rose-700">{outstanding.toLocaleString()}</td>
-                                    {settings?.isGstEnabled && <td className=" py-4 text-center text-[10px] font-bold text-rose-700">0%</td>}
-                                    <td className=" py-4 text-right text-[10px] font-black text-rose-700">{outstanding.toLocaleString()}</td>
-                                 </tr>
-                              );
-                           })}
-                        </tbody>
+            </tbody>
           </table>
         </div>
         <ServerPagination
@@ -505,6 +491,21 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                                 <td className=" py-4 text-right text-xs font-bold text-slate-900">{(item.rate * item.quantity).toLocaleString()}</td>
                              </tr>
                           ))}
+                          {previousDues.map((prevInv) => {
+                             const outstanding = getOutstandingBalance(prevInv);
+                             if (outstanding <= 0) return null;
+                             return (
+                                <tr key={`prev-${prevInv.id}`} className="bg-rose-50/20 border-t border-slate-200">
+                                   <td className=" py-4 text-center text-xs font-black text-rose-600">P</td>
+                                   <td className=" py-4 text-[10px] font-bold text-rose-700 uppercase">{formatDate(prevInv.date)}</td>
+                                   <td className=" py-4 text-[10px] font-black text-rose-700">Previous Outstanding Due (Inv: {prevInv.invoiceNo})</td>
+                                   <td className=" py-4 text-center text-[10px] font-bold text-rose-700">1</td>
+                                   <td className=" py-4 text-right text-[10px] font-bold text-rose-700">{outstanding.toLocaleString()}</td>
+                                   {settings?.isGstEnabled && <td className=" py-4 text-center text-[10px] font-bold text-rose-700">0%</td>}
+                                   <td className=" py-4 text-right text-[10px] font-black text-rose-700">{outstanding.toLocaleString()}</td>
+                                </tr>
+                             );
+                          })}
                        </tbody>
                     </table>
 
