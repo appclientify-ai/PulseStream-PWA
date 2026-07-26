@@ -48,30 +48,11 @@ const MonthlyFiling: React.FC = () => {
     selectedYear, 
     selectedMonth, 
     undefined, 
-    pageData?.filingData, 
-    pageData?.dueDates
+    pageData?.filingData || {}, 
+    pageData?.dueDates || {}
   );
 
   const isLoading = isPageLoading && !pageData;
-
-  useEffect(() => {
-    let debounceTimer: any = null;
-    const syncHandler = () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      debounceTimer = setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['monthly_filing_page_data'] });
-      }, 150);
-    };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => {
-      window.removeEventListener('clientify_db_change', syncHandler);
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-    };
-  }, [queryClient]);
 
   useEffect(() => {
     const handleClose = (event: any) => {

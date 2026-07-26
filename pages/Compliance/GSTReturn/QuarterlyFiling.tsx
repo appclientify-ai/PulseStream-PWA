@@ -54,19 +54,11 @@ const QuarterlyFiling: React.FC = () => {
     selectedYear, 
     selectedMonth, 
     'clientify_quarterly_filing_v3', 
-    pageData?.filingData, 
-    pageData?.dueDates
+    pageData?.filingData || {}, 
+    pageData?.dueDates || {}
   );
 
   const isLoading = isPageLoading && !pageData;
-
-  useEffect(() => {
-    const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['quarterly_filing_page_data'] });
-    };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, [queryClient]);
 
   useEffect(() => {
     const handleClose = (event: any) => {
