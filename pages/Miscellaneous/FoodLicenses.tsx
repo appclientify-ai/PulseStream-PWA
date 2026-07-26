@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { FoodLicenseRecord, FoodLicenseStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import FoodLicensesForm from '../Clientform/FoodLicensesForm';
@@ -16,11 +17,7 @@ const FoodLicenses: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<FoodLicenseRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['food_licenses'],
-    queryFn: () => api.getFoodLicenses(true),
-    staleTime: 0,
-  });
+  const { data: records = [], isLoading } = useModuleData<FoodLicenseRecord[]>('food_licenses');
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<FoodLicenseRecord>) => api.saveFoodLicense(data),

@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { InvoiceRecord, Client, InvoiceSettings } from '../../../types';
@@ -39,7 +40,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   
 
   
-  const { data: settings } = useQuery({ queryKey: ['invoice_settings'], queryFn: () => api.getInvoiceSettings(), staleTime: 0 });
+  const { data: settings } = useModuleData<InvoiceSettings>('invoice_settings');
 
   const [settlingInvoice, setSettlingInvoice] = useState<InvoiceRecord | null>(null);
   const [isSaving, setIsSaving] = useState(false);

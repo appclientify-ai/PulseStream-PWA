@@ -14,6 +14,16 @@ import {
   getITRReturnFilingData, 
   getTaxAuditFilingData, 
   getLitigationFilingData,
+  getGstNoticePending,
+  getGstNoticeFiled,
+  getGstNoticeDemand,
+  getGstNoticeDrop,
+  getGstAppealPending,
+  getGstAppealFiled,
+  getGstAppealDemand,
+  getGstAppealDrop,
+  getGstClients,
+  getItClients,
   getMessengerClientsAll,
   getMessengerClientsGst,
   getMessengerClientsItr,
@@ -40,6 +50,19 @@ router.get('/filing/gstr9', getGSTR9FilingData);
 router.get('/filing/itr', getITRReturnFilingData);
 router.get('/filing/audit', getTaxAuditFilingData);
 router.get('/filing/litigation', getLitigationFilingData);
+
+router.get('/litigation/gst-notice/pending', getGstNoticePending);
+router.get('/litigation/gst-notice/filed', getGstNoticeFiled);
+router.get('/litigation/gst-notice/demand', getGstNoticeDemand);
+router.get('/litigation/gst-notice/drop', getGstNoticeDrop);
+
+router.get('/litigation/gst-appeal/pending', getGstAppealPending);
+router.get('/litigation/gst-appeal/filed', getGstAppealFiled);
+router.get('/litigation/gst-appeal/demand', getGstAppealDemand);
+router.get('/litigation/gst-appeal/drop', getGstAppealDrop);
+
+router.get('/clients/gst', getGstClients);
+router.get('/clients/it', getItClients);
 
 router.get('/messenger/all', getMessengerClientsAll);
 router.get('/messenger/gst', getMessengerClientsGst);

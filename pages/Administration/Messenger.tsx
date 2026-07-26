@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { Client } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
@@ -30,28 +31,10 @@ const Messenger: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'All' | 'GST' | 'ITR' | 'Audit' | 'GSTR-4' | 'GSTR-9/9C'>('All');
 
   // Specific query for each segment to achieve fast access and database-level pre-filtering
-  const { data: clientsData = [], isLoading } = useQuery<Client[]>({
-    queryKey: ['messenger_clients', activeSection],
-    queryFn: () => {
-      switch (activeSection) {
-        case 'All': return api.getMessengerClientsAll();
-        case 'GST': return api.getMessengerClientsGst();
-        case 'ITR': return api.getMessengerClientsItr();
-        case 'Audit': return api.getMessengerClientsAudit();
-        case 'GSTR-4': return api.getMessengerClientsGstr4();
-        case 'GSTR-9/9C': return api.getMessengerClientsGstr9();
-        default: return api.getMessengerClientsAll();
-      }
-    },
-    staleTime: 0, // 5 minutes cache TTL
-  });
+  const { data: clientsData = [], isLoading } = useModuleData<Client[]>('messenger_clients', activeSection);
 
   // Query all clients to derive counts for segment tabs
-  const { data: allClients = [] } = useQuery<Client[]>({
-    queryKey: ['messenger_clients', 'All'],
-    queryFn: () => api.getMessengerClientsAll(),
-    staleTime: 0,
-  });
+  const { data: allClients = [] } = useModuleData<Client[]>('messenger_clients', 'All');
 
   useEffect(() => {
     const syncHandler = () => {

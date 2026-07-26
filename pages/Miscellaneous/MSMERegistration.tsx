@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { MSMERegistrationRecord, MSMERegistrationStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import MSMEForm from '../Clientform/MSMEForm';
@@ -16,11 +17,7 @@ const MSMERegistration: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<MSMERegistrationRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['msme_registrations'],
-    queryFn: () => api.getMSMERegistrations(true),
-    staleTime: 0,
-  });
+  const { data: records = [], isLoading } = useModuleData<MSMERegistrationRecord[]>('msme_registrations');
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<MSMERegistrationRecord>) => api.saveMSMERegistration(data),

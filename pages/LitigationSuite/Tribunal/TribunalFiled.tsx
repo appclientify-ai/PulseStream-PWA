@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -13,17 +14,9 @@ import { formatDate } from '../../../dateUtils';
 const TribunalFiled: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: allRecords = [], isLoading: isRecordsLoading } = useQuery({
-    queryKey: ['tribunal_records'],
-    queryFn: () => api.getTribunalRecords(true),
-    staleTime: 0,
-  });
+  const { data: allRecords = [], isLoading: isRecordsLoading } = useModuleData<LitigationRecord[]>('tribunal_records');
 
-  const { data: clients = [], isLoading: isClientsLoading } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 0,
-  });
+  const { data: clients = [], isLoading: isClientsLoading } = useModuleData<Client[]>('clients');
 
   const records = useMemo(() => allRecords.filter(r => r.status === 'Filed'), [allRecords]);
   const isLoading = isRecordsLoading || isClientsLoading;

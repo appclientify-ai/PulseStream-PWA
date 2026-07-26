@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData';
 import { formatDate } from '../../exportUtils';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
@@ -16,22 +17,20 @@ const GSTPortfolioContent: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: clientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 0,
-  });
+  const { data: clientsData } = useModuleData('gst_clients');
 
   const clients = useMemo(() => {
-    return (clientsData || []).filter(c => c && c.gstProfile);
+    return clientsData || [];
   }, [clientsData]);
 
   const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['gst_clients'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 
   useEffect(() => {
     const syncHandler = () => {
+      queryClient.invalidateQueries({ queryKey: ['gst_clients'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
     };
     window.addEventListener('clientify_db_change', syncHandler);

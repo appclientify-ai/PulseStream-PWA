@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { GSTRegistrationRecord, GSTRegistrationStatus, GSTRegistrationType } from '../../types';
 import { api } from '../../services/api.ts';
 import GSTRegistrationForm from '../Clientform/GSTRegistrationForm';
@@ -16,11 +17,7 @@ const GSTRegistration: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<GSTRegistrationRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: registrations = [], isLoading } = useQuery({
-    queryKey: ['gst_registrations'],
-    queryFn: () => api.getGSTRegistrations(true),
-    staleTime: 0,
-  });
+  const { data: registrations = [], isLoading } = useModuleData<GSTRegistrationRecord[]>('gst_registrations');
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<GSTRegistrationRecord>) => api.saveGSTRegistration(data),

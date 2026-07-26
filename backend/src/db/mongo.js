@@ -104,15 +104,17 @@ class InMemoryCollection {
     return this.list.find(doc => matchFilter(doc, filter)) || null;
   }
 
-  find(filter) {
-    const result = this.list.filter(doc => matchFilter(doc, filter));
-    return {
+  find(filter, projectionObj) {
+    let result = this.list.filter(doc => matchFilter(doc, filter));
+    const createCursor = (list) => ({
+      project: (proj) => createCursor(list),
+      select: (proj) => createCursor(list),
       sort: (sortObj) => {
         const keys = Object.keys(sortObj || {});
         if (keys.length > 0) {
           const key = keys[0];
           const dir = sortObj[key];
-          result.sort((a, b) => {
+          list.sort((a, b) => {
             const valA = a[key] || '';
             const valB = b[key] || '';
             if (valA < valB) return dir > 0 ? -1 : 1;
@@ -120,12 +122,11 @@ class InMemoryCollection {
             return 0;
           });
         }
-        return {
-          toArray: async () => result
-        };
+        return createCursor(list);
       },
-      toArray: async () => result
-    };
+      toArray: async () => list
+    });
+    return createCursor(result);
   }
 
   async insertOne(doc) {

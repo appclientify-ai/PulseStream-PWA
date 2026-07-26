@@ -1059,4 +1059,201 @@ export const getRemindersAll = async (req, res) => {
   }
 };
 
+// --- Dedicated GST Notice & GST Appeal Controllers ---
+
+const fetchLitigationDataset = async (req, filterFn) => {
+  const userMatches = [req.user._id];
+  if (req.user._id) {
+    userMatches.push(req.user._id.toString());
+    if (ObjectId.isValid(req.user._id)) {
+      try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+    }
+  }
+
+  const itemsColl = getCollection('items');
+  const rawItems = await itemsColl.find(
+    { createdBy: { $in: userMatches }, name: { $in: ['client', 'litigation'] } },
+    { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+  ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+
+  const clients = [];
+  const litigation = [];
+
+  for (const item of rawItems) {
+    const transformed = {
+      ...item.data,
+      id: item._id,
+      createdAt: item.createdAt
+    };
+
+    if (item.name === 'client') {
+      clients.push(transformed);
+    } else if (item.name === 'litigation') {
+      if (!filterFn || filterFn(transformed)) {
+        litigation.push(transformed);
+      }
+    }
+  }
+
+  return { clients, litigation };
+};
+
+export const getGstNoticePending = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Pending');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Notice Pending Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Notice Pending records' });
+  }
+};
+
+export const getGstNoticeFiled = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Filed');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Notice Filed Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Notice Filed records' });
+  }
+};
+
+export const getGstNoticeDemand = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Demand');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Notice Demand Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Notice Demand records' });
+  }
+};
+
+export const getGstNoticeDrop = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped'));
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Notice Drop Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Notice Drop records' });
+  }
+};
+
+export const getGstAppealPending = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Pending');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Appeal Pending Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Appeal Pending records' });
+  }
+};
+
+export const getGstAppealFiled = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Filed');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Appeal Filed Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Appeal Filed records' });
+  }
+};
+
+export const getGstAppealDemand = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Demand');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Appeal Demand Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Appeal Demand records' });
+  }
+};
+
+export const getGstAppealDrop = async (req, res) => {
+  try {
+    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped'));
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
+    res.json(data);
+  } catch (err) {
+    console.error('Get GST Appeal Drop Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST Appeal Drop records' });
+  }
+};
+
+// --- Dedicated GST Portfolio & IT Portfolio Client Controllers ---
+
+export const getGstClients = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find(
+      { createdBy: { $in: userMatches }, name: 'client' },
+      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+
+    const gstClients = rawItems
+      .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
+      .filter(c => c && (c.gstProfile || Boolean(c.gstProfile?.gstin)));
+
+    const io = req.app.get('io');
+    if (io) io.emit('gst_clients_accessed', { count: gstClients.length, timestamp: new Date() });
+
+    res.json(gstClients);
+  } catch (err) {
+    console.error('Get GST Clients Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve GST clients' });
+  }
+};
+
+export const getItClients = async (req, res) => {
+  try {
+    const userMatches = [req.user._id];
+    if (req.user._id) {
+      userMatches.push(req.user._id.toString());
+      if (ObjectId.isValid(req.user._id)) {
+        try { userMatches.push(new ObjectId(req.user._id)); } catch (e) {}
+      }
+    }
+
+    const itemsColl = getCollection('items');
+    const rawItems = await itemsColl.find(
+      { createdBy: { $in: userMatches }, name: 'client' },
+      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+
+    const itClients = rawItems
+      .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
+      .filter(c => c && (c.itProfile || Boolean(c.itProfile?.pan)));
+
+    const io = req.app.get('io');
+    if (io) io.emit('it_clients_accessed', { count: itClients.length, timestamp: new Date() });
+
+    res.json(itClients);
+  } catch (err) {
+    console.error('Get IT Clients Error:', err);
+    res.status(500).json({ error: 'Failed to retrieve IT clients' });
+  }
+};
+
 

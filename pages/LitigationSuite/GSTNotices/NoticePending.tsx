@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 import { LitigationRecord, Client, LitigationStatus } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
@@ -17,15 +18,11 @@ import { formatDate } from '../../../dateUtils';
 const NoticePending: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['litigation_filing_page_data'],
-    queryFn: () => api.getLitigationFilingData(),
-    staleTime: 0,
-  });
+  const { data: pageData, isLoading: isPageLoading } = useModuleData('gst_notice_pending');
 
   const allRecords = useMemo(() => pageData?.litigation || [], [pageData]);
   const clients = useMemo(() => pageData?.clients || [], [pageData]);
-  const records = useMemo(() => allRecords.filter(r => r.category === 'Notice' && r.status === 'Pending'), [allRecords]);
+  const records = useMemo(() => allRecords, [allRecords]);
   const isLoading = isPageLoading && !pageData;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +46,7 @@ const NoticePending: React.FC = () => {
   const [replyRefNo, setReplyRefNo] = useState('');
 
   const refreshData = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['gst_notice_pending'] });
     queryClient.invalidateQueries({ queryKey: ['litigation_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });

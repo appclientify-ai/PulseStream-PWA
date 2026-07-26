@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 import { api } from '../../../services/api';
 import Loader from '../../../components/Loader';
 import { formatDate } from '../../../dateUtils';
@@ -13,53 +14,29 @@ interface ClientLedgerProps {
 }
 
 const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
-  
-  
-  
-  
-  
+  const queryClient = useQueryClient();
+  const { data: clients = [], isLoading: isClientsLoading } = useModuleData<Client[]>('clients');
+  const { data: invoices = [], isLoading: isInvoicesLoading } = useModuleData<InvoiceRecord[]>('invoices');
+  const { data: payments = [], isLoading: isPaymentsLoading } = useModuleData<PaymentRecord[]>('payments');
+  const { data: settings } = useModuleData<InvoiceSettings>('invoice_settings');
+
   const [searchTerm, setSearchTerm] = useState('');
-  
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [manualCarryForward, setManualCarryForward] = useState('');
   const [entryToDelete, setEntryToDelete] = useState<{ id: string; type: string; ref: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const isLoading = isClientsLoading || isInvoicesLoading || isPaymentsLoading || isPurging;
 
   useEffect(() => {
     setStartDate('');
     setEndDate('');
     setManualCarryForward('');
   }, [selectedClient]);
-
-  const fetchData = async (isSync = false) => {
-    if (!isSync) setIsLoading(true);
-    try {
-      const [clis, invs, pmts, sets] = await Promise.all([
-        api.getClients(),
-        api.getInvoices(),
-        api.getPayments(),
-        api.getInvoiceSettings()
-      ]);
-      setClients(clis);
-      setInvoices(invs);
-      setPayments(pmts);
-      setSettings(sets);
-    } catch (err) {
-      console.error('Error fetching ledger data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const syncHandler = () => { console.log('Syncing in background...'); fetchData(true); };
-    window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
-  }, []);
 
   const validInvoices = useMemo(() => {
     return invoices.filter(i => i.status !== 'Cancelled' && i.status !== 'Draft');
@@ -78,15 +55,16 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
   const handlePurgeDatabase = async () => {
     if (window.confirm('Do you want to clean deleted/cancelled invoice data and orphaned payments from the database?')) {
-      setIsLoading(true);
+      setIsPurging(true);
       try {
         const res = await api.purgeOrphanAndCancelledRecords();
         toast.success(`Database cleaned successfully! ${res.purgedCount} orphaned/cancelled item(s) removed.`);
-        await fetchData(true);
+        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        queryClient.invalidateQueries({ queryKey: ['payments'] });
       } catch (err) {
         toast.error('Failed to clean database.');
       } finally {
-        setIsLoading(false);
+        setIsPurging(false);
       }
     }
   };

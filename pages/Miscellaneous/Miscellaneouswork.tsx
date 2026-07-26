@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { MiscWorkRecord, MiscWorkStatus } from '../../types';
 import { api } from '../../services/api.ts';
 import WorkForm from '../Clientform/workForm';
@@ -16,11 +17,7 @@ const Miscellaneouswork: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<MiscWorkRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
 
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['misc_work'],
-    queryFn: () => api.getMiscWork(true),
-    staleTime: 0,
-  });
+  const { data: records = [], isLoading } = useModuleData<MiscWorkRecord[]>('misc_work');
 
   const saveMutation = useMutation({
     mutationFn: (data: Partial<MiscWorkRecord>) => api.saveMiscWork(data),

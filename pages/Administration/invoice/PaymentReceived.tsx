@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { PaymentRecord, Client, InvoiceSettings, InvoiceRecord } from '../../../types';
@@ -26,10 +27,10 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
 
   const queryClient = useQueryClient();
-  const { data: payments = [], isLoading } = useQuery({ queryKey: ['payments'], queryFn: () => api.getPayments(), staleTime: 0 });
-  const { data: settings } = useQuery({ queryKey: ['invoice_settings'], queryFn: () => api.getInvoiceSettings(), staleTime: 0 });
-  const { data: invoices = [] } = useQuery({ queryKey: ['invoices'], queryFn: () => api.getInvoices(), staleTime: 0 });
-  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => api.getClients(), staleTime: 0 });
+  const { data: payments = [], isLoading } = useModuleData<PaymentRecord[]>('payments');
+  const { data: settings } = useModuleData<InvoiceSettings>('invoice_settings');
+  const { data: invoices = [] } = useModuleData<InvoiceRecord[]>('invoices');
+  const { data: clients = [] } = useModuleData<Client[]>('clients');
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deletePayment(id),

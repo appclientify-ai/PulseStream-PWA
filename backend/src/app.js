@@ -30,6 +30,8 @@ app.use('/api', miscRoutes);
 app.use('/api', litigationRoutes);
 
 // 2. Health Check
+app.get('/ping', (req, res) => { res.status(200).send('pong'); });
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });

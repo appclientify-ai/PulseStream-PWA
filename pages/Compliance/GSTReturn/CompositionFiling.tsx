@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -36,11 +37,7 @@ const CompositionFiling: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['composition_filing_page_data'],
-    queryFn: () => api.getCompositionFilingData(),
-    staleTime: 0,
-  });
+  const { data: pageData, isLoading: isPageLoading } = useModuleData('composition_filing_page_data');
 
   const clients = useMemo(() => pageData?.clients || [], [pageData]);
   const allClientsBase = clients;

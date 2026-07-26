@@ -333,6 +333,106 @@ class ApiService {
     return { clients, litigation };
   }
 
+  async getGstNoticePending(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-notice/pending');
+    } catch (e) {
+      console.warn('Dedicated GST notice pending endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category !== 'Appeal' && r.status === 'Pending') };
+    }
+  }
+
+  async getGstNoticeFiled(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-notice/filed');
+    } catch (e) {
+      console.warn('Dedicated GST notice filed endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category !== 'Appeal' && r.status === 'Filed') };
+    }
+  }
+
+  async getGstNoticeDemand(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-notice/demand');
+    } catch (e) {
+      console.warn('Dedicated GST notice demand endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category !== 'Appeal' && r.status === 'Demand') };
+    }
+  }
+
+  async getGstNoticeDrop(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-notice/drop');
+    } catch (e) {
+      console.warn('Dedicated GST notice drop endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category !== 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped')) };
+    }
+  }
+
+  async getGstAppealPending(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-appeal/pending');
+    } catch (e) {
+      console.warn('Dedicated GST appeal pending endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category === 'Appeal' && r.status === 'Pending') };
+    }
+  }
+
+  async getGstAppealFiled(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-appeal/filed');
+    } catch (e) {
+      console.warn('Dedicated GST appeal filed endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category === 'Appeal' && r.status === 'Filed') };
+    }
+  }
+
+  async getGstAppealDemand(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-appeal/demand');
+    } catch (e) {
+      console.warn('Dedicated GST appeal demand endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category === 'Appeal' && r.status === 'Demand') };
+    }
+  }
+
+  async getGstAppealDrop(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    try {
+      return await this.get('/items/litigation/gst-appeal/drop');
+    } catch (e) {
+      console.warn('Dedicated GST appeal drop endpoint failed, falling back:', e);
+      const data = await this.getLitigationFilingData();
+      return { clients: data.clients, litigation: data.litigation.filter(r => r.category === 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped')) };
+    }
+  }
+
+  async getGstClients(): Promise<Client[]> {
+    try {
+      return await this.get('/items/clients/gst');
+    } catch (e) {
+      console.warn('Dedicated GST clients endpoint failed, falling back:', e);
+      const clients = await this.getClients();
+      return clients.filter(c => c && c.gstProfile);
+    }
+  }
+
+  async getItClients(): Promise<Client[]> {
+    try {
+      return await this.get('/items/clients/it');
+    } catch (e) {
+      console.warn('Dedicated IT clients endpoint failed, falling back:', e);
+      const clients = await this.getClients();
+      return clients.filter(c => c && c.itProfile);
+    }
+  }
+
   async getMessengerClientsAll(): Promise<Client[]> {
     try {
       return await this.get('/items/messenger/all');

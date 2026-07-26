@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData';
 import ItMasterPortfolio from './ItMasterPortfolio';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
 import { api } from '../../services/api.ts';
@@ -11,18 +12,17 @@ const ITPortfolio: React.FC = () => {
   const [search, setSearch] = useState('');
   const queryClient = useQueryClient();
 
-  const { data: clientsData } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => api.getClients(),
-    staleTime: 0,
-  });
+  const { data: clientsData } = useModuleData('it_clients');
 
   const clients = useMemo(() => {
-    return (clientsData || []).filter(c => c && c.itProfile);
+    return clientsData || [];
   }, [clientsData]);
 
   useEffect(() => {
-    const syncHandler = () => queryClient.invalidateQueries({ queryKey: ['clients'] });
+    const syncHandler = () => {
+      queryClient.invalidateQueries({ queryKey: ['it_clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [queryClient]);
@@ -35,6 +35,7 @@ const ITPortfolio: React.FC = () => {
   }, [clients]);
 
   const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['it_clients'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   };
 

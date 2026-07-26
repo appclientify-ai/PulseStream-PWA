@@ -2,7 +2,8 @@ import { ErrorBoundary } from '../../components/ErrorBoundary.tsx';
 
 import { useParams, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, Suspense, lazy, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { MetricData, ActiveView, LitigationRecord, Client, InvoiceRecord } from '../../types.ts';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { useOffline } from '../../hooks/useOffline.ts';
@@ -78,16 +79,11 @@ const Dashboard: React.FC = () => {
   // Quick Nav Modal State
   const [navigationFolder, setNavigationFolder] = useState<NavItem | null>(null);
 
-  // Single optimized React Query for Dashboard Data
+  // Single optimized React Query for Dashboard Data via useModuleData
   const {
     data: dashboardResponse,
     isLoading: isDashboardLoading
-  } = useQuery({
-    queryKey: ['dashboard_data'],
-    queryFn: () => api.getDashboardData(),
-    enabled: !!token,
-    staleTime: 0, // 0 minutes fresh (real-time sync)
-  });
+  } = useModuleData('dashboard_data');
 
   const summary = dashboardResponse?.summary;
   const filingDataCache = useMemo(() => dashboardResponse?.filingDataCache || {}, [dashboardResponse]);

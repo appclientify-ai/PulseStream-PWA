@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../../hooks/useModuleData.ts';
 import { formatDate } from '../../../exportUtils';
 import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
@@ -26,11 +27,7 @@ const GSTR9_9C: React.FC = () => {
     return `${startYear}-${(startYear + 1).toString().slice(-2)}`;
   };
 
-  const { data: pageData, isLoading: isPageLoading } = useQuery({
-    queryKey: ['gstr9_filing_page_data'],
-    queryFn: () => api.getGSTR9FilingData(),
-    staleTime: 0,
-  });
+  const { data: pageData, isLoading: isPageLoading } = useModuleData('gstr9_filing_page_data');
 
   const allClients = useMemo(() => pageData?.clients || [], [pageData]);
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useModuleData } from '../../hooks/useModuleData.ts';
 import { LitigationRecord, MiscWorkRecord } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
@@ -22,101 +23,10 @@ const Reminders: React.FC = () => {
   const [filter, setFilter] = useState<'All' | 'Litigation' | 'Misc Work'>('All');
 
   // Separate React Query for each filter/tab, leveraging separate database datasets
-  const { data: reminderData, isLoading } = useQuery({
-    queryKey: ['reminders_data', filter],
-    queryFn: async () => {
-      if (filter === 'Litigation') {
-        const litigation = await api.getRemindersLitigation();
-        const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
-          id: r.id,
-          title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
-          client: r.clientName,
-          date: r.dueDate,
-          category: r.category as any,
-          priority: 'High',
-          status: 'Response Due',
-          origin: 'litigation'
-        }));
-        return mappedLit.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      } else if (filter === 'Misc Work') {
-        const work = await api.getRemindersWork();
-        const mappedWork: UnifiedDeadline[] = work.map(r => ({
-          id: r.id,
-          title: r.description,
-          client: r.clientName,
-          date: r.completionDate || r.startDate,
-          category: 'MISC WORK',
-          priority: 'Medium',
-          status: r.status,
-          origin: 'work'
-        }));
-        return mappedWork.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      } else {
-        const res = await api.getRemindersAll();
-        const litigation = res.litigation || [];
-        const work = res.work || [];
-
-        const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
-          id: r.id,
-          title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
-          client: r.clientName,
-          date: r.dueDate,
-          category: r.category as any,
-          priority: 'High',
-          status: 'Response Due',
-          origin: 'litigation'
-        }));
-
-        const mappedWork: UnifiedDeadline[] = work.map(r => ({
-          id: r.id,
-          title: r.description,
-          client: r.clientName,
-          date: r.completionDate || r.startDate,
-          category: 'MISC WORK',
-          priority: 'Medium',
-          status: r.status,
-          origin: 'work'
-        }));
-
-        return [...mappedLit, ...mappedWork].sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-      }
-    },
-    staleTime: 0, // 5 minutes cache TTL
-  });
+  const { data: reminderData = [], isLoading } = useModuleData<UnifiedDeadline[]>('reminders_data', filter);
 
   // Query all for stats calculation
-  const { data: allReminderData } = useQuery({
-    queryKey: ['reminders_data', 'All'],
-    queryFn: async () => {
-      const res = await api.getRemindersAll();
-      const litigation = res.litigation || [];
-      const work = res.work || [];
-      const mappedLit: UnifiedDeadline[] = litigation.map(r => ({
-        id: r.id,
-        title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
-        client: r.clientName,
-        date: r.dueDate,
-        category: r.category as any,
-        priority: 'High',
-        status: 'Response Due',
-        origin: 'litigation'
-      }));
-      const mappedWork: UnifiedDeadline[] = work.map(r => ({
-        id: r.id,
-        title: r.description,
-        client: r.clientName,
-        date: r.completionDate || r.startDate,
-        category: 'MISC WORK',
-        priority: 'Medium',
-        status: r.status,
-        origin: 'work'
-      }));
-      return [...mappedLit, ...mappedWork];
-    },
-    staleTime: 0,
-  });
+  const { data: allReminderData = [] } = useModuleData<UnifiedDeadline[]>('reminders_data', 'All');
 
   useEffect(() => {
     const syncHandler = () => {
