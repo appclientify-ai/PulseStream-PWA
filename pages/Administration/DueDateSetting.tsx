@@ -137,10 +137,11 @@ const DateField: React.FC<{
 };
 
 const DueDateSetting: React.FC = () => {
+  const queryClient = useQueryClient();
   const [selectedYear, setSelectedYear] = useState(YEARS[0]);
   const [activeCategory, setActiveCategory] = useState<ReturnCategory>('GST_MONTHLY');
-  
-  
+  const [dates, setDates] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const STORAGE_KEY = 'clientify_global_compliance_dates_v1';

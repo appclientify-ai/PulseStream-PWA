@@ -158,6 +158,15 @@ const Setting: React.FC = () => {
     }
   };
 
+  const handleClearCache = () => {
+    try {
+      queryClient.clear();
+      setMessage({ type: 'success', text: 'Local query cache purged successfully.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Cache purge failed.' });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
       

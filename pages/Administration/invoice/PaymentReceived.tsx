@@ -32,9 +32,97 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   const { data: invoices = [] } = useModuleData<InvoiceRecord[]>('invoices');
   const { data: clients = [] } = useModuleData<Client[]>('clients');
 
+  const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editDate, setEditDate] = useState<string>('');
+  const [editMode, setEditMode] = useState<'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI' | 'Online'>('Online');
+  const [editChequeNo, setEditChequeNo] = useState<string>('');
+
+  const handleStartEdit = (pay: PaymentRecord) => {
+    setEditingPayment(pay);
+    setEditAmount(pay.amount);
+    setEditDate(pay.date ? pay.date.split('T')[0] : '');
+    setEditMode(pay.mode);
+    setEditChequeNo(pay.chequeNo || pay.referenceNo || '');
+  };
+
+  const updatePaymentMutation = useMutation({
+    mutationFn: async (updatedPay: PaymentRecord) => {
+      await api.savePayment(updatedPay);
+      if (updatedPay.invoiceNo) {
+        const associatedInvoice = invoices.find(i => i.invoiceNo === updatedPay.invoiceNo);
+        if (associatedInvoice) {
+          const otherPayments = payments.filter(p => p.invoiceNo === updatedPay.invoiceNo && p.id !== updatedPay.id);
+          const totalPaid = otherPayments.reduce((sum, p) => sum + p.amount, 0) + updatedPay.amount;
+          const balanceDue = Math.max(0, associatedInvoice.totalAmount - totalPaid);
+          const status = balanceDue <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Pending');
+          
+          await api.saveInvoice({
+            ...associatedInvoice,
+            amountPaid: totalPaid,
+            balanceDue,
+            status,
+            paymentDate: updatedPay.date,
+            paymentMode: updatedPay.mode
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success('Payment details modified successfully');
+      setEditingPayment(null);
+    },
+    onError: () => {
+      toast.error('Failed to modify payment details');
+    }
+  });
+
+  const handleSaveEdit = async () => {
+    if (!editingPayment) return;
+    const updated: PaymentRecord = {
+      ...editingPayment,
+      amount: editAmount,
+      date: editDate,
+      mode: editMode,
+      chequeNo: editMode === 'Cheque' ? editChequeNo : undefined,
+      referenceNo: editMode !== 'Cheque' ? editChequeNo : undefined,
+    };
+    await updatePaymentMutation.mutateAsync(updated);
+  };
+
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deletePayment(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['payments'] })
+    mutationFn: async (id: string) => {
+      const pay = payments.find(p => p.id === id);
+      await api.deletePayment(id);
+      if (pay && pay.invoiceNo) {
+        const associatedInvoice = invoices.find(i => i.invoiceNo === pay.invoiceNo);
+        if (associatedInvoice) {
+          const otherPayments = payments.filter(p => p.invoiceNo === pay.invoiceNo && p.id !== id);
+          const totalPaid = otherPayments.reduce((sum, p) => sum + p.amount, 0);
+          const balanceDue = Math.max(0, associatedInvoice.totalAmount - totalPaid);
+          const status = balanceDue <= 0 ? 'Paid' : (totalPaid > 0 ? 'Partial' : 'Pending');
+          
+          await api.saveInvoice({
+            ...associatedInvoice,
+            amountPaid: totalPaid,
+            balanceDue,
+            status,
+            paymentDate: otherPayments.length > 0 ? otherPayments[otherPayments.length - 1].date : undefined,
+            paymentMode: otherPayments.length > 0 ? otherPayments[otherPayments.length - 1].mode : undefined
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success('Payment record deleted and invoice balance updated');
+    },
+    onError: () => {
+      toast.error('Failed to delete payment record');
+    }
   });
 
   const handleDelete = async (id: string) => { if(confirm('Delete payment record?')) { await deleteMutation.mutateAsync(id); } };
@@ -158,6 +246,61 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden pb-10">
+      {/* Modify Payment Modal */}
+      {editingPayment && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col p-8 space-y-6">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Modify Payment</h3>
+              
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Amount Received</label>
+                <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={editAmount} onChange={e => setEditAmount(Number(e.target.value))} />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Payment Date</label>
+                <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={editDate} onChange={e => setEditDate(e.target.value)} />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Payment Mode</label>
+                <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
+                  value={editMode} onChange={e => setEditMode(e.target.value as any)}>
+                  <option value="Online">Online / NEFT</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Cheque">Cheque</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+              </div>
+
+              {editMode === 'Cheque' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Cheque / Reference No</label>
+                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-emerald-50"
+                    value={editChequeNo} onChange={e => setEditChequeNo(e.target.value)} placeholder="000000" />
+                </div>
+              )}
+
+              {editMode !== 'Cheque' && (
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block">Reference No</label>
+                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase focus:ring-4 focus:ring-emerald-50"
+                    value={editChequeNo} onChange={e => setEditChequeNo(e.target.value)} placeholder="N/A" />
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setEditingPayment(null)} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Cancel</button>
+                <button type="button" disabled={updatePaymentMutation.isPending} onClick={handleSaveEdit} className="flex-[2] bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">
+                  {updatePaymentMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
         <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
@@ -221,6 +364,9 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                     <div className="flex items-center justify-end gap-2">
       <button onClick={() => handlePrintPayment(pay)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm" title="View/Print Receipt">
          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
+      </button>
+      <button onClick={() => handleStartEdit(pay)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm" title="Modify Payment">
+         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
       </button>
       <button onClick={() => handleDelete(pay.id)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm" title="Delete Payment">
          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -297,6 +443,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                        <thead>
                           <tr className="border-b-2 border-slate-900">
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-12 text-center">#</th>
+                             <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24">Period / AY</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Description</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-24 text-right">Rate</th>
                              <th className=" py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest w-16 text-center">Qty</th>
@@ -308,6 +455,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
                           {previewPayment.inv.items.map((item, i) => (
                              <tr key={i}>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-500">{i + 1}</td>
+                                <td className=" py-4 text-xs font-bold text-slate-700">{item.period || '-'}</td>
                                 <td className=" py-4 text-xs font-bold text-slate-700">{item.description}</td>
                                 <td className=" py-4 text-right text-xs font-bold text-slate-700">₹{item.rate}</td>
                                 <td className=" py-4 text-center text-xs font-bold text-slate-700">{item.quantity}</td>

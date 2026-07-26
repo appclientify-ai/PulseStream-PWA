@@ -83,11 +83,15 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   }, [search, statusFilter]);
 
   useEffect(() => {
-    if (paginatedData?.items) {
-      setInvoices(paginatedData.items);
+    if (paginatedData) {
+      if (paginatedData.items) {
+        setInvoices(paginatedData.items);
+      }
+      setIsLoading(false);
+    } else if (!isQueryLoading) {
       setIsLoading(false);
     }
-  }, [paginatedData]);
+  }, [paginatedData, isQueryLoading]);
 
   
 
