@@ -66,7 +66,8 @@ export const useTaxAuditLogic = (
       const current = prev[selectedYear] || [];
       if (current.includes(clientId)) return prev;
       const next = { ...prev, [selectedYear]: [...current, clientId] };
-      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] }).then(() => socketService.emit('data_updated')).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { [`data.${selectedYear}`]: next[selectedYear] })
+        .catch(console.error);
       return next;
     });
   }, [selectedYear]);
@@ -77,58 +78,67 @@ export const useTaxAuditLogic = (
       Object.keys(prev).forEach(year => {
         next[year] = prev[year].filter(id => id !== clientId);
       });
-      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next }).then(() => socketService.emit('data_updated')).catch(console.error);
+      api.patchAppData(STORAGE_KEY_WATCHLIST, { "data": next })
+        .catch(console.error);
       return next;
     });
   }, []);
 
   const toggleAuditStatus = useCallback((clientId: string) => {
+    // Calculate values outside of state setter
+    const yearData = allData[selectedYear] || {};
+    const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
+    
+    clientData.auditFiled = !clientData.auditFiled;
+    if (clientData.auditFiled) {
+      clientData.auditDate = new Date().toISOString().split('T')[0];
+    } else {
+      delete clientData.auditDate;
+    }
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
-      
-      clientData.auditFiled = !clientData.auditFiled;
-      if (clientData.auditFiled) {
-        clientData.auditDate = new Date().toISOString().split('T')[0];
-      } else {
-        delete clientData.auditDate;
-      }
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedYear]: yData };
     });
-  }, [selectedYear]);
+
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedYear, allData]);
 
   const setBSStatus = useCallback((clientId: string, status: BSStatus) => {
+    const yearData = allData[selectedYear] || {};
+    const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
+    
+    clientData.bsStatus = status;
+    if (status === 'Ready') {
+      clientData.bsDate = new Date().toISOString().split('T')[0];
+    }
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
-      
-      clientData.bsStatus = status;
-      if (status === 'Ready') {
-        clientData.bsDate = new Date().toISOString().split('T')[0];
-      }
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedYear]: yData };
     });
-  }, [selectedYear]);
+
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedYear, allData]);
 
   const updateCaName = useCallback((clientId: string, name: string) => {
+    const yearData = allData[selectedYear] || {};
+    const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
+    clientData.caName = name;
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }) };
-      clientData.caName = name;
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedYear]: yData };
     });
-  }, [selectedYear]);
+
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedYear, allData]);
 
   const getStatus = useCallback((clientId: string): AuditFinancialStatus => {
     return (allData[selectedYear] || {})[clientId] || { bsStatus: 'Pending', auditFiled: false };
@@ -136,19 +146,21 @@ export const useTaxAuditLogic = (
 
   const updateRemark = useCallback((clientId: string, val: string) => {
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { bsStatus: 'Pending', auditFiled: false }), remark: val };
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      const cData = { ...(yData[clientId] || { bsStatus: 'Pending', auditFiled: false }), remark: val };
+      yData[clientId] = cData;
+      return { ...prev, [selectedYear]: yData };
     });
+
+    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}.remark`]: val })
+      .catch(console.error);
   }, [selectedYear]);
 
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val })
+      .catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';

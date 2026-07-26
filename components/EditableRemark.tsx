@@ -34,7 +34,10 @@ export const EditableRemark: React.FC<EditableRemarkProps> = ({
   };
 
   return (
-    <div className={`relative flex items-center w-full min-w-[110px] ${className}`}>
+    <div 
+      className={`relative flex items-center w-full min-w-[110px] ${className}`}
+      title={text ? text : placeholder}
+    >
       <input
         type="text"
         value={text}
@@ -50,7 +53,7 @@ export const EditableRemark: React.FC<EditableRemarkProps> = ({
             ? 'text-slate-800 hover:bg-slate-100/80 hover:border-slate-200'
             : 'text-slate-400 placeholder-slate-300 hover:bg-slate-100/80 hover:border-slate-200'
         }`}
-        title="Click to edit remark. Clicking outside saves changes."
+        title={text ? text : "Click to edit remark"}
       />
     </div>
   );

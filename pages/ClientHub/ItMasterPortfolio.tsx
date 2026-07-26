@@ -46,7 +46,13 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   const openFilterMenu = (e: React.MouseEvent, type: 'status') => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    setFilterMenuPos({ top: rect.bottom + 4, left: rect.left });
+    const menuHeight = 120;
+    let top = rect.bottom + 4;
+    if (top + menuHeight > window.innerHeight - 12) {
+      top = Math.max(12, rect.top - menuHeight - 4);
+    }
+    const left = Math.min(rect.left, window.innerWidth - 180);
+    setFilterMenuPos({ top, left });
     setActiveFilterMenu(prev => prev === type ? null : type);
     setActiveActionsId(null);
   };
@@ -150,10 +156,27 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPosition({ 
-      top: rect.bottom + window.scrollY + 8, 
-      left: rect.right - 256 
-    });
+    const menuHeight = 360;
+    const menuWidth = 256;
+    const padding = 12;
+
+    let top = rect.bottom + 8;
+    if (top + menuHeight > window.innerHeight - padding) {
+      if (rect.top - menuHeight - 8 > padding) {
+        top = rect.top - menuHeight - 8;
+      } else {
+        top = Math.max(padding, window.innerHeight - menuHeight - padding);
+      }
+    }
+
+    let left = rect.right - menuWidth;
+    if (left < padding) {
+      left = padding;
+    } else if (left + menuWidth > window.innerWidth - padding) {
+      left = window.innerWidth - menuWidth - padding;
+    }
+
+    setMenuPosition({ top, left });
     setActiveActionsId(client.id);
     setSelectedClient(client);
   };
@@ -270,7 +293,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
         <div 
           ref={actionsRef}
           style={{ top: menuPosition.top, left: menuPosition.left }}
-          className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-hidden text-left"
+          className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-y-auto max-h-[calc(100vh-24px)] text-left"
         >
           <div className="px-3 py-2 border-b border-slate-50 mb-1">
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">IT Operations</p>

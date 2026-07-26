@@ -40,17 +40,34 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
   }, []);
 
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b') => {
+    // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
+    const periodData = allData[periodKey] || {};
+    const clientData = periodData[clientId] || { r1: false, r3b: false };
+    const newVal = !clientData[type];
+
+    // Optimistically update local state
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false }) };
-      const newVal = !clientData[type];
-      clientData[type] = newVal;
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { r1: false, r3b: false }) };
+      cData[type] = newVal;
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
-  }, [periodKey]);
+
+    // Make API request without duplicate socket emit
+    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
+      .catch(err => {
+        console.error('Failed to save quarterly filing data', err);
+        // Rollback on error
+        setAllData(prev => {
+          const pData = { ...(prev[periodKey] || {}) };
+          const cData = { ...(pData[clientId] || { r1: false, r3b: false }) };
+          cData[type] = !newVal;
+          pData[clientId] = cData;
+          return { ...prev, [periodKey]: pData };
+        });
+      });
+  }, [periodKey, allData]);
 
   const getStatus = useCallback((clientId: string): FilingStatus => {
     return (allData[periodKey] || {})[clientId] || { r1: false, r3b: false };
@@ -58,19 +75,21 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
 
   const updateRemark = useCallback((clientId: string, val: string) => {
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false }), remark: val };
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { r1: false, r3b: false }), remark: val };
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
+
+    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val })
+      .catch(console.error);
   }, [periodKey]);
 
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val })
+      .catch(console.error);
   };
 
   const getDueDate = () => dueDates[periodKey] || '';

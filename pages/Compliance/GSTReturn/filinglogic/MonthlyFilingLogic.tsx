@@ -204,17 +204,35 @@ export const useMonthlyFilingLogic = (
 
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b' | 'cmp08', customPeriod?: string) => {
     const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;
+    
+    // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
+    const periodData = allData[periodKey] || {};
+    const clientData = periodData[clientId] || { r1: false, r3b: false, cmp08: false };
+    const newVal = !(clientData as any)[type];
+
+    // Optimistically update local state
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false, cmp08: false }) };
-      const newVal = !(clientData as any)[type];
-      (clientData as any)[type] = newVal;
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save filing data', err));
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { r1: false, r3b: false, cmp08: false }) };
+      (cData as any)[type] = newVal;
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
-  }, [selectedYear, selectedMonth, storageKey]);
+
+    // Make API request without duplicate socket emit
+    api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
+      .catch(err => {
+        console.error('Failed to save filing data', err);
+        // Rollback on error
+        setAllData(prev => {
+          const pData = { ...(prev[periodKey] || {}) };
+          const cData = { ...(pData[clientId] || { r1: false, r3b: false, cmp08: false }) };
+          (cData as any)[type] = !newVal;
+          pData[clientId] = cData;
+          return { ...prev, [periodKey]: pData };
+        });
+      });
+  }, [selectedYear, selectedMonth, storageKey, allData]);
 
   const getStatus = useCallback((clientId: string, customPeriod?: string): any => {
     const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;
@@ -225,19 +243,22 @@ export const useMonthlyFilingLogic = (
     const key = `${selectedYear}_${selectedMonth}`;
     const next = { ...dueDates, [key]: val };
     setDueDates(next);
-    api.patchAppData(storageKeyDates, { [`data.${key}`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save due dates', err));
+    api.patchAppData(storageKeyDates, { [`data.${key}`]: val })
+      .catch(err => console.error('Failed to save due dates', err));
   };
 
   const updateRemark = useCallback((clientId: string, val: string, customPeriod?: string) => {
     const periodKey = customPeriod || `${selectedYear}_${selectedMonth}`;
+    
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { r1: false, r3b: false, cmp08: false }), remark: val };
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save remark', err));
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { r1: false, r3b: false, cmp08: false }), remark: val };
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
+
+    api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.remark`]: val })
+      .catch(err => console.error('Failed to save remark', err));
   }, [selectedYear, selectedMonth, storageKey]);
 
   const getDueDate = () => dueDates[`${selectedYear}_${selectedMonth}`] || '';

@@ -133,15 +133,24 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (isOnline) { 
       socketService.connect(); 
+      let debounceTimer: any = null;
       const syncHandler = (e: any) => { 
         console.log('Real-time sync event received:', e.detail);
-        queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
-        queryClient.invalidateQueries({ queryKey: ['filing_data_cache'] });
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+        debounceTimer = setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
+          queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
+          queryClient.invalidateQueries({ queryKey: ['filing_data_cache'] });
+        }, 150);
       };
       window.addEventListener('clientify_db_change', syncHandler);
       return () => {
         window.removeEventListener('clientify_db_change', syncHandler);
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
         socketService.disconnect();
       };
     }

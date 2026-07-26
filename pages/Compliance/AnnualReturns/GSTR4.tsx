@@ -169,7 +169,27 @@ const handleExportPDF = () => {
 
   const openActionsMenu = (e: React.MouseEvent, client: Client) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPosition({ top: rect.bottom + window.scrollY + 8, left: rect.right - 256 });
+    const menuHeight = 160;
+    const menuWidth = 256;
+    const padding = 12;
+
+    let top = rect.bottom + 8;
+    if (top + menuHeight > window.innerHeight - padding) {
+      if (rect.top - menuHeight - 8 > padding) {
+        top = rect.top - menuHeight - 8;
+      } else {
+        top = Math.max(padding, window.innerHeight - menuHeight - padding);
+      }
+    }
+
+    let left = rect.right - menuWidth;
+    if (left < padding) {
+      left = padding;
+    } else if (left + menuWidth > window.innerWidth - padding) {
+      left = window.innerWidth - menuWidth - padding;
+    }
+
+    setMenuPosition({ top, left });
     setActiveActionsId(client.id);
     setSelectedClient(client);
   };
@@ -228,7 +248,6 @@ const handleExportPDF = () => {
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[12px] font-bold uppercase tracking-widest text-slate-900">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Trader Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Legal Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">GSTIN</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-center">CMP-08 Status</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-center">GSTR-4 Status</th>
@@ -242,7 +261,7 @@ const handleExportPDF = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={12} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={9} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const status = getStatus(client.id);
@@ -251,9 +270,8 @@ const handleExportPDF = () => {
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
-     <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
-     <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
-   </td>
+                      <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
+                    </td>
    
                     <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest uppercase">
                       <div className="flex items-center gap-2">
@@ -299,7 +317,7 @@ const handleExportPDF = () => {
                         )}
                       </div>
                     </td>
-                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                    <td className=" px-4 py-[2px] truncate max-w-[150px]" title={status?.remark || getStatus?.(client.id)?.remark || 'Add remark...'}>
                        <EditableRemark value={status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                     </td>
                     <td className=" px-4 py-[2px] text-right  overflow-visible">
@@ -320,7 +338,7 @@ const handleExportPDF = () => {
 
       {/* FIXED ACTIONS MENU */}
       {activeActionsId && selectedClient && (
-        <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-hidden text-left">
+        <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-y-auto max-h-[calc(100vh-24px)] text-left">
           <button onClick={() => { shareViaWhatsApp(`*GSTR-4 Annual Credentials*\n*Entity:* ${selectedClient.tradeName}\n*GSTIN:* ${selectedClient.gstProfile?.gstin}\n*User ID:* ${selectedClient.gstProfile?.username}\n*Password:* ${selectedClient.gstProfile?.password}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
               <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Share Creds</span>

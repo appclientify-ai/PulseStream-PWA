@@ -55,79 +55,89 @@ export const useITRReturnLogic = (
   }, [initialData]);
 
   const toggleStatus = useCallback((clientId: string) => {
-    setAllData(prev => {
-      const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false, prepared: false, refundStatus: 'N/A' }) };
-      
-      if (clientData.filed) {
-        clientData.filed = false;
-        clientData.prepared = false;
-        delete clientData.date;
-        clientData.refundStatus = 'N/A';
-      } else if (clientData.prepared) {
-        clientData.filed = true;
-        clientData.prepared = false;
-        clientData.date = new Date().toISOString().split('T')[0];
-        if (!clientData.refundStatus || clientData.refundStatus === 'N/A') {
-          clientData.refundStatus = 'Pending';
-        }
-      } else {
-        clientData.prepared = true;
-        clientData.filed = false;
+    // Calculate new values outside of state setter
+    const yearData = allData[selectedAY] || {};
+    const clientData = { ...(yearData[clientId] || { filed: false, prepared: false, refundStatus: 'N/A' }) };
+    
+    if (clientData.filed) {
+      clientData.filed = false;
+      clientData.prepared = false;
+      delete clientData.date;
+      clientData.refundStatus = 'N/A';
+    } else if (clientData.prepared) {
+      clientData.filed = true;
+      clientData.prepared = false;
+      clientData.date = new Date().toISOString().split('T')[0];
+      if (!clientData.refundStatus || clientData.refundStatus === 'N/A') {
+        clientData.refundStatus = 'Pending';
       }
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+    } else {
+      clientData.prepared = true;
+      clientData.filed = false;
+    }
+
+    setAllData(prev => {
+      const yData = { ...(prev[selectedAY] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedAY]: yData };
     });
-  }, [selectedAY]);
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedAY, allData]);
 
   const updateFilingDate = useCallback((clientId: string, date: string) => {
+    const yearData = allData[selectedAY] || {};
+    const clientData = { ...(yearData[clientId] || { filed: true, refundStatus: 'Pending' }) };
+    clientData.date = date;
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: true, refundStatus: 'Pending' }) };
-      clientData.date = date;
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedAY] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedAY]: yData };
     });
-  }, [selectedAY]);
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedAY, allData]);
 
   const cycleRefundStatus = useCallback((clientId: string) => {
     const statusFlow: RefundStatus[] = ['Pending', 'Processed', 'Issued', 'Adjusted', 'Rejected', 'N/A'];
+    const yearData = allData[selectedAY] || {};
+    const clientData = { ...(yearData[clientId] || { filed: false, refundStatus: 'N/A' }) };
+    const currentIdx = statusFlow.indexOf(clientData.refundStatus || 'N/A');
+    const nextIdx = (currentIdx + 1) % statusFlow.length;
+    clientData.refundStatus = statusFlow[nextIdx];
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false, refundStatus: 'N/A' }) };
-      const currentIdx = statusFlow.indexOf(clientData.refundStatus || 'N/A');
-      const nextIdx = (currentIdx + 1) % statusFlow.length;
-      clientData.refundStatus = statusFlow[nextIdx];
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedAY] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedAY]: yData };
     });
-  }, [selectedAY]);
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedAY, allData]);
 
   const updateFileData = useCallback((clientId: string, type: 'itrFile' | 'compFile', base64: string | null) => {
+    const yearData = allData[selectedAY] || {};
+    const clientData = { ...(yearData[clientId] || { filed: false }) };
+    
+    if (base64) {
+      clientData[type] = base64;
+    } else {
+      delete clientData[type];
+    }
+
     setAllData(prev => {
-      const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false }) };
-      
-      if (base64) {
-        clientData[type] = base64;
-      } else {
-        delete clientData[type];
-      }
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedAY] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedAY]: yData };
     });
-  }, [selectedAY]);
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedAY, allData]);
 
   const getStatus = useCallback((clientId: string): ITRFilingStatus => {
     return (allData[selectedAY] || {})[clientId] || { filed: false, refundStatus: 'N/A' };
@@ -135,19 +145,21 @@ export const useITRReturnLogic = (
 
   const updateRemark = useCallback((clientId: string, val: string) => {
     setAllData(prev => {
-      const yearData = { ...(prev[selectedAY] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false }), remark: val };
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedAY]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedAY] || {}) };
+      const cData = { ...(yData[clientId] || { filed: false }), remark: val };
+      yData[clientId] = cData;
+      return { ...prev, [selectedAY]: yData };
     });
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}.remark`]: val })
+      .catch(console.error);
   }, [selectedAY]);
 
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedAY]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedAY}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedAY}`]: val })
+      .catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedAY] || '';

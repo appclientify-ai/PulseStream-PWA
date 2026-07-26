@@ -48,6 +48,8 @@ const AppContent: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    let debounceTimer: any = null;
+
     const handleDbChange = (e: Event) => {
       api.invalidateCache();
       const customEv = e as CustomEvent;
@@ -79,10 +81,20 @@ const AppContent: React.FC = () => {
         );
       }
 
-      queryClient.invalidateQueries({ refetchType: 'active' });
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ refetchType: 'active' });
+      }, 150);
     };
     window.addEventListener('clientify_db_change', handleDbChange);
-    return () => window.removeEventListener('clientify_db_change', handleDbChange);
+    return () => {
+      window.removeEventListener('clientify_db_change', handleDbChange);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
   }, []);
 
   const location = useLocation();

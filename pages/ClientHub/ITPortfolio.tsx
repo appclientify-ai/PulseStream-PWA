@@ -19,12 +19,23 @@ const ITPortfolio: React.FC = () => {
   }, [clientsData]);
 
   useEffect(() => {
+    let debounceTimer: any = null;
     const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['it_clients'] });
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['it_clients'] });
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+      }, 150);
     };
     window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
+    return () => {
+      window.removeEventListener('clientify_db_change', syncHandler);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
   }, [queryClient]);
 
   const stats = useMemo(() => {

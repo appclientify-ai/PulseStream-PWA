@@ -1061,7 +1061,7 @@ export const getRemindersAll = async (req, res) => {
 
 // --- Dedicated GST Notice & GST Appeal Controllers ---
 
-const fetchLitigationDataset = async (req, filterFn) => {
+const fetchSpecificLitigation = async (req, isAppeal, status) => {
   const userMatches = [req.user._id];
   if (req.user._id) {
     userMatches.push(req.user._id.toString());
@@ -1071,36 +1071,58 @@ const fetchLitigationDataset = async (req, filterFn) => {
   }
 
   const itemsColl = getCollection('items');
-  const rawItems = await itemsColl.find(
-    { createdBy: { $in: userMatches }, name: { $in: ['client', 'litigation'] } },
+
+  // Built highly-targeted litigation query (MongoDB equivalent of SELECT)
+  const litigationQuery = {
+    createdBy: { $in: userMatches },
+    name: 'litigation',
+    'data.category': isAppeal ? 'Appeal' : { $ne: 'Appeal' }
+  };
+
+  // Status mapping
+  if (status === 'Pending') {
+    litigationQuery['data.status'] = 'Pending';
+  } else if (status === 'Filed') {
+    litigationQuery['data.status'] = 'Filed';
+  } else if (status === 'Demand') {
+    if (isAppeal) {
+      litigationQuery['data.status'] = { $in: ['Demand', 'Demand Sustain', 'Demand Sustained'] };
+    } else {
+      litigationQuery['data.status'] = 'Demand';
+    }
+  } else if (status === 'Drop') {
+    litigationQuery['data.status'] = { $in: ['Drop', 'Dropped'] };
+  }
+
+  // Run database query selecting only necessary fields
+  const rawLitigation = await itemsColl.find(
+    litigationQuery,
     { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
   ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 
-  const clients = [];
-  const litigation = [];
+  const litigation = rawLitigation.map(item => ({
+    ...item.data,
+    id: item._id,
+    createdAt: item.createdAt
+  }));
 
-  for (const item of rawItems) {
-    const transformed = {
-      ...item.data,
-      id: item._id,
-      createdAt: item.createdAt
-    };
+  // Fetch and project client details (SELECT id, legalName, tradeName, gstProfile, itProfile)
+  const rawClients = await itemsColl.find(
+    { createdBy: { $in: userMatches }, name: 'client' },
+    { projection: { _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 } }
+  ).project({ _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 }).toArray();
 
-    if (item.name === 'client') {
-      clients.push(transformed);
-    } else if (item.name === 'litigation') {
-      if (!filterFn || filterFn(transformed)) {
-        litigation.push(transformed);
-      }
-    }
-  }
+  const clients = rawClients.map(item => ({
+    ...item.data,
+    id: item._id
+  }));
 
   return { clients, litigation };
 };
 
 export const getGstNoticePending = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Pending');
+    const data = await fetchSpecificLitigation(req, false, 'Pending');
     const io = req.app.get('io');
     if (io) io.emit('gst_notice_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1112,7 +1134,7 @@ export const getGstNoticePending = async (req, res) => {
 
 export const getGstNoticeFiled = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Filed');
+    const data = await fetchSpecificLitigation(req, false, 'Filed');
     const io = req.app.get('io');
     if (io) io.emit('gst_notice_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1124,7 +1146,7 @@ export const getGstNoticeFiled = async (req, res) => {
 
 export const getGstNoticeDemand = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && r.status === 'Demand');
+    const data = await fetchSpecificLitigation(req, false, 'Demand');
     const io = req.app.get('io');
     if (io) io.emit('gst_notice_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1136,7 +1158,7 @@ export const getGstNoticeDemand = async (req, res) => {
 
 export const getGstNoticeDrop = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category !== 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped'));
+    const data = await fetchSpecificLitigation(req, false, 'Drop');
     const io = req.app.get('io');
     if (io) io.emit('gst_notice_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1148,7 +1170,7 @@ export const getGstNoticeDrop = async (req, res) => {
 
 export const getGstAppealPending = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Pending');
+    const data = await fetchSpecificLitigation(req, true, 'Pending');
     const io = req.app.get('io');
     if (io) io.emit('gst_appeal_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1160,7 +1182,7 @@ export const getGstAppealPending = async (req, res) => {
 
 export const getGstAppealFiled = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Filed');
+    const data = await fetchSpecificLitigation(req, true, 'Filed');
     const io = req.app.get('io');
     if (io) io.emit('gst_appeal_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1172,7 +1194,7 @@ export const getGstAppealFiled = async (req, res) => {
 
 export const getGstAppealDemand = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && r.status === 'Demand');
+    const data = await fetchSpecificLitigation(req, true, 'Demand');
     const io = req.app.get('io');
     if (io) io.emit('gst_appeal_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1184,7 +1206,7 @@ export const getGstAppealDemand = async (req, res) => {
 
 export const getGstAppealDrop = async (req, res) => {
   try {
-    const data = await fetchLitigationDataset(req, r => r.category === 'Appeal' && (r.status === 'Drop' || r.status === 'Dropped'));
+    const data = await fetchSpecificLitigation(req, true, 'Drop');
     const io = req.app.get('io');
     if (io) io.emit('gst_appeal_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
@@ -1207,8 +1229,16 @@ export const getGstClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
+    // Filter on database level and project only required client attributes
     const rawItems = await itemsColl.find(
-      { createdBy: { $in: userMatches }, name: 'client' },
+      { 
+        createdBy: { $in: userMatches }, 
+        name: 'client',
+        $or: [
+          { 'data.gstProfile': { $exists: true } },
+          { 'data.gstProfile.gstin': { $exists: true, $ne: '' } }
+        ]
+      },
       { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
     ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 
@@ -1237,8 +1267,16 @@ export const getItClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
+    // Filter on database level and project only required client attributes
     const rawItems = await itemsColl.find(
-      { createdBy: { $in: userMatches }, name: 'client' },
+      { 
+        createdBy: { $in: userMatches }, 
+        name: 'client',
+        $or: [
+          { 'data.itProfile': { $exists: true } },
+          { 'data.itProfile.pan': { $exists: true, $ne: '' } }
+        ]
+      },
       { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
     ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 

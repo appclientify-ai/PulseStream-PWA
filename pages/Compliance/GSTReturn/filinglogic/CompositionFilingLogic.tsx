@@ -51,17 +51,34 @@ export const useCompositionFilingLogic = (
   }, [initialData]);
 
   const toggleStatus = useCallback((clientId: string) => {
+    // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
+    const periodData = allData[periodKey] || {};
+    const clientData = periodData[clientId] || { cmp08: false };
+    const newVal = !clientData.cmp08;
+
+    // Optimistically update local state
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { cmp08: false }) };
-      const newVal = !clientData.cmp08;
-      clientData.cmp08 = newVal;
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.cmp08`]: newVal }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save composition data', err));
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { cmp08: false }) };
+      cData.cmp08 = newVal;
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
-  }, [periodKey]);
+
+    // Make API request without duplicate socket emit
+    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.cmp08`]: newVal })
+      .catch(err => {
+        console.error('Failed to save composition data', err);
+        // Rollback on error
+        setAllData(prev => {
+          const pData = { ...(prev[periodKey] || {}) };
+          const cData = { ...(pData[clientId] || { cmp08: false }) };
+          cData.cmp08 = !newVal;
+          pData[clientId] = cData;
+          return { ...prev, [periodKey]: pData };
+        });
+      });
+  }, [periodKey, allData]);
 
   const getStatus = useCallback((clientId: string): FilingStatus => {
     return (allData[periodKey] || {})[clientId] || { cmp08: false };
@@ -69,19 +86,21 @@ export const useCompositionFilingLogic = (
 
   const updateRemark = useCallback((clientId: string, val: string) => {
     setAllData(prev => {
-      const periodData = { ...(prev[periodKey] || {}) };
-      const clientData = { ...(periodData[clientId] || { cmp08: false }), remark: val };
-      periodData[clientId] = clientData;
-      const next = { ...prev, [periodKey]: periodData };
-      api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save composition remark', err));
-      return next;
+      const pData = { ...(prev[periodKey] || {}) };
+      const cData = { ...(pData[clientId] || { cmp08: false }), remark: val };
+      pData[clientId] = cData;
+      return { ...prev, [periodKey]: pData };
     });
+
+    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val })
+      .catch(err => console.error('Failed to save composition remark', err));
   }, [periodKey]);
 
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [periodKey]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val }).then(() => socketService.emit('data_updated')).catch(err => console.error('Failed to save composition due dates', err));
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${periodKey}`]: val })
+      .catch(err => console.error('Failed to save composition due dates', err));
   };
 
   const getDueDate = () => dueDates[periodKey] || '';

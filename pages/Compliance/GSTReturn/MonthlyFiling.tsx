@@ -55,11 +55,22 @@ const MonthlyFiling: React.FC = () => {
   const isLoading = isPageLoading && !pageData;
 
   useEffect(() => {
+    let debounceTimer: any = null;
     const syncHandler = () => {
-      queryClient.invalidateQueries({ queryKey: ['monthly_filing_page_data'] });
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['monthly_filing_page_data'] });
+      }, 150);
     };
     window.addEventListener('clientify_db_change', syncHandler);
-    return () => window.removeEventListener('clientify_db_change', syncHandler);
+    return () => {
+      window.removeEventListener('clientify_db_change', syncHandler);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
   }, [queryClient]);
 
   useEffect(() => {

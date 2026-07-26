@@ -47,23 +47,28 @@ export const useGSTR4Logic = (
   }, [initialData]);
 
   const toggleStatus = useCallback((clientId: string) => {
+    // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
+    const yearData = allData[selectedYear] || {};
+    const clientData = { ...(yearData[clientId] || { filed: false }) };
+    
+    clientData.filed = !clientData.filed;
+    if (clientData.filed) {
+      clientData.date = new Date().toISOString().split('T')[0];
+    } else {
+      delete clientData.date;
+    }
+
+    // Optimistically update local state
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false }) };
-      
-      clientData.filed = !clientData.filed;
-      if (clientData.filed) {
-        clientData.date = new Date().toISOString().split('T')[0];
-      } else {
-        delete clientData.date;
-      }
-      
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      yData[clientId] = clientData;
+      return { ...prev, [selectedYear]: yData };
     });
-  }, [selectedYear]);
+
+    // Make API request without duplicate socket emit
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData })
+      .catch(console.error);
+  }, [selectedYear, allData]);
 
   const getStatus = useCallback((clientId: string): GSTR4FilingStatus => {
     return (allData[selectedYear] || {})[clientId] || { filed: false };
@@ -71,19 +76,21 @@ export const useGSTR4Logic = (
 
   const updateRemark = useCallback((clientId: string, val: string) => {
     setAllData(prev => {
-      const yearData = { ...(prev[selectedYear] || {}) };
-      const clientData = { ...(yearData[clientId] || { filed: false }), remark: val };
-      yearData[clientId] = clientData;
-      const next = { ...prev, [selectedYear]: yearData };
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}.remark`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
-      return next;
+      const yData = { ...(prev[selectedYear] || {}) };
+      const cData = { ...(yData[clientId] || { filed: false }), remark: val };
+      yData[clientId] = cData;
+      return { ...prev, [selectedYear]: yData };
     });
+
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}.remark`]: val })
+      .catch(console.error);
   }, [selectedYear]);
 
   const updateDueDate = (val: string) => {
     const next = { ...dueDates, [selectedYear]: val };
     setDueDates(next);
-    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val }).then(() => socketService.emit('data_updated')).catch(console.error);
+    api.patchAppData(STORAGE_KEY_DATES, { [`data.${selectedYear}`]: val })
+      .catch(console.error);
   };
 
   const getDueDate = () => dueDates[selectedYear] || '';
