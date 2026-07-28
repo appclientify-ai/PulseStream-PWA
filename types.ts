@@ -13,8 +13,11 @@ export interface MetricData {
 }
 
 export interface UISettings {
-  fontSize: number; // in px, default 16
-  fontStyle: 'sans' | 'serif' | 'mono';
+  fontSize: number; // in px, default 16 (13-22)
+  fontStyle: 'sans' | 'serif' | 'mono' | 'rounded' | 'condensed' | 'slab';
+  themeColor: 'indigo' | 'emerald' | 'blue' | 'violet' | 'slate' | 'amber' | 'rose' | 'teal';
+  themeMode: 'light' | 'dark' | 'parchment';
+  compactMode?: boolean;
 }
 
 export interface User {

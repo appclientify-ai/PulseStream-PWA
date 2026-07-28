@@ -6,6 +6,7 @@ import { api } from '../../services/api.ts';
 import ITClientFormModal from '../Clientform/ITClientFormModal';
 import ITViewIcon from '../../components/ITViewIcon';
 import GSTViewIcon from '../../components/GSTViewIcon';
+import { toast } from 'sonner';
 
 interface ItMasterPortfolioProps {
   externalSearch?: string;
@@ -60,6 +61,13 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   // Password Visibility State
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
 
+  // Login Tool Box State
+  const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
+  const [loginToolClient, setLoginToolClient] = useState<Client | null>(null);
+  const [showLoginPass, setShowLoginPass] = useState(false);
+  const [isEditingLoginPass, setIsEditingLoginPass] = useState(false);
+  const [tempPass, setTempPass] = useState('');
+
   // Actions Menu State (Fixed Positioning)
   const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -106,6 +114,23 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     queryClient.invalidateQueries({ queryKey: ['clients'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
     if (onDataChange) onDataChange();
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!loginToolClient || !tempPass.trim()) return;
+    try {
+      const updated = { 
+        ...loginToolClient, 
+        itProfile: { ...loginToolClient.itProfile!, password: tempPass } 
+      };
+      await api.saveClient(updated);
+      setLoginToolClient(updated as Client);
+      setIsEditingLoginPass(false);
+      handleDataChange();
+      toast.success("IT Password updated in vault.");
+    } catch (err) { 
+      toast.error("Vault update failed."); 
+    }
   };
 
   const handleEdit = (client: Client) => {
@@ -274,6 +299,20 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
                         
                         <button 
+                          onClick={() => {
+                            setLoginToolClient(client);
+                            setTempPass(client.itProfile?.password || '');
+                            setShowLoginPass(false);
+                            setIsEditingLoginPass(false);
+                            setIsLoginBoxOpen(true);
+                          }}
+                          className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                          title="IT Portal Access Utility"
+                        >
+                           <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        </button>
+
+                        <button 
                           onClick={(e) => openActionsMenu(e, client)}
                           className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
                         >
@@ -300,8 +339,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
              <p className="text-[10px] font-black text-slate-900 truncate mt-0.5">{selectedClient.legalName}</p>
           </div>
           <button onClick={() => { 
-              copyToClipboard(selectedClient!.itProfile?.username || ''); 
-              window.open('https://eportal.incometax.gov.in/iec/foservices/#/login', '_blank'); 
+              setLoginToolClient(selectedClient!); 
+              setTempPass(selectedClient!.itProfile?.password || ''); 
+              setShowLoginPass(false);
+              setIsEditingLoginPass(false);
+              setIsLoginBoxOpen(true); 
               setActiveActionsId(null); 
           }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group">
               <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></div>
@@ -372,6 +414,108 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
               <button onClick={proceedShare} className="flex-1 py-3 bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-colors">Share Now</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Login Tool Box Modal */}
+      {isLoginBoxOpen && loginToolClient && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+           <div className="w-full max-w-lg bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200">
+              <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
+                 <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">IT Portal Access Utility</p>
+                    <h3 className="text-xl font-black truncate">{loginToolClient.legalName || loginToolClient.tradeName}</h3>
+                 </div>
+                 <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">
+                    <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
+                 </button>
+              </div>
+              
+              <div className="p-8 md:p-10 space-y-8">
+                 <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">PAN Identity</span>
+                       <button onClick={() => {
+                         if (navigator.clipboard && loginToolClient.itProfile?.pan) {
+                           navigator.clipboard.writeText(loginToolClient.itProfile.pan).then(() => { toast.success('PAN Copied!'); });
+                         }
+                       }} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Copy PAN</button>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                       <code className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{loginToolClient.itProfile?.pan || '---'}</code>
+                       <button onClick={() => { 
+                          if (loginToolClient.itProfile?.pan) {
+                            copyToClipboard(loginToolClient.itProfile.pan); 
+                            toast.success('PAN Copied'); 
+                          }
+                       }} className="p-2 text-slate-300 hover:text-indigo-600 transition-colors" title="Copy PAN">
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Portal User ID</span>
+                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                          <span className="text-sm font-black text-slate-900 truncate font-mono">{loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '---'}</span>
+                          <button onClick={() => { 
+                            const uid = loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '';
+                            if (uid) {
+                              copyToClipboard(uid); 
+                              toast.success('User ID Copied'); 
+                            }
+                          }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors" title="Copy User ID">
+                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                          </button>
+                       </div>
+                    </div>
+                    <div className="space-y-2">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">e-Filing Password</span>
+                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                          {isEditingLoginPass ? (
+                             <input 
+                                autoFocus
+                                value={tempPass} 
+                                onChange={e => setTempPass(e.target.value)} 
+                                onBlur={handleUpdatePassword}
+                                onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()}
+                                className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-xs font-black w-full outline-none focus:ring-2 focus:ring-indigo-100"
+                             />
+                          ) : (
+                             <>
+                                <span className="text-sm font-black text-indigo-600 tracking-wider truncate font-mono">{showLoginPass ? (loginToolClient.itProfile?.password || '---') : '••••••••'}</span>
+                                <div className="flex gap-1.5">
+                                   <button onClick={() => setShowLoginPass(!showLoginPass)} className="p-1 text-slate-300 hover:text-indigo-600" title={showLoginPass ? 'Hide Password' : 'Show Password'}>{showLoginPass ? '🙈' : '👁️'}</button>
+                                   <button onClick={() => setIsEditingLoginPass(true)} className="p-1 text-slate-300 hover:text-amber-500" title="Edit Password"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                   {loginToolClient.itProfile?.password && (
+                                     <button onClick={() => { copyToClipboard(loginToolClient.itProfile!.password!); toast.success('Password Copied'); }} className="p-1 text-slate-300 hover:text-indigo-600" title="Copy Password">📋</button>
+                                   )}
+                                </div>
+                             </>
+                          )}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-slate-100">
+                 <button 
+                   onClick={() => { 
+                     const userId = loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '';
+                     if (userId) {
+                       copyToClipboard(userId);
+                       toast.success('User ID / PAN Copied! Opening Income Tax Portal...');
+                     }
+                     window.open('https://eportal.incometax.gov.in/iec/foservices/#/login', '_blank'); 
+                   }}
+                   className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3"
+                 >
+                    Launch IT Portal & Copy User ID
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                 </button>
+              </div>
+           </div>
         </div>
       )}
 

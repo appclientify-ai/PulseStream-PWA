@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { User, ActiveView } from '../types';
 import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
+import { useTheme } from '../hooks/useTheme';
+import { THEME_COLORS, FONT_SIZES, FONT_STYLES, THEME_MODES } from '../services/theme';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -16,7 +18,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, activeViewLabel, activeViewDescription, onViewChange }) => {
   const { logout } = useAuth();
   const { canInstall, triggerInstall } = usePWA();
+  const { settings, updateSettings } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
 
   return (
     <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-30">
@@ -62,9 +66,107 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
         </div>
 
+        {/* Quick UI Theme Customizer Popover */}
+        <div className="relative">
+          <button
+            onClick={() => { setIsThemeOpen(!isThemeOpen); setIsProfileOpen(false); }}
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm relative"
+            title="App Theme & Typography Customizer"
+          >
+            <span className="text-base md:text-lg">🎨</span>
+            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white" style={{ backgroundColor: THEME_COLORS.find(c => c.id === settings.themeColor)?.primary || '#4f46e5' }} />
+          </button>
+
+          {isThemeOpen && (
+            <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-slate-200 rounded-[2rem] shadow-2xl p-5 animate-in zoom-in-95 duration-200 origin-top-right z-[10000] text-slate-900">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🎨</span>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Quick App Customizer</h4>
+                </div>
+                <button onClick={() => setIsThemeOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold text-xs p-1">✕</button>
+              </div>
+
+              {/* Theme Colors */}
+              <div className="mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Accent Color</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {THEME_COLORS.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => updateSettings({ themeColor: c.id as any })}
+                      className={`flex items-center gap-1.5 p-2 rounded-xl border text-left transition-all ${
+                        settings.themeColor === c.id ? 'border-slate-900 bg-slate-50 ring-2 ring-slate-900/10' : 'border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <span className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: c.primary }} />
+                      <span className="text-[10px] font-bold text-slate-800 truncate">{c.id}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Size */}
+              <div className="mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Font Size ({settings.fontSize}px)</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {FONT_SIZES.map(sz => (
+                    <button
+                      key={sz.value}
+                      onClick={() => updateSettings({ fontSize: sz.value })}
+                      className={`py-1.5 px-2 rounded-xl text-[10px] font-black transition-all ${
+                        settings.fontSize === sz.value ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {sz.value}px
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Style */}
+              <div className="mb-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Typography Style</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {FONT_STYLES.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => updateSettings({ fontStyle: s.id as any })}
+                      className={`p-2 rounded-xl border text-left transition-all ${s.fontClass} ${
+                        settings.fontStyle === s.id ? 'border-indigo-600 bg-indigo-50/70' : 'border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <p className="text-[10px] font-black text-indigo-600 leading-none">{s.name}</p>
+                      <p className="text-xs font-bold text-slate-800 mt-1 truncate">Clientify Practice</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Theme Mode */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Canvas Mode</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {THEME_MODES.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => updateSettings({ themeMode: m.id as any })}
+                      className={`py-2 px-2 rounded-xl border text-center transition-all ${
+                        settings.themeMode === m.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-700 border-slate-100 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-wider block">{m.id}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="relative">
           <button 
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            onClick={() => { setIsProfileOpen(!isProfileOpen); setIsThemeOpen(false); }}
             className="flex items-center gap-2 md:gap-4 group hover:bg-slate-50 p-1 rounded-2xl transition-all"
           >
             <div className="text-right hidden md:block">

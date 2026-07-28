@@ -14,6 +14,7 @@ const Dashboard = React.lazy(() => import('./pages/Primary/Dashboard.tsx'));
 const Login = React.lazy(() => import('./auth/Login.tsx'));
 const Signup = React.lazy(() => import('./auth/Signup.tsx'));
 import { api } from './services/api.ts';
+import { getStoredUiSettings, applyUiSettings } from './services/theme.ts';
 import { useOffline } from './hooks/useOffline.ts';
 import { Toaster } from 'sonner';
 import { socketService } from './services/socket.ts';
@@ -38,6 +39,10 @@ const localStoragePersister = createSyncStoragePersister({
 const AppContent: React.FC = () => {
   const { isAuthenticated, token, hasCheckedAuth, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    applyUiSettings(getStoredUiSettings());
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {

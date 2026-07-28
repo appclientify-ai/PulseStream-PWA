@@ -16,7 +16,6 @@ import {
   useDeleteInvoiceMutation,
   useSettleInvoiceMutation
 } from '../../../hooks/usePaginatedData';
-import { ServerPagination } from '../../../components/ServerPagination';
 
 interface InvoicesProps {
   onViewChange?: (view: string, extra?: any) => void;
@@ -353,15 +352,6 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
             </tbody>
           </table>
         </div>
-        <ServerPagination
-          currentPage={page}
-          totalPages={paginatedData?.totalPages || 1}
-          totalRecords={paginatedData?.total || 0}
-          pageSize={limit}
-          onPageChange={setPage}
-          onPageSizeChange={setLimit}
-          isLoading={isFetching}
-        />
       </div>
 
       

@@ -71,20 +71,20 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
       <form 
         onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
-        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
+        className="w-full max-w-2xl max-h-[90vh] bg-white rounded-[2rem] shadow-2xl p-6 sm:p-8 flex flex-col my-auto border border-slate-200 overflow-hidden animate-in zoom-in-95"
       >
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">FSSAI Entry</h3>
            <button type="button" onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
               <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
            </button>
         </div>
 
-        <div className="space-y-4 flex-1 overflow-y-auto pr-1 no-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4 flex-1 overflow-y-auto py-4 pr-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Name</label>
               <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50 uppercase"
@@ -119,7 +119,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Application Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
@@ -137,7 +137,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Applied Date</label>
               <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase text-xs"
@@ -166,7 +166,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
           </div>
         </div>
 
-        <div className="flex gap-4 pt-4 border-t border-slate-100 shrink-0">
+        <div className="flex gap-3 sm:gap-4 pt-4 border-t border-slate-100 shrink-0">
           <button type="button" onClick={onClose} className="flex-1 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px] border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
           <button type="submit" className="flex-[2] bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-xl shadow-xl hover:bg-slate-900 transition-all active:scale-[0.98]">Save FSSAI</button>
         </div>

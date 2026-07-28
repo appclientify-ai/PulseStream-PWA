@@ -5,6 +5,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { api } from '../../services/api.ts';
 import { usePWA, DeviceCategory } from '../../hooks/usePWA';
 import Loader from '../../components/Loader';
+import { useTheme } from '../../hooks/useTheme';
+import { FONT_SIZES, FONT_STYLES, THEME_COLORS, THEME_MODES } from '../../services/theme';
 
 const Setting: React.FC = () => {
   const queryClient = useQueryClient();
@@ -37,10 +39,7 @@ const Setting: React.FC = () => {
     confirmPassword: ''
   });
 
-  const [uiSettings, setUiSettings] = useState(() => {
-    const saved = localStorage.getItem('clientify_ui_settings');
-    return saved ? JSON.parse(saved) : { fontSize: 16, fontStyle: 'sans' };
-  });
+  const { settings: uiSettings, updateSettings } = useTheme();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -83,14 +82,6 @@ const Setting: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const applyUiSettings = (next: any) => {
-    setUiSettings(next);
-    localStorage.setItem('clientify_ui_settings', JSON.stringify(next));
-    document.documentElement.style.setProperty('--ui-font-size', next.fontSize + 'px');
-    document.body.classList.remove('app-font-sans', 'app-font-serif', 'app-font-mono');
-    document.body.classList.add('app-font-' + next.fontStyle);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -662,38 +653,122 @@ const Setting: React.FC = () => {
          )}
 
          {activeTab === 'appearance' && (
-           <div className="max-w-2xl space-y-12 animate-in slide-in-from-bottom-4 duration-300">
-              <section>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 mb-8 flex items-center gap-3">Visual Scaling <div className="h-px flex-1 bg-slate-100" /></h4>
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { l: 'Compact', v: 14 },
-                      { l: 'Default', v: 16 },
-                      { l: 'Large', v: 18 }
-                    ].map(sz => (
-                      <button key={sz.v} onClick={() => applyUiSettings({...uiSettings, fontSize: sz.v})}
-                        className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border-2 transition-all ${uiSettings.fontSize === sz.v ? 'bg-indigo-50 border-indigo-600' : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200'}`}>
-                        <span className="text-[10px] font-black uppercase tracking-widest mb-2">{sz.l}</span>
-                        <span className="font-black" style={{ fontSize: sz.v + 'px' }}>Aa</span>
-                      </button>
-                    ))}
+           <div className="max-w-4xl space-y-10 animate-in slide-in-from-bottom-4 duration-300">
+              {/* App Accent Color Section */}
+              <section className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+                 <div>
+                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
+                     <span className="h-3 w-3 rounded-full bg-indigo-600 inline-block" />
+                     App Theme Accent Color
+                   </h4>
+                   <p className="text-xs font-medium text-slate-500 mt-1">Select the primary theme color applied across buttons, badges, navigation, and active indicators across the whole app.</p>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                   {THEME_COLORS.map(col => (
+                     <button
+                       key={col.id}
+                       onClick={() => updateSettings({ themeColor: col.id as any })}
+                       className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all ${
+                         uiSettings.themeColor === col.id ? 'border-slate-900 bg-slate-50 shadow-md ring-2 ring-slate-900/10' : 'border-slate-100 hover:border-slate-200 bg-white'
+                       }`}
+                     >
+                       <span className="h-7 w-7 rounded-full shadow-inner shrink-0 ring-2 ring-white" style={{ backgroundColor: col.primary }} />
+                       <div className="text-left min-w-0">
+                         <p className="text-xs font-black text-slate-900 truncate">{col.name}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{col.id}</p>
+                       </div>
+                     </button>
+                   ))}
                  </div>
               </section>
 
-              <section>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-indigo-600 mb-8 flex items-center gap-3">Typography Style <div className="h-px flex-1 bg-slate-100" /></h4>
+              {/* Font Size Scaling Section */}
+              <section className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+                 <div>
+                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
+                     <span className="text-sm">🔤</span>
+                     Global Font Size Options
+                   </h4>
+                   <p className="text-xs font-medium text-slate-500 mt-1">Scale interface typography across all tables, forms, modals, sidebars, and headings.</p>
+                 </div>
+
+                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                   {FONT_SIZES.map(sz => (
+                     <button
+                       key={sz.value}
+                       onClick={() => updateSettings({ fontSize: sz.value })}
+                       className={`flex flex-col p-4 rounded-2xl border-2 text-left transition-all ${
+                         uiSettings.fontSize === sz.value ? 'border-indigo-600 bg-indigo-50/70 shadow-md ring-2 ring-indigo-600/10' : 'border-slate-100 hover:border-slate-200 bg-white'
+                       }`}
+                     >
+                       <div className="flex items-center justify-between mb-2">
+                         <span className="text-xs font-black uppercase tracking-wider text-slate-900">{sz.label}</span>
+                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{sz.value}px</span>
+                       </div>
+                       <span className="font-black text-slate-900 my-1 truncate" style={{ fontSize: `${Math.min(sz.value, 18)}px` }}>Aa Bb 123</span>
+                       <span className="text-[10px] font-medium text-slate-400 truncate">{sz.desc.split('•')[1] || sz.desc}</span>
+                     </button>
+                   ))}
+                 </div>
+              </section>
+
+              {/* Typography Style Section */}
+              <section className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+                 <div>
+                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
+                     <span className="text-sm">✒️</span>
+                     Global Typography Font Style
+                   </h4>
+                   <p className="text-xs font-medium text-slate-500 mt-1">Select your preferred typeface family applied globally across all screens and documents.</p>
+                 </div>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                   {FONT_STYLES.map(sty => (
+                     <button
+                       key={sty.id}
+                       onClick={() => updateSettings({ fontStyle: sty.id as any })}
+                       className={`p-5 rounded-2xl border-2 text-left transition-all ${sty.fontClass} ${
+                         uiSettings.fontStyle === sty.id ? 'border-indigo-600 bg-indigo-50/70 shadow-md ring-2 ring-indigo-600/10' : 'border-slate-100 hover:border-slate-200 bg-white'
+                       }`}
+                     >
+                       <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-1">{sty.name}</span>
+                       <span className="text-base font-bold text-slate-900 block my-1">{sty.sample}</span>
+                       <span className="text-[10px] text-slate-400 font-mono block mt-2 truncate">{sty.family}</span>
+                     </button>
+                   ))}
+                 </div>
+              </section>
+
+              {/* Theme Mode Section */}
+              <section className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+                 <div>
+                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-2">
+                     <span className="text-sm">🎨</span>
+                     Interface Surface Mode
+                   </h4>
+                   <p className="text-xs font-medium text-slate-500 mt-1">Select contrast canvas mode for optimal reading comfort.</p>
+                 </div>
+
                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {[
-                      { l: 'Modern Sans', v: 'sans' },
-                      { l: 'Classic Serif', v: 'serif' },
-                      { l: 'Statutory Mono', v: 'mono' }
-                    ].map(sty => (
-                      <button key={sty.v} onClick={() => applyUiSettings({...uiSettings, fontStyle: sty.v})}
-                        className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border-2 transition-all ${uiSettings.fontStyle === sty.v ? 'bg-indigo-50 border-indigo-600' : 'bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-200'} app-font-${sty.v}`}>
-                        <span className="text-[10px] font-black uppercase tracking-widest mb-2">{sty.l}</span>
-                        <span className="text-xl font-black">Ref</span>
-                      </button>
-                    ))}
+                   {THEME_MODES.map(m => (
+                     <button
+                       key={m.id}
+                       onClick={() => updateSettings({ themeMode: m.id as any })}
+                       className={`p-5 rounded-2xl border-2 text-left transition-all flex flex-col justify-between ${
+                         uiSettings.themeMode === m.id ? 'border-slate-900 bg-slate-900 text-white shadow-xl' : 'border-slate-100 hover:border-slate-200 bg-slate-50 text-slate-900'
+                       }`}
+                     >
+                       <div>
+                         <span className="text-xs font-black uppercase tracking-widest block mb-1">{m.name}</span>
+                         <p className={`text-[11px] font-medium ${uiSettings.themeMode === m.id ? 'text-slate-300' : 'text-slate-500'}`}>{m.desc}</p>
+                       </div>
+                       <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200/20">
+                         <span className="h-4 w-4 rounded-full border border-current shrink-0" style={{ backgroundColor: m.bg }} />
+                         <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{m.id} mode</span>
+                       </div>
+                     </button>
+                   ))}
                  </div>
               </section>
            </div>

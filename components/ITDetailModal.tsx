@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { Client } from '../types';
 import { formatDate } from '../exportUtils';
+import { toast } from 'sonner';
 
 interface ITDetailModalProps {
   isOpen: boolean;
@@ -11,146 +11,317 @@ interface ITDetailModalProps {
 }
 
 const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, onEdit }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'personal_employment' | 'bank_notes'>('overview');
+  const [showPassword, setShowPassword] = useState(false);
+
   if (!isOpen || !client) return null;
 
-  const Field = ({ label, value, isMono = false, className = '' }: { label: string, value?: string | number, isMono?: boolean, className?: string }) => (
-    <div className={`space-y-1 ${className}`}>
-      <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
-      <div className={`min-h-[20px] text-sm font-bold text-slate-900 ${isMono ? 'font-mono tracking-wider' : ''} border-b border-slate-100 pb-1`}>
-        {value || '---'}
-      </div>
-    </div>
-  );
-
-  const PasswordField = ({ label, value, className = '' }: { label: string, value?: string, className?: string }) => {
-    const [show, setShow] = useState(false);
-    return (
-      <div className={`space-y-1 ${className}`}>
-        <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{label}</p>
-        <div className="flex items-center justify-between border-b border-slate-100 pb-1">
-          <div className="min-h-[20px] text-sm font-bold text-slate-900 font-mono tracking-wider">
-            {value ? (show ? value : '••••••••') : '---'}
-          </div>
-          {value && (
-            <button onClick={() => setShow(!show)} className="text-slate-400 hover:text-indigo-600 transition-colors ml-2">
-              {show ? (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-              ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-    );
+  const copyToClipboard = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied to clipboard`);
   };
 
   const handlePortalLogin = () => {
-    if (client.itProfile?.pan && client.itProfile?.password) {
-      const loginUrl = `https://eportal.incometax.gov.in/iec/foservices/#/login`;
-      window.open(loginUrl, '_blank');
+    if (client.itProfile?.pan) {
       navigator.clipboard.writeText(client.itProfile.pan);
+      toast.success('PAN copied! Opening Income Tax Portal...');
     }
+    window.open(`https://eportal.incometax.gov.in/iec/foservices/#/login`, '_blank');
   };
 
+  const itProf = client.itProfile;
+
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-5xl max-h-[95vh] bg-white rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-3 sm:p-5 animate-in fade-in duration-200">
+      <div className="w-full max-w-4xl max-h-[92vh] bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
         
-        {/* Header */}
-        <div className="px-8 py-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-             <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-             </div>
-             <div>
-                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">IT Master Profile</h2>
-                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Full Compliance Dossier</p>
-             </div>
-          </div>
-          <button onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors">
-            <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-
-        <div className="p-8 overflow-y-auto no-scrollbar flex-1 space-y-10">
+        {/* Header Hero Section */}
+        <div className="p-6 md:p-8 bg-slate-900 text-white flex flex-col gap-5 shrink-0 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           
-          {/* 1. Administrative Control */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">1. Administrative Control <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Field label="Lifecycle Status" value={client.status} />
-            </div>
-          </section>
-
-          {/* 2. IT Credentials */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">2. IT Credentials <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-              <Field label="PAN Identity" value={client.itProfile?.pan} isMono />
-              <PasswordField label="Portal Password" value={client.itProfile?.password} />
+          <div className="flex items-start justify-between relative z-10 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 md:h-14 md:w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 shrink-0 font-black text-xl">
+                IT
+              </div>
               <div>
-                <button onClick={handlePortalLogin} className="w-full h-[42px] bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-md flex items-center justify-center gap-2">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                  Portal Login
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg md:text-2xl font-black tracking-tight text-white">{client.legalName || client.tradeName}</h2>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    client.status === 'Active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  }`}>
+                    {client.status}
+                  </span>
+                </div>
+                {client.tradeName && client.tradeName !== client.legalName && (
+                  <p className="text-xs font-medium text-slate-400 mt-0.5">Trade Name: {client.tradeName}</p>
+                )}
               </div>
             </div>
-          </section>
 
-          {/* 3. Entity Information */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">3. Entity Information <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Legal Name (As per PAN)" value={client.legalName} />
-              <Field label="Trade Name (Optional)" value={client.tradeName} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Field label="DOB / Incorporation" value={formatDate(client.itProfile?.dob)} />
-              <Field label="Father's Name" value={client.itProfile?.fatherName} />
-              <Field label="Mobile No" value={client.mobile} isMono />
-              <Field label="Email Address" value={client.email} />
-            </div>
-            <div className="grid grid-cols-1 gap-6">
-              <Field label="Client Address" value={client.address} />
-            </div>
-          </section>
+            <button 
+              onClick={onClose} 
+              className="h-9 w-9 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-all shrink-0"
+            >
+              ✕
+            </button>
+          </div>
 
-          {/* 4. Professional Profile */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">4. Professional Profile <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Field label="Nature of Work" value={client.itProfile?.natureOfWork} />
-              <Field label="Employment Type" value={client.itProfile?.employmentType} />
-            </div>
-          </section>
+          {/* Key Identifiers & Quick Launch */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80 relative z-10 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              {itProf?.pan ? (
+                <button
+                  onClick={() => copyToClipboard(itProf.pan, 'PAN')}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 font-mono font-bold tracking-wider flex items-center gap-2 border border-slate-700 transition-all group"
+                  title="Click to copy PAN"
+                >
+                  <span className="text-[10px] font-black uppercase text-slate-400">PAN:</span>
+                  <span>{itProf.pan}</span>
+                  <span className="text-slate-500 group-hover:text-white text-[10px]">📋</span>
+                </button>
+              ) : (
+                <span className="text-slate-500 italic">No PAN recorded</span>
+              )}
 
-          {/* 5. Bank Details */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">5. Bank Details <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <Field label="Bank Name" value={client.bankDetails?.bankName} />
-              <Field label="A/C Number" value={client.bankDetails?.accountNo} isMono />
-              <Field label="IFSC Code" value={client.bankDetails?.ifsc} isMono />
+              {itProf?.category && (
+                <span className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 font-bold border border-slate-700">
+                  {itProf.category}
+                </span>
+              )}
             </div>
-          </section>
 
-          {/* 6. Vault Remarks */}
-          <section className="space-y-4">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 flex items-center gap-3">6. Vault Remarks <div className="h-px flex-1 bg-slate-100" /></h4>
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 min-h-[100px]">
-              <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap">{client.remarks || 'No legacy history documented.'}</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePortalLogin}
+                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-2 shadow-md transition-all"
+              >
+                <span>🚀 IT e-Portal Login</span>
+              </button>
             </div>
-          </section>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+          {[
+            { id: 'overview', label: 'Overview & Portal Credentials', icon: '🔑' },
+            { id: 'personal_employment', label: 'Personal & Professional Details', icon: '👤' },
+            { id: 'bank_notes', label: 'Banking & Office Notes', icon: '🏦' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/80'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Body Content */}
+        <div className="p-6 md:p-8 overflow-y-auto flex-1 no-scrollbar space-y-6">
+
+          {/* TAB 1: OVERVIEW & CREDENTIALS */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* Credentials Highlight Card */}
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                  <span>Income Tax Portal Credentials</span>
+                  <span className="text-[10px] text-indigo-600 font-bold">1-Click Portal Sync</span>
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* PAN / User ID */}
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">PAN / Portal Username</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="font-mono font-bold text-indigo-600 text-sm truncate">{itProf?.pan || '---'}</span>
+                      {itProf?.pan && (
+                        <button
+                          onClick={() => copyToClipboard(itProf.pan, 'PAN')}
+                          className="text-slate-400 hover:text-indigo-600 text-xs p-1"
+                          title="Copy PAN"
+                        >
+                          📋
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">e-Filing Password</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="font-mono font-bold text-slate-900 text-sm">
+                        {itProf?.password ? (showPassword ? itProf.password : '••••••••') : '---'}
+                      </span>
+                      {itProf?.password && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-slate-400 hover:text-slate-700 text-xs p-1"
+                            title={showPassword ? 'Hide Password' : 'Show Password'}
+                          >
+                            {showPassword ? '🙈' : '👁️'}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(itProf.password, 'Password')}
+                            className="text-slate-400 hover:text-indigo-600 text-xs p-1"
+                            title="Copy Password"
+                          >
+                            📋
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Primary Contact Details */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Contact Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Mobile Number</p>
+                    <p className="font-mono font-bold text-slate-900 text-sm mt-0.5">{client.mobile || '---'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Email Address</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5 truncate">{client.email || '---'}</p>
+                  </div>
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <p className="text-[10px] font-black uppercase text-slate-400">Communication Address</p>
+                    <p className="font-medium text-slate-800 text-xs mt-0.5 line-clamp-2">{client.address || '---'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Remarks */}
+              {client.remarks && (
+                <div className="bg-amber-50/60 p-5 rounded-2xl border border-amber-200/60 space-y-2">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
+                    <span>📌</span>
+                    <span>IT Vault Remarks</span>
+                  </h3>
+                  <p className="text-xs font-medium text-amber-900 leading-relaxed whitespace-pre-wrap">{client.remarks}</p>
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* TAB 2: PERSONAL & PROFESSIONAL */}
+          {activeTab === 'personal_employment' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Individual / Entity Particulars</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Legal Name (As per PAN)</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5">{client.legalName || '---'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Father's Name</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5">{itProf?.fatherName || '---'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Date of Birth / Incorporation</p>
+                    <p className="font-mono font-bold text-slate-900 text-sm mt-0.5">{formatDate(itProf?.dob) || '---'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Professional & Taxpayer Profile</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Nature of Work</p>
+                    <p className="font-bold text-indigo-600 text-sm mt-0.5">{itProf?.natureOfWork || 'Salaried'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Employment Type</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5">{itProf?.employmentType || '---'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">Assessee Category</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5">{itProf?.category || 'Individual'}</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 3: BANK & NOTES */}
+          {activeTab === 'bank_notes' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                  <span>🏦</span> Income Tax Bank Account for Refund
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <p className="text-[10px] font-black uppercase text-slate-400">Bank Name</p>
+                    <p className="font-bold text-slate-900 text-sm mt-0.5">{client.bankDetails?.bankName || '---'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <p className="text-[10px] font-black uppercase text-slate-400">Account Number</p>
+                    <p className="font-mono font-bold text-slate-900 text-sm mt-0.5">{client.bankDetails?.accountNo || '---'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <p className="text-[10px] font-black uppercase text-slate-400">IFSC Code</p>
+                    <p className="font-mono font-bold text-slate-900 text-sm mt-0.5">{client.bankDetails?.ifsc || '---'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Vault Remarks & Notes</h3>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 min-h-[100px]">
+                  <p className="text-xs font-medium text-slate-700 whitespace-pre-wrap">{client.remarks || 'No internal remarks logged.'}</p>
+                </div>
+              </div>
+
+            </div>
+          )}
 
         </div>
 
-        <footer className="px-8 py-6 border-t border-slate-100 bg-slate-50 flex justify-between shrink-0">
-          {onEdit && (
-            <button onClick={() => onEdit(client)} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-900 transition-all shadow-lg">Modify Profile</button>
-          )}
-          <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-lg ml-auto">Close Profile</button>
+        {/* Footer */}
+        <footer className="p-4 md:px-8 md:py-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0 gap-3">
+          <p className="text-[10px] font-bold text-slate-400 hidden sm:block">Clientify IT Vault Dossier • Confidential</p>
+          <div className="flex items-center gap-3 ml-auto">
+            {onEdit && (
+              <button 
+                onClick={() => { onClose(); onEdit(client); }} 
+                className="px-5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-black text-xs uppercase tracking-wider transition-all border border-indigo-200"
+              >
+                ✏️ Edit Profile
+              </button>
+            )}
+            <button 
+              onClick={onClose} 
+              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md transition-all"
+            >
+              Close
+            </button>
+          </div>
         </footer>
+
       </div>
     </div>
   );

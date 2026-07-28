@@ -58,19 +58,19 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
       <form 
         onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
-        className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
+        className="w-full max-w-xl max-h-[90vh] bg-white rounded-[2rem] shadow-2xl p-6 sm:p-8 flex flex-col my-auto border border-slate-200 overflow-hidden animate-in zoom-in-95"
       >
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Work Log Entry</h3>
            <button type="button" onClick={onClose} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-all">
               <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg>
            </button>
         </div>
 
-        <div className="space-y-4 flex-1 overflow-y-auto pr-1 no-scrollbar">
+        <div className="space-y-4 flex-1 overflow-y-auto py-4 pr-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Client Name</label>
