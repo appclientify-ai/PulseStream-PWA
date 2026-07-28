@@ -5,8 +5,15 @@ import { socketService } from '../../../../services/socket.ts';
 export interface FilingStatus {
   remark?: string;
   r1: boolean;
-  r3b: boolean;
+  r3b: boolean | 'Pending' | 'Challan' | 'Filed';
+  cmp08?: boolean | 'Pending' | 'Challan' | 'Filed';
 }
+
+export const getStatusLabel = (val: boolean | string | undefined): 'Filed' | 'Challan' | 'Pending' => {
+  if (val === true || val === 'Filed') return 'Filed';
+  if (val === 'Challan') return 'Challan';
+  return 'Pending';
+};
 
 const STORAGE_KEY_DEFAULT = 'clientify_monthly_filing_v3';
 const STORAGE_KEY_DATES_DEFAULT = 'clientify_monthly_due_dates_v1';
@@ -207,13 +214,22 @@ export const useMonthlyFilingLogic = (
     
     // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
     const periodData = allData[periodKey] || {};
-    const clientData = periodData[clientId] || { r1: false, r3b: false, cmp08: false };
-    const newVal = !(clientData as any)[type];
+    const clientData = periodData[clientId] || { r1: false, r3b: 'Pending', cmp08: 'Pending' };
+    
+    let newVal: boolean | string;
+    if (type === 'r3b' || type === 'cmp08') {
+      const currentLabel = getStatusLabel((clientData as any)[type]);
+      if (currentLabel === 'Pending') newVal = 'Challan';
+      else if (currentLabel === 'Challan') newVal = 'Filed';
+      else newVal = 'Pending';
+    } else {
+      newVal = !(clientData as any)[type];
+    }
 
     // Optimistically update local state
     setAllData(prev => {
       const pData = { ...(prev[periodKey] || {}) };
-      const cData = { ...(pData[clientId] || { r1: false, r3b: false, cmp08: false }) };
+      const cData = { ...(pData[clientId] || { r1: false, r3b: 'Pending', cmp08: 'Pending' }) };
       (cData as any)[type] = newVal;
       pData[clientId] = cData;
       return { ...prev, [periodKey]: pData };
@@ -223,14 +239,6 @@ export const useMonthlyFilingLogic = (
     api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
       .catch(err => {
         console.error('Failed to save filing data', err);
-        // Rollback on error
-        setAllData(prev => {
-          const pData = { ...(prev[periodKey] || {}) };
-          const cData = { ...(pData[clientId] || { r1: false, r3b: false, cmp08: false }) };
-          (cData as any)[type] = !newVal;
-          pData[clientId] = cData;
-          return { ...prev, [periodKey]: pData };
-        });
       });
   }, [selectedYear, selectedMonth, storageKey, allData]);
 

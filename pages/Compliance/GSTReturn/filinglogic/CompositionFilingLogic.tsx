@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
 import { socketService } from '../../../../services/socket.ts';
+import { getStatusLabel } from './MonthlyFilingLogic';
 
 export interface FilingStatus {
   remark?: string;
-  cmp08: boolean;
+  cmp08: boolean | 'Pending' | 'Challan' | 'Filed';
 }
 
 const STORAGE_KEY = 'clientify_composition_filing_v3';
@@ -53,13 +54,18 @@ export const useCompositionFilingLogic = (
   const toggleStatus = useCallback((clientId: string) => {
     // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
     const periodData = allData[periodKey] || {};
-    const clientData = periodData[clientId] || { cmp08: false };
-    const newVal = !clientData.cmp08;
+    const clientData = periodData[clientId] || { cmp08: 'Pending' };
+    
+    const currentLabel = getStatusLabel(clientData.cmp08);
+    let newVal: string;
+    if (currentLabel === 'Pending') newVal = 'Challan';
+    else if (currentLabel === 'Challan') newVal = 'Filed';
+    else newVal = 'Pending';
 
     // Optimistically update local state
     setAllData(prev => {
       const pData = { ...(prev[periodKey] || {}) };
-      const cData = { ...(pData[clientId] || { cmp08: false }) };
+      const cData = { ...(pData[clientId] || { cmp08: 'Pending' }) };
       cData.cmp08 = newVal;
       pData[clientId] = cData;
       return { ...prev, [periodKey]: pData };
@@ -69,14 +75,6 @@ export const useCompositionFilingLogic = (
     api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.cmp08`]: newVal })
       .catch(err => {
         console.error('Failed to save composition data', err);
-        // Rollback on error
-        setAllData(prev => {
-          const pData = { ...(prev[periodKey] || {}) };
-          const cData = { ...(pData[clientId] || { cmp08: false }) };
-          cData.cmp08 = !newVal;
-          pData[clientId] = cData;
-          return { ...prev, [periodKey]: pData };
-        });
       });
   }, [periodKey, allData]);
 

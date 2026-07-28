@@ -8,7 +8,7 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
-import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from './filinglogic/MonthlyFilingLogic';
+import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
@@ -19,7 +19,7 @@ const QuarterlyFiling: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
-  const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
   const [isR1FilterOpen, setIsR1FilterOpen] = useState(false);
   const [isR3bFilterOpen, setIsR3bFilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
@@ -96,14 +96,15 @@ const QuarterlyFiling: React.FC = () => {
     );
 
     if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
-    if (r3bFilter !== 'All') list = list.filter(c => r3bFilter === 'Filed' ? getStatus(c.id).r3b : !getStatus(c.id).r3b);
+    if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
     return list;
   }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, getStatus, checkQrmpVisibility]);
 
   const stats = useMemo(() => {
     const r1 = filteredClients.filter(c => getStatus(c.id).r1).length;
-    const r3b = filteredClients.filter(c => getStatus(c.id).r3b).length;
-    return { total: filteredClients.length, r1, r3b };
+    const r3bFiled = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Filed').length;
+    const r3bChallan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Challan').length;
+    return { total: filteredClients.length, r1, r3b: r3bFiled, r3bChallan };
   }, [filteredClients, getStatus]);
 
   const handleRefreshClients = useCallback(() => {
@@ -150,7 +151,7 @@ const QuarterlyFiling: React.FC = () => {
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).r1 ? 'Filed' : 'Pending',
-      isQuarterEnd ? (getStatus(client.id).r3b ? 'Filed' : 'Pending') : 'N/A',
+      isQuarterEnd ? getStatusLabel(getStatus(client.id).r3b) : 'N/A',
       client.gstProfile?.username,
       client.gstProfile?.password
     ]);
@@ -165,7 +166,7 @@ const QuarterlyFiling: React.FC = () => {
       client.mobile,
       client.gstProfile?.gstin,
       getStatus(client.id).r1 ? 'Filed' : 'Pending',
-      isQuarterEnd ? (getStatus(client.id).r3b ? 'Filed' : 'Pending') : 'N/A',
+      isQuarterEnd ? getStatusLabel(getStatus(client.id).r3b) : 'N/A',
       client.gstProfile?.username,
       client.gstProfile?.password
     ]);
@@ -182,6 +183,7 @@ const QuarterlyFiling: React.FC = () => {
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">QRMP Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
           <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">IFF Filed: <strong className="font-black text-indigo-900">{stats.r1}</strong></span>
+          {isQuarterEnd && <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Challan: <strong className="font-black text-amber-900">{stats.r3bChallan}</strong></span>}
           <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Filed: <strong className="font-black text-emerald-900">{isQuarterEnd ? stats.r3b : '---'}</strong></span>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
@@ -200,6 +202,12 @@ const QuarterlyFiling: React.FC = () => {
             <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">IFF Filed {iffDueDate && `(Due: ${formatISOToDDMMYYYY(iffDueDate)})`}</p>
             <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
           </div>
+          {isQuarterEnd && (
+            <div className="text-center border-l border-slate-100 pl-6">
+              <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">3B Challan</p>
+              <p className="text-xl font-black text-amber-600 leading-none">{stats.r3bChallan}</p>
+            </div>
+          )}
           <div className="text-center border-l border-slate-100 pl-6">
             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">3B Filed {q3bDueDate && `(Due: ${formatISOToDDMMYYYY(q3bDueDate)})`}</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{isQuarterEnd ? stats.r3b : '---'}</p>
@@ -215,7 +223,7 @@ const QuarterlyFiling: React.FC = () => {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
            </button>
            <button onClick={handleExportCSV} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center" title="Export Excel / CSV">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
            </button>
            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
            <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
@@ -241,7 +249,7 @@ const QuarterlyFiling: React.FC = () => {
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
-                       {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                       {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
@@ -259,6 +267,7 @@ const QuarterlyFiling: React.FC = () => {
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
+                const r3bStatus = getStatusLabel(st.r3b);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 last:border-0 h-[44px]">
@@ -287,8 +296,14 @@ const QuarterlyFiling: React.FC = () => {
                     </td>
                     <td className=" px-4 py-[2px] text-center">
                        {isQuarterEnd ? (
-                         <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r3b ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-400'}`}>
-                            {st.r3b ? 'Filed' : 'Pending'}
+                         <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                            r3bStatus === 'Filed' 
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                              : r3bStatus === 'Challan' 
+                                ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                         }`} title="Click to cycle: Pending → Challan → Filed">
+                            {r3bStatus}
                             <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                          </button>
                        ) : <span className="text-[10px] font-black text-slate-300">N/A</span>}

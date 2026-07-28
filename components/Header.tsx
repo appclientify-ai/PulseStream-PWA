@@ -23,8 +23,16 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const [isThemeOpen, setIsThemeOpen] = useState(false);
 
   return (
-    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-30">
-      <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
+    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-40">
+      {/* Click outside backdrop for popovers */}
+      {(isThemeOpen || isProfileOpen) && (
+        <div 
+          className="fixed inset-0 z-[9990] bg-slate-900/10 backdrop-blur-[1px]" 
+          onClick={() => { setIsThemeOpen(false); setIsProfileOpen(false); }} 
+        />
+      )}
+
+      <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0 pr-2">
         <button 
           onClick={onMenuClick} 
           className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors border border-slate-100 shadow-sm"
@@ -35,13 +43,13 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </svg>
         </button>
         
-        <div className="h-6 md:h-8 w-[1px] bg-slate-200 hidden sm:block" />
+        <div className="h-6 md:h-8 w-[1px] bg-slate-200 hidden sm:block shrink-0" />
 
         <div className="min-w-0 flex-1">
-           <div className="flex items-center gap-2 overflow-hidden">
-             <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-none truncate shrink-0 uppercase">{activeViewLabel}</h2>
-             <span className="text-sm font-bold text-slate-300 shrink-0">|</span>
-             <span className="text-base md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
+           <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden min-w-0">
+             <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
+             <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
+             <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
            </div>
            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
@@ -49,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         </div>
       </div>
 
-      <div className="flex items-center gap-3 md:gap-6 shrink-0">
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
         {canInstall && (
           <button onClick={triggerInstall} className="sm:hidden flex items-center justify-center h-10 w-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-md shadow-indigo-600/20" title="Install App">
              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -78,8 +86,8 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
 
           {isThemeOpen && (
-            <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-slate-200 rounded-[2rem] shadow-2xl p-5 animate-in zoom-in-95 duration-200 origin-top-right z-[10000] text-slate-900">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 md:w-96 max-w-sm sm:max-w-md bg-white border border-slate-200 rounded-[2rem] shadow-2xl p-5 animate-in zoom-in-95 duration-200 origin-top-right z-[10000] text-slate-900 max-h-[85vh] overflow-y-auto no-scrollbar">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 sticky top-0 bg-white z-10">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🎨</span>
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Quick App Customizer</h4>
@@ -167,11 +175,11 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         <div className="relative">
           <button 
             onClick={() => { setIsProfileOpen(!isProfileOpen); setIsThemeOpen(false); }}
-            className="flex items-center gap-2 md:gap-4 group hover:bg-slate-50 p-1 rounded-2xl transition-all"
+            className="flex items-center gap-2 md:gap-3 group hover:bg-slate-50 p-1 rounded-2xl transition-all"
           >
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-black text-slate-900 leading-none">{currentUser?.username}</p>
-              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 truncate max-w-[120px]">{currentUser?.firm_name || 'Practitioner'}</p>
+            <div className="text-right hidden md:block max-w-[120px] lg:max-w-[160px]">
+              <p className="text-sm font-black text-slate-900 leading-none truncate">{currentUser?.username}</p>
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-1 truncate">{currentUser?.firm_name || 'Practitioner'}</p>
             </div>
             {currentUser?.avatar ? (
               <img src={currentUser.avatar} alt="DP" className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl object-cover shadow-lg ring-2 ring-slate-50" />
@@ -183,7 +191,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right z-[10000]">
+            <div className="absolute right-0 mt-3 w-60 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right z-[10000]">
                <div className="p-3 border-b border-slate-100 mb-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault Session ID</p>
                   <p className="text-xs font-black text-slate-900 truncate">{currentUser?.user_id}</p>

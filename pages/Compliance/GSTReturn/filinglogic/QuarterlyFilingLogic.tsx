@@ -1,11 +1,12 @@
 import { socketService } from '../../../../services/socket.ts';
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../../../../services/api';
+import { getStatusLabel } from './MonthlyFilingLogic';
 
 export interface FilingStatus {
   remark?: string;
   r1: boolean;
-  r3b: boolean;
+  r3b: boolean | 'Pending' | 'Challan' | 'Filed';
 }
 
 const STORAGE_KEY = 'clientify_quarterly_filing_v3';
@@ -42,14 +43,23 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
   const toggleStatus = useCallback((clientId: string, type: 'r1' | 'r3b') => {
     // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
     const periodData = allData[periodKey] || {};
-    const clientData = periodData[clientId] || { r1: false, r3b: false };
-    const newVal = !clientData[type];
+    const clientData = periodData[clientId] || { r1: false, r3b: 'Pending' };
+    
+    let newVal: boolean | string;
+    if (type === 'r3b') {
+      const currentLabel = getStatusLabel(clientData.r3b);
+      if (currentLabel === 'Pending') newVal = 'Challan';
+      else if (currentLabel === 'Challan') newVal = 'Filed';
+      else newVal = 'Pending';
+    } else {
+      newVal = !clientData.r1;
+    }
 
     // Optimistically update local state
     setAllData(prev => {
       const pData = { ...(prev[periodKey] || {}) };
-      const cData = { ...(pData[clientId] || { r1: false, r3b: false }) };
-      cData[type] = newVal;
+      const cData = { ...(pData[clientId] || { r1: false, r3b: 'Pending' }) };
+      (cData as any)[type] = newVal;
       pData[clientId] = cData;
       return { ...prev, [periodKey]: pData };
     });
@@ -58,14 +68,6 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
     api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
       .catch(err => {
         console.error('Failed to save quarterly filing data', err);
-        // Rollback on error
-        setAllData(prev => {
-          const pData = { ...(prev[periodKey] || {}) };
-          const cData = { ...(pData[clientId] || { r1: false, r3b: false }) };
-          cData[type] = !newVal;
-          pData[clientId] = cData;
-          return { ...prev, [periodKey]: pData };
-        });
       });
   }, [periodKey, allData]);
 

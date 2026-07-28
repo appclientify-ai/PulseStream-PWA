@@ -11,7 +11,7 @@ import { exportToCSV, printList } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
-import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod } from './filinglogic/MonthlyFilingLogic';
+import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
@@ -20,7 +20,7 @@ const CompositionFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
   const [isCmp08FilterOpen, setIsCmp08FilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.quarterYear);
   const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
@@ -91,14 +91,15 @@ const CompositionFiling: React.FC = () => {
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
     if (cmp08Filter !== 'All') {
-      list = list.filter(c => cmp08Filter === 'Filed' ? getStatus(c.id).cmp08 : !getStatus(c.id).cmp08);
+      list = list.filter(c => getStatusLabel(getStatus(c.id).cmp08) === cmp08Filter);
     }
     return list;
   }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, getStatus]);
 
   const stats = useMemo(() => {
-    const cmp08Count = filteredClients.filter(c => getStatus(c.id).cmp08).length;
-    return { total: filteredClients.length, cmp08: cmp08Count };
+    const cmp08Filed = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Filed').length;
+    const cmp08Challan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Challan').length;
+    return { total: filteredClients.length, cmp08: cmp08Filed, cmp08Challan };
   }, [filteredClients, getStatus]);
   
   const handleRefreshClients = useCallback(() => {
@@ -137,7 +138,7 @@ const CompositionFiling: React.FC = () => {
       client.tradeName,
       client.mobile,
       client.gstProfile?.gstin,
-      getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
+      getStatusLabel(getStatus(client.id).cmp08),
       client.gstProfile?.username,
       client.gstProfile?.password
     ]);
@@ -151,7 +152,7 @@ const CompositionFiling: React.FC = () => {
       client.tradeName,
       client.mobile,
       client.gstProfile?.gstin,
-      getStatus(client.id).cmp08 ? 'Filed' : 'Pending',
+      getStatusLabel(getStatus(client.id).cmp08),
       client.gstProfile?.username,
       client.gstProfile?.password
     ]);
@@ -167,7 +168,8 @@ const CompositionFiling: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Quarter Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Filed: <strong className="font-black text-indigo-900">{stats.cmp08}</strong></span>
+          <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Challan: <strong className="font-black text-amber-900">{stats.cmp08Challan}</strong></span>
+          <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Filed: <strong className="font-black text-emerald-900">{stats.cmp08}</strong></span>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
           {cmp08DueDate && <span>CMP-08 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(cmp08DueDate)}</strong></span>}
@@ -181,8 +183,12 @@ const CompositionFiling: React.FC = () => {
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
           <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">CMP-08 Filed {cmp08DueDate && `(Due: ${formatISOToDDMMYYYY(cmp08DueDate)})`}</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.cmp08}</p>
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">CMP-08 Challan</p>
+            <p className="text-xl font-black text-amber-600 leading-none">{stats.cmp08Challan}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">CMP-08 Filed {cmp08DueDate && `(Due: ${formatISOToDDMMYYYY(cmp08DueDate)})`}</p>
+            <p className="text-xl font-black text-emerald-600 leading-none">{stats.cmp08}</p>
           </div>
         </div>
         <div className="flex-1 relative group w-full">
@@ -214,7 +220,7 @@ const CompositionFiling: React.FC = () => {
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
                    <div className="flex justify-center flex-col items-center">
                      <TableFilter label="CMP-08" isActive={cmp08Filter !== 'All'}>
-                       {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                       {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                      </TableFilter>
                    </div>
                 </th>
@@ -232,6 +238,7 @@ const CompositionFiling: React.FC = () => {
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
+                const cmp08Status = getStatusLabel(st.cmp08);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
@@ -249,7 +256,18 @@ const CompositionFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className=" px-4 py-[2px] text-center"><button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border ${st.cmp08 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>{st.cmp08 ? 'Filed' : 'Pending'}</button></td>
+                    <td className=" px-4 py-[2px] text-center">
+                      <button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                        cmp08Status === 'Filed' 
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                          : cmp08Status === 'Challan' 
+                            ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                            : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                      }`} title="Click to cycle: Pending → Challan → Filed">
+                        {cmp08Status}
+                        <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
+                    </td>
                     <td className=" px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
                     <td className=" px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
                       <div className="flex items-center gap-2">

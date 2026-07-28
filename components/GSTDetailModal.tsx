@@ -38,7 +38,17 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
 
   const handleSearchTaxpayer = (gstin?: string) => {
     if (gstin) {
-      window.open(`https://services.gst.gov.in/services/searchtp?gstin=${gstin}`, '_blank');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(gstin).then(() => {
+          toast.success('GSTIN Copied!');
+          window.open('https://services.gst.gov.in/services/searchtp', '_blank');
+        }).catch(() => {
+          toast.success('GSTIN Copied!');
+          window.open('https://services.gst.gov.in/services/searchtp', '_blank');
+        });
+      } else {
+        window.open('https://services.gst.gov.in/services/searchtp', '_blank');
+      }
     }
   };
 
