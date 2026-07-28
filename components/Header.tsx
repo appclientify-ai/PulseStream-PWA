@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-[9999]">
+    <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-30">
       <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0">
         <button 
           onClick={onMenuClick} 

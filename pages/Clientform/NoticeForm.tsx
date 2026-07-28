@@ -198,7 +198,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
   const sectionSuggestions = SECTIONS_BY_CATEGORY[category] || SECTIONS_BY_CATEGORY['Notice'];
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200">
       <form 
         onSubmit={handleSubmit}
         className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FoodLicenseRecord, FoodLicenseType, FoodLicenseStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
+import { calculateRenewalDueDate } from '../../dateUtils.ts';
 
 interface FoodLicensesFormProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
     appDate: '',
     licenseNo: '',
     expiryDate: '',
+    dueDate: '',
     remarks: ''
   });
 
@@ -32,7 +34,8 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      const calcDue = initialData.dueDate || (initialData.expiryDate ? calculateRenewalDueDate(initialData.expiryDate) : '');
+      setFormData({ ...initialData, dueDate: calcDue });
     } else {
       setFormData({
         clientName: '',
@@ -42,10 +45,20 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
         appDate: new Date().toISOString().split('T')[0],
         licenseNo: '',
         expiryDate: '',
+        dueDate: '',
         remarks: ''
       });
     }
   }, [initialData, isOpen]);
+
+  const handleExpiryDateChange = (expDate: string) => {
+    const calcDue = calculateRenewalDueDate(expDate);
+    setFormData(prev => ({
+      ...prev,
+      expiryDate: expDate,
+      dueDate: calcDue
+    }));
+  };
 
   const suggestions = useMemo(() => {
     const query = formData.clientName?.toLowerCase() || '';
@@ -58,7 +71,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-hidden">
       <form 
         onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
         className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95 flex flex-col gap-1"
@@ -124,16 +137,25 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Applied Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase"
+              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase text-xs"
                 value={formData.appDate} onChange={e => setFormData({...formData, appDate: e.target.value})} />
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Expiry Date</label>
-              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase"
-                value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
+              <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none uppercase text-xs"
+                value={formData.expiryDate} onChange={e => handleExpiryDateChange(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-1.5 flex items-center justify-between ml-1">
+                <span>Renewal Due Date</span>
+              </label>
+              <input type="date" className="w-full bg-amber-50/60 border border-amber-200 rounded-xl p-3.5 font-bold outline-none uppercase text-amber-900 text-xs"
+                value={formData.dueDate || (formData.expiryDate ? calculateRenewalDueDate(formData.expiryDate) : '')} 
+                onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+              <p className="text-[8px] font-bold text-amber-600/80 mt-1 ml-1 lowercase">*Auto-set to 2 months before expiry</p>
             </div>
           </div>
 

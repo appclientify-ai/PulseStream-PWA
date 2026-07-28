@@ -403,7 +403,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       
       {/* Share Modal */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
             <h3 className="text-lg font-black text-slate-900 uppercase mb-4">Append Note</h3>
             <textarea
@@ -454,7 +454,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
       {/* Login Tool Box Modal */}
       {isLoginBoxOpen && loginToolClient && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-lg bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200">
               <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
                  <div className="min-w-0">

@@ -349,7 +349,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
       
       {/* Share Modal */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md">
             <h3 className="text-lg font-black text-slate-900 uppercase mb-4">Append Note</h3>
             <textarea

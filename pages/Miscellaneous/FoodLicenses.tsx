@@ -7,7 +7,7 @@ import FoodLicensesForm from '../Clientform/FoodLicensesForm';
 import Loader from '../../components/Loader';
 import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
-import { formatDate as formatDateUtil } from '../../dateUtils.ts';
+import { formatDate as formatDateUtil, calculateRenewalDueDate } from '../../dateUtils.ts';
 
 const FoodLicenses: React.FC = () => {
   const queryClient = useQueryClient();
@@ -63,7 +63,13 @@ const FoodLicenses: React.FC = () => {
 
   const filteredRecords = useMemo(() => {
     let list = records;
-    if (statusFilter !== 'All') {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (statusFilter === 'Renewal Due') {
+      list = list.filter(r => {
+        const due = r.dueDate || calculateRenewalDueDate(r.expiryDate);
+        return due && due <= todayStr && r.status !== 'Rejected';
+      });
+    } else if (statusFilter !== 'All') {
       list = list.filter(r => r.status === statusFilter);
     }
     const s = search.toLowerCase();
@@ -75,10 +81,15 @@ const FoodLicenses: React.FC = () => {
   }, [records, search, statusFilter]);
 
   const stats = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
     return {
       total: records.length,
       active: records.filter(r => r.status === 'Completed').length,
-      pending: records.filter(r => r.status !== 'Completed' && r.status !== 'Rejected').length
+      pending: records.filter(r => r.status !== 'Completed' && r.status !== 'Rejected').length,
+      renewalDue: records.filter(r => {
+        const due = r.dueDate || calculateRenewalDueDate(r.expiryDate);
+        return due && due <= todayStr && r.status !== 'Rejected';
+      }).length
     };
   }, [records]);
 
@@ -119,6 +130,10 @@ const FoodLicenses: React.FC = () => {
             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Licenses</p>
             <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
           </div>
+          <div className="text-center border-l border-slate-100 pl-6">
+            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Renewal Due</p>
+            <p className="text-xl font-black text-rose-600 leading-none">{stats.renewalDue}</p>
+          </div>
         </div>
 
         <div className="relative flex-1 w-full group">
@@ -148,68 +163,85 @@ const FoodLicenses: React.FC = () => {
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
-                       {['All', 'Pending', 'Applied', 'Completed', 'Rejected'].map(st => (
+                       {['All', 'Pending', 'Applied', 'Completed', 'Renewal Due', 'Rejected'].map(st => (
                          <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-emerald-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                        ))}
                     </TableFilter>
                   </div>
                 </th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Applied On</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-amber-600">Renewal Due Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Expiry Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</td></tr>
+                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</td></tr>
               ) : (
-                filteredRecords.map((rec, idx) => (
-                  <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[12px]">
-                    <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-6 py-5">
-                       <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                       <p className="text-[9px] font-bold text-slate-400 uppercase truncate mt-0.5">{rec.mobile || 'No Contact'}</p>
-                    </td>
-                    <td className=" px-6 py-5">
-                       <input 
-                         type="text" 
-                         value={rec.licenseNo || ''} 
-                         onChange={e => handleInlineUpdate(rec.id, 'licenseNo', e.target.value)}
-                         className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-black text-emerald-600 font-mono tracking-widest uppercase transition-all"
-                         placeholder="Awaiting Issue..."
-                       />
-                    </td>
-                    <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
-                    <td className=" px-6 py-5 text-center relative overflow-visible">
-                        <button 
-                          onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
-                          className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusStyle(rec.status)}`}
-                        >
-                          <span className="truncate">{rec.status}</span>
-                          <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                        </button>
-                        {activeStatusRowId === rec.id && (
-                          <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
-                             {['Pending', 'Applied', 'Completed', 'Rejected'].map(st => (
-                               <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as FoodLicenseStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-slate-600">{st}</button>
-                             ))}
-                          </div>
+                filteredRecords.map((rec, idx) => {
+                  const renewalDueDate = rec.dueDate || calculateRenewalDueDate(rec.expiryDate);
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const isRenewalDueNow = Boolean(renewalDueDate && renewalDueDate <= todayStr && rec.status !== 'Rejected');
+
+                  return (
+                    <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[12px]">
+                      <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-6 py-5">
+                         <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase truncate mt-0.5">{rec.mobile || 'No Contact'}</p>
+                      </td>
+                      <td className=" px-6 py-5">
+                         <input 
+                           type="text" 
+                           value={rec.licenseNo || ''} 
+                           onChange={e => handleInlineUpdate(rec.id, 'licenseNo', e.target.value)}
+                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-black text-emerald-600 font-mono tracking-widest uppercase transition-all"
+                           placeholder="Awaiting Issue..."
+                         />
+                      </td>
+                      <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
+                      <td className=" px-6 py-5 text-center relative overflow-visible">
+                          <button 
+                            onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
+                            className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusStyle(rec.status)}`}
+                          >
+                            <span className="truncate">{rec.status}</span>
+                            <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                          </button>
+                          {activeStatusRowId === rec.id && (
+                            <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
+                               {['Pending', 'Applied', 'Completed', 'Rejected'].map(st => (
+                                 <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as FoodLicenseStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-slate-600">{st}</button>
+                               ))}
+                            </div>
+                          )}
+                      </td>
+                      <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
+                      <td className=" px-6 py-5 font-black uppercase">
+                        <span className={isRenewalDueNow ? 'text-amber-600 font-black' : 'text-slate-700 font-semibold'}>
+                          {formatDate(renewalDueDate)}
+                        </span>
+                        {isRenewalDueNow && (
+                          <span className="block mt-0.5 text-[8px] font-black text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
+                            Renewal Due
+                          </span>
                         )}
-                    </td>
-                    <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
-                    <td className=" px-6 py-5 font-black text-rose-500 uppercase">{formatDate(rec.expiryDate)}</td>
-                    <td className="px-6 py-5 text-right ">
-                      <div className="flex items-center justify-end gap-2">
-                         <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                         </button>
-                         <button onClick={() => handleDelete(rec.id)} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className=" px-6 py-5 font-black text-rose-500 uppercase">{formatDate(rec.expiryDate)}</td>
+                      <td className="px-6 py-5 text-right ">
+                        <div className="flex items-center justify-end gap-2">
+                           <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                           </button>
+                           <button onClick={() => handleDelete(rec.id)} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                           </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

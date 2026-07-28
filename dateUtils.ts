@@ -76,3 +76,46 @@ export const formatISOToDDMMYYYY = (isoStr: string | null | undefined): string =
   return formatDate(str);
 };
 
+export const calculateRenewalDueDate = (expiryDateStr?: string, monthsPrior: number = 2): string => {
+  if (!expiryDateStr) return '';
+  const cleanStr = expiryDateStr.split('T')[0];
+  const parts = cleanStr.split(/[-/]/);
+  
+  let year = 0, month = 0, day = 0;
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      day = parseInt(parts[2], 10);
+    } else if (parts[2].length === 4) {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      year = parseInt(parts[2], 10);
+    }
+  }
+
+  if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
+    const d = new Date(expiryDateStr);
+    if (isNaN(d.getTime())) return '';
+    year = d.getFullYear();
+    month = d.getMonth() + 1;
+    day = d.getDate();
+  }
+
+  month -= monthsPrior;
+  while (month <= 0) {
+    month += 12;
+    year -= 1;
+  }
+
+  const maxDays = new Date(year, month, 0).getDate();
+  if (day > maxDays) {
+    day = maxDays;
+  }
+
+  const yyyy = year.toString().padStart(4, '0');
+  const mm = month.toString().padStart(2, '0');
+  const dd = day.toString().padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+

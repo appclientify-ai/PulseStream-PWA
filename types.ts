@@ -244,6 +244,7 @@ export interface FoodLicenseRecord {
   appDate: string;
   licenseNo: string;
   expiryDate?: string;
+  dueDate?: string;
   remarks?: string;
 }
 
