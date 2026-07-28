@@ -35,7 +35,10 @@ const PerformanceChartWidget: React.FC<Props> = ({ clients }) => {
       const periodKey = `${fyStr}_${monthName}`;
       
       const periodData = filingData[periodKey] || {};
-      const completed = applicableClients.filter(c => periodData[c.id]?.r3b).length;
+      const completed = applicableClients.filter(c => {
+        const val = periodData[c.id]?.r3b;
+        return val === true || val === 'Filed';
+      }).length;
       
       data.push({
         name: monthName.slice(0, 3) + ' ' + calYear.toString().slice(-2),

@@ -70,7 +70,12 @@ export function applyUiSettings(settings: Partial<UISettings>): UISettings {
 
   if (typeof document !== 'undefined') {
     // 1. Apply font size
-    document.documentElement.style.setProperty('--ui-font-size', `${finalSettings.fontSize}px`);
+    const fontSize = finalSettings.fontSize || 16;
+    document.documentElement.style.setProperty('--ui-font-size', `${fontSize}px`);
+    document.documentElement.style.setProperty('--ui-font-size-num', `${fontSize}`);
+    document.documentElement.style.setProperty('--ui-font-scale', `${fontSize / 16}`);
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    document.body.style.fontSize = `${fontSize}px`;
 
     // 2. Apply font style
     FONT_STYLES.forEach(s => {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="font-sans text-base">
+<html lang="en" class="font-sans">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -47,6 +47,7 @@
     <style>
       :root {
         --ui-font-size: 16px;
+        --ui-font-size-num: 16;
         --app-primary: #4f46e5;
         --app-primary-hover: #4338ca;
         --app-primary-light: #e0e7ff;
@@ -56,13 +57,28 @@
         --app-text: #0f172a;
         --app-card-bg: #ffffff;
       }
-      html { font-size: var(--ui-font-size); scroll-behavior: smooth; }
-      body {
+      html { font-size: var(--ui-font-size, 16px) !important; scroll-behavior: smooth; }
+      body, #root {
+        font-size: var(--ui-font-size, 16px) !important;
         background-color: var(--app-bg, #fcfdfe);
         color: var(--app-text, #0f172a);
         -webkit-tap-highlight-color: transparent;
         transition: background-color 0.2s ease, color 0.2s ease;
       }
+      .text-\[9px\] { font-size: calc(0.5625rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[10px\] { font-size: calc(0.625rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[11px\] { font-size: calc(0.6875rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[12px\] { font-size: calc(0.75rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[13px\] { font-size: calc(0.8125rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[14px\] { font-size: calc(0.875rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+      .text-\[15px\] { font-size: calc(0.9375rem * (var(--ui-font-size-num, 16) / 16)) !important; }
+
+      /* Client Trade Name Header Theme Color Styling */
+      th.trade-name-header, th.client-name-header, .client-header-theme {
+        color: var(--app-primary-text, #4f46e5) !important;
+        font-weight: 800 !important;
+      }
+
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       

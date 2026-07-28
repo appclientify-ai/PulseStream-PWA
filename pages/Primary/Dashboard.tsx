@@ -207,11 +207,13 @@ const Dashboard: React.FC = () => {
     let r3b = 0;
     let cmp08 = 0;
     
+    const isFiled = (val: any) => val === true || val === 'Filed';
+
     if (type === 'monthly') {
       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly' && isClientVisibleInPeriod(c, year, month));
       total = applicable.length;
-      r1 = applicable.filter(c => periodData[c.id]?.r1).length;
-      r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
+      r1 = applicable.filter(c => isFiled(periodData[c.id]?.r1)).length;
+      r3b = applicable.filter(c => isFiled(periodData[c.id]?.r3b)).length;
       filed = r3b;
     } else if (type === 'quarterly') {
       const checkQrmpVisibility = (c: Client) => {
@@ -231,32 +233,32 @@ const Dashboard: React.FC = () => {
       };
       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly' && checkQrmpVisibility(c));
       total = applicable.length;
-      r1 = applicable.filter(c => periodData[c.id]?.r1).length;
-      r3b = applicable.filter(c => periodData[c.id]?.r3b).length;
+      r1 = applicable.filter(c => isFiled(periodData[c.id]?.r1)).length;
+      r3b = applicable.filter(c => isFiled(periodData[c.id]?.r3b)).length;
       filed = r3b;
     } else if (type === 'composition') {
       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition' && isClientVisibleInPeriod(c, year, month));
       total = applicable.length;
-      cmp08 = applicable.filter(c => periodData[c.id]?.cmp08).length;
+      cmp08 = applicable.filter(c => isFiled(periodData[c.id]?.cmp08)).length;
       filed = cmp08;
     } else if (type === 'itr') {
       const applicable = (clients || []).filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing'));
       total = applicable.length;
-      filed = applicable.filter(c => periodData[c.id]?.filed).length;
+      filed = applicable.filter(c => isFiled(periodData[c.id]?.filed)).length;
     } else if (type === 'gstr4') {
        const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Composition' && (c.status === 'Active' || c.status === 'Active Filing'));
        total = applicable.length;
-       filed = applicable.filter(c => periodData[c.id]?.filed).length;
+       filed = applicable.filter(c => isFiled(periodData[c.id]?.filed)).length;
     } else if (type === 'gstr9') {
        const watchlistObj = filingDataCache['clientify_gstr9_watchlist_v2'] || {};
        const currentWatchlist: string[] = watchlistObj[periodKey] || [];
        const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id) && (c.status === 'Active' || c.status === 'Active Filing'));
        total = applicable.length;
-       filed = applicable.filter(c => periodData[c.id]?.gstr9).length;
+       filed = applicable.filter(c => isFiled(periodData[c.id]?.gstr9)).length;
     } else if (type === 'audit') {
        const applicable = (clients || []).filter(c => c && c.itProfile?.advisoryWork?.taxAudit);
        total = applicable.length;
-       filed = applicable.filter(c => periodData[c.id]?.auditFiled).length;
+       filed = applicable.filter(c => isFiled(periodData[c.id]?.auditFiled)).length;
     }
 
     return { total, filed, pending: Math.max(0, total - filed), r1, r3b, cmp08 };

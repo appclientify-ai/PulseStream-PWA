@@ -213,7 +213,7 @@ const CompositionFiling: React.FC = () => {
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[12px]">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 trade-name-header">Trade Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Legal Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Mobile No.</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">GSTIN</th>
