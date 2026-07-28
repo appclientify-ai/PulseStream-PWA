@@ -236,7 +236,7 @@ const QuarterlyFiling: React.FC = () => {
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest border-b border-slate-200 trade-name-header">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
