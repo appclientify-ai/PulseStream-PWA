@@ -1,47 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Rich Deep Indigo Circle Gradient -->
+    <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4f46e5" />
-      <stop offset="50%" stop-color="#4338ca" />
-      <stop offset="100%" stop-color="#312e81" />
+      <stop offset="50%" stop-color="#3730a3" />
+      <stop offset="100%" stop-color="#1e1b4b" />
     </linearGradient>
-    <linearGradient id="cGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#e0e7ff" />
-    </linearGradient>
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1e1b4b" flood-opacity="0.35" />
+
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.5" />
     </filter>
   </defs>
 
-  <!-- Background Card -->
-  <rect x="32" y="32" width="448" height="448" rx="100" fill="url(#bgGrad)" filter="url(#shadow)" />
+  <!-- Outer Styled Background Circle -->
+  <circle cx="256" cy="256" r="230" fill="url(#circleGradient)" filter="url(#softShadow)" />
 
-  <!-- Outer Vault Circle Accent -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="12" stroke-dasharray="24 12" />
+  <!-- Stylish Glowing Ring Accent -->
+  <circle cx="256" cy="256" r="212" fill="none" stroke="url(#borderGradient)" stroke-width="10" opacity="0.9" />
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.2" />
 
-  <!-- Stylized C Shield Vault Path -->
-  <path d="M 256 128 
-           C 180 128, 128 180, 128 256 
-           C 128 332, 180 384, 256 384 
-           C 316 384, 360 348, 376 296 
-           L 308 296 
-           C 298 320, 280 332, 256 332 
-           C 214 332, 180 298, 180 256 
-           C 180 214, 214 180, 256 180 
-           C 280 180, 298 192, 308 216 
-           L 376 216 
-           C 360 164, 316 128, 256 128 Z" 
-        fill="url(#cGrad)" />
+  <!-- Stylized Underline Arc inside Circle -->
+  <path d="M 116 296 Q 256 322 396 296" fill="none" stroke="#38bdf8" stroke-width="7" stroke-linecap="round" />
+  <circle cx="256" cy="309" r="4.5" fill="#38bdf8" />
 
-  <!-- Connected Intelligence Node Spark -->
-  <circle cx="360" cy="256" r="28" fill="url(#accentGrad)" />
-  <circle cx="360" cy="256" r="12" fill="#ffffff" />
-
-  <!-- Interconnecting Cyber Shield Line -->
-  <path d="M 320 256 L 332 256" stroke="url(#accentGrad)" stroke-width="8" stroke-linecap="round" />
+  <!-- Styled Bold 'Clientify' Text inside Circle -->
+  <text x="256" y="270" 
+        text-anchor="middle" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif" 
+        font-weight="900" 
+        font-size="68" 
+        letter-spacing="-1">
+    <tspan fill="#ffffff">Client</tspan><tspan fill="#38bdf8">ify</tspan>
+  </text>
 </svg>

@@ -1,6 +1,5 @@
 
 import React from 'react';
-import ClientifyLogo from '../components/Logo';
 
 interface HomeProps {
   onGetStarted: () => void;
@@ -25,8 +24,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">Enterprise Grade Compliance Vault</span>
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <ClientifyLogo size="2xl" showText={false} className="shrink-0" />
+        <div className="mb-8 flex flex-wrap items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700">
           <h1 className="text-6xl font-black tracking-tight text-slate-900 md:text-8xl lg:text-9xl leading-none">
             Client<span className="text-indigo-600">ify.</span>
           </h1>
@@ -139,8 +137,8 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       <footer className="mt-10 w-full border-t border-slate-100 bg-white py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-               <ClientifyLogo size="md" showText={true} />
+            <div className="flex items-center justify-center md:justify-start mb-4">
+               <span className="text-2xl font-black text-slate-900 tracking-tighter">Client<span className="text-indigo-600">ify</span></span>
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Vault for Legal Excellence</p>
           </div>

@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { ActiveView } from '../types';
-import ClientifyLogo from './Logo';
 
 export interface NavItem {
   id: ActiveView | string;
@@ -249,12 +248,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
            {!isCollapsed && (
              <div className="flex items-center gap-3 animate-in fade-in duration-500">
-               <ClientifyLogo size="md" showText={true} />
+               <span className="text-xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
              </div>
            )}
            {isCollapsed && (
              <div className="animate-in fade-in duration-300">
-               <ClientifyLogo size="md" showText={false} />
+               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 font-black text-indigo-600 text-lg border border-indigo-100 shadow-sm">C</span>
              </div>
            )}
         </div>

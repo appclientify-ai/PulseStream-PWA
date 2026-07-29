@@ -1,6 +1,5 @@
 
 import React from 'react';
-import ClientifyLogo from './Logo';
 
 interface NavbarProps {
   onLoginClick: () => void;
@@ -21,7 +20,6 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
     <nav className="fixed top-0 left-0 right-0 z-[100] w-full bg-white/70 px-6 md:px-12 py-6 backdrop-blur-2xl border-b border-slate-100">
       <div className="max-w-7xl mx-auto flex w-full items-center justify-between">
         <button onClick={onHomeClick} className="flex items-center gap-3.5 group text-left">
-          <ClientifyLogo size="md" showText={false} />
           <div className="text-left">
             <span className="text-2xl font-black text-slate-900 tracking-tighter block leading-none">Client<span className="text-indigo-600">ify</span></span>
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mt-1 block">Legal Tech Vault</span>
