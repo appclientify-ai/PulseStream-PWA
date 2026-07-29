@@ -24,7 +24,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [newPassVal, setNewPassVal] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [isPortalLoginModalOpen, setIsPortalLoginModalOpen] = useState(false);
+  const [activePortalType, setActivePortalType] = useState<'gst' | 'eway' | 'gstat' | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -98,8 +98,8 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
     }
   };
 
-  const handleLogin = () => {
-    setIsPortalLoginModalOpen(true);
+  const handleLogin = (type: 'gst' | 'eway' | 'gstat' = 'gst') => {
+    setActivePortalType(type);
   };
 
   const gstProf = currentClient.gstProfile;
@@ -174,17 +174,36 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
               {gstProf?.gstin && (
                 <button
                   onClick={() => handleSearchTaxpayer(gstProf.gstin)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all"
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all shrink-0"
                 >
                   <span>🔍 Verify on GST</span>
                 </button>
               )}
               {gstProf?.username && (
                 <button
-                  onClick={() => handleLogin(gstProf.username)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all"
+                  onClick={() => handleLogin('gst')}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
+                  title="Open GST Portal login"
                 >
                   <span>🔐 Portal Login</span>
+                </button>
+              )}
+              {gstProf?.ewayBillId && (
+                <button
+                  onClick={() => handleLogin('eway')}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
+                  title="Open E-Way Bill Portal login"
+                >
+                  <span>🚚 E-Way Login</span>
+                </button>
+              )}
+              {gstProf?.gstatId && (
+                <button
+                  onClick={() => handleLogin('gstat')}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
+                  title="Open GSTAT Portal login"
+                >
+                  <span>⚖️ GSTAT Login</span>
                 </button>
               )}
             </div>
@@ -601,10 +620,11 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
       </div>
 
       <GSTPortalLoginModal
-        isOpen={isPortalLoginModalOpen}
-        onClose={() => setIsPortalLoginModalOpen(false)}
+        isOpen={activePortalType !== null}
+        onClose={() => setActivePortalType(null)}
         client={currentClient}
         onDataChange={onDataChange}
+        initialType={activePortalType || 'gst'}
       />
     </div>
   );

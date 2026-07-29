@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MSMERegistrationRecord, MSMERegistrationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 
 interface MSMEFormProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface MSMEFormProps {
 }
 
 const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialData }) => {
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<MSMERegistrationRecord>>({
     clientName: '',
     mobile: '',
@@ -66,12 +68,38 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
              <h3 className="text-xl font-black text-white uppercase tracking-tight">MSME / Udyam Tracking</h3>
              <p className="text-xs font-semibold text-slate-400 mt-0.5">Udyam Registration & Application Progress</p>
            </div>
-           <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
-           </button>
+           <div className="flex items-center gap-2">
+             <button
+               type="button"
+               onClick={() => setIsGuidelinesOpen(true)}
+               className="px-3 py-1.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-400/30 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+               title="View Complete MSME/Udyam statutory guidelines"
+             >
+               <span>⚖️</span>
+               <span className="hidden sm:inline">MSME Guide</span>
+             </button>
+             <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
+             </button>
+           </div>
         </div>
 
         <div className="p-6 sm:p-8 space-y-5 flex-1 overflow-y-auto">
+          
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+            <span className="text-xl">🏢</span>
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center justify-between flex-wrap gap-1">
+                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">MSME / Udyam Statutory Guidelines</h4>
+                <span className="text-[10px] font-black text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 uppercase">
+                  Sec 15/16 Delayed Payment Protection
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                Udyam classification criteria requires Micro (&le;1Cr inv, &le;5Cr turn), Small (&le;10Cr inv, &le;50Cr turn), or Medium (&le;50Cr inv, &le;250Cr turn). <strong>Section 15 & 16 of the MSMED Act</strong> mandates buyers pay within <strong>45 days</strong> (with written contract) or <strong>15 days</strong> (without contract), failing which compound interest at <strong>3x Bank Rate</strong> applies, which is strictly non-tax-deductible.
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Name</label>
@@ -133,6 +161,9 @@ const MSMEForm: React.FC<MSMEFormProps> = ({ isOpen, onClose, onSave, initialDat
           <button type="submit" className="flex-1 px-8 py-3.5 bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg hover:bg-slate-900 transition-all active:scale-[0.98]">Commit MSME Entry</button>
         </div>
       </form>
+      {isGuidelinesOpen && (
+        <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory="Msme" />
+      )}
     </div>
   );
 };

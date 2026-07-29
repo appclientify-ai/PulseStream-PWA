@@ -32,6 +32,8 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   const [activeTabStep, setActiveTabStep] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showEwayPass, setShowEwayPass] = useState(false);
+  const [showGstatPass, setShowGstatPass] = useState(false);
   const [isDataLinked, setIsDataLinked] = useState(false);
 
   const { data: existingClientsData } = useQuery({
@@ -693,13 +695,22 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                       onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, ewayBillId: e.target.value}})} 
                       placeholder="E-Way Bill User ID" 
                     />
-                    <input 
-                      type="password" 
-                      className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold w-full outline-none" 
-                      value={formData.gstProfile?.ewayBillPass || ''} 
-                      onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, ewayBillPass: e.target.value}})} 
-                      placeholder="E-Way Bill Password" 
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showEwayPass ? "text" : "password"} 
+                        className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold w-full outline-none pr-10" 
+                        value={formData.gstProfile?.ewayBillPass || ''} 
+                        onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, ewayBillPass: e.target.value}})} 
+                        placeholder="E-Way Bill Password" 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowEwayPass(!showEwayPass)} 
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 text-xs"
+                      >
+                        {showEwayPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -714,13 +725,22 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                       onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstatId: e.target.value}})} 
                       placeholder="GSTAT User ID" 
                     />
-                    <input 
-                      type="password" 
-                      className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold w-full outline-none" 
-                      value={formData.gstProfile?.gstatPass || ''} 
-                      onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstatPass: e.target.value}})} 
-                      placeholder="GSTAT Password" 
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showGstatPass ? "text" : "password"} 
+                        className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold w-full outline-none pr-10" 
+                        value={formData.gstProfile?.gstatPass || ''} 
+                        onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, gstatPass: e.target.value}})} 
+                        placeholder="GSTAT Password" 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowGstatPass(!showGstatPass)} 
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 text-xs"
+                      >
+                        {showGstatPass ? '🙈' : '👁️'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

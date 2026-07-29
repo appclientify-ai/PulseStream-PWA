@@ -644,15 +644,21 @@ export const LitigationGuidelinesModal: React.FC<LitigationGuidelinesModalProps>
                     </div>
                   )}
 
-                  {matchesSearch("Renewal 30 days before late fee ₹100 per day expiry") && (
+                  {matchesSearch("Renewal 30 days before late fee ₹100 per day expiry post-expiry renewal FoSCoS 180 days") && (
                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3 lg:col-span-3">
                       <h5 className="text-xs font-black uppercase text-rose-700 tracking-wider">
-                        4. Crucial Timelines & Renewal Rules
+                        4. Crucial Timelines & Renewal Rules (LATEST UPDATES)
                       </h5>
                       <div className="bg-slate-50 p-3.5 rounded-xl space-y-2 text-xs text-slate-700 font-bold border border-slate-100">
-                        <p>• <strong>Approval Timeline:</strong> Registration is issued in 7 to 30 days. Licenses are approved or queried within 60 working days of submission.</p>
-                        <p>• <strong>Renewal Rule:</strong> Applications for renewal must be filed at least <strong>30 days prior</strong> to the license expiry date.</p>
-                        <p>• <strong>Late Fee:</strong> Delayed filing after the 30-day window but before expiry triggers a penalty of <strong>₹100 per day</strong>. After the expiry date, the license is cancelled and requires a completely new registration application.</p>
+                        <p>• <strong>Instant Renewal Scheme:</strong> FSSAI has introduced <strong>Instant Renewal of Licenses & Registrations</strong> on the FoSCoS portal without mandatory physical inspection, provided no change is made in the food category or parameters.</p>
+                        <p>• <strong>Renewal Timeline:</strong> Renewal applications can be filed starting <strong>120 days before</strong> the license expiry. The ideal statutory window is at least <strong>30 days prior</strong> to expiry.</p>
+                        <p>• <strong>Late Fee (Before Expiry):</strong> Filing inside the final 30 days before the expiry date triggers a late fee of <strong>₹100 per day</strong>.</p>
+                        <p>• <strong>Post-Expiry Renewal Window (NEW RULE):</strong> Food Businesses are now permitted to renew their licenses/registrations <strong>even after the expiry date up to 180 days (6 months)</strong> on FoSCoS with a tiered penalty:</p>
+                        <div className="pl-4 border-l-2 border-rose-200 space-y-1 text-[11px] text-slate-600 mt-1">
+                          <p>• <strong>Days 1 to 90 after Expiry:</strong> Penalty of <strong>1 time</strong> the annual license/registration fee (plus regular renewal fee).</p>
+                          <p>• <strong>Days 91 to 180 after Expiry:</strong> Penalty of <strong>2 times</strong> the annual license/registration fee (plus regular renewal fee).</p>
+                          <p>• <strong>After 180 Days:</strong> The license is permanently terminated and a new fresh application must be submitted.</p>
+                        </div>
                       </div>
                     </div>
                   )}

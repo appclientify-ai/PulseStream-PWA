@@ -76,102 +76,34 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
         </div>
 
-        {/* Responsive Guideline Buttons depending on current activeView */}
-        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-          {/* 1. Litigation Guide (Dashboard or Litigation pages) */}
-          {(activeView === 'dashboard' || activeView.startsWith('lit-')) && (
-            <button
-              onClick={() => { onOpenGuidelines('Notice'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="Litigation Guidelines"
-            >
-              <span className="text-base md:text-lg">⚖️</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">Litigation Guide</span>
-            </button>
-          )}
-
-          {/* 2. GST Sections & Rules (Dashboard, Litigation, GST Portfolio, GST Returns, GST Reg) */}
-          {(activeView === 'dashboard' || 
-            activeView.startsWith('lit-') || 
-            activeView === 'gst-portfolio' || 
-            activeView.startsWith('compliance-monthly') || 
-            activeView.startsWith('compliance-quarterly') || 
-            activeView.startsWith('compliance-composition') || 
-            activeView.startsWith('compliance-gstr4') || 
-            activeView.startsWith('compliance-gstr9') ||
-            activeView === 'misc-gst-reg') && (
-            <button
-              onClick={() => { onOpenGuidelines('GstRules'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="GST Sections & Rules Reference"
-            >
-              <span className="text-base md:text-lg">📖</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">GST Rules & Sec</span>
-            </button>
-          )}
-
-          {/* 3. Income Tax Sections & Rules (IT Portfolio, ITR, TAX Audit/Balance Sheet) */}
-          {(activeView === 'it-portfolio' || 
-            activeView === 'compliance-itr' || 
-            activeView === 'compliance-taxaudit') && (
-            <button
-              onClick={() => { onOpenGuidelines('ItRules'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="Income Tax Rules & Sections Reference"
-            >
-              <span className="text-base md:text-lg">💼</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">IT Rules & Sec</span>
-            </button>
-          )}
-
-          {/* 4. GST Registration Guide */}
-          {activeView === 'misc-gst-reg' && (
-            <button
-              onClick={() => { onOpenGuidelines('GstReg'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="GST Registration Guide"
-            >
-              <span className="text-base md:text-lg">🆔</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">GST Reg Guide</span>
-            </button>
-          )}
-
-          {/* 5. Food License Guide */}
-          {activeView === 'misc-food-lic' && (
-            <button
-              onClick={() => { onOpenGuidelines('FoodLicense'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="FSSAI Food License Guide"
-            >
-              <span className="text-base md:text-lg">🍎</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">FSSAI Guide</span>
-            </button>
-          )}
-
-          {/* 6. MSME Guide */}
-          {activeView === 'misc-msme' && (
-            <button
-              onClick={() => { onOpenGuidelines('Msme'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="MSME / Udyam Guide"
-            >
-              <span className="text-base md:text-lg">🏢</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">MSME Guide</span>
-            </button>
-          )}
-
-          {/* 7. Work Log Manual */}
-          {activeView === 'misc-work' && (
-            <button
-              onClick={() => { onOpenGuidelines('WorkLog'); setIsThemeOpen(false); setIsProfileOpen(false); }}
-              className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95"
-              title="Work Log Office Manual"
-            >
-              <span className="text-base md:text-lg">📋</span>
-              <span className="hidden md:inline font-extrabold text-[11px]">Work SOPs</span>
-            </button>
-          )}
-        </div>
+        {/* Unified Guideline Button (All Pages, All Guides) */}
+        <button
+          onClick={() => {
+            const getCategoryForView = (view: string): string => {
+              if (view === 'dashboard' || view.startsWith('lit-')) return 'Notice';
+              if (view === 'gst-portfolio' || 
+                  view.startsWith('compliance-monthly') || 
+                  view.startsWith('compliance-quarterly') || 
+                  view.startsWith('compliance-composition') || 
+                  view.startsWith('compliance-gstr4') || 
+                  view.startsWith('compliance-gstr9')) return 'GstRules';
+              if (view === 'misc-gst-reg') return 'GstReg';
+              if (view === 'it-portfolio' || view === 'compliance-itr' || view === 'compliance-taxaudit') return 'ItRules';
+              if (view === 'misc-food-lic') return 'FoodLicense';
+              if (view === 'misc-msme') return 'Msme';
+              if (view === 'misc-work') return 'WorkLog';
+              return 'Notice';
+            };
+            onOpenGuidelines(getCategoryForView(activeView));
+            setIsThemeOpen(false);
+            setIsProfileOpen(false);
+          }}
+          className="flex h-10 md:h-12 items-center gap-1.5 md:gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-2.5 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95 shrink-0"
+          title="Open Compliance & Statutory Guidelines Manual"
+        >
+          <span className="text-base md:text-lg">⚖️</span>
+          <span className="hidden md:inline font-extrabold text-[11px]">Statutory Guide</span>
+        </button>
 
         {/* Quick UI Theme Customizer Popover */}
         <div className="relative">

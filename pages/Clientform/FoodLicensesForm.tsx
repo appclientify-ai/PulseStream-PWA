@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FoodLicenseRecord, FoodLicenseType, FoodLicenseStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
 import { calculateRenewalDueDate } from '../../dateUtils.ts';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 
 interface FoodLicensesFormProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface FoodLicensesFormProps {
 }
 
 const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, onSave, initialData }) => {
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FoodLicenseRecord>>({
     clientName: '',
     mobile: '',
@@ -81,12 +83,38 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
              <h3 className="text-xl font-black text-white uppercase tracking-tight">FSSAI License Entry</h3>
              <p className="text-xs font-semibold text-slate-400 mt-0.5">Food Safety License Application & Renewal Tracking</p>
            </div>
-           <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
-           </button>
+           <div className="flex items-center gap-2">
+             <button
+               type="button"
+               onClick={() => setIsGuidelinesOpen(true)}
+               className="px-3 py-1.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-400/30 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+               title="View Complete FSSAI Statutory Guidelines"
+             >
+               <span>⚖️</span>
+               <span className="hidden sm:inline">FSSAI Guide</span>
+             </button>
+             <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
+             </button>
+           </div>
         </div>
 
         <div className="p-6 sm:p-8 space-y-5 flex-1 overflow-y-auto">
+          
+          <div className="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+            <span className="text-xl">🍎</span>
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center justify-between flex-wrap gap-1">
+                <h4 className="text-xs font-black text-rose-950 uppercase tracking-wide">FSSAI / Food License Latest Guidelines</h4>
+                <span className="text-[10px] font-black text-rose-800 bg-rose-100 px-2 py-0.5 rounded border border-rose-200 uppercase">
+                  New: Post-Expiry Renewal (180 Days)
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                Turnovers determine category: <strong>Basic</strong> (&lt;₹12L, ₹100/yr), <strong>State</strong> (₹12L-₹20Cr, ₹2k-₹5k/yr), or <strong>Central</strong> (&gt;₹20Cr, ₹7.5k/yr). Under new FSSAI rules, renewals can be processed <strong>instantly (no inspection)</strong> if parameters are unchanged. Furthermore, expired licenses can now be renewed <strong>up to 180 days after expiry</strong> with a tiered penalty (1x fee for 1-90 days, 2x fee for 91-180 days).
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Name</label>
@@ -174,6 +202,9 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
           <button type="submit" className="flex-1 px-8 py-3.5 bg-indigo-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg hover:bg-slate-900 transition-all active:scale-[0.98]">Save FSSAI Record</button>
         </div>
       </form>
+      {isGuidelinesOpen && (
+        <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory="FoodLicense" />
+      )}
     </div>
   );
 };

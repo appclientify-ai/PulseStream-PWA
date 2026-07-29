@@ -66,6 +66,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [showLoginPass, setShowLoginPass] = useState(false);
   const [isEditingLoginPass, setIsEditingLoginPass] = useState(false);
   const [tempPass, setTempPass] = useState('');
+  const [loginPortalType, setLoginPortalType] = useState<'gst' | 'eway' | 'gstat'>('gst');
 
   // Actions Menu State (Fixed Positioning)
   const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
@@ -366,10 +367,20 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Global Operations</p>
              <p className="text-[10px] font-black text-slate-900 truncate mt-0.5">{selectedClient.tradeName || selectedClient.legalName}</p>
           </div>
-          <button onClick={() => { setLoginToolClient(selectedClient!); setTempPass(selectedClient!.gstProfile?.password || ''); setIsLoginBoxOpen(true); setActiveActionsId(null); }} 
+          <button onClick={() => { setLoginToolClient(selectedClient!); setLoginPortalType('gst'); setIsLoginBoxOpen(true); setActiveActionsId(null); }} 
               className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 rounded-xl transition-colors text-left group">
-              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Login Portal</span>
+              <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white shadow-sm">🔐</div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">GST Portal Login</span>
+          </button>
+          <button onClick={() => { setLoginToolClient(selectedClient!); setLoginPortalType('eway'); setIsLoginBoxOpen(true); setActiveActionsId(null); }} 
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group border-t border-slate-50">
+              <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm">🚚</div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">E-Way Bill Login</span>
+          </button>
+          <button onClick={() => { setLoginToolClient(selectedClient!); setLoginPortalType('gstat'); setIsLoginBoxOpen(true); setActiveActionsId(null); }} 
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-amber-50 rounded-xl transition-colors text-left group border-t border-slate-50">
+              <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-white shadow-sm">⚖️</div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">GSTAT Portal Login</span>
           </button>
           <button onClick={() => { 
               const creds = `*GST Credentials*\n*Entity:* ${selectedClient!.tradeName}\n*GSTIN:* ${selectedClient!.gstProfile?.gstin}\n*User ID:* ${selectedClient!.gstProfile?.username}\n*Password:* ${selectedClient!.gstProfile?.password}`;
@@ -459,6 +470,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
         onClose={() => setIsLoginBoxOpen(false)}
         client={loginToolClient}
         onDataChange={onDataChange}
+        initialType={loginPortalType}
       />
 
     </div>

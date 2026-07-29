@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { GSTRegistrationRecord, GSTRegistrationType, GSTRegistrationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 
 interface GSTRegistrationFormProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface GSTRegistrationFormProps {
 }
 
 const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClose, onSave, initialData }) => {
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<GSTRegistrationRecord>>({
     clientName: '',
     mobile: '',
@@ -70,12 +72,38 @@ const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClo
              </h3>
              <p className="text-xs font-semibold text-slate-400 mt-0.5">Registration, Amendment & Cancellation Tracking</p>
            </div>
-           <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
-           </button>
+           <div className="flex items-center gap-2">
+             <button
+               type="button"
+               onClick={() => setIsGuidelinesOpen(true)}
+               className="px-3 py-1.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-400/30 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+               title="View Complete GST Registration Guidelines"
+             >
+               <span>⚖️</span>
+               <span className="hidden sm:inline">GST Reg Guide</span>
+             </button>
+             <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg>
+             </button>
+           </div>
         </div>
 
         <div className="p-6 sm:p-8 space-y-5 flex-1 overflow-y-auto">
+          
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+            <span className="text-xl">🆔</span>
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center justify-between flex-wrap gap-1">
+                <h4 className="text-xs font-black text-purple-900 uppercase tracking-wide">GST Registration Guidelines</h4>
+                <span className="text-[10px] font-black text-purple-800 bg-purple-100 px-2 py-0.5 rounded border border-purple-200 uppercase">
+                  Threshold: 40L Goods • 20L Services
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                Applications u/s 22/24 are submitted in <strong>Form REG-01</strong>. Normal approval window is <strong>7 working days</strong> if Aadhaar-authenticated; otherwise, physical site verification or a <strong>REG-03 SCN</strong> is triggered. Discrepancy replies in <strong>REG-04</strong> must be filed within <strong>7 working days</strong>.
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Name</label>
@@ -152,6 +180,9 @@ const GSTRegistrationForm: React.FC<GSTRegistrationFormProps> = ({ isOpen, onClo
           </button>
         </div>
       </form>
+      {isGuidelinesOpen && (
+        <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory="GstReg" />
+      )}
     </div>
   );
 };
