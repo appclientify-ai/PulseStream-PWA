@@ -5,7 +5,6 @@ import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import { useTheme } from '../hooks/useTheme';
 import { THEME_COLORS, FONT_SIZES, FONT_STYLES, THEME_MODES } from '../services/theme';
-import ClientifyLogo from './Logo';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -50,10 +49,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden min-w-0">
              <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
              <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
-             <div className="flex items-center gap-1.5 shrink-0">
-               <ClientifyLogo size="xs" showText={false} />
-               <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
-             </div>
+             <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
            </div>
            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
