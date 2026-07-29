@@ -7,6 +7,7 @@ import ITClientFormModal from '../Clientform/ITClientFormModal';
 import ITViewIcon from '../../components/ITViewIcon';
 import GSTViewIcon from '../../components/GSTViewIcon';
 import { toast } from 'sonner';
+import { TableFilter } from '../../components/TableFilter';
 
 interface ItMasterPortfolioProps {
   externalSearch?: string;
@@ -39,6 +40,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [itrFilter, setItrFilter] = useState<'All' | 'ITR-1' | 'ITR-2' | 'ITR-3' | 'ITR-4' | 'N/A'>('All');
   const [activeFilterMenu, setActiveFilterMenu] = useState<'status' | null>(null);
   const [filterMenuPos, setFilterMenuPos] = useState({ top: 0, left: 0 });
   const filterMenuRef = useRef<HTMLDivElement>(null);
@@ -143,6 +145,12 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     if (statusFilter !== 'All') {
       list = list.filter(c => c?.status === statusFilter);
     }
+    if (itrFilter !== 'All') {
+      list = list.filter(c => {
+        const itr = c?.itProfile?.itrFiled || 'N/A';
+        return itr === itrFilter;
+      });
+    }
     const s = (externalSearch || '').toLowerCase();
     const result = list.filter(c => {
       if (!c) return false;
@@ -153,7 +161,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
       String(c.mobile || '').toLowerCase().includes(s);
     });
     return [...result].sort((a, b) => (a.legalName || '').localeCompare(b.legalName || ''));
-  }, [clients, externalSearch, statusFilter]);
+  }, [clients, externalSearch, statusFilter, itrFilter]);
 
   const togglePassword = (id: string) => {
     setVisiblePasswords(prev => {
@@ -221,6 +229,13 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
             <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
               <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
               <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Name</th>
+              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
+                <TableFilter label="ITR" isActive={itrFilter !== 'All'}>
+                  {['All', 'ITR-1', 'ITR-2', 'ITR-3', 'ITR-4', 'N/A'].map(f => (
+                    <button key={f} onClick={() => setItrFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${itrFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>
+                  ))}
+                </TableFilter>
+              </th>
               <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Father Name</th>
               <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
               <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Pan No.</th>
@@ -257,6 +272,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                           Trade: {client.tradeName}
                         </p>
                      )}
+                  </td>
+                  <td className=" px-[5.5px] py-[2px]">
+                     <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-[10px] tracking-wide">
+                        {client.itProfile?.itrFiled || 'N/A'}
+                     </span>
                   </td>
                   <td className=" px-[5.5px] py-[2px]">
                      <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>

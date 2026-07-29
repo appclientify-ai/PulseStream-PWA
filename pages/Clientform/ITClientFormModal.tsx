@@ -67,6 +67,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       natureOfWork: 'Salaried',
       employmentType: 'Private',
       businessName: '',
+      itrFiled: 'ITR-1',
     },
     bankDetails: { bankName: '', accountNo: '', ifsc: '' },
     remarks: ''
@@ -95,7 +96,7 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
       itProfile: {
         pan: '', username: '', password: '', category: 'Individual',
         fatherName: '', dob: '', natureOfWork: 'Salaried',
-        employmentType: 'Private', businessName: '',
+        employmentType: 'Private', businessName: '', itrFiled: 'ITR-1',
       },
       bankDetails: { bankName: '', accountNo: '', ifsc: '' },
       remarks: ''
@@ -412,6 +413,21 @@ const ITClientFormModal: React.FC<ITClientFormModalProps> = ({ isOpen, onClose, 
                       onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, businessName: e.target.value}})} 
                       placeholder="Business Name" 
                     />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">ITR Form Filed *</label>
+                    <select 
+                      className="w-full bg-white border border-slate-200 p-3 rounded-xl font-bold text-xs outline-none focus:border-indigo-600" 
+                      value={formData.itProfile?.itrFiled || 'ITR-1'} 
+                      onChange={e => setFormData({...formData, itProfile: {...formData.itProfile!, itrFiled: e.target.value as any}})}
+                    >
+                      <option value="ITR-1">ITR-1 (Sahaj)</option>
+                      <option value="ITR-2">ITR-2</option>
+                      <option value="ITR-3">ITR-3</option>
+                      <option value="ITR-4">ITR-4 (Sugam)</option>
+                      <option value="N/A">Not Applicable</option>
+                    </select>
                   </div>
                 </div>
               </div>

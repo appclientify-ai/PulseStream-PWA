@@ -351,6 +351,14 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, 
                     <p className="text-[10px] font-black uppercase text-slate-400">Assessee Category</p>
                     <p className="font-bold text-slate-900 text-sm mt-0.5">{itProf?.category || 'Individual'}</p>
                   </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-slate-400">ITR Form Filed</p>
+                    <p className="mt-0.5">
+                      <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-xs tracking-wide">
+                        {itProf?.itrFiled || 'N/A'}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               </div>
 

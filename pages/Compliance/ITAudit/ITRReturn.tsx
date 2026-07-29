@@ -44,6 +44,7 @@ const ITRReturn: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [refundStatusFilter, setRefundStatusFilter] = useState<'All' | 'Pending' | 'Received' | 'No Refund'>('All');
   const [isRefundFilterOpen, setIsRefundFilterOpen] = useState(false);
+  const [itrFilter, setItrFilter] = useState<'All' | 'ITR-1' | 'ITR-2' | 'ITR-3' | 'ITR-4' | 'N/A'>('All');
 
   // Modals & Tools
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -135,16 +136,24 @@ const ITRReturn: React.FC = () => {
       });
     }
 
+    if (itrFilter !== 'All') {
+      list = list.filter(c => {
+        const itr = c.itProfile?.itrFiled || 'N/A';
+        return itr === itrFilter;
+      });
+    }
+
     return [...list].sort((a, b) => (a.legalName || '').localeCompare(b.legalName || ''));
-  }, [clients, search, statusFilter, refundStatusFilter, getStatus]);
+  }, [clients, search, statusFilter, refundStatusFilter, itrFilter, getStatus]);
 
   const handleExportCSV = () => {
-    const headers = ["ID", "Name", "Father Name", "Status", "Filing Date", "Refund Status", "PAN", "Password"].join(",");
+    const headers = ["ID", "Name", "ITR", "Father Name", "Status", "Filing Date", "Refund Status", "PAN", "Password"].join(",");
     const rows = filteredClients.map(c => {
       const s = getStatus(c.id);
       return [
         getClientDisplayId(c),
         c.legalName,
+        c.itProfile?.itrFiled || 'N/A',
         c.itProfile?.fatherName || '---',
         s.filed ? 'Filed' : (s.prepared ? 'Prepared' : 'Pending'),
         s.date || '---',
@@ -157,12 +166,13 @@ const ITRReturn: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    const headers = ["ID", "Name", "Father Name", "Status", "Filing Date", "Refund Status", "PAN"];
+    const headers = ["ID", "Name", "ITR", "Father Name", "Status", "Filing Date", "Refund Status", "PAN"];
     const rows = filteredClients.map(c => {
       const s = getStatus(c.id);
       return [
         getClientDisplayId(c),
         c.legalName,
+        c.itProfile?.itrFiled || 'N/A',
         c.itProfile?.fatherName || '---',
         s.filed ? 'Filed' : (s.prepared ? 'Prepared' : 'Pending'),
         s.date || '---',
@@ -265,6 +275,13 @@ const ITRReturn: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm text-[12px] font-bold uppercase tracking-widest text-slate-900">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">
+                  <TableFilter label="ITR" isActive={itrFilter !== 'All'}>
+                    {['All', 'ITR-1', 'ITR-2', 'ITR-3', 'ITR-4', 'N/A'].map(f => (
+                      <button key={f} onClick={() => setItrFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${itrFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>
+                    ))}
+                  </TableFilter>
+                </th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-center">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Status" isActive={statusFilter !== 'All'}>
@@ -306,6 +323,11 @@ const ITRReturn: React.FC = () => {
                        <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.itProfile?.fatherName || '---'}>
                          {client.itProfile?.fatherName ? `Father: ${client.itProfile.fatherName}` : '---'}
                        </div>
+                    </td>
+                    <td className=" px-4 py-[2px]">
+                       <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-[10px] tracking-wide">
+                          {client.itProfile?.itrFiled || 'N/A'}
+                       </span>
                     </td>
                     <td className=" px-4 py-[2px] text-center">
                        <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : (status.prepared ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-400 border-slate-200')}`}>{status.filed ? 'Filed' : (status.prepared ? 'Prepared' : 'Pending')}</button>

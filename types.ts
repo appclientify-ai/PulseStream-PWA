@@ -87,6 +87,7 @@ export interface ITProfile {
   natureOfWork?: NatureOfWork;
   employmentType?: string;
   businessName?: string;
+  itrFiled?: 'ITR-1' | 'ITR-2' | 'ITR-3' | 'ITR-4' | 'N/A';
   advisoryWork?: {
     itrFiling: boolean;
     taxAudit: boolean;
