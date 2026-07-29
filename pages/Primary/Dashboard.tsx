@@ -19,6 +19,7 @@ import InstallBanner from '../../components/InstallBanner.tsx';
 import CommandPalette from '../../components/CommandPalette.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import ITClientFormModal from '../Clientform/ITClientFormModal.tsx';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 import { YEARS, FY_MONTHS, FY_QUARTERS, getDefaultPeriod, isClientVisibleInPeriod, periodToDate } from '../Compliance/GSTReturn/filinglogic/MonthlyFilingLogic';
 import { formatDate } from '../../dateUtils.ts';
 
@@ -102,6 +103,8 @@ const Dashboard: React.FC = () => {
   // Form Modals
   const [isGstModalOpen, setIsGstModalOpen] = useState(false);
   const [isItModalOpen, setIsItModalOpen] = useState(false);
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
+  const [guidelinesCategory, setGuidelinesCategory] = useState<string>('Notice');
 
   // Period Filters for Dashboard Boxes
   const def = getDefaultPeriod();
@@ -915,6 +918,11 @@ const Dashboard: React.FC = () => {
           activeViewLabel={headerInfo.label} 
           activeViewDescription={headerInfo.desc}
           onViewChange={handleViewChange}
+          activeView={activeView}
+          onOpenGuidelines={(cat) => {
+            setGuidelinesCategory(cat);
+            setIsGuidelinesOpen(true);
+          }}
         />
         <div className="flex-1 flex flex-col min-h-0 pt-4 md:pt-8 pb-20 md:pb-12 px-3 sm:px-6 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
@@ -933,6 +941,7 @@ const Dashboard: React.FC = () => {
       
       <GSTClientFormModal isOpen={isGstModalOpen} onClose={() => setIsGstModalOpen(false)} onSave={() => queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] })} />
       <ITClientFormModal isOpen={isItModalOpen} onClose={() => setIsItModalOpen(false)} onSave={() => queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] })} />
+      <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory={guidelinesCategory} />
     </div>
   );
 };
