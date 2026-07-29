@@ -4,6 +4,7 @@ import { formatDate } from '../exportUtils';
 import { toast } from 'sonner';
 import { api } from '../services/api';
 import { useQueryClient } from '@tanstack/react-query';
+import GSTPortalLoginModal from './GSTPortalLoginModal';
 
 interface GSTDetailModalProps {
   isOpen: boolean;
@@ -15,14 +16,15 @@ interface GSTDetailModalProps {
 
 const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client, onEdit, onDataChange }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'registration' | 'stakeholders' | 'portals_bank'>('overview');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showEwayPass, setShowEwayPass] = useState(false);
-  const [showGstatPass, setShowGstatPass] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
+  const [showEwayPass, setShowEwayPass] = useState(true);
+  const [showGstatPass, setShowGstatPass] = useState(true);
 
   const [localClient, setLocalClient] = useState<Client | null>(client);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [newPassVal, setNewPassVal] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isPortalLoginModalOpen, setIsPortalLoginModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -96,12 +98,8 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
     }
   };
 
-  const handleLogin = (username?: string) => {
-    if (username) {
-      navigator.clipboard.writeText(username);
-      toast.success('GST User ID copied! Redirecting to GST portal...');
-    }
-    window.open('https://services.gst.gov.in/services/login', '_blank');
+  const handleLogin = () => {
+    setIsPortalLoginModalOpen(true);
   };
 
   const gstProf = currentClient.gstProfile;
@@ -297,8 +295,8 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="font-mono font-bold text-slate-900 text-sm">
+                      <div className="flex items-center justify-between mt-1 gap-2 flex-wrap sm:flex-nowrap">
+                        <span className="font-mono font-bold text-slate-900 text-sm break-all select-all leading-snug">
                           {gstProf?.password ? (showPassword ? gstProf.password : '••••••••') : '---'}
                         </span>
                         {gstProf?.password && (
@@ -601,6 +599,13 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
         </footer>
 
       </div>
+
+      <GSTPortalLoginModal
+        isOpen={isPortalLoginModalOpen}
+        onClose={() => setIsPortalLoginModalOpen(false)}
+        client={currentClient}
+        onDataChange={onDataChange}
+      />
     </div>
   );
 };

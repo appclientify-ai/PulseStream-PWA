@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { LitigationRecord, LitigationCategory, LitigationStatus, Client } from '../../types';
 import { api } from '../../services/api.ts';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 
 interface NoticeFormProps {
   isOpen: boolean;
@@ -16,9 +17,9 @@ interface NoticeFormProps {
 const SECTIONS_BY_CATEGORY: Record<string, string[]> = {
   Notice: ['73', '74', '61', '129', '130', '142', '148', 'DRC-01'],
   Appeal: ['107', '112', '108', 'APL-01', '107(1)', '107(11)'],
-  Tribunal: ['112', '113', '107', 'APL-05'],
-  'High Court': ['117', '118', 'Art 226', 'Art 227'],
-  HighCourt: ['117', '118', 'Art 226', 'Art 227']
+  Tribunal: ['112', '113', '108', '107', 'APL-05', '112(1)', '112(3)', '112(6)'],
+  'High Court': ['117', '118', 'Art 226', 'Art 227', '117(1)'],
+  HighCourt: ['117', '118', 'Art 226', 'Art 227', '117(1)']
 };
 
 const COMMON_PERIODS = ['2024-25', '2023-24', '2022-23', '2021-22'];
@@ -33,9 +34,12 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
   initialData,
   isReissue
 }) => {
+  const isNotice = category === 'Notice';
   const isAppeal = category === 'Appeal';
   const isTribunal = category === 'Tribunal';
   const isHighCourt = category === 'HighCourt' || category === 'High Court';
+
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   const [formData, setFormData] = useState<Partial<LitigationRecord>>({
     status: 'Pending',
@@ -224,39 +228,94 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
                 : `Add New GST ${category}`}
             </h3>
           </div>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsGuidelinesOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600/40 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-400/30 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+              title="View Complete Statutory Guidelines for Notice, Appeal, Tribunal & High Court"
+            >
+              <span>⚖️</span>
+              <span className="hidden sm:inline">Litigation Guide</span>
+            </button>
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Form Body */}
         <div className="p-5 sm:p-6 space-y-6 overflow-y-auto no-scrollbar flex-1 text-slate-900">
           
+          {isNotice && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+              <span className="text-xl">📩</span>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <h4 className="text-xs font-black text-amber-900 uppercase tracking-wide">GST Notice Statutory Guideline</h4>
+                  <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-200 uppercase">
+                    30 Days Reply Deadline
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  GST Notices are issued under <strong>Section 73</strong> (Non-fraud / determination of tax), <strong>Section 74</strong> (Fraud / wilful misstatement / suppression), <strong>Section 61</strong> (Scrutiny of Returns - ASMT-10), <strong>Section 129/130</strong> (E-Way Bill & Transit Detention), or <strong>DRC-01/01A</strong>. Standard statutory reply deadline is <strong>30 days</strong> from date of service in Form DRC-06 or ASMT-11.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isAppeal && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+              <span className="text-xl">⚖️</span>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">GST First Appeal Guideline (Section 107)</h4>
+                  <span className="text-[10px] font-black text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded border border-indigo-200 uppercase">
+                    Section 107 • Form APL-01
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  First Appeals against Adjudication Orders before the Appellate Authority (JC/ADC/Comm Appeals) are filed under <strong>Section 107 of CGST Act</strong> in <strong>Form GST APL-01</strong> within <strong>90 days (3 months)</strong> of receiving the order. Condonation of delay up to 30 extra days is permissible u/s 107(4) with valid reasons. Mandatory pre-deposit is <strong>10% of disputed tax demand</strong> (max ₹25 Cr each CGST/SGST).
+                </p>
+              </div>
+            </div>
+          )}
+
           {isTribunal && (
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
-              <span className="text-xl">💡</span>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">GSTAT Tribunal Litigation Guideline</h4>
-                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Appeals before the GST Appellate Tribunal (GSTAT) must typically be filed within <strong>90 days (3 months)</strong> of receiving the Order-In-Appeal (OIA). For delay condonation petitions, GSTAT allows up to 180 days with valid grounds.
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+              <span className="text-xl">🏛️</span>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <h4 className="text-xs font-black text-purple-900 uppercase tracking-wide">GST Appellate Tribunal (GSTAT) Guideline (Section 112)</h4>
+                  <span className="text-[10px] font-black text-purple-800 bg-purple-100 px-2 py-0.5 rounded border border-purple-200 uppercase">
+                    Section 112 • Form APL-05
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  Appeals before the GST Appellate Tribunal (GSTAT) are filed under <strong>Section 112 of CGST Act</strong> in <strong>Form GST APL-05</strong> within <strong>90 days (3 months)</strong> of communication of the Order-in-Appeal (u/s 107) or Revisional Order (u/s 108). Statutory pre-deposit is <strong>20% of disputed tax demand</strong> (in addition to 10% paid at First Appeal stage). Delay condonation up to 180 days is permitted under Section 112(6) upon showing sufficient cause.
                 </p>
               </div>
             </div>
           )}
 
           {isHighCourt && (
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
-              <span className="text-xl">💡</span>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-indigo-900 uppercase tracking-wide">High Court Litigation Guideline</h4>
-                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Writ Petitions (Article 226) or Appeals in the High Court are typically filed within <strong>90 days</strong> of receiving the Impugned Order/Decision. Make sure grounds such as violations of principles of natural justice, constitutional validity, or errors apparent on face of record are documented.
+            <div className="bg-gradient-to-r from-slate-100 to-indigo-50 border border-slate-200 rounded-2xl p-4 flex items-start gap-3 shadow-xs animate-in slide-in-from-top-2 duration-300">
+              <span className="text-xl">🏛️</span>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">High Court Litigation Guideline (Section 117 / Article 226)</h4>
+                  <span className="text-[10px] font-black text-slate-800 bg-slate-200 px-2 py-0.5 rounded border border-slate-300 uppercase">
+                    Section 117 • Art 226/227
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  Statutory Appeals against GSTAT orders involving substantial questions of law are filed under <strong>Section 117 of CGST Act</strong> within <strong>180 days</strong>. Constitutional Writ Petitions under <strong>Article 226 / Article 227 of the Constitution of India</strong> can be invoked against orders passed in violation of principles of natural justice, lack of jurisdiction, or unconstitutionality.
                 </p>
               </div>
             </div>
@@ -748,6 +807,12 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
           </div>
         </div>
       </form>
+
+      <LitigationGuidelinesModal
+        isOpen={isGuidelinesOpen}
+        onClose={() => setIsGuidelinesOpen(false)}
+        initialCategory={category}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { LitigationRecord, Client, LitigationStatus, LitigationCategory } from '
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
 import NoticeForm from '../Clientform/NoticeForm';
+import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
 import { toast } from 'sonner';
 import { formatISOToDDMMYYYY } from '../../dateUtils';
 
@@ -28,6 +29,7 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
   const isLoading = isPageLoading && !pageData;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -104,6 +106,15 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
             className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
+        <button 
+          onClick={() => setIsGuidelinesOpen(true)}
+          className="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-black uppercase tracking-wider px-4 h-10 landscape:h-8 rounded-xl transition-all text-xs flex items-center gap-1.5 shrink-0"
+          title="View Statutory Guidelines for Notice, Appeal, Tribunal & High Court"
+        >
+          <span>⚖️</span>
+          <span>Guidelines</span>
+        </button>
+
         {status === 'Pending' && (
           <button onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-6 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5 shrink-0">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
@@ -144,6 +155,7 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
       </div>
 
       <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category={category} initialData={selectedRecord} />
+      <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory={category} />
     </div>
   );
 };

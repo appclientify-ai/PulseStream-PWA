@@ -15,7 +15,7 @@ interface ITDetailModalProps {
 
 const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, onEdit, onDataChange }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'personal_employment' | 'bank_notes'>('overview');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
 
   const [localClient, setLocalClient] = useState<Client | null>(client);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
@@ -252,8 +252,8 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, 
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="font-mono font-bold text-slate-900 text-sm">
+                      <div className="flex items-center justify-between mt-1 gap-2 flex-wrap sm:flex-nowrap">
+                        <span className="font-mono font-bold text-slate-900 text-sm break-all select-all leading-snug">
                           {itProf?.password ? (showPassword ? itProf.password : '••••••••') : '---'}
                         </span>
                         {itProf?.password && (

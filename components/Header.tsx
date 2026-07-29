@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import { useTheme } from '../hooks/useTheme';
 import { THEME_COLORS, FONT_SIZES, FONT_STYLES, THEME_MODES } from '../services/theme';
+import LitigationGuidelinesModal from './LitigationGuidelinesModal';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -21,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const { settings, updateSettings } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
 
   return (
     <header className="flex h-16 md:h-20 w-full items-center justify-between border-b border-slate-200 bg-white/80 px-4 md:px-6 backdrop-blur-md sticky top-0 z-40">
@@ -73,6 +75,16 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
         </div>
+
+        {/* Litigation Guidelines Header Button */}
+        <button
+          onClick={() => { setIsGuidelinesOpen(true); setIsThemeOpen(false); setIsProfileOpen(false); }}
+          className="flex h-10 md:h-12 items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 px-3 md:px-4 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xs hover:shadow-sm active:scale-95 shrink-0"
+          title="Litigation Guidelines & Statutory Manual"
+        >
+          <span className="text-base md:text-lg">⚖️</span>
+          <span className="hidden sm:inline font-extrabold text-[11px]">Litigation Guide</span>
+        </button>
 
         {/* Quick UI Theme Customizer Popover */}
         <div className="relative">
@@ -218,6 +230,11 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           )}
         </div>
       </div>
+
+      <LitigationGuidelinesModal
+        isOpen={isGuidelinesOpen}
+        onClose={() => setIsGuidelinesOpen(false)}
+      />
     </header>
   );
 };

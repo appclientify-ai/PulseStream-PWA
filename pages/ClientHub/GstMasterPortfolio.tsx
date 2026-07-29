@@ -4,6 +4,7 @@ import { formatDate } from '../../exportUtils';
 import { Client } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
+import GSTPortalLoginModal from '../../components/GSTPortalLoginModal';
 import GSTViewIcon from '../../components/GSTViewIcon';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
@@ -453,79 +454,12 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       )}
 
       {/* Login Tool Box Modal */}
-      {isLoginBoxOpen && loginToolClient && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-lg bg-white rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200">
-              <div className="p-8 bg-slate-900 text-white flex items-center justify-between">
-                 <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-2">Portal Access Utility</p>
-                    <h3 className="text-xl font-black truncate">{loginToolClient.tradeName}</h3>
-                 </div>
-                 <button onClick={() => setIsLoginBoxOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-              </div>
-              
-              <div className="p-10 space-y-8">
-                 <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Entity GSTIN</span>
-                       <button onClick={() => {
-                         if (navigator.clipboard) {
-                           navigator.clipboard.writeText(loginToolClient.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
-                         }
-                       }} className="text-[9px] font-black uppercase text-indigo-600 hover:underline">Verify Identity</button>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                       <code className="text-lg font-black text-indigo-600 font-mono tracking-widest uppercase">{loginToolClient.gstProfile?.gstin}</code>
-                       <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.gstin || ''); toast.success('Copied'); }} className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Portal User ID</span>
-                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                          <span className="text-sm font-black text-slate-900 truncate">{loginToolClient.gstProfile?.username}</span>
-                          <button onClick={() => { copyToClipboard(loginToolClient.gstProfile?.username || ''); toast.success('Copied'); }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg></button>
-                       </div>
-                    </div>
-                    <div className="space-y-2">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Password</span>
-                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                          {isEditingLoginPass ? (
-                             <input 
-                                autoFocus
-                                value={tempPass} 
-                                onChange={e => setTempPass(e.target.value)} 
-                                onBlur={handleUpdatePassword}
-                                onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()}
-                                className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-xs font-black w-full outline-none focus:ring-2 focus:ring-indigo-100"
-                             />
-                          ) : (
-                             <>
-                                <span className="text-sm font-black text-indigo-600 tracking-wider truncate">{showLoginPass ? loginToolClient.gstProfile?.password : '••••••••'}</span>
-                                <div className="flex gap-1.5">
-                                   <button onClick={() => setShowLoginPass(!showLoginPass)} className="p-1 text-slate-300 hover:text-indigo-600">{showLoginPass ? '🙈' : '👁️'}</button>
-                                   <button onClick={() => setIsEditingLoginPass(true)} className="p-1 text-slate-300 hover:text-amber-500"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                </div>
-                             </>
-                          )}
-                       </div>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="p-8 bg-slate-50 border-t border-slate-100">
-                 <button 
-                   onClick={() => { copyToClipboard(loginToolClient.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }}
-                   className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-900 transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3"
-                 >
-                    Launch Portal & Sync ID
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2-2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
+      <GSTPortalLoginModal
+        isOpen={isLoginBoxOpen}
+        onClose={() => setIsLoginBoxOpen(false)}
+        client={loginToolClient}
+        onDataChange={onDataChange}
+      />
 
     </div>
   );

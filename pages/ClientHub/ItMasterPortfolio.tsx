@@ -64,7 +64,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   // Login Tool Box State
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [loginToolClient, setLoginToolClient] = useState<Client | null>(null);
-  const [showLoginPass, setShowLoginPass] = useState(false);
+  const [showLoginPass, setShowLoginPass] = useState(true);
   const [isEditingLoginPass, setIsEditingLoginPass] = useState(false);
   const [tempPass, setTempPass] = useState('');
 
@@ -302,7 +302,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                           onClick={() => {
                             setLoginToolClient(client);
                             setTempPass(client.itProfile?.password || '');
-                            setShowLoginPass(false);
+                            setShowLoginPass(true);
                             setIsEditingLoginPass(false);
                             setIsLoginBoxOpen(true);
                           }}
@@ -341,7 +341,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           <button onClick={() => { 
               setLoginToolClient(selectedClient!); 
               setTempPass(selectedClient!.itProfile?.password || ''); 
-              setShowLoginPass(false);
+              setShowLoginPass(true);
               setIsEditingLoginPass(false);
               setIsLoginBoxOpen(true); 
               setActiveActionsId(null); 
@@ -457,22 +457,22 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Portal User ID</span>
-                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
-                          <span className="text-sm font-black text-slate-900 truncate font-mono">{loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '---'}</span>
+                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
+                          <span className="text-sm font-black text-slate-900 font-mono break-all select-all leading-snug">{loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '---'}</span>
                           <button onClick={() => { 
                             const uid = loginToolClient.itProfile?.username || loginToolClient.itProfile?.pan || '';
                             if (uid) {
                               copyToClipboard(uid); 
                               toast.success('User ID Copied'); 
                             }
-                          }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors" title="Copy User ID">
+                          }} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-colors shrink-0" title="Copy User ID">
                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
                           </button>
                        </div>
                     </div>
                     <div className="space-y-2">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">e-Filing Password</span>
-                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                           {isEditingLoginPass ? (
                              <input 
                                 autoFocus
@@ -484,8 +484,8 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                              />
                           ) : (
                              <>
-                                <span className="text-sm font-black text-indigo-600 tracking-wider truncate font-mono">{showLoginPass ? (loginToolClient.itProfile?.password || '---') : '••••••••'}</span>
-                                <div className="flex gap-1.5">
+                                <span className="text-sm font-black text-indigo-600 tracking-wider font-mono break-all select-all leading-snug max-w-full">{showLoginPass ? (loginToolClient.itProfile?.password || '---') : '••••••••'}</span>
+                                <div className="flex gap-1.5 shrink-0 ml-auto">
                                    <button onClick={() => setShowLoginPass(!showLoginPass)} className="p-1 text-slate-300 hover:text-indigo-600" title={showLoginPass ? 'Hide Password' : 'Show Password'}>{showLoginPass ? '🙈' : '👁️'}</button>
                                    <button onClick={() => setIsEditingLoginPass(true)} className="p-1 text-slate-300 hover:text-amber-500" title="Edit Password"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                                    {loginToolClient.itProfile?.password && (

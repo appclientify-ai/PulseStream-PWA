@@ -386,8 +386,8 @@ const ITRReturn: React.FC = () => {
                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col gap-4">
                     <div><p className="text-[9px] font-black uppercase text-slate-400 mb-1">PAN Identity</p><p className="text-lg font-black text-indigo-600 font-mono tracking-widest">{selectedClient.itProfile?.pan}</p></div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                       <div><p className="text-[9px] font-black text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900">{selectedClient.itProfile?.username}</p></div>
-                       <div><p className="text-[9px] font-black text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 tracking-widest">{selectedClient.itProfile?.password}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">User ID</p><p className="text-sm font-black text-slate-900 font-mono break-all select-all">{selectedClient.itProfile?.username}</p></div>
+                       <div><p className="text-[9px] font-black text-slate-400 mb-1">Password</p><p className="text-sm font-black text-indigo-600 font-mono tracking-wider break-all select-all">{selectedClient.itProfile?.password}</p></div>
                     </div>
                  </div>
               </div>
