@@ -6,6 +6,7 @@ import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
 import NoticeForm from '../Clientform/NoticeForm';
 import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModal';
+import LitigationDetailModal from '../../components/LitigationDetailModal';
 import { toast } from 'sonner';
 import { formatISOToDDMMYYYY } from '../../dateUtils';
 
@@ -156,6 +157,17 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
 
       <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category={category} initialData={selectedRecord} />
       <LitigationGuidelinesModal isOpen={isGuidelinesOpen} onClose={() => setIsGuidelinesOpen(false)} initialCategory={category} />
+      <LitigationDetailModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        record={viewingRecord}
+        clients={clients}
+        onEdit={(rec) => {
+          setSelectedRecord(rec);
+          setIsModalOpen(true);
+        }}
+        onDataChange={refreshData}
+      />
     </div>
   );
 };

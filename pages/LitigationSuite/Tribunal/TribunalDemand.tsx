@@ -5,6 +5,7 @@ import { LitigationRecord, Client, LitigationStatus, LitigationCategory } from '
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import NoticeForm from '../../Clientform/NoticeForm';
+import LitigationDetailModal from '../../../components/LitigationDetailModal';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
 import { EditableRemark } from '../../../components/EditableRemark';
@@ -189,39 +190,18 @@ const TribunalDemand: React.FC = () => {
         </div>
       </div>
 
-      {isViewModalOpen && viewingRecord && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl flex flex-col animate-in zoom-in-95 max-h-[90vh] overflow-hidden">
-              <div className="px-10 py-8 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
-                 <div className="min-w-0">
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight truncate">{viewingRecord.clientName}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Confirmed Tribunal Order Review</p>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <button onClick={() => { setSelectedRecord(viewingRecord); setTargetCategory('Tribunal'); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase text-[10px] px-6 py-3 rounded-xl shadow-lg hover:bg-slate-900 transition-all">Edit Record</button>
-                    <button onClick={() => setIsViewModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-200 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
-                 </div>
-              </div>
-              <div className="p-10 grid grid-cols-2 gap-8 flex-1 overflow-y-auto no-scrollbar">
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Status</p><p className="text-base font-black text-red-600 uppercase">SUSTAINED (DEMAND)</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Tribunal Section</p><p className="text-base font-black text-slate-900">U/s {viewingRecord.section}</p></div>
-                 <div><p className="text-[10px] font-black text-slate-400 mb-1">AIO/OIO Ref No</p><p className="text-base font-black text-slate-900">{viewingRecord.aioArn || viewingRecord.oioRefNo || viewingRecord.referenceNo || '---'}</p></div>
-                 <div><p className="text-[10px] font-black uppercase text-slate-400 mb-1">Judgment Date</p><p className="text-base font-black text-red-600">{formatDisplayDate(viewingRecord.aioDate || viewingRecord.oioDate || viewingRecord.orderDate || viewingRecord.issuedDate)}</p></div>
-                 <EditableCaseHistory 
-                    value={viewingRecord.caseHistory || ''} 
-                    onSave={async (val) => {
-                      const updated = { ...viewingRecord, caseHistory: val };
-                      await api.saveTribunalRecord(updated);
-                      setViewingRecord(updated);
-                      refreshData();
-                    }}
-                 />
-                 <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100"><p className="text-[10px] font-black uppercase text-slate-400 mb-2">Internal Staff Remarks</p><p className="text-sm font-medium text-slate-600 italic leading-relaxed">{viewingRecord.remarks || 'No notes archived.'}</p></div>
-              </div>
-              <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 shrink-0"><button onClick={() => setIsViewModalOpen(false)} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] rounded-xl shadow-sm hover:bg-slate-100 transition-all">Close Details</button></div>
-           </div>
-        </div>
-      )}
+      <LitigationDetailModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        record={viewingRecord}
+        clients={clients}
+        onEdit={(rec) => {
+          setSelectedRecord(rec);
+          setTargetCategory('Tribunal');
+          setIsModalOpen(true);
+        }}
+        onDataChange={refreshData}
+      />
 
       <NoticeForm isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setIsReissueMode(false); }} onSave={handleSave} onDelete={handleDelete} clients={clients} category={targetCategory} initialData={selectedRecord} isReissue={isReissueMode} />
     </div>

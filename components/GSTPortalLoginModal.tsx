@@ -209,7 +209,7 @@ export const GSTPortalLoginModal: React.FC<GSTPortalLoginModalProps> = ({
               </div>
             ) : (
               <div className="flex items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex-wrap sm:flex-nowrap">
-                <span className="font-mono font-black text-indigo-600 text-sm md:text-base break-all leading-snug select-all max-w-full">
+                <span className="font-mono font-black text-indigo-600 text-sm md:text-base break-all whitespace-pre-wrap leading-snug select-all min-w-0 flex-1">
                   {password ? (showPassword ? password : '••••••••') : <span className="text-slate-400 italic font-normal text-sm">No password saved</span>}
                 </span>
                 

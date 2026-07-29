@@ -253,7 +253,7 @@ const ITDetailModal: React.FC<ITDetailModalProps> = ({ isOpen, onClose, client, 
                       </div>
                     ) : (
                       <div className="flex items-center justify-between mt-1 gap-2 flex-wrap sm:flex-nowrap">
-                        <span className="font-mono font-bold text-slate-900 text-sm break-all select-all leading-snug">
+                        <span className="font-mono font-bold text-slate-900 text-sm break-all whitespace-pre-wrap select-all leading-snug min-w-0 flex-1">
                           {itProf?.password ? (showPassword ? itProf.password : '••••••••') : '---'}
                         </span>
                         {itProf?.password && (
