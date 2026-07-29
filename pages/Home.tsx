@@ -1,5 +1,6 @@
 
 import React from 'react';
+import ClientifyLogo from '../components/Logo';
 
 interface HomeProps {
   onGetStarted: () => void;
@@ -24,9 +25,12 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">Enterprise Grade Compliance Vault</span>
         </div>
 
-        <h1 className="mb-8 text-6xl font-black tracking-tight text-slate-900 md:text-8xl lg:text-9xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-          Client<span className="text-indigo-600">ify.</span>
-        </h1>
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <ClientifyLogo size="2xl" showText={false} className="shrink-0" />
+          <h1 className="text-6xl font-black tracking-tight text-slate-900 md:text-8xl lg:text-9xl leading-none">
+            Client<span className="text-indigo-600">ify.</span>
+          </h1>
+        </div>
         
         <p className="mb-12 text-xl font-medium leading-relaxed text-slate-500 md:text-2xl max-w-3xl mx-auto animate-in fade-in duration-1000 delay-300">
           The high-performance operating system for modern Tax Consultants. Securely manage IDs, automate tracking, and master complex litigation with absolute clarity.
@@ -136,10 +140,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-               <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-               </div>
-               <span className="text-2xl font-black text-slate-900 tracking-tighter">Clientify</span>
+               <ClientifyLogo size="md" showText={true} />
             </div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Vault for Legal Excellence</p>
           </div>

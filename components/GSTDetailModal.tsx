@@ -1,22 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Client } from '../types';
 import { formatDate } from '../exportUtils';
 import { toast } from 'sonner';
+import { api } from '../services/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface GSTDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
   onEdit?: (client: Client) => void;
+  onDataChange?: () => void;
 }
 
-const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client, onEdit }) => {
+const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client, onEdit, onDataChange }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'registration' | 'stakeholders' | 'portals_bank'>('overview');
   const [showPassword, setShowPassword] = useState(false);
   const [showEwayPass, setShowEwayPass] = useState(false);
   const [showGstatPass, setShowGstatPass] = useState(false);
 
-  if (!isOpen || !client) return null;
+  const [localClient, setLocalClient] = useState<Client | null>(client);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [newPassVal, setNewPassVal] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setLocalClient(client);
+  }, [client]);
+
+  if (!isOpen || !localClient) return null;
+
+  const currentClient = localClient;
+
+  const handleSavePassword = async () => {
+    if (!currentClient) return;
+    if (!newPassVal.trim()) {
+      toast.error("Password cannot be empty");
+      return;
+    }
+    setIsSavingPassword(true);
+    try {
+      const updated = {
+        ...currentClient,
+        gstProfile: {
+          ...(currentClient.gstProfile || { gstin: '' }),
+          password: newPassVal.trim()
+        }
+      };
+      await api.saveClient(updated);
+      setLocalClient(updated);
+      setIsEditingPassword(false);
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast.success("GST Password updated instantly!");
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      toast.error("Failed to update password");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     if (!text) return;
@@ -60,7 +104,7 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
     window.open('https://services.gst.gov.in/services/login', '_blank');
   };
 
-  const gstProf = client.gstProfile;
+  const gstProf = currentClient.gstProfile;
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/70 backdrop-blur-xl p-3 sm:p-5 animate-in fade-in duration-200">
@@ -205,30 +249,78 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
 
                   {/* GST Password */}
                   <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">GST Password</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="font-mono font-bold text-slate-900 text-sm">
-                        {gstProf?.password ? (showPassword ? gstProf.password : '••••••••') : '---'}
-                      </span>
-                      {gstProf?.password && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="text-slate-400 hover:text-slate-700 text-xs p-1"
-                            title={showPassword ? 'Hide Password' : 'Show Password'}
-                          >
-                            {showPassword ? '🙈' : '👁️'}
-                          </button>
-                          <button
-                            onClick={() => copyToClipboard(gstProf.password, 'Password')}
-                            className="text-slate-400 hover:text-indigo-600 text-xs p-1"
-                            title="Copy Password"
-                          >
-                            📋
-                          </button>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">GST Password</p>
+                      {!isEditingPassword && (
+                        <button
+                          onClick={() => {
+                            setNewPassVal(gstProf?.password || '');
+                            setIsEditingPassword(true);
+                          }}
+                          className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md transition-all border border-indigo-100 flex items-center gap-1 shrink-0"
+                          title="Change password instantly without modifying full profile"
+                        >
+                          ✏️ Instant Change
+                        </button>
                       )}
                     </div>
+
+                    {isEditingPassword ? (
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="text"
+                          value={newPassVal}
+                          onChange={e => setNewPassVal(e.target.value)}
+                          placeholder="Enter new GST password"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-indigo-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-indigo-50/30"
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleSavePassword();
+                            if (e.key === 'Escape') setIsEditingPassword(false);
+                          }}
+                        />
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setIsEditingPassword(false)}
+                            className="px-2.5 py-1 rounded-md text-[10px] font-bold text-slate-500 hover:bg-slate-100"
+                            disabled={isSavingPassword}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSavePassword}
+                            disabled={isSavingPassword}
+                            className="px-3 py-1 rounded-md text-[10px] font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all flex items-center gap-1"
+                          >
+                            {isSavingPassword ? 'Saving...' : '✓ Save'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="font-mono font-bold text-slate-900 text-sm">
+                          {gstProf?.password ? (showPassword ? gstProf.password : '••••••••') : '---'}
+                        </span>
+                        {gstProf?.password && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="text-slate-400 hover:text-slate-700 text-xs p-1"
+                              title={showPassword ? 'Hide Password' : 'Show Password'}
+                            >
+                              {showPassword ? '🙈' : '👁️'}
+                            </button>
+                            <button
+                              onClick={() => copyToClipboard(gstProf.password, 'Password')}
+                              className="text-slate-400 hover:text-indigo-600 text-xs p-1"
+                              title="Copy Password"
+                            >
+                              📋
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* GSTIN */}

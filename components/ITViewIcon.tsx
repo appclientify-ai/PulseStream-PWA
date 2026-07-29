@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Client } from '../types';
 import ITDetailModal from './ITDetailModal';
 import ITClientFormModal from '../pages/Clientform/ITClientFormModal';
@@ -14,6 +14,10 @@ const ITViewIcon: React.FC<ITViewIconProps> = ({ client, className = '', onEdit,
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [currentClient, setCurrentClient] = useState(client);
+
+  useEffect(() => {
+    setCurrentClient(client);
+  }, [client]);
 
   const handleEditClick = (c: Client) => {
     setIsOpen(false);
@@ -47,7 +51,13 @@ const ITViewIcon: React.FC<ITViewIconProps> = ({ client, className = '', onEdit,
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" />
         </svg>
       </button>
-      <ITDetailModal isOpen={isOpen} onClose={() => setIsOpen(false)} client={currentClient} onEdit={handleEditClick} />
+      <ITDetailModal 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
+        client={currentClient} 
+        onEdit={handleEditClick} 
+        onDataChange={onDataChange}
+      />
       {isEditOpen && (
         <ITClientFormModal 
           isOpen={isEditOpen} 

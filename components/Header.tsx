@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import { useTheme } from '../hooks/useTheme';
 import { THEME_COLORS, FONT_SIZES, FONT_STYLES, THEME_MODES } from '../services/theme';
+import ClientifyLogo from './Logo';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -49,7 +50,10 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
            <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden min-w-0">
              <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
              <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
-             <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
+             <div className="flex items-center gap-1.5 shrink-0">
+               <ClientifyLogo size="xs" showText={false} />
+               <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
+             </div>
            </div>
            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
@@ -86,7 +90,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
 
           {isThemeOpen && (
-            <div className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 md:w-96 max-w-sm sm:max-w-md bg-white border border-slate-200 rounded-[2rem] shadow-2xl p-5 animate-in zoom-in-95 duration-200 origin-top-right z-[10000] text-slate-900 max-h-[85vh] overflow-y-auto no-scrollbar">
+            <div className="fixed left-3 right-3 top-16 sm:left-auto sm:right-3 sm:w-80 md:w-96 sm:max-w-md bg-white border border-slate-200 rounded-[2rem] shadow-2xl p-5 animate-in zoom-in-95 duration-200 sm:origin-top-right z-[10000] text-slate-900 max-h-[80vh] overflow-y-auto no-scrollbar sm:absolute sm:top-full sm:mt-3">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 sticky top-0 bg-white z-10">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🎨</span>
@@ -191,7 +195,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-60 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right z-[10000]">
+            <div className="fixed right-3 top-16 sm:absolute sm:right-0 sm:top-full sm:mt-3 w-60 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl p-2 animate-in zoom-in-95 duration-200 origin-top-right z-[10000]">
                <div className="p-3 border-b border-slate-100 mb-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vault Session ID</p>
                   <p className="text-xs font-black text-slate-900 truncate">{currentUser?.user_id}</p>

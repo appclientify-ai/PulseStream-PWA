@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ActiveView } from '../types';
+import ClientifyLogo from './Logo';
 
 export interface NavItem {
   id: ActiveView | string;
@@ -248,15 +249,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
            {!isCollapsed && (
              <div className="flex items-center gap-3 animate-in fade-in duration-500">
-               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md">
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-               </div>
-               <span className="text-xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
+               <ClientifyLogo size="md" showText={true} />
              </div>
            )}
            {isCollapsed && (
-             <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+             <div className="animate-in fade-in duration-300">
+               <ClientifyLogo size="md" showText={false} />
              </div>
            )}
         </div>
