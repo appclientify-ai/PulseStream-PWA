@@ -74,6 +74,8 @@ const FoodLicenses: React.FC = () => {
     }
     const s = search.toLowerCase();
     return list.filter(r => 
+      (r.tradeName || '').toLowerCase().includes(s) || 
+      (r.legalName || '').toLowerCase().includes(s) || 
       (r.clientName || '').toLowerCase().includes(s) || 
       (r.mobile && String(r.mobile).includes(s)) || 
       (r.licenseNo && String(r.licenseNo).toLowerCase().includes(s))
@@ -157,7 +159,7 @@ const FoodLicenses: React.FC = () => {
             <thead className=" sticky top-0 z-20">
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client Identity</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">License Number</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">License Type</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
@@ -188,8 +190,15 @@ const FoodLicenses: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[12px]">
                       <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-6 py-5">
-                         <p className="font-black text-slate-900 uppercase leading-snug" title={rec.clientName}>{rec.clientName}</p>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{rec.mobile || 'No Contact'}</p>
+                         <p className="font-black text-slate-900 uppercase leading-snug" title={rec.tradeName || rec.clientName}>
+                           {rec.tradeName || rec.clientName || '---'}
+                         </p>
+                         <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5" title={rec.legalName || rec.clientName}>
+                           Legal: {rec.legalName || rec.clientName || '---'}
+                         </p>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                           Mob: {rec.mobile || 'No Contact'}
+                         </p>
                       </td>
                       <td className=" px-6 py-5">
                          <input 

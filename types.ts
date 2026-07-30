@@ -242,6 +242,8 @@ export type FoodLicenseStatus = 'Pending' | 'Applied' | 'Completed' | 'Rejected'
 export interface FoodLicenseRecord {
   id: string;
   clientName: string;
+  tradeName?: string;
+  legalName?: string;
   mobile: string;
   licenseType: FoodLicenseType;
   status: FoodLicenseStatus;

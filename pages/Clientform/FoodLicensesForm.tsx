@@ -15,6 +15,8 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FoodLicenseRecord>>({
     clientName: '',
+    tradeName: '',
+    legalName: '',
     mobile: '',
     licenseType: 'FSSAI Basic Registration',
     status: 'Pending',
@@ -37,10 +39,18 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
   useEffect(() => {
     if (initialData) {
       const calcDue = initialData.dueDate || (initialData.expiryDate ? calculateRenewalDueDate(initialData.expiryDate) : '');
-      setFormData({ ...initialData, dueDate: calcDue });
+      setFormData({
+        ...initialData,
+        tradeName: initialData.tradeName || initialData.clientName || '',
+        legalName: initialData.legalName || initialData.clientName || '',
+        mobile: initialData.mobile || '',
+        dueDate: calcDue
+      });
     } else {
       setFormData({
         clientName: '',
+        tradeName: '',
+        legalName: '',
         mobile: '',
         licenseType: 'FSSAI Basic Registration',
         status: 'Pending',
@@ -63,23 +73,32 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
   };
 
   const suggestions = useMemo(() => {
-    const query = formData.clientName?.toLowerCase() || '';
+    const query = (formData.tradeName || formData.legalName || formData.clientName || '').toLowerCase();
     if (!query || initialData) return [];
     return dbClients.filter(c => 
+      (c.tradeName || '').toLowerCase().includes(query) || 
       (c.legalName || '').toLowerCase().includes(query) || 
-      (c.tradeName || '').toLowerCase().includes(query) ||
       (c.gstProfile?.gstin || '').toLowerCase().includes(query) ||
       (c.pan || '').toLowerCase().includes(query) ||
       (c.mobile || '').includes(query)
     ).slice(0, 8);
-  }, [formData.clientName, dbClients, initialData]);
+  }, [formData.tradeName, formData.legalName, formData.clientName, dbClients, initialData]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
       <form 
-        onSubmit={(e) => { e.preventDefault(); onSave(formData); }}
+        onSubmit={(e) => { 
+          e.preventDefault(); 
+          const payload = {
+            ...formData,
+            clientName: formData.legalName || formData.tradeName || formData.clientName || '',
+            tradeName: formData.tradeName || formData.clientName || '',
+            legalName: formData.legalName || formData.clientName || ''
+          };
+          onSave(payload); 
+        }}
         className="w-full max-w-2xl max-h-[90vh] bg-white rounded-[2rem] shadow-2xl flex flex-col my-auto border border-slate-100 overflow-hidden animate-in zoom-in-95"
       >
         <div className="px-8 py-6 bg-slate-900 flex items-center justify-between shrink-0">
@@ -121,27 +140,40 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="relative">
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Entity Name</label>
-              <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50 uppercase"
-                value={formData.clientName} onChange={e => { setFormData({...formData, clientName: e.target.value}); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} placeholder="Search..." />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Trade Name</label>
+              <input 
+                required 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50 uppercase text-slate-900"
+                value={formData.tradeName || ''} 
+                onChange={e => { 
+                  const val = e.target.value;
+                  setFormData(prev => ({ ...prev, tradeName: val, clientName: prev.legalName || val })); 
+                  setIsDropdownOpen(true); 
+                }} 
+                onFocus={() => setIsDropdownOpen(true)} 
+                placeholder="Trade Name (e.g. Royal Sweets)" 
+              />
               {isDropdownOpen && suggestions.length > 0 && (
                 <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto">
                   {suggestions.map(c => {
                     const trade = c.tradeName || c.legalName;
-                    const legal = c.legalName;
-                    const displayName = c.tradeName && c.legalName && c.tradeName !== c.legalName 
-                      ? `${c.tradeName} (${c.legalName})` 
-                      : trade;
+                    const legal = c.legalName || c.tradeName;
                     return (
                       <button key={c.id} type="button" 
                         onClick={() => { 
-                          setFormData({ ...formData, clientName: displayName, mobile: c.mobile }); 
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            tradeName: trade,
+                            legalName: legal,
+                            clientName: legal, 
+                            mobile: c.mobile || prev.mobile || '' 
+                          })); 
                           setIsDropdownOpen(false); 
                         }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 border-b border-slate-50 last:border-0"
+                        className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 border-b border-slate-50 last:border-0 transition-colors"
                       >
-                        <p className="text-xs font-black text-slate-900 truncate">{trade}</p>
-                        <p className="text-[10px] font-bold text-slate-600 truncate">Legal Name: {legal || '---'}</p>
+                        <p className="text-xs font-black text-slate-900 truncate">Trade: {trade}</p>
+                        <p className="text-[10px] font-bold text-slate-600 truncate">Legal: {legal || '---'}</p>
                         <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
                           GSTIN: {c.gstProfile?.gstin || 'N/A'} • PAN: {c.pan || 'N/A'} • Mob: {c.mobile || 'N/A'}
                         </p>
@@ -152,20 +184,41 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
               )}
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Mobile No</label>
-              <input required maxLength={10} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50"
-                value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value.replace(/\D/g, '')})} placeholder="No..." />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Legal Name</label>
+              <input 
+                required 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50 uppercase text-slate-900"
+                value={formData.legalName || ''} 
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormData(prev => ({ ...prev, legalName: val, clientName: val || prev.tradeName || '' }));
+                }} 
+                placeholder="Legal Entity Name" 
+              />
             </div>
           </div>
 
-          <div>
-            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">FSSAI Category</label>
-            <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
-              value={formData.licenseType} onChange={e => setFormData({...formData, licenseType: e.target.value as FoodLicenseType})}>
-              <option value="FSSAI Basic Registration">Basic Registration</option>
-              <option value="State License">State License</option>
-              <option value="Central License">Central License</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Mobile No</label>
+              <input 
+                required 
+                maxLength={10} 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-emerald-50 text-slate-900"
+                value={formData.mobile || ''} 
+                onChange={e => setFormData(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '') }))} 
+                placeholder="10 Digit Mobile No..." 
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">FSSAI Category</label>
+              <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none text-slate-900"
+                value={formData.licenseType} onChange={e => setFormData(prev => ({ ...prev, licenseType: e.target.value as FoodLicenseType }))}>
+                <option value="FSSAI Basic Registration">Basic Registration</option>
+                <option value="State License">State License</option>
+                <option value="Central License">Central License</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
