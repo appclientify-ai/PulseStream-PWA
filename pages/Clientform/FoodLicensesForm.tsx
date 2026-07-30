@@ -224,8 +224,10 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Application Status</label>
-              <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none"
-                value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as FoodLicenseStatus})}>
+              <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none text-slate-900"
+                value={formData.status || 'Pending'} 
+                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as FoodLicenseStatus }))}
+              >
                 <option value="Pending">Pending</option>
                 <option value="Applied">Applied</option>
                 <option value="Completed">Completed</option>

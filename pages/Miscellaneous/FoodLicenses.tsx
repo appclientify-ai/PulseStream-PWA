@@ -210,21 +210,17 @@ const FoodLicenses: React.FC = () => {
                          />
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
-                      <td className=" px-6 py-5 text-center relative overflow-visible">
-                          <button 
-                            onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
-                            className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusStyle(rec.status)}`}
+                      <td className=" px-6 py-5 text-center">
+                          <select 
+                            value={rec.status || 'Pending'}
+                            onChange={e => handleInlineUpdate(rec.id, 'status', e.target.value as FoodLicenseStatus)}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
                           >
-                            <span className="truncate">{rec.status}</span>
-                            <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                          </button>
-                          {activeStatusRowId === rec.id && (
-                            <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
-                               {['Pending', 'Applied', 'Completed', 'Rejected'].map(st => (
-                                 <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as FoodLicenseStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-slate-600">{st}</button>
-                               ))}
-                            </div>
-                          )}
+                            <option value="Pending" className="bg-white text-slate-900 font-bold">Pending</option>
+                            <option value="Applied" className="bg-white text-slate-900 font-bold">Applied</option>
+                            <option value="Completed" className="bg-white text-slate-900 font-bold">Completed</option>
+                            <option value="Rejected" className="bg-white text-slate-900 font-bold">Rejected</option>
+                          </select>
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
                       <td className=" px-6 py-5 font-black uppercase">
