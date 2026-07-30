@@ -131,7 +131,8 @@ const GSTR9_9C: React.FC = () => {
       
       return (c.legalName || '').toLowerCase().includes(s) || 
              (c.tradeName || '').toLowerCase().includes(s) || 
-             (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s));
+             (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s)) ||
+             (c.pan && c.pan.toLowerCase().includes(s));
     }).filter(c => {
       if (gstr9Filter !== 'All') {
         const filed = getStatus(c.id).gstr9;
@@ -320,10 +321,10 @@ const GSTR9_9C: React.FC = () => {
                 return (
                   <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
-     <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
-     <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
-   </td>
+                    <td className=" px-4 py-[2px]" title={`${client.tradeName || ''} (${client.legalName || ''})`}>
+                     <div className="font-black text-slate-900 leading-tight text-[12px]">{client.tradeName || '---'}</div>
+                     <div className="font-bold text-[9px] text-slate-500 leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
+                    </td>
    
                     <td className=" px-4 py-[2px]">
                        <div className="flex items-center gap-2 group/gstin">

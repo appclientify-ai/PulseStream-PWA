@@ -257,8 +257,8 @@ const TAXAudit: React.FC = () => {
                     <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
                       <td className=" px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-6 py-5">
-                        <p className="font-black text-slate-900 truncate text-[12px] leading-tight" title={client.tradeName}>{client.tradeName || '---'}</p>
-                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</p>
+                        <p className="font-black text-slate-900 leading-tight text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
+                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter leading-tight" title={client.legalName}>{client.legalName || '---'}</p>
                       </td>
                       <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
                          {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}

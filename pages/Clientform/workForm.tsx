@@ -53,8 +53,12 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
     const query = formData.clientName?.toLowerCase() || '';
     if (!query || initialData) return [];
     return dbClients.filter(c => 
-      (c.legalName || '').toLowerCase().includes(query) || (c.tradeName || '').toLowerCase().includes(query)
-    ).slice(0, 5);
+      (c.legalName || '').toLowerCase().includes(query) || 
+      (c.tradeName || '').toLowerCase().includes(query) ||
+      (c.gstProfile?.gstin || '').toLowerCase().includes(query) ||
+      (c.pan || '').toLowerCase().includes(query) ||
+      (c.mobile || '').includes(query)
+    ).slice(0, 8);
   }, [formData.clientName, dbClients, initialData]);
 
   if (!isOpen) return null;
@@ -108,15 +112,29 @@ const WorkForm: React.FC<WorkFormProps> = ({ isOpen, onClose, onSave, initialDat
               <input required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none focus:ring-4 focus:ring-indigo-50 uppercase"
                 value={formData.clientName} onChange={e => { setFormData({...formData, clientName: e.target.value}); setIsDropdownOpen(true); }} placeholder="Search..." />
               {isDropdownOpen && suggestions.length > 0 && (
-                <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
-                  {suggestions.map(c => (
-                    <button key={c.id} type="button" onClick={() => { setFormData({ ...formData, clientName: c.tradeName || c.legalName, mobile: c.mobile }); setIsDropdownOpen(false); }}
-                      className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
-                    >
-                      <p className="text-xs font-black text-slate-900 truncate">{c.tradeName || c.legalName}</p>
-                      <p className="text-[9px] text-slate-400 font-bold uppercase">Mobile: {c.mobile}</p>
-                    </button>
-                  ))}
+                <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto">
+                  {suggestions.map(c => {
+                    const trade = c.tradeName || c.legalName;
+                    const legal = c.legalName;
+                    const displayName = c.tradeName && c.legalName && c.tradeName !== c.legalName 
+                      ? `${c.tradeName} (${c.legalName})` 
+                      : trade;
+                    return (
+                      <button key={c.id} type="button" 
+                        onClick={() => { 
+                          setFormData({ ...formData, clientName: displayName, mobile: c.mobile }); 
+                          setIsDropdownOpen(false); 
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 border-b border-slate-50 last:border-0"
+                      >
+                        <p className="text-xs font-black text-slate-900 truncate">{trade}</p>
+                        <p className="text-[10px] font-bold text-slate-600 truncate">Legal Name: {legal || '---'}</p>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">
+                          GSTIN: {c.gstProfile?.gstin || 'N/A'} • PAN: {c.pan || 'N/A'} • Mob: {c.mobile || 'N/A'}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

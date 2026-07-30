@@ -303,22 +303,22 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       )}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center justify-between sm:justify-start gap-4 md:gap-6 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
           <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Online/NEFT</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Online').length}</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+            <p className="text-lg md:text-xl font-black text-emerald-600 leading-none">{filteredPayments.length}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Online</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Online').length}</p>
+          </div>
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">UPI</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'UPI').length}</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'UPI').length}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cash</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Cash').length}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cheque</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Cheque').length}</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Cash').length}</p>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useIsFetching } from '@tanstack/react-query';
 import { User, ActiveView } from '../types';
 import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
@@ -21,6 +22,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
   const { logout } = useAuth();
   const { canInstall, triggerInstall } = usePWA();
   const { settings, updateSettings } = useTheme();
+  const isFetching = useIsFetching();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
 
@@ -48,10 +50,26 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         <div className="h-6 md:h-8 w-[1px] bg-slate-200 hidden sm:block shrink-0" />
 
         <div className="min-w-0 flex-1">
-           <div className="flex items-center gap-1.5 md:gap-2 overflow-hidden min-w-0">
+           <div className="flex items-center gap-1.5 md:gap-2.5 overflow-hidden min-w-0">
              <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
              <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
-             <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight shrink-0">Clientify</span>
+             <div className="flex items-center gap-1.5 shrink-0">
+               <img 
+                 src="/icon.png" 
+                 alt="Logo" 
+                 className="h-6 w-6 md:h-7 md:w-7 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" 
+                 onError={(e) => {
+                   const target = e.target as HTMLImageElement;
+                   if (!target.dataset.triedIcon) {
+                     target.dataset.triedIcon = 'true';
+                     target.src = '/icon.svg';
+                   } else {
+                     target.style.display = 'none';
+                   }
+                 }}
+               />
+               <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
+             </div>
            </div>
            <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
@@ -70,6 +88,28 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
              App
           </button>
+        )}
+        {isFetching > 0 && (
+          <div className="flex items-center gap-2 rounded-full bg-indigo-50/90 border border-indigo-200/90 px-3 py-1.5 shadow-xs animate-in fade-in duration-300">
+            <div className="relative flex items-center justify-center shrink-0">
+              <div className="absolute -inset-1 rounded-full bg-indigo-500/30 blur-xs animate-pulse" />
+              <img 
+                src="/icon.png" 
+                alt="Fetching..." 
+                className="relative h-5 w-5 rounded-full object-cover border border-indigo-300 animate-pulse"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.dataset.triedIcon) {
+                    target.dataset.triedIcon = 'true';
+                    target.src = '/icon.svg';
+                  } else {
+                    target.style.display = 'none';
+                  }
+                }}
+              />
+            </div>
+            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider animate-pulse hidden sm:inline">Syncing...</span>
+          </div>
         )}
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />

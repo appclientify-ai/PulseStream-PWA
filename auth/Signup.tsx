@@ -53,10 +53,22 @@ const Signup: React.FC<SignupProps> = ({ onSwitch, onBackToHome }) => {
         </button>
 
         <div className="mb-12 text-center pt-8">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-100">
-            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2-2h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011-1v5m-4 0h4" />
-            </svg>
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600 shadow-xl shadow-indigo-100 overflow-hidden relative border border-indigo-100 shrink-0">
+            <img 
+              src="/icon.png" 
+              alt="Clientify Logo" 
+              className="relative z-10 h-full w-full object-cover rounded-full" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.triedIcon) {
+                  target.dataset.triedIcon = 'true';
+                  target.src = '/icon.svg';
+                } else {
+                  target.style.display = 'none';
+                }
+              }}
+            />
+            <span className="absolute z-0 text-2xl font-black text-white">C</span>
           </div>
           <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase leading-none">Register Firm</h2>
           <p className="mt-3 text-sm font-bold text-slate-400 uppercase tracking-widest">Initialize Professional Onboarding</p>

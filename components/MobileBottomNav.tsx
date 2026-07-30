@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActiveView } from '../types';
+import { useNavCounts } from '../hooks/useNavCounts';
 
 interface MobileBottomNavProps {
   activeView: ActiveView;
@@ -12,6 +13,9 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onViewChange,
   onToggleSidebar
 }) => {
+  const { data: navCounts = {} } = useNavCounts();
+  const totalCount = Object.values(navCounts).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+
   const isDashboard = activeView === 'dashboard';
   const isGst = activeView.startsWith('gst') || activeView.startsWith('compliance-m') || activeView.startsWith('compliance-q') || activeView.startsWith('compliance-c');
   const isIt = activeView.startsWith('it') || activeView.startsWith('compliance-itr') || activeView.startsWith('compliance-tax');
@@ -69,11 +73,18 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
       <button
         onClick={onToggleSidebar}
-        className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-slate-500 hover:text-slate-900 transition-all"
+        className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-slate-500 hover:text-slate-900 transition-all relative"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
+        <div className="relative">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          {totalCount > 0 && (
+            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-black text-white ring-2 ring-white shadow-xs">
+              {totalCount > 99 ? '99+' : totalCount}
+            </span>
+          )}
+        </div>
         <span className="text-[9px] font-black uppercase tracking-tight mt-1">Menu</span>
       </button>
     </div>

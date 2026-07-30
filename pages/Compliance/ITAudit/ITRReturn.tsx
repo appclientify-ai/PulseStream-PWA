@@ -313,14 +313,14 @@ const ITRReturn: React.FC = () => {
                 return (
                   <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.legalName}>
-                       <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.legalName || '---'}</div>
+                    <td className=" px-4 py-[2px]" title={client.legalName}>
+                       <div className="font-black text-slate-900 leading-tight text-[12px]">{client.legalName || '---'}</div>
                        {client.tradeName && (
-                         <div className="font-bold text-[9px] text-indigo-600 truncate leading-tight" title={client.tradeName}>
+                         <div className="font-bold text-[9px] text-indigo-600 leading-tight" title={client.tradeName}>
                            Trade: {client.tradeName}
                          </div>
                        )}
-                       <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.itProfile?.fatherName || '---'}>
+                       <div className="font-bold text-[9px] text-slate-500 leading-tight" title={client.itProfile?.fatherName || '---'}>
                          {client.itProfile?.fatherName ? `Father: ${client.itProfile.fatherName}` : '---'}
                        </div>
                     </td>

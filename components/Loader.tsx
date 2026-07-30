@@ -3,22 +3,40 @@ import React from 'react';
 
 const Loader: React.FC = () => {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50 animate-in fade-in duration-500">
-      <div className="relative h-32 w-32">
-        <div className="absolute inset-0 animate-ping rounded-full bg-indigo-200/50"></div>
-        <div className="relative flex h-full w-full items-center justify-center rounded-[2.5rem] bg-white border-4 border-slate-100 border-t-indigo-600 animate-spin shadow-2xl shadow-indigo-100">
-           <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-indigo-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50/90 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="relative flex items-center justify-center">
+        {/* Soft glowing ambient aura behind logo */}
+        <div className="absolute -inset-6 rounded-full bg-indigo-500/25 blur-2xl animate-pulse" />
+        <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 opacity-50 blur-lg animate-pulse" />
+        
+        {/* Logo container with light dimming and glowing pulse */}
+        <div className="relative flex h-24 w-24 md:h-28 md:w-28 items-center justify-center rounded-full bg-white p-2.5 border border-indigo-100 shadow-2xl shadow-indigo-500/20 overflow-hidden">
+          <img 
+            src="/icon.png" 
+            alt="Clientify Logo" 
+            className="h-full w-full rounded-full object-cover animate-pulse transition-opacity duration-1000"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (!target.dataset.triedIcon) {
+                target.dataset.triedIcon = 'true';
+                target.src = '/icon.svg';
+              } else {
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = `<span class="text-3xl font-black text-indigo-600 animate-pulse">C</span>`;
+                }
+              }
+            }}
+          />
         </div>
       </div>
-      <div className="mt-12 text-center">
-        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Syncing Clientify</h3>
-        <p className="mt-3 text-sm font-black uppercase tracking-[0.3em] text-slate-400">Authenticating Credentials</p>
-        <div className="mt-6 flex justify-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:-0.3s]" />
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:-0.15s]" />
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-bounce" />
+      <div className="mt-8 text-center">
+        <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Syncing Clientify</h3>
+        <p className="mt-2 text-xs md:text-sm font-black uppercase tracking-[0.3em] text-indigo-600/80 animate-pulse">Authenticating & Loading Data</p>
+        <div className="mt-4 flex justify-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:-0.3s]" />
+          <div className="h-2 w-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]" />
+          <div className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce" />
         </div>
       </div>
     </div>

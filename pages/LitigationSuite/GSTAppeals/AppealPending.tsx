@@ -8,7 +8,6 @@ import NoticeForm from '../../Clientform/NoticeForm';
 import LitigationDetailModal from '../../../components/LitigationDetailModal';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { toast } from 'sonner';
-import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
@@ -180,7 +179,6 @@ const AppealPending: React.FC = () => {
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
         <button onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
           Record Appeal

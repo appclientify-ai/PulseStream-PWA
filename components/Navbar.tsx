@@ -20,6 +20,23 @@ const Navbar: React.FC<NavbarProps> = ({ onLoginClick, onHomeClick }) => {
     <nav className="fixed top-0 left-0 right-0 z-[100] w-full bg-white/70 px-6 md:px-12 py-6 backdrop-blur-2xl border-b border-slate-100">
       <div className="max-w-7xl mx-auto flex w-full items-center justify-between">
         <button onClick={onHomeClick} className="flex items-center gap-3.5 group text-left">
+          <div className="relative flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-indigo-600 text-white font-black overflow-hidden border border-slate-200 shadow-sm shrink-0 transition-transform group-hover:scale-105">
+            <img 
+              src="/icon.png" 
+              alt="Clientify Logo" 
+              className="relative z-10 h-full w-full object-cover rounded-full" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.triedIcon) {
+                  target.dataset.triedIcon = 'true';
+                  target.src = '/icon.svg';
+                } else {
+                  target.style.display = 'none';
+                }
+              }}
+            />
+            <span className="absolute z-0 text-lg font-black text-white">C</span>
+          </div>
           <div className="text-left">
             <span className="text-2xl font-black text-slate-900 tracking-tighter block leading-none">Client<span className="text-indigo-600">ify</span></span>
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mt-1 block">Legal Tech Vault</span>

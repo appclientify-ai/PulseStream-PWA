@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ActiveView } from '../types';
+import { useNavCounts } from '../hooks/useNavCounts';
 
 export interface NavItem {
   id: ActiveView | string;
@@ -129,6 +130,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
+  const { data: navCounts = {} } = useNavCounts();
+
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
   const toggleGroup = (id: string) => {
@@ -174,6 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
     const isActive = activeView === item.id || item.children?.some(c => c.id === activeView);
     const hasChildren = !!item.children?.length;
     const isExpanded = expandedGroups[item.id] ?? isActive;
+    const count = navCounts[item.id];
 
     return (
       <div key={item.id} className="w-full relative px-2 space-y-1">
@@ -181,21 +185,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           onClick={(e) => handleItemClick(e, item)}
           onMouseEnter={(e) => handleMouseEnter(e, item)}
           onMouseLeave={() => { hoverTimeout.current = setTimeout(() => setHoveredItem(null), 150); }}
-          className={`flex w-full items-center gap-3.5 rounded-2xl transition-all duration-300 group/item ${
+          className={`flex w-full items-center gap-3.5 rounded-2xl transition-all duration-300 group/item relative ${
             isCollapsed ? 'justify-center py-3.5' : 'px-4 py-3'
           } ${
             isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
           {item.icon && (
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 shrink-0 transition-transform group-hover/item:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover/item:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {item.icon}
-            </svg>
+            <div className="relative shrink-0 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 shrink-0 transition-transform group-hover/item:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover/item:text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {item.icon}
+              </svg>
+              {isCollapsed && count !== undefined && count > 0 && (
+                <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-black text-white ring-2 ring-white shadow-xs">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </div>
           )}
           
           {!isCollapsed && (
             <span className="flex-1 text-left truncate font-black text-[11px] uppercase tracking-wider">
               {item.label}
+            </span>
+          )}
+
+          {!isCollapsed && count !== undefined && count > 0 && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 transition-colors ${
+              isActive 
+                ? 'bg-white text-indigo-700 shadow-xs' 
+                : 'bg-indigo-100 text-indigo-700 group-hover/item:bg-indigo-200'
+            }`}>
+              {count}
             </span>
           )}
           
@@ -246,14 +267,46 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         }`}
       >
         <div className={`flex h-16 md:h-20 items-center border-b border-slate-100 shrink-0 ${isCollapsed ? 'justify-center' : 'px-6 justify-between'}`}>
-           {!isCollapsed && (
+           {!isCollapsed ? (
              <div className="flex items-center gap-3 animate-in fade-in duration-500">
+               <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white font-black overflow-hidden border border-slate-200 shadow-xs shrink-0">
+                 <img 
+                   src="/icon.png" 
+                   alt="Clientify Logo" 
+                   className="relative z-10 h-full w-full object-cover rounded-full" 
+                   onError={(e) => {
+                     const target = e.target as HTMLImageElement;
+                     if (!target.dataset.triedIcon) {
+                       target.dataset.triedIcon = 'true';
+                       target.src = '/icon.svg';
+                     } else {
+                       target.style.display = 'none';
+                     }
+                   }}
+                 />
+                 <span className="absolute z-0 text-lg font-black text-white">C</span>
+               </div>
                <span className="text-xl font-black text-slate-900 tracking-tight">Client<span className="text-indigo-600">ify</span></span>
              </div>
-           )}
-           {isCollapsed && (
+           ) : (
              <div className="animate-in fade-in duration-300">
-               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 font-black text-indigo-600 text-lg border border-indigo-100 shadow-sm">C</span>
+               <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-white font-black overflow-hidden border border-slate-200 shadow-xs shrink-0">
+                 <img 
+                   src="/icon.png" 
+                   alt="Clientify Logo" 
+                   className="relative z-10 h-full w-full object-cover rounded-full" 
+                   onError={(e) => {
+                     const target = e.target as HTMLImageElement;
+                     if (!target.dataset.triedIcon) {
+                       target.dataset.triedIcon = 'true';
+                       target.src = '/icon.svg';
+                     } else {
+                       target.style.display = 'none';
+                     }
+                   }}
+                 />
+                 <span className="absolute z-0 text-lg font-black text-white">C</span>
+               </div>
              </div>
            )}
         </div>

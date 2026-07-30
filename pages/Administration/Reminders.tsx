@@ -74,14 +74,14 @@ const Reminders: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center justify-between sm:justify-start gap-4 md:gap-6 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Overdue</p>
-            <p className="text-xl font-black text-red-600 leading-none">{stats.overdue}</p>
+            <p className="text-lg md:text-xl font-black text-red-600 leading-none">{stats.overdue}</p>
           </div>
         </div>
 

@@ -24,6 +24,15 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [newPassVal, setNewPassVal] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const [isEditingEwayPass, setIsEditingEwayPass] = useState(false);
+  const [newEwayPassVal, setNewEwayPassVal] = useState('');
+  const [isSavingEwayPass, setIsSavingEwayPass] = useState(false);
+
+  const [isEditingGstatPass, setIsEditingGstatPass] = useState(false);
+  const [newGstatPassVal, setNewGstatPassVal] = useState('');
+  const [isSavingGstatPass, setIsSavingGstatPass] = useState(false);
+
   const [activePortalType, setActivePortalType] = useState<'gst' | 'eway' | 'gstat' | null>(null);
 
   const queryClient = useQueryClient();
@@ -61,6 +70,62 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
       toast.error("Failed to update password");
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const handleSaveEwayPass = async () => {
+    if (!currentClient) return;
+    if (!newEwayPassVal.trim()) {
+      toast.error("Password cannot be empty");
+      return;
+    }
+    setIsSavingEwayPass(true);
+    try {
+      const updated = {
+        ...currentClient,
+        gstProfile: {
+          ...(currentClient.gstProfile || { gstin: '' }),
+          ewayBillPass: newEwayPassVal.trim()
+        }
+      };
+      await api.saveClient(updated);
+      setLocalClient(updated);
+      setIsEditingEwayPass(false);
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast.success("E-Way Bill Password updated instantly!");
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      toast.error("Failed to update password");
+    } finally {
+      setIsSavingEwayPass(false);
+    }
+  };
+
+  const handleSaveGstatPass = async () => {
+    if (!currentClient) return;
+    if (!newGstatPassVal.trim()) {
+      toast.error("Password cannot be empty");
+      return;
+    }
+    setIsSavingGstatPass(true);
+    try {
+      const updated = {
+        ...currentClient,
+        gstProfile: {
+          ...(currentClient.gstProfile || { gstin: '' }),
+          gstatPass: newGstatPassVal.trim()
+        }
+      };
+      await api.saveClient(updated);
+      setLocalClient(updated);
+      setIsEditingGstatPass(false);
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast.success("GSTAT Password updated instantly!");
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      toast.error("Failed to update password");
+    } finally {
+      setIsSavingGstatPass(false);
     }
   };
 
@@ -179,33 +244,13 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                   <span>🔍 Verify on GST</span>
                 </button>
               )}
-              {gstProf?.username && (
-                <button
-                  onClick={() => handleLogin('gst')}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
-                  title="Open GST Portal login"
-                >
-                  <span>🔐 Portal Login</span>
-                </button>
-              )}
-              {gstProf?.ewayBillId && (
-                <button
-                  onClick={() => handleLogin('eway')}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
-                  title="Open E-Way Bill Portal login"
-                >
-                  <span>🚚 E-Way Login</span>
-                </button>
-              )}
-              {gstProf?.gstatId && (
-                <button
-                  onClick={() => handleLogin('gstat')}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
-                  title="Open GSTAT Portal login"
-                >
-                  <span>⚖️ GSTAT Login</span>
-                </button>
-              )}
+              <button
+                onClick={() => handleLogin('gst')}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white font-black text-[11px] uppercase tracking-wider flex items-center gap-1.5 border border-slate-700 transition-all shrink-0"
+                title="Open Portal Login Utility"
+              >
+                <span>🔐 Portal Login</span>
+              </button>
             </div>
           </div>
         </div>
@@ -518,6 +563,18 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                     <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
                       <span>🚚</span> E-Way Bill Portal
                     </h3>
+                    {!isEditingEwayPass && (
+                      <button
+                        onClick={() => {
+                          setNewEwayPassVal(gstProf?.ewayBillPass || '');
+                          setIsEditingEwayPass(true);
+                        }}
+                        className="text-[10px] font-black text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md transition-all border border-emerald-200"
+                        title="Change E-Way Bill password"
+                      >
+                        ✏️ Instant Change
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-2 bg-white p-3 rounded-xl border border-slate-200 text-xs">
                     <div className="flex justify-between items-center">
@@ -526,16 +583,43 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                       <span className="text-slate-400 font-bold">Password:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900">
-                          {gstProf?.ewayBillPass ? (showEwayPass ? gstProf.ewayBillPass : '••••••••') : '---'}
-                        </span>
-                        {gstProf?.ewayBillPass && (
-                          <button onClick={() => setShowEwayPass(!showEwayPass)} className="text-xs">
-                            {showEwayPass ? '🙈' : '👁️'}
+                      {isEditingEwayPass ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={newEwayPassVal}
+                            onChange={e => setNewEwayPassVal(e.target.value)}
+                            className="px-2 py-1 rounded border border-emerald-300 text-xs font-mono font-bold w-28"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveEwayPass();
+                              if (e.key === 'Escape') setIsEditingEwayPass(false);
+                            }}
+                          />
+                          <button onClick={handleSaveEwayPass} disabled={isSavingEwayPass} className="px-2 py-1 rounded bg-emerald-600 text-white font-black text-[10px]">
+                            {isSavingEwayPass ? '...' : '✓'}
                           </button>
-                        )}
-                      </div>
+                          <button onClick={() => setIsEditingEwayPass(false)} className="px-2 py-1 rounded bg-slate-200 text-slate-600 font-bold text-[10px]">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900">
+                            {gstProf?.ewayBillPass ? (showEwayPass ? gstProf.ewayBillPass : '••••••••') : '---'}
+                          </span>
+                          {gstProf?.ewayBillPass && (
+                            <>
+                              <button onClick={() => setShowEwayPass(!showEwayPass)} className="text-xs">
+                                {showEwayPass ? '🙈' : '👁️'}
+                              </button>
+                              <button onClick={() => copyToClipboard(gstProf.ewayBillPass, 'E-Way Bill Password')} className="text-xs text-slate-400 hover:text-emerald-600">
+                                📋
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -546,6 +630,18 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                     <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
                       <span>⚖️</span> GSTAT Portal
                     </h3>
+                    {!isEditingGstatPass && (
+                      <button
+                        onClick={() => {
+                          setNewGstatPassVal(gstProf?.gstatPass || '');
+                          setIsEditingGstatPass(true);
+                        }}
+                        className="text-[10px] font-black text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md transition-all border border-amber-200"
+                        title="Change GSTAT password"
+                      >
+                        ✏️ Instant Change
+                      </button>
+                    )}
                   </div>
                   <div className="space-y-2 bg-white p-3 rounded-xl border border-slate-200 text-xs">
                     <div className="flex justify-between items-center">
@@ -554,16 +650,43 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-slate-100">
                       <span className="text-slate-400 font-bold">Password:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900">
-                          {gstProf?.gstatPass ? (showGstatPass ? gstProf.gstatPass : '••••••••') : '---'}
-                        </span>
-                        {gstProf?.gstatPass && (
-                          <button onClick={() => setShowGstatPass(!showGstatPass)} className="text-xs">
-                            {showGstatPass ? '🙈' : '👁️'}
+                      {isEditingGstatPass ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={newGstatPassVal}
+                            onChange={e => setNewGstatPassVal(e.target.value)}
+                            className="px-2 py-1 rounded border border-amber-300 text-xs font-mono font-bold w-28"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveGstatPass();
+                              if (e.key === 'Escape') setIsEditingGstatPass(false);
+                            }}
+                          />
+                          <button onClick={handleSaveGstatPass} disabled={isSavingGstatPass} className="px-2 py-1 rounded bg-amber-600 text-white font-black text-[10px]">
+                            {isSavingGstatPass ? '...' : '✓'}
                           </button>
-                        )}
-                      </div>
+                          <button onClick={() => setIsEditingGstatPass(false)} className="px-2 py-1 rounded bg-slate-200 text-slate-600 font-bold text-[10px]">
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900">
+                            {gstProf?.gstatPass ? (showGstatPass ? gstProf.gstatPass : '••••••••') : '---'}
+                          </span>
+                          {gstProf?.gstatPass && (
+                            <>
+                              <button onClick={() => setShowGstatPass(!showGstatPass)} className="text-xs">
+                                {showGstatPass ? '🙈' : '👁️'}
+                              </button>
+                              <button onClick={() => copyToClipboard(gstProf.gstatPass, 'GSTAT Password')} className="text-xs text-slate-400 hover:text-amber-600">
+                                📋
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

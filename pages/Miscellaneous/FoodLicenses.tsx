@@ -117,22 +117,22 @@ const FoodLicenses: React.FC = () => {
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 max-w-full mx-auto w-full overflow-hidden">
       
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
+        <div className="flex items-center justify-between sm:justify-start gap-4 md:gap-6 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
           <div className="text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Portfolio</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Applied</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.pending}</p>
+            <p className="text-lg md:text-xl font-black text-amber-600 leading-none">{stats.pending}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Licenses</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
+            <p className="text-lg md:text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
+          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
             <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Renewal Due</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.renewalDue}</p>
+            <p className="text-lg md:text-xl font-black text-rose-600 leading-none">{stats.renewalDue}</p>
           </div>
         </div>
 
@@ -188,8 +188,8 @@ const FoodLicenses: React.FC = () => {
                     <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[12px]">
                       <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-6 py-5">
-                         <p className="font-black text-slate-900 uppercase truncate" title={rec.clientName}>{rec.clientName}</p>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase truncate mt-0.5">{rec.mobile || 'No Contact'}</p>
+                         <p className="font-black text-slate-900 uppercase leading-snug" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{rec.mobile || 'No Contact'}</p>
                       </td>
                       <td className=" px-6 py-5">
                          <input 
