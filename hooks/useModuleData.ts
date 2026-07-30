@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { calculateRenewalDueDate } from '../dateUtils.ts';
 
 export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
   return useQuery<T>({
@@ -124,9 +125,9 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
           const work = await api.getRemindersMiscWork();
           const mappedWork = work.map((w: any) => ({
             id: w.id,
-            title: w.workType,
-            client: w.clientName,
-            date: w.targetDate,
+            title: w.workType || w.description || 'Misc Work',
+            client: w.clientName || 'Client',
+            date: w.targetDate || w.dueDate || w.startDate || new Date().toISOString(),
             category: 'MISC WORK',
             priority: w.priority || 'Medium',
             status: w.status,
@@ -134,9 +135,29 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
           }));
           return mappedWork.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
         }
-        const [litigation, work] = await Promise.all([
-          api.getRemindersLitigation(),
-          api.getRemindersMiscWork()
+        if (filter === 'Food License' || filter === 'Food License Renewal') {
+          const licenses = await api.getFoodLicenses();
+          const validLicenses = (licenses || []).filter((l: any) => l.expiryDate || l.dueDate);
+          const mappedFood = validLicenses.map((l: any) => {
+            const renewalDue = l.dueDate || (l.expiryDate ? calculateRenewalDueDate(l.expiryDate) : '');
+            return {
+              id: l.id,
+              title: `FSSAI Renewal - ${l.licenseType}${l.licenseNo ? ` (${l.licenseNo})` : ''}`,
+              client: l.clientName || 'Client',
+              date: renewalDue || l.expiryDate || new Date().toISOString(),
+              category: 'FOOD LICENSE',
+              priority: 'High',
+              status: 'Renewal Due',
+              origin: 'food_license',
+              expiryDate: l.expiryDate
+            };
+          });
+          return mappedFood.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
+        }
+        const [litigation, work, licenses] = await Promise.all([
+          api.getRemindersLitigation().catch(() => []),
+          api.getRemindersMiscWork().catch(() => []),
+          api.getFoodLicenses().catch(() => [])
         ]);
         const mappedLit = litigation.map((r: any) => ({
           id: r.id,
@@ -150,15 +171,30 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
         }));
         const mappedWork = work.map((w: any) => ({
           id: w.id,
-          title: w.workType,
-          client: w.clientName,
-          date: w.targetDate,
+          title: w.workType || w.description || 'Misc Work',
+          client: w.clientName || 'Client',
+          date: w.targetDate || w.dueDate || w.startDate || new Date().toISOString(),
           category: 'MISC WORK',
           priority: w.priority || 'Medium',
           status: w.status,
           origin: 'work'
         }));
-        const combined = [...mappedLit, ...mappedWork];
+        const validLicenses = (licenses || []).filter((l: any) => l.expiryDate || l.dueDate);
+        const mappedFood = validLicenses.map((l: any) => {
+          const renewalDue = l.dueDate || (l.expiryDate ? calculateRenewalDueDate(l.expiryDate) : '');
+          return {
+            id: l.id,
+            title: `FSSAI Renewal - ${l.licenseType}${l.licenseNo ? ` (${l.licenseNo})` : ''}`,
+            client: l.clientName || 'Client',
+            date: renewalDue || l.expiryDate || new Date().toISOString(),
+            category: 'FOOD LICENSE',
+            priority: 'High',
+            status: 'Renewal Due',
+            origin: 'food_license',
+            expiryDate: l.expiryDate
+          };
+        });
+        const combined = [...mappedLit, ...mappedWork, ...mappedFood];
         return combined.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
       }
       const items = await api.getItemsByCategory(moduleKey, true);

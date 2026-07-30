@@ -224,11 +224,20 @@ const FoodLicenses: React.FC = () => {
                         </span>
                         {isRenewalDueNow && (
                           <span className="block mt-0.5 text-[8px] font-black text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
-                            Renewal Due
+                            Renewal Due (2 Mo Window)
                           </span>
                         )}
                       </td>
-                      <td className=" px-6 py-5 font-black text-rose-500 uppercase">{formatDate(rec.expiryDate)}</td>
+                      <td className=" px-6 py-5 font-black uppercase">
+                        <span className={rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) ? 'text-red-600 font-black' : 'text-rose-500 font-semibold'}>
+                          {formatDate(rec.expiryDate)}
+                        </span>
+                        {Boolean(rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) && rec.status !== 'Rejected') && (
+                          <span className="block mt-0.5 text-[8px] font-black text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
+                            Expired • Late Fees Apply
+                          </span>
+                        )}
+                      </td>
                       <td className="px-6 py-5 text-right ">
                         <div className="flex items-center justify-end gap-2">
                            <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">

@@ -499,18 +499,20 @@ class ApiService {
     }
   }
 
-  async getRemindersAll(): Promise<{ litigation: LitigationRecord[]; work: MiscWorkRecord[] }> {
+  async getRemindersAll(): Promise<{ litigation: LitigationRecord[]; work: MiscWorkRecord[]; foodLicenses: FoodLicenseRecord[] }> {
     try {
       return await this.get('/items/reminders/all');
     } catch (e) {
       console.warn('Dedicated reminders all endpoint failed, falling back:', e);
-      const [litigation, work] = await Promise.all([
-        this.getLitigationRecords(),
-        this.getMiscWork()
+      const [litigation, work, foodLicenses] = await Promise.all([
+        this.getLitigationRecords().catch(() => []),
+        this.getMiscWork().catch(() => []),
+        this.getFoodLicenses().catch(() => [])
       ]);
       return {
         litigation: litigation.filter(r => r.status === 'Pending'),
-        work: work.filter(r => r.status !== 'Completed')
+        work: work.filter(r => r.status !== 'Completed'),
+        foodLicenses: foodLicenses.filter(l => l.expiryDate || l.dueDate)
       };
     }
   }
@@ -532,6 +534,20 @@ class ApiService {
       console.warn('Dedicated reminders work endpoint failed, falling back:', e);
       const work = await this.getMiscWork();
       return work.filter(r => r.status !== 'Completed');
+    }
+  }
+
+  async getRemindersMiscWork(): Promise<MiscWorkRecord[]> {
+    return this.getRemindersWork();
+  }
+
+  async getRemindersFoodLicenses(): Promise<FoodLicenseRecord[]> {
+    try {
+      return await this.get('/items/reminders/food_licenses');
+    } catch (e) {
+      console.warn('Dedicated reminders food licenses endpoint failed, falling back:', e);
+      const foodLicenses = await this.getFoodLicenses();
+      return foodLicenses.filter(l => l.expiryDate || l.dueDate);
     }
   }
 
