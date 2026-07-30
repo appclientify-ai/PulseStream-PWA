@@ -54,20 +54,6 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
              <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
              <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
              <div className="flex items-center gap-1.5 shrink-0">
-               <img 
-                 src="/icon.png" 
-                 alt="Logo" 
-                 className="h-6 w-6 md:h-7 md:w-7 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" 
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   if (!target.dataset.triedIcon) {
-                     target.dataset.triedIcon = 'true';
-                     target.src = '/icon.svg';
-                   } else {
-                     target.style.display = 'none';
-                   }
-                 }}
-               />
                <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
              </div>
            </div>
@@ -93,20 +79,10 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           <div className="flex items-center gap-2 rounded-full bg-indigo-50/90 border border-indigo-200/90 px-3 py-1.5 shadow-xs animate-in fade-in duration-300">
             <div className="relative flex items-center justify-center shrink-0">
               <div className="absolute -inset-1 rounded-full bg-indigo-500/30 blur-xs animate-pulse" />
-              <img 
-                src="/icon.png" 
-                alt="Fetching..." 
-                className="relative h-5 w-5 rounded-full object-cover border border-indigo-300 animate-pulse"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (!target.dataset.triedIcon) {
-                    target.dataset.triedIcon = 'true';
-                    target.src = '/icon.svg';
-                  } else {
-                    target.style.display = 'none';
-                  }
-                }}
-              />
+              <svg className="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
             </div>
             <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider animate-pulse hidden sm:inline">Syncing...</span>
           </div>
