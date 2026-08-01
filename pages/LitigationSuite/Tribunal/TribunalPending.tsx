@@ -113,7 +113,7 @@ const TribunalPending: React.FC = () => {
     const list = records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             ((r.aioArn || r.oioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
+             ((r.aioArn || r.oioRefNo || r.referenceNo || r.filingNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
     return [...list].sort((a, b) => {
@@ -152,6 +152,7 @@ const TribunalPending: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
@@ -163,7 +164,7 @@ const TribunalPending: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Tribunal Records</td></tr>
+                <tr><td colSpan={11} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Pending Tribunal Records</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const timing = getTribunalTiming(rec.dueDate);
@@ -184,6 +185,15 @@ const TribunalPending: React.FC = () => {
                             </button>
                           )}
                         </div>
+                      </td>
+                      <td className=" px-6 py-5 font-mono font-bold text-slate-800 uppercase">
+                        {rec.filingNo ? (
+                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono">
+                            {rec.filingNo}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">---</span>
+                        )}
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase">{formatDisplayDate(rec.aioDate || rec.oioDate || rec.orderDate || rec.issuedDate)}</td>

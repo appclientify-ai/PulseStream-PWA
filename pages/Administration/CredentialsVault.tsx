@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
 import { PortalCredentialRecord, PortalCategory } from '../../types';
+import { toast } from 'sonner';
 
 interface CredentialsVaultProps {
   onShowMessage?: (msg: { type: 'success' | 'error'; text: string }) => void;
@@ -112,6 +113,26 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleLoginPortal = (item: PortalCredentialRecord) => {
+    const userIdToCopy = item.username || item.identifier || '';
+    if (userIdToCopy) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(userIdToCopy);
+      }
+      const msg = `${item.category || 'Portal'} User ID (${userIdToCopy}) copied! Opening portal...`;
+      toast.success(msg);
+      if (onShowMessage) {
+        onShowMessage({ type: 'success', text: msg });
+      }
+    } else {
+      toast.success('Opening portal...');
+    }
+
+    if (item.portalUrl) {
+      window.open(item.portalUrl, '_blank');
+    }
   };
 
   const handleShareWhatsApp = (item: PortalCredentialRecord) => {
@@ -384,14 +405,14 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                           </p>
                         )}
                         {item.portalUrl && (
-                          <a 
-                            href={item.portalUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[10px] text-indigo-600 hover:underline font-semibold block truncate max-w-[180px] mt-0.5"
+                          <button 
+                            type="button"
+                            onClick={() => handleLoginPortal(item)}
+                            className="text-[10px] text-indigo-600 hover:underline font-semibold block truncate max-w-[180px] mt-0.5 text-left"
+                            title="Copy User ID & Open Portal"
                           >
                             🔗 {item.portalUrl.replace(/^https?:\/\//, '')}
-                          </a>
+                          </button>
                         )}
                       </td>
 
@@ -463,22 +484,21 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                       <td className="py-4 px-4 align-top text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           {item.portalUrl ? (
-                            <a
-                              href={item.portalUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => handleLoginPortal(item)}
                               className={`p-2 rounded-xl text-xs font-black flex items-center gap-1 transition-all shadow-2xs ${
                                 isAppCategory 
                                   ? 'bg-fuchsia-100 hover:bg-fuchsia-700 text-fuchsia-900 hover:text-white border border-fuchsia-200' 
                                   : 'bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 border border-indigo-100'
                               }`}
-                              title={`Open ${item.category} Website / Login`}
+                              title={`Copy User ID (${item.username || item.identifier || 'User'}) & Open ${item.category} Portal`}
                             >
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                               </svg>
                               <span>Login</span>
-                            </a>
+                            </button>
                           ) : null}
 
                           <button

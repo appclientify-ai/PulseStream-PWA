@@ -199,6 +199,7 @@ export interface LitigationRecord {
   category: LitigationCategory;
   status: LitigationStatus;
   referenceNo: string;
+  filingNo?: string;
   section: string;
   taxPeriod?: string;
   issuedDate: string;

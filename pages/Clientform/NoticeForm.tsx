@@ -47,6 +47,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
     taxPeriod: '',
     section: '',
     referenceNo: '',
+    filingNo: '',
     issuedDate: '',
     dueDate: '',
     filedDate: '',
@@ -102,6 +103,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
           ...initialData,
           category: category,
           status: initialData.status || 'Pending',
+          filingNo: initialData.filingNo || '',
           filedDate: initialData.filedDate || '',
           replyReferenceNo: initialData.replyReferenceNo || '',
           orderDate: initialData.orderDate || '',
@@ -116,6 +118,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
         taxPeriod: '',
         section: '',
         referenceNo: '',
+        filingNo: '',
         issuedDate: '',
         dueDate: '',
         filedDate: '',
@@ -493,19 +496,35 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
               </div>
             </div>
 
-            {/* Reference / DIN Number */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                {isHighCourt ? 'Impugned GSTAT Order No / Decision Reference' : isTribunal ? 'Order-In-Appeal (OIA) No / Impugned Order Ref No' : isAppeal ? 'Appeal ARN / Order-In-Original No / APL-01 Ref' : 'Notice Reference No / DIN / Order No'} <span className="text-red-500">*</span>
-              </label>
-              <input
-                required
-                type="text"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
-                placeholder={isHighCourt ? 'e.g. GSTAT-DEL/ORDER/2024/01 or J-123/24' : isTribunal ? 'e.g. OIA-GSTAT-2023-24/105 or APL-01/Ref/789' : isAppeal ? 'e.g. APL-01 ARN / OIO-1234/2023-24' : 'e.g. ZD2703241234567 or DRC-01/2023-24/102'}
-                value={formData.referenceNo || ''}
-                onChange={e => setFormData({ ...formData, referenceNo: e.target.value })}
-              />
+            {/* Reference & Filing Numbers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
+                  {isHighCourt ? 'Impugned GSTAT Order No / Ref' : isTribunal ? 'Order-In-Appeal (OIA) No / Ref' : isAppeal ? 'Appeal ARN / Order No' : 'Notice Reference No / DIN'} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                  placeholder={isHighCourt ? 'e.g. GSTAT-DEL/ORDER/2024/01' : isTribunal ? 'e.g. OIA-GSTAT-2023-24/105' : isAppeal ? 'e.g. APL-01 ARN' : 'e.g. ZD2703241234567'}
+                  value={formData.referenceNo || ''}
+                  onChange={e => setFormData({ ...formData, referenceNo: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block flex items-center justify-between">
+                  <span>Filing No.</span>
+                  {(isTribunal || isHighCourt) && <span className="text-[9px] text-indigo-600 font-bold lowercase">gstat / hc filing no</span>}
+                </label>
+                <input
+                  type="text"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                  placeholder={isHighCourt ? 'e.g. HC/FIL/2024/00192' : isTribunal ? 'e.g. GSTAT/FIL/2024/00812' : 'e.g. FIL-12345'}
+                  value={formData.filingNo || ''}
+                  onChange={e => setFormData({ ...formData, filingNo: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 

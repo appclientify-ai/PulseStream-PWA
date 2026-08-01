@@ -60,7 +60,7 @@ const TribunalDrop: React.FC = () => {
     return records.filter(r => {
       const client = clients.find(c => c.id === r.clientId);
       return (r.clientName || '').toLowerCase().includes(s) || 
-             ((r.aioArn || r.oioRefNo || r.referenceNo || '').toLowerCase().includes(s)) ||
+             ((r.aioArn || r.oioRefNo || r.referenceNo || r.filingNo || '').toLowerCase().includes(s)) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
   }, [records, clients, search]);
@@ -90,6 +90,7 @@ const TribunalDrop: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center">Status</th>
@@ -99,7 +100,7 @@ const TribunalDrop: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Tribunal Relief Records Archived</td></tr>
+                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No Tribunal Relief Records Archived</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
@@ -120,6 +121,15 @@ const TribunalDrop: React.FC = () => {
                             </button>
                           )}
                         </div>
+                      </td>
+                      <td className=" px-6 py-5 font-mono font-bold text-slate-800 uppercase">
+                        {rec.filingNo ? (
+                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono">
+                            {rec.filingNo}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">---</span>
+                        )}
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
                       <td className=" px-6 py-5 font-black text-emerald-600 uppercase">{formatDisplayDate(rec.orderDate || rec.aioDate || rec.oioDate || rec.issuedDate)}</td>

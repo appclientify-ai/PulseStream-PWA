@@ -178,6 +178,17 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
             </div>
 
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Filing No. / Filing Ref</p>
+              <p className="text-sm font-black text-slate-900 font-mono">
+                {record.filingNo ? (
+                  <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-indigo-700">
+                    {record.filingNo}
+                  </span>
+                ) : 'N/A'}
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Section / Statutory Provision</p>
               <p className="text-sm font-black text-slate-900">
                 {record.section ? `Section ${record.section}` : 'N/A'}
