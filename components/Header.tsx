@@ -76,25 +76,22 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
         )}
         {isFetching > 0 && (
-          <div className="flex items-center gap-2.5 rounded-full bg-indigo-50/90 border border-indigo-200/90 px-3 py-1.5 shadow-xs animate-in fade-in duration-300">
-            <div className="relative flex items-center justify-center shrink-0">
-              <div className="absolute -inset-1 rounded-full bg-indigo-500/30 blur-xs animate-pulse" />
-              <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-white p-0.5 border border-indigo-200 shadow-xs overflow-hidden shrink-0">
-                <img 
-                  src="/icon.png" 
-                  alt="Syncing Clientify" 
-                  className="h-full w-full rounded-full object-cover animate-pulse"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (!target.dataset.triedIcon) {
-                      target.dataset.triedIcon = 'true';
-                      target.src = '/icon.svg';
-                    }
-                  }}
-                />
-              </div>
+          <div className="relative flex items-center justify-center shrink-0 p-1" title="Syncing Clientify Data...">
+            <div className="absolute -inset-1 rounded-full bg-indigo-500/40 blur-xs animate-pulse" />
+            <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white p-1 border-2 border-indigo-500 shadow-md shadow-indigo-500/30 overflow-hidden shrink-0">
+              <img 
+                src="/icon.png" 
+                alt="Clientify Sync" 
+                className="h-full w-full rounded-full object-cover animate-pulse"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.dataset.triedIcon) {
+                    target.dataset.triedIcon = 'true';
+                    target.src = '/icon.svg';
+                  }
+                }}
+              />
             </div>
-            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider animate-pulse hidden sm:inline">Syncing...</span>
           </div>
         )}
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">

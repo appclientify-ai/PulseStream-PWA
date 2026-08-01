@@ -506,13 +506,13 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
         <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar">
           {[
             { id: 'ALL', label: 'All Portals' },
+            { id: 'App User Credential', label: '📱 App User Credentials', isApp: true },
             { id: 'GST Portal', label: 'GST Portal' },
             { id: 'Income Tax', label: 'Income Tax' },
             { id: 'GSTAT Portal', label: 'GSTAT Tribunal' },
             { id: 'E-Way Bill / E-Invoice', label: 'E-Way Bill' },
             { id: 'TRACES / TDS', label: 'TRACES / TDS' },
             { id: 'FSSAI / Food', label: 'FSSAI / Food' },
-            { id: 'App User Credential', label: '📱 App User Credentials' },
             { id: 'MCA / ROC V3', label: 'MCA V3 / ROC' },
             { id: 'MSME / Udyam', label: 'MSME / Udyam' },
             { id: 'ICEGATE / Customs', label: 'Customs' },
@@ -521,15 +521,20 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
             { id: 'Other', label: 'Custom / Other' }
           ].map(cat => {
             const isSelected = selectedCategory === cat.id;
+            let btnStyle = 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100';
+            if (isSelected) {
+              btnStyle = cat.isApp 
+                ? 'bg-fuchsia-800 text-white shadow-md shadow-fuchsia-600/30 ring-2 ring-fuchsia-400 font-black' 
+                : 'bg-slate-900 text-white shadow-md font-black';
+            } else if (cat.isApp) {
+              btnStyle = 'bg-fuchsia-50 text-fuchsia-900 border border-fuchsia-200 hover:bg-fuchsia-100 font-black';
+            }
+
             return (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${
-                  isSelected 
-                    ? 'bg-slate-900 text-white shadow-md' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl text-[10px] uppercase tracking-wider whitespace-nowrap transition-all ${btnStyle}`}
               >
                 {cat.label}
               </button>
@@ -549,7 +554,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
             <div className="text-4xl">🔑</div>
             <p className="text-sm font-black text-slate-800 uppercase tracking-tight">No Matching Credentials Found</p>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              {searchQuery ? 'Try adjusting your search criteria or filter.' : 'Click "Add Credential" above to save custom practitioner portal logins, or add clients in Client Hub.'}
+              {searchQuery ? 'Try adjusting your search criteria or filter.' : 'Click "Add Credential" above to save custom practitioner portal logins, software app logins, or add clients in Client Hub.'}
             </p>
           </div>
         ) : (
@@ -557,11 +562,11 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <th className="py-4 px-6">Entity / Client</th>
-                  <th className="py-4 px-4">Portal & ID</th>
-                  <th className="py-4 px-4">Username</th>
-                  <th className="py-4 px-4">Password</th>
-                  <th className="py-4 px-4 text-center">Quick Actions</th>
+                  <th className="py-4 px-6">Entity / Client Name</th>
+                  <th className="py-4 px-4">Portal / App Badge & Link</th>
+                  <th className="py-4 px-4">User ID / Username</th>
+                  <th className="py-4 px-4">Password & Security PIN</th>
+                  <th className="py-4 px-4 text-center">Login / Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -569,36 +574,59 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                   const isVisible = showAllPasswords || visiblePasswords[item.id];
                   const userCopyKey = `user_${item.id}`;
                   const passCopyKey = `pass_${item.id}`;
+                  const isAppCategory = item.category === 'App User Credential';
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/70 transition-all group">
+                    <tr key={item.id} className={`hover:bg-slate-50/70 transition-all group ${isAppCategory ? 'bg-fuchsia-50/20' : ''}`}>
                       
                       {/* Client / Entity */}
                       <td className="py-4 px-6 align-top">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full shrink-0 ${item.isCustom ? 'bg-indigo-600' : 'bg-emerald-500'}`} />
+                          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isAppCategory ? 'bg-fuchsia-600 shadow-xs shadow-fuchsia-500' : item.isCustom ? 'bg-indigo-600' : 'bg-emerald-500'}`} />
                           <p className="font-black text-slate-900 uppercase tracking-tight text-xs">
                             {item.clientName}
                           </p>
                         </div>
                         {item.remarks && (
-                          <p className="text-[10px] text-slate-400 font-medium mt-0.5 max-w-xs truncate">
+                          <p className="text-[10px] text-slate-500 font-medium mt-0.5 max-w-xs truncate">
                             {item.remarks}
                           </p>
                         )}
-                        <span className="inline-block mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
-                          {item.isCustom ? 'Vault Custom' : 'Client Profile Sync'}
+                        <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          isAppCategory 
+                            ? 'bg-fuchsia-100 text-fuchsia-800' 
+                            : item.isCustom ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'
+                        }`}>
+                          {isAppCategory ? '📱 Software / App User Credential' : item.isCustom ? 'Vault Custom' : 'Client Profile Sync'}
                         </span>
                       </td>
 
                       {/* Portal Category & Identifier */}
                       <td className="py-4 px-4 align-top">
-                        <span className="inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
-                          {item.category}
-                        </span>
-                        <p className="font-mono text-xs font-bold text-slate-800 mt-1 uppercase">
-                          {item.identifier}
-                        </p>
+                        {isAppCategory ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-300 shadow-2xs">
+                            <span>📱</span> App User Credential
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            {item.category}
+                          </span>
+                        )}
+                        {item.identifier && (
+                          <p className="font-mono text-xs font-bold text-slate-800 mt-1 uppercase">
+                            {item.identifier}
+                          </p>
+                        )}
+                        {item.portalUrl && (
+                          <a 
+                            href={item.portalUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-indigo-600 hover:underline font-semibold block truncate max-w-[180px] mt-0.5"
+                          >
+                            🔗 {item.portalUrl.replace(/^https?:\/\//, '')}
+                          </a>
+                        )}
                       </td>
 
                       {/* Username */}
@@ -620,7 +648,10 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                           </button>
                         </div>
                         {item.associatedMobile && (
-                          <p className="text-[10px] text-slate-400 font-medium">Mob: {item.associatedMobile}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">Mob: {item.associatedMobile}</p>
+                        )}
+                        {item.associatedEmail && (
+                          <p className="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">{item.associatedEmail}</p>
                         )}
                       </td>
 
@@ -663,26 +694,33 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                       {/* Actions */}
                       <td className="py-4 px-4 align-top text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          {item.portalUrl && (
+                          {item.portalUrl ? (
                             <a
                               href={item.portalUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-2 rounded-xl bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 transition-all text-xs font-bold flex items-center gap-1"
-                              title={`Open ${item.category} Portal`}
+                              className={`p-2 rounded-xl text-xs font-black flex items-center gap-1 transition-all shadow-2xs ${
+                                isAppCategory 
+                                  ? 'bg-fuchsia-100 hover:bg-fuchsia-700 text-fuchsia-900 hover:text-white border border-fuchsia-200' 
+                                  : 'bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 border border-indigo-100'
+                              }`}
+                              title={`Open ${item.category} Website / Login`}
                             >
-                              <span>Launch</span>
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                               </svg>
+                              <span>Login</span>
                             </a>
-                          )}
+                          ) : null}
 
                           <button
                             onClick={() => handleShareWhatsApp(item)}
-                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 transition-all text-xs font-bold flex items-center gap-1"
+                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-all text-xs font-black flex items-center gap-1 shadow-2xs"
                             title="Share Credentials via WhatsApp"
                           >
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                            </svg>
                             <span>Share</span>
                           </button>
 
