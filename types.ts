@@ -249,6 +249,7 @@ export interface FoodLicenseRecord {
   status: FoodLicenseStatus;
   appDate: string;
   licenseNo: string;
+  password?: string;
   expiryDate?: string;
   dueDate?: string;
   remarks?: string;
@@ -293,10 +294,12 @@ export type PortalCategory =
   | 'ICEGATE / Customs' 
   | 'DGFT' 
   | 'PF & ESIC' 
+  | 'App User Credential'
   | 'Other';
 
 export interface PortalCredentialRecord {
   id: string;
+  clientId?: string;
   clientName: string;
   category: PortalCategory;
   identifier: string;

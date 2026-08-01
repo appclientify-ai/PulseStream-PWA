@@ -6,6 +6,7 @@ import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
 import GSTPortalLoginModal from '../../components/GSTPortalLoginModal';
 import GSTViewIcon from '../../components/GSTViewIcon';
+import Loader from '../../components/Loader';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
 
@@ -226,12 +227,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
     setIsEditModalOpen(true);
   };
 
-  if (isLoading) return (
-    <div className="flex-1 flex flex-col items-center justify-center p-20 space-y-4">
-       <div className="h-10 w-10 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin" />
-       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Accessing Secured Vault</p>
-    </div>
-  );
+  if (isLoading) return <Loader />;
 
   return (
     <div className="w-full h-full flex flex-col min-h-0">

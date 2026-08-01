@@ -198,7 +198,7 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Mobile No</label>
               <input 
@@ -219,9 +219,6 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
                 <option value="Central License">Central License</option>
               </select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">Application Status</label>
               <select required className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold outline-none text-slate-900"
@@ -234,10 +231,23 @@ const FoodLicensesForm: React.FC<FoodLicensesFormProps> = ({ isOpen, onClose, on
                 <option value="Rejected">Rejected</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">License No</label>
-              <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-black uppercase font-mono tracking-widest outline-none"
-                value={formData.licenseNo} onChange={e => setFormData({...formData, licenseNo: e.target.value})} placeholder="FSSAI NO" />
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">FSSAI License No / ID</label>
+              <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-black uppercase font-mono tracking-widest outline-none text-emerald-600"
+                value={formData.licenseNo || ''} onChange={e => setFormData({...formData, licenseNo: e.target.value})} placeholder="FSSAI License No or Application ID" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block ml-1">FSSAI Portal Password</label>
+              <input 
+                type="text" 
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-mono font-bold outline-none text-slate-900"
+                value={formData.password || ''} 
+                onChange={e => setFormData({...formData, password: e.target.value})} 
+                placeholder="Password created while applying" 
+              />
             </div>
           </div>
 

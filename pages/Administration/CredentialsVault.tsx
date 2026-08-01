@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
-import { Client, PortalCredentialRecord, PortalCategory } from '../../types';
+import { Client, PortalCredentialRecord, PortalCategory, FoodLicenseRecord } from '../../types';
 
 interface CredentialsVaultProps {
   onShowMessage?: (msg: { type: 'success' | 'error'; text: string }) => void;
@@ -27,21 +27,23 @@ interface CombinedCredentialItem {
 const PORTAL_URL_MAP: Record<string, string> = {
   'GST Portal': 'https://www.gst.gov.in',
   'Income Tax': 'https://eportal.incometax.gov.in',
-  'GSTAT Portal': 'https://www.gstat.gov.in',
+  'GSTAT Portal': 'https://efiling.gstat.gov.in/mainPage.drt',
   'E-Way Bill / E-Invoice': 'https://ewaybillgst.gov.in',
   'TRACES / TDS': 'https://contents.tdscpc.gov.in',
-  'FSSAI / Food': 'https://foscos.fssai.gov.in',
+  'FSSAI / Food': 'https://foscos.fssai.gov.in/',
   'MSME / Udyam': 'https://udyamregistration.gov.in',
   'MCA / ROC V3': 'https://contents.mca.gov.in',
   'ICEGATE / Customs': 'https://www.icegate.gov.in',
   'DGFT': 'https://www.dgft.gov.in',
   'PF & ESIC': 'https://unifiedportal-mem.epfindia.gov.in',
+  'App User Credential': '',
   'Other': ''
 };
 
 export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessage }) => {
   const [customCreds, setCustomCreds] = useState<PortalCredentialRecord[]>([]);
   const [dbClients, setDbClients] = useState<Client[]>([]);
+  const [foodLicenses, setFoodLicenses] = useState<FoodLicenseRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -73,12 +75,14 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [credsData, clientsData] = await Promise.all([
+      const [credsData, clientsData, foodData] = await Promise.all([
         api.getPortalCredentials(true),
-        api.getClients(true)
+        api.getClients(true),
+        api.getFoodLicenses(true)
       ]);
       setCustomCreds(credsData || []);
       setDbClients(clientsData || []);
+      setFoodLicenses(foodData || []);
     } catch (err: any) {
       console.error('Failed to load portal credentials:', err);
       if (onShowMessage) onShowMessage({ type: 'error', text: 'Failed to load credentials vault.' });
@@ -216,8 +220,26 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
       }
     });
 
+    // 3. Derive credentials from Food Licenses (FSSAI)
+    foodLicenses.forEach(food => {
+      if (food.licenseNo || food.password) {
+        list.push({
+          id: `food_lic_${food.id}`,
+          isCustom: false,
+          clientName: food.tradeName || food.legalName || food.clientName || 'Food License Client',
+          category: 'FSSAI / Food',
+          portalUrl: PORTAL_URL_MAP['FSSAI / Food'],
+          identifier: food.licenseNo || 'Awaiting Issue',
+          username: food.licenseNo || food.mobile || 'FSSAI User',
+          password: food.password || '',
+          associatedMobile: food.mobile,
+          remarks: `Type: ${food.licenseType} • Status: ${food.status}`
+        });
+      }
+    });
+
     return list;
-  }, [customCreds, dbClients]);
+  }, [customCreds, dbClients, foodLicenses]);
 
   // Filtered List
   const filteredCredentials = useMemo(() => {
@@ -326,14 +348,82 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
 
     setIsSaving(true);
     try {
+      // 1. Save vault credential record
       await api.savePortalCredential({
         ...formData,
         id: editingCred?.id
       });
+
+      // 2. If linked to an existing Client, update client's profile sync automatically
+      if (formData.clientId) {
+        const client = dbClients.find(c => c.id === formData.clientId);
+        if (client) {
+          let updated = false;
+          const updatedClient = { ...client };
+
+          if (formData.category === 'GST Portal') {
+            updatedClient.gstProfile = {
+              ...(updatedClient.gstProfile || {}),
+              username: formData.username,
+              password: formData.password || ''
+            };
+            if (formData.identifier) updatedClient.gstProfile.gstin = formData.identifier;
+            updated = true;
+          } else if (formData.category === 'E-Way Bill / E-Invoice') {
+            updatedClient.gstProfile = {
+              ...(updatedClient.gstProfile || {}),
+              ewayUsername: formData.username,
+              ewayPassword: formData.password || ''
+            };
+            if (formData.identifier && !updatedClient.gstProfile.gstin) updatedClient.gstProfile.gstin = formData.identifier;
+            updated = true;
+          } else if (formData.category === 'GSTAT Portal') {
+            updatedClient.gstProfile = {
+              ...(updatedClient.gstProfile || {}),
+              gstatUsername: formData.username,
+              gstatPassword: formData.password || ''
+            };
+            if (formData.identifier && !updatedClient.gstProfile.gstin) updatedClient.gstProfile.gstin = formData.identifier;
+            updated = true;
+          } else if (formData.category === 'Income Tax') {
+            updatedClient.itProfile = {
+              ...(updatedClient.itProfile || {}),
+              username: formData.username,
+              password: formData.password || ''
+            };
+            if (formData.identifier) updatedClient.itProfile.pan = formData.identifier;
+            updated = true;
+          }
+
+          if (updated) {
+            await api.saveClient(updatedClient);
+          }
+        }
+      }
+
+      // 3. If category is FSSAI / Food, sync with food license record
+      if (formData.category === 'FSSAI / Food' && (formData.password || formData.identifier)) {
+        const targetName = (formData.clientName || '').toLowerCase();
+        const food = foodLicenses.find(f => 
+          (f.tradeName && f.tradeName.toLowerCase() === targetName) ||
+          (f.legalName && f.legalName.toLowerCase() === targetName) ||
+          (f.clientName && f.clientName.toLowerCase() === targetName) ||
+          (formData.identifier && f.licenseNo === formData.identifier)
+        );
+        if (food) {
+          await api.saveFoodLicense({
+            ...food,
+            licenseNo: formData.identifier || food.licenseNo,
+            password: formData.password || food.password
+          });
+        }
+      }
+
       setIsModalOpen(false);
-      if (onShowMessage) onShowMessage({ type: 'success', text: editingCred ? 'Credential updated.' : 'New portal credential saved to vault.' });
+      if (onShowMessage) onShowMessage({ type: 'success', text: editingCred ? 'Credential updated & client profile synchronized.' : 'New portal credential saved to vault & linked.' });
       loadData();
     } catch (err: any) {
+      console.error('Save credential error:', err);
       if (onShowMessage) onShowMessage({ type: 'error', text: 'Save failed.' });
     } finally {
       setIsSaving(false);
@@ -422,6 +512,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
             { id: 'E-Way Bill / E-Invoice', label: 'E-Way Bill' },
             { id: 'TRACES / TDS', label: 'TRACES / TDS' },
             { id: 'FSSAI / Food', label: 'FSSAI / Food' },
+            { id: 'App User Credential', label: '📱 App User Credentials' },
             { id: 'MCA / ROC V3', label: 'MCA V3 / ROC' },
             { id: 'MSME / Udyam', label: 'MSME / Udyam' },
             { id: 'ICEGATE / Customs', label: 'Customs' },
@@ -655,6 +746,81 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
 
             <div className="p-8 space-y-5 overflow-y-auto max-h-[75vh]">
               
+              {/* Select Existing Client Link */}
+              <div>
+                <label className="text-[10px] font-black uppercase text-indigo-600 tracking-widest block mb-1.5 ml-1 flex items-center justify-between">
+                  <span>🔍 Pick Existing Client to Link (Auto-Fill & Sync)</span>
+                  <span className="text-[9px] text-slate-400 font-normal lowercase">Optional</span>
+                </label>
+                <select
+                  value={formData.clientId || ''}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    if (!selectedId) {
+                      setFormData(prev => ({ ...prev, clientId: undefined }));
+                      return;
+                    }
+                    const client = dbClients.find(c => c.id === selectedId);
+                    if (client) {
+                      const cName = client.tradeName || client.legalName || 'Client';
+                      let identifier = formData.identifier || '';
+                      let username = formData.username || '';
+                      let password = formData.password || '';
+
+                      const currentCat = formData.category || 'GST Portal';
+
+                      if (currentCat === 'GST Portal') {
+                        identifier = client.gstProfile?.gstin || identifier;
+                        username = client.gstProfile?.username || username;
+                        password = client.gstProfile?.password || password;
+                      } else if (currentCat === 'E-Way Bill / E-Invoice') {
+                        identifier = client.gstProfile?.gstin || identifier;
+                        username = client.gstProfile?.ewayUsername || username;
+                        password = client.gstProfile?.ewayPassword || password;
+                      } else if (currentCat === 'GSTAT Portal') {
+                        identifier = client.gstProfile?.gstin || identifier;
+                        username = client.gstProfile?.gstatUsername || username;
+                        password = client.gstProfile?.gstatPassword || password;
+                      } else if (currentCat === 'Income Tax') {
+                        identifier = client.itProfile?.pan || identifier;
+                        username = client.itProfile?.username || client.itProfile?.pan || username;
+                        password = client.itProfile?.password || password;
+                      } else if (currentCat === 'FSSAI / Food') {
+                        const food = foodLicenses.find(f => 
+                          (f.tradeName && f.tradeName.toLowerCase() === cName.toLowerCase()) ||
+                          (f.legalName && f.legalName.toLowerCase() === (client.legalName || '').toLowerCase()) ||
+                          (f.clientName && f.clientName.toLowerCase() === cName.toLowerCase())
+                        );
+                        if (food) {
+                          identifier = food.licenseNo || identifier;
+                          username = food.licenseNo || food.mobile || username;
+                          password = food.password || password;
+                        }
+                      }
+
+                      setFormData(prev => ({
+                        ...prev,
+                        clientId: client.id,
+                        clientName: cName,
+                        identifier: identifier,
+                        username: username,
+                        password: password,
+                        associatedMobile: client.mobile || prev.associatedMobile,
+                        associatedEmail: client.email || prev.associatedEmail
+                      }));
+                    }
+                  }}
+                  className="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
+                >
+                  <option value="">-- Custom / Firm Master Credential (No Client Link) --</option>
+                  {dbClients.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.tradeName || c.legalName} {c.gstProfile?.gstin ? `(GSTIN: ${c.gstProfile.gstin})` : c.itProfile?.pan ? `(PAN: ${c.itProfile.pan})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Category */}
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
@@ -675,10 +841,11 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 >
                   <option value="GST Portal">GST Portal (www.gst.gov.in)</option>
                   <option value="Income Tax">Income Tax Portal (eportal.incometax.gov.in)</option>
-                  <option value="GSTAT Portal">GSTAT Appellate Tribunal (www.gstat.gov.in)</option>
+                  <option value="GSTAT Portal">GSTAT Appellate Tribunal (efiling.gstat.gov.in)</option>
                   <option value="E-Way Bill / E-Invoice">E-Way Bill & E-Invoice (ewaybillgst.gov.in)</option>
                   <option value="TRACES / TDS">TRACES / TDS Portal (contents.tdscpc.gov.in)</option>
                   <option value="FSSAI / Food">FSSAI / Food License (foscos.fssai.gov.in)</option>
+                  <option value="App User Credential">📱 App & Software User Credentials (Firm/Software Apps)</option>
                   <option value="MCA / ROC V3">MCA / ROC V3 (contents.mca.gov.in)</option>
                   <option value="MSME / Udyam">MSME / Udyam (udyamregistration.gov.in)</option>
                   <option value="ICEGATE / Customs">ICEGATE / Customs (www.icegate.gov.in)</option>

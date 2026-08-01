@@ -78,7 +78,8 @@ const FoodLicenses: React.FC = () => {
       (r.legalName || '').toLowerCase().includes(s) || 
       (r.clientName || '').toLowerCase().includes(s) || 
       (r.mobile && String(r.mobile).includes(s)) || 
-      (r.licenseNo && String(r.licenseNo).toLowerCase().includes(s))
+      (r.licenseNo && String(r.licenseNo).toLowerCase().includes(s)) ||
+      (r.password && String(r.password).toLowerCase().includes(s))
     ).sort((a, b) => (new Date(b.appDate || 0).getTime() || 0) - (new Date(a.appDate || 0).getTime() || 0));
   }, [records, search, statusFilter]);
 
@@ -160,7 +161,8 @@ const FoodLicenses: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">License Number</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">License Number (ID)</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Password</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">License Type</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">
                   <div className="flex justify-center flex-col items-center">
@@ -179,7 +181,7 @@ const FoodLicenses: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.length === 0 ? (
-                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</td></tr>
+                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</td></tr>
               ) : (
                 filteredRecords.map((rec, idx) => {
                   const renewalDueDate = rec.dueDate || calculateRenewalDueDate(rec.expiryDate);
@@ -207,6 +209,15 @@ const FoodLicenses: React.FC = () => {
                            onChange={e => handleInlineUpdate(rec.id, 'licenseNo', e.target.value)}
                            className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-black text-emerald-600 font-mono tracking-widest uppercase transition-all"
                            placeholder="Awaiting Issue..."
+                         />
+                      </td>
+                      <td className=" px-6 py-5">
+                         <input 
+                           type="text" 
+                           value={rec.password || ''} 
+                           onChange={e => handleInlineUpdate(rec.id, 'password', e.target.value)}
+                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-mono font-bold text-slate-800 text-xs transition-all"
+                           placeholder="Set Password..."
                          />
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
