@@ -7,12 +7,13 @@ import { usePWA, DeviceCategory } from '../../hooks/usePWA';
 import Loader from '../../components/Loader';
 import { useTheme } from '../../hooks/useTheme';
 import { FONT_SIZES, FONT_STYLES, THEME_COLORS, THEME_MODES } from '../../services/theme';
+import CredentialsVault from './CredentialsVault';
 
 const Setting: React.FC = () => {
   const queryClient = useQueryClient();
   const { user, token } = useAuth();
   const { canInstall, isStandalone, isIOS, isAndroid, isMac, isWindows, isTablet, isMobile, detectedCategory, triggerInstall } = usePWA();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'app' | 'data'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'credentials' | 'security' | 'appearance' | 'app' | 'data'>('profile');
   const [selectedDevice, setSelectedDevice] = useState<DeviceCategory>('desktop');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -164,6 +165,15 @@ const Setting: React.FC = () => {
       <div className="flex items-center gap-2 bg-white p-2 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0 overflow-x-auto no-scrollbar">
          {[
            { id: 'profile', label: 'Firm' },
+           { 
+             id: 'credentials', 
+             label: (
+               <span className="flex items-center gap-1.5">
+                 <span>🔑</span>
+                 <span>Credentials</span>
+               </span>
+             ) 
+           },
            { id: 'security', label: 'Security' },
            { id: 'appearance', label: 'UI' },
            { 
@@ -195,6 +205,10 @@ const Setting: React.FC = () => {
       )}
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-y-auto no-scrollbar p-6 md:p-10">
+         {activeTab === 'credentials' && (
+           <CredentialsVault onShowMessage={setMessage} />
+         )}
+
          {activeTab === 'profile' && (
            <form onSubmit={handleProfileSave} className="max-w-3xl space-y-8 md:space-y-10 animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10 pb-8 border-b border-slate-100">

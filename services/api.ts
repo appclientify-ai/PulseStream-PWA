@@ -2,7 +2,7 @@ import { API_BASE_URL } from '../constants.ts';
 import { 
   Client, LitigationRecord, InvoiceRecord, PaymentRecord, 
   InvoiceSettings, GSTRegistrationRecord, FoodLicenseRecord, 
-  MSMERegistrationRecord, MiscWorkRecord, User
+  MSMERegistrationRecord, MiscWorkRecord, PortalCredentialRecord, User
 } from '../types.ts';
 
 function getFinancialYear(): string {
@@ -969,6 +969,32 @@ class ApiService {
     } else {
       await this.post('/items', payload);
     }
+  }
+
+  // --- Portal Credentials Vault ---
+  async getPortalCredentials(forceRefresh = false): Promise<PortalCredentialRecord[]> {
+    const items = await this.getItemsByCategory('portal_credentials', forceRefresh);
+    return (items || []).map((item: any) => ({
+      ...item.data,
+      id: item.id || item._id
+    }));
+  }
+
+  async savePortalCredential(cred: Partial<PortalCredentialRecord>): Promise<PortalCredentialRecord> {
+    const payload = { name: 'portal_credentials', data: { ...cred, updatedAt: Date.now() } };
+    let res;
+    if (cred.id) {
+      res = await this.put(`/items/${cred.id}`, payload);
+    } else {
+      res = await this.post('/items', payload);
+    }
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
+    return this.transformItem<PortalCredentialRecord>(res);
+  }
+
+  async deletePortalCredential(id: string): Promise<void> {
+    await this.delete(`/items/${id}`);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('clientify_db_change'));
   }
 
 }

@@ -280,3 +280,33 @@ export interface MiscWorkRecord {
   completionDate?: string;
   remarks?: string;
 }
+
+export type PortalCategory = 
+  | 'GST Portal' 
+  | 'Income Tax' 
+  | 'GSTAT Portal' 
+  | 'E-Way Bill / E-Invoice' 
+  | 'TRACES / TDS' 
+  | 'FSSAI / Food' 
+  | 'MSME / Udyam' 
+  | 'MCA / ROC V3' 
+  | 'ICEGATE / Customs' 
+  | 'DGFT' 
+  | 'PF & ESIC' 
+  | 'Other';
+
+export interface PortalCredentialRecord {
+  id: string;
+  clientName: string;
+  category: PortalCategory;
+  identifier: string;
+  username: string;
+  password?: string;
+  portalUrl?: string;
+  associatedMobile?: string;
+  associatedEmail?: string;
+  securityKey?: string;
+  remarks?: string;
+  updatedAt?: number;
+}
+
