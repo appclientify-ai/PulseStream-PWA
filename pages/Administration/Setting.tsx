@@ -170,7 +170,7 @@ const Setting: React.FC = () => {
              label: (
                <span className="flex items-center gap-1.5">
                  <span>🔑</span>
-                 <span>Credentials</span>
+                 <span>Credential Vault</span>
                </span>
              ) 
            },

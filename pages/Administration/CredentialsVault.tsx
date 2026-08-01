@@ -1,27 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
-import { Client, PortalCredentialRecord, PortalCategory, FoodLicenseRecord } from '../../types';
+import { PortalCredentialRecord, PortalCategory } from '../../types';
 
 interface CredentialsVaultProps {
   onShowMessage?: (msg: { type: 'success' | 'error'; text: string }) => void;
-}
-
-interface CombinedCredentialItem {
-  id: string;
-  isCustom: boolean; // true if created in custom vault, false if auto-derived from Client profile
-  rawRecord?: PortalCredentialRecord;
-  clientId?: string;
-  clientName: string;
-  category: PortalCategory;
-  portalUrl: string;
-  identifier: string; // GSTIN / PAN / TAN / Udyam / User ID
-  username: string;
-  password?: string;
-  associatedMobile?: string;
-  associatedEmail?: string;
-  securityKey?: string;
-  remarks?: string;
-  updatedAt?: number;
 }
 
 const PORTAL_URL_MAP: Record<string, string> = {
@@ -40,10 +22,16 @@ const PORTAL_URL_MAP: Record<string, string> = {
   'Other': ''
 };
 
+const PRACTITIONER_PRESETS = [
+  'CA Authorized Practitioner',
+  'Advocate & Legal Practitioner',
+  'Tax Consultant Firm Master',
+  'Authorized Firm Admin Account',
+  'App & Software User Account'
+];
+
 export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessage }) => {
-  const [customCreds, setCustomCreds] = useState<PortalCredentialRecord[]>([]);
-  const [dbClients, setDbClients] = useState<Client[]>([]);
-  const [foodLicenses, setFoodLicenses] = useState<FoodLicenseRecord[]>([]);
+  const [credsList, setCredsList] = useState<PortalCredentialRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -53,14 +41,14 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   const [showAllPasswords, setShowAllPasswords] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Modal states for adding/editing custom portal credentials
+  // Modal states for adding/editing authorized practitioner credentials
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingCred, setEditingCred] = useState<Partial<PortalCredentialRecord> | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<PortalCredentialRecord>>({
-    clientName: 'Firm Level - Master',
+    clientName: 'CA Authorized Practitioner',
     category: 'GST Portal',
     identifier: '',
     username: '',
@@ -75,17 +63,11 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [credsData, clientsData, foodData] = await Promise.all([
-        api.getPortalCredentials(true),
-        api.getClients(true),
-        api.getFoodLicenses(true)
-      ]);
-      setCustomCreds(credsData || []);
-      setDbClients(clientsData || []);
-      setFoodLicenses(foodData || []);
+      const credsData = await api.getPortalCredentials(true);
+      setCredsList(credsData || []);
     } catch (err: any) {
-      console.error('Failed to load portal credentials:', err);
-      if (onShowMessage) onShowMessage({ type: 'error', text: 'Failed to load credentials vault.' });
+      console.error('Failed to load practitioner credential vault:', err);
+      if (onShowMessage) onShowMessage({ type: 'error', text: 'Failed to load credential vault.' });
     } finally {
       setIsLoading(false);
     }
@@ -98,152 +80,9 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
     return () => window.removeEventListener('clientify_db_change', handleDbChange);
   }, []);
 
-  // Combine custom credentials with client profiles
-  const allCredentialsList = useMemo<CombinedCredentialItem[]>(() => {
-    const list: CombinedCredentialItem[] = [];
-
-    // 1. Add Custom Portal Credentials
-    customCreds.forEach(c => {
-      list.push({
-        id: c.id,
-        isCustom: true,
-        rawRecord: c,
-        clientName: c.clientName || 'Firm Master',
-        category: c.category || 'Other',
-        portalUrl: c.portalUrl || PORTAL_URL_MAP[c.category] || '',
-        identifier: c.identifier || '---',
-        username: c.username || '---',
-        password: c.password || '',
-        associatedMobile: c.associatedMobile || '',
-        associatedEmail: c.associatedEmail || '',
-        securityKey: c.securityKey || '',
-        remarks: c.remarks || '',
-        updatedAt: c.updatedAt
-      });
-    });
-
-    // 2. Derive credentials from Clients
-    dbClients.forEach(client => {
-      const name = client.tradeName || client.legalName || 'Unnamed Client';
-
-      // GST Portal Login
-      if (client.gstProfile?.username || client.gstProfile?.gstin) {
-        list.push({
-          id: `client_gst_${client.id}`,
-          isCustom: false,
-          clientId: client.id,
-          clientName: name,
-          category: 'GST Portal',
-          portalUrl: PORTAL_URL_MAP['GST Portal'],
-          identifier: client.gstProfile.gstin || 'N/A',
-          username: client.gstProfile.username || 'Not Set',
-          password: client.gstProfile.password || '',
-          associatedMobile: client.mobile,
-          associatedEmail: client.email,
-          remarks: `Reg Type: ${client.gstProfile.regType || 'Regular'} • Freq: ${client.gstProfile.filingFreq || 'Monthly'}`
-        });
-      }
-
-      // E-Way Bill Portal Login
-      if (client.gstProfile?.ewayUsername) {
-        list.push({
-          id: `client_ewb_${client.id}`,
-          isCustom: false,
-          clientId: client.id,
-          clientName: `${name} (E-Way Bill)`,
-          category: 'E-Way Bill / E-Invoice',
-          portalUrl: PORTAL_URL_MAP['E-Way Bill / E-Invoice'],
-          identifier: client.gstProfile.gstin || 'N/A',
-          username: client.gstProfile.ewayUsername,
-          password: client.gstProfile.ewayPassword || '',
-          associatedMobile: client.mobile,
-          associatedEmail: client.email,
-          remarks: 'Auto-derived from GST Profile E-Way Bill setup'
-        });
-      }
-
-      // GSTAT Portal Login
-      if (client.gstProfile?.gstatUsername) {
-        list.push({
-          id: `client_gstat_${client.id}`,
-          isCustom: false,
-          clientId: client.id,
-          clientName: `${name} (GSTAT Tribunal)`,
-          category: 'GSTAT Portal',
-          portalUrl: PORTAL_URL_MAP['GSTAT Portal'],
-          identifier: client.gstProfile.gstin || 'N/A',
-          username: client.gstProfile.gstatUsername,
-          password: client.gstProfile.gstatPassword || '',
-          associatedMobile: client.mobile,
-          associatedEmail: client.email,
-          remarks: 'Appellate Tribunal login credentials'
-        });
-      }
-
-      // Income Tax Portal Login
-      if (client.itProfile?.username || client.itProfile?.pan) {
-        list.push({
-          id: `client_it_${client.id}`,
-          isCustom: false,
-          clientId: client.id,
-          clientName: name,
-          category: 'Income Tax',
-          portalUrl: PORTAL_URL_MAP['Income Tax'],
-          identifier: client.itProfile.pan || 'N/A',
-          username: client.itProfile.username || client.itProfile.pan || 'Not Set',
-          password: client.itProfile.password || '',
-          associatedMobile: client.mobile,
-          associatedEmail: client.email,
-          remarks: `Category: ${client.itProfile.category || 'Individual'} • Work: ${client.itProfile.natureOfWork || 'General'}`
-        });
-      }
-
-      // Stakeholder IT Passwords
-      if (client.itProfile?.stakeholders && client.itProfile.stakeholders.length > 0) {
-        client.itProfile.stakeholders.forEach((sh, idx) => {
-          if (sh.itPassword || sh.pan) {
-            list.push({
-              id: `client_sh_${client.id}_${sh.id || idx}`,
-              isCustom: false,
-              clientId: client.id,
-              clientName: `${name} - ${sh.name} (Stakeholder)`,
-              category: 'Income Tax',
-              portalUrl: PORTAL_URL_MAP['Income Tax'],
-              identifier: sh.pan || 'N/A',
-              username: sh.pan || sh.name,
-              password: sh.itPassword || '',
-              associatedMobile: sh.mobile || client.mobile,
-              remarks: `Partner/Director/Proprietor for ${name}`
-            });
-          }
-        });
-      }
-    });
-
-    // 3. Derive credentials from Food Licenses (FSSAI)
-    foodLicenses.forEach(food => {
-      if (food.licenseNo || food.password) {
-        list.push({
-          id: `food_lic_${food.id}`,
-          isCustom: false,
-          clientName: food.tradeName || food.legalName || food.clientName || 'Food License Client',
-          category: 'FSSAI / Food',
-          portalUrl: PORTAL_URL_MAP['FSSAI / Food'],
-          identifier: food.licenseNo || 'Awaiting Issue',
-          username: food.licenseNo || food.mobile || 'FSSAI User',
-          password: food.password || '',
-          associatedMobile: food.mobile,
-          remarks: `Type: ${food.licenseType} • Status: ${food.status}`
-        });
-      }
-    });
-
-    return list;
-  }, [customCreds, dbClients, foodLicenses]);
-
   // Filtered List
   const filteredCredentials = useMemo(() => {
-    let list = allCredentialsList;
+    let list = credsList;
 
     if (selectedCategory !== 'ALL') {
       list = list.filter(item => item.category === selectedCategory);
@@ -252,17 +91,17 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(item => 
-        item.clientName.toLowerCase().includes(q) ||
-        item.identifier.toLowerCase().includes(q) ||
-        item.username.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q) ||
+        (item.clientName && item.clientName.toLowerCase().includes(q)) ||
+        (item.identifier && item.identifier.toLowerCase().includes(q)) ||
+        (item.username && item.username.toLowerCase().includes(q)) ||
+        (item.category && item.category.toLowerCase().includes(q)) ||
         (item.remarks && item.remarks.toLowerCase().includes(q)) ||
         (item.associatedMobile && item.associatedMobile.includes(q))
       );
     }
 
     return list;
-  }, [allCredentialsList, selectedCategory, searchQuery]);
+  }, [credsList, selectedCategory, searchQuery]);
 
   const togglePasswordVisibility = (id: string) => {
     setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
@@ -275,17 +114,17 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const handleShareWhatsApp = (item: CombinedCredentialItem) => {
-    const text = `🔐 *CLIENT CREDENTIALS DETAILED RECORD*\n\n` +
-      `👤 *Entity:* ${item.clientName}\n` +
-      `🌐 *Portal:* ${item.category}\n` +
-      `🆔 *Identifier:* ${item.identifier}\n` +
-      `🔑 *Username:* ${item.username}\n` +
+  const handleShareWhatsApp = (item: PortalCredentialRecord) => {
+    const text = `🔐 *AUTHORIZED PRACTITIONER CREDENTIAL RECORD*\n\n` +
+      `👤 *Practitioner / Entity:* ${item.clientName || 'Authorized Practitioner'}\n` +
+      `🌐 *Portal / App:* ${item.category}\n` +
+      (item.identifier ? `🆔 *Reg No / ID:* ${item.identifier}\n` : '') +
+      `🔑 *User ID / Username:* ${item.username}\n` +
       `🔒 *Password:* ${item.password || '---'}\n` +
-      (item.securityKey ? `🛡️ *Security PIN/Key:* ${item.securityKey}\n` : '') +
+      (item.securityKey ? `🛡️ *Security PIN / Key:* ${item.securityKey}\n` : '') +
       (item.portalUrl ? `🔗 *Login Link:* ${item.portalUrl}\n` : '') +
       (item.remarks ? `📝 *Notes:* ${item.remarks}\n` : '') +
-      `\n_Sent safely via Clientify Vault_`;
+      `\n_Sent safely via Practice Credential Vault_`;
 
     const mobile = item.associatedMobile ? item.associatedMobile.replace(/\D/g, '') : '';
     const encoded = encodeURIComponent(text);
@@ -299,7 +138,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   const handleOpenAddModal = () => {
     setEditingCred(null);
     setFormData({
-      clientName: 'Firm Level - Master',
+      clientName: 'CA Authorized Practitioner',
       category: 'GST Portal',
       identifier: '',
       username: '',
@@ -313,22 +152,14 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = (item: CombinedCredentialItem) => {
-    if (!item.isCustom || !item.rawRecord) {
-      if (onShowMessage) onShowMessage({ type: 'error', text: 'Auto-derived client credentials must be updated directly in the Client Hub.' });
-      return;
-    }
-    setEditingCred(item.rawRecord);
-    setFormData({ ...item.rawRecord });
+  const handleOpenEditModal = (item: PortalCredentialRecord) => {
+    setEditingCred(item);
+    setFormData({ ...item });
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (item: CombinedCredentialItem) => {
-    if (!item.isCustom) {
-      if (onShowMessage) onShowMessage({ type: 'error', text: 'Auto-derived client credentials can only be edited or cleared from the Client Portfolio.' });
-      return;
-    }
-    if (!confirm(`Are you sure you want to delete credential record for "${item.clientName} - ${item.category}"?`)) return;
+  const handleDelete = async (item: PortalCredentialRecord) => {
+    if (!confirm(`Are you sure you want to delete credential record for "${item.clientName || 'Practitioner'} - ${item.category}"?`)) return;
 
     try {
       await api.deletePortalCredential(item.id);
@@ -342,85 +173,22 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   const handleSaveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.clientName || !formData.username) {
-      if (onShowMessage) onShowMessage({ type: 'error', text: 'Client name and username are required.' });
+      if (onShowMessage) onShowMessage({ type: 'error', text: 'Practitioner name and username are required.' });
       return;
     }
 
     setIsSaving(true);
     try {
-      // 1. Save vault credential record
       await api.savePortalCredential({
         ...formData,
         id: editingCred?.id
       });
 
-      // 2. If linked to an existing Client, update client's profile sync automatically
-      if (formData.clientId) {
-        const client = dbClients.find(c => c.id === formData.clientId);
-        if (client) {
-          let updated = false;
-          const updatedClient = { ...client };
-
-          if (formData.category === 'GST Portal') {
-            updatedClient.gstProfile = {
-              ...(updatedClient.gstProfile || {}),
-              username: formData.username,
-              password: formData.password || ''
-            };
-            if (formData.identifier) updatedClient.gstProfile.gstin = formData.identifier;
-            updated = true;
-          } else if (formData.category === 'E-Way Bill / E-Invoice') {
-            updatedClient.gstProfile = {
-              ...(updatedClient.gstProfile || {}),
-              ewayUsername: formData.username,
-              ewayPassword: formData.password || ''
-            };
-            if (formData.identifier && !updatedClient.gstProfile.gstin) updatedClient.gstProfile.gstin = formData.identifier;
-            updated = true;
-          } else if (formData.category === 'GSTAT Portal') {
-            updatedClient.gstProfile = {
-              ...(updatedClient.gstProfile || {}),
-              gstatUsername: formData.username,
-              gstatPassword: formData.password || ''
-            };
-            if (formData.identifier && !updatedClient.gstProfile.gstin) updatedClient.gstProfile.gstin = formData.identifier;
-            updated = true;
-          } else if (formData.category === 'Income Tax') {
-            updatedClient.itProfile = {
-              ...(updatedClient.itProfile || {}),
-              username: formData.username,
-              password: formData.password || ''
-            };
-            if (formData.identifier) updatedClient.itProfile.pan = formData.identifier;
-            updated = true;
-          }
-
-          if (updated) {
-            await api.saveClient(updatedClient);
-          }
-        }
-      }
-
-      // 3. If category is FSSAI / Food, sync with food license record
-      if (formData.category === 'FSSAI / Food' && (formData.password || formData.identifier)) {
-        const targetName = (formData.clientName || '').toLowerCase();
-        const food = foodLicenses.find(f => 
-          (f.tradeName && f.tradeName.toLowerCase() === targetName) ||
-          (f.legalName && f.legalName.toLowerCase() === targetName) ||
-          (f.clientName && f.clientName.toLowerCase() === targetName) ||
-          (formData.identifier && f.licenseNo === formData.identifier)
-        );
-        if (food) {
-          await api.saveFoodLicense({
-            ...food,
-            licenseNo: formData.identifier || food.licenseNo,
-            password: formData.password || food.password
-          });
-        }
-      }
-
       setIsModalOpen(false);
-      if (onShowMessage) onShowMessage({ type: 'success', text: editingCred ? 'Credential updated & client profile synchronized.' : 'New portal credential saved to vault & linked.' });
+      if (onShowMessage) onShowMessage({ 
+        type: 'success', 
+        text: editingCred ? 'Authorized Practitioner credential updated.' : 'New Authorized Practitioner credential saved to vault.' 
+      });
       loadData();
     } catch (err: any) {
       console.error('Save credential error:', err);
@@ -439,17 +207,17 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg text-2xl shrink-0">
-              🔐
+              🔑
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight">Portal Credentials Vault</h3>
-                <span className="bg-indigo-500/30 text-indigo-300 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-400/30">
-                  Practitioner Hub
+                <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight">Authorized Practitioner Credential Vault</h3>
+                <span className="bg-fuchsia-500/30 text-fuchsia-300 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-fuchsia-400/30">
+                  CA & Advocate Hub
                 </span>
               </div>
               <p className="text-slate-400 text-xs font-medium mt-1">
-                Centralized password manager for GST, Income Tax, GSTAT, E-Way Bill, TRACES, MCA/ROC & custom portals.
+                Centralized credential manager for CA, Advocate & Tax Professional authorized practitioner portal logins & software accounts.
               </p>
             </div>
           </div>
@@ -459,7 +227,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
               onClick={() => setShowAllPasswords(!showAllPasswords)}
               className="flex-1 md:flex-initial px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border border-white/10"
             >
-              <span>{showAllPasswords ? '🙈 Hide All Passwords' : '👁️ Reveal All Passwords'}</span>
+              <span>{showAllPasswords ? '🙈 Hide Passwords' : '👁️ Reveal Passwords'}</span>
             </button>
             <button
               onClick={handleOpenAddModal}
@@ -484,7 +252,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search by client, GSTIN, PAN, username, portal..."
+              placeholder="Search by practitioner, membership, username, portal..."
               className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-xs font-bold text-slate-800 placeholder-slate-400 outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
             />
             <svg className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -498,26 +266,24 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
           </div>
 
           <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider shrink-0">
-            Showing <span className="text-slate-900">{filteredCredentials.length}</span> of {allCredentialsList.length} Credentials
+            Showing <span className="text-slate-900">{filteredCredentials.length}</span> Practitioner Credential Records
           </div>
         </div>
 
-        {/* Portal Categories Pills */}
+        {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar">
           {[
-            { id: 'ALL', label: 'All Portals' },
-            { id: 'App User Credential', label: '📱 App User Credentials', isApp: true },
-            { id: 'GST Portal', label: 'GST Portal' },
-            { id: 'Income Tax', label: 'Income Tax' },
+            { id: 'ALL', label: 'All Portals & Apps' },
+            { id: 'App User Credential', label: '📱 App & Software User Credentials', isApp: true },
+            { id: 'GST Portal', label: 'GST Practitioner' },
+            { id: 'Income Tax', label: 'Income Tax ERIC' },
             { id: 'GSTAT Portal', label: 'GSTAT Tribunal' },
-            { id: 'E-Way Bill / E-Invoice', label: 'E-Way Bill' },
             { id: 'TRACES / TDS', label: 'TRACES / TDS' },
-            { id: 'FSSAI / Food', label: 'FSSAI / Food' },
             { id: 'MCA / ROC V3', label: 'MCA V3 / ROC' },
+            { id: 'FSSAI / Food', label: 'FSSAI / Food' },
             { id: 'MSME / Udyam', label: 'MSME / Udyam' },
             { id: 'ICEGATE / Customs', label: 'Customs' },
             { id: 'DGFT', label: 'DGFT' },
-            { id: 'PF & ESIC', label: 'PF & ESIC' },
             { id: 'Other', label: 'Custom / Other' }
           ].map(cat => {
             const isSelected = selectedCategory === cat.id;
@@ -543,18 +309,18 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
         </div>
       </div>
 
-      {/* Main Credentials Table / Cards Grid */}
+      {/* Main Credential Table / Cards Grid */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="p-20 text-center text-slate-400 font-bold animate-pulse text-xs uppercase tracking-widest">
-            Loading Practice Credentials Vault...
+          <div className="p-12 text-center text-xs font-bold text-slate-400">
+            Loading Authorized Practitioner Credential Vault...
           </div>
         ) : filteredCredentials.length === 0 ? (
           <div className="p-16 text-center space-y-3">
             <div className="text-4xl">🔑</div>
-            <p className="text-sm font-black text-slate-800 uppercase tracking-tight">No Matching Credentials Found</p>
+            <p className="text-sm font-black text-slate-800 uppercase tracking-tight">No Matching Practitioner Credential Found</p>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              {searchQuery ? 'Try adjusting your search criteria or filter.' : 'Click "Add Credential" above to save custom practitioner portal logins, software app logins, or add clients in Client Hub.'}
+              {searchQuery ? 'Try adjusting your search criteria or filter.' : 'Click "Add Credential" above to save logins for CA, Advocate, Tax Consultants, or software apps.'}
             </p>
           </div>
         ) : (
@@ -562,7 +328,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <th className="py-4 px-6">Entity / Client Name</th>
+                  <th className="py-4 px-6">Practitioner / Entity Name</th>
                   <th className="py-4 px-4">Portal / App Badge & Link</th>
                   <th className="py-4 px-4">User ID / Username</th>
                   <th className="py-4 px-4">Password & Security PIN</th>
@@ -579,12 +345,12 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                   return (
                     <tr key={item.id} className={`hover:bg-slate-50/70 transition-all group ${isAppCategory ? 'bg-fuchsia-50/20' : ''}`}>
                       
-                      {/* Client / Entity */}
+                      {/* Practitioner / Entity */}
                       <td className="py-4 px-6 align-top">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isAppCategory ? 'bg-fuchsia-600 shadow-xs shadow-fuchsia-500' : item.isCustom ? 'bg-indigo-600' : 'bg-emerald-500'}`} />
+                          <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${isAppCategory ? 'bg-fuchsia-600 shadow-xs shadow-fuchsia-500' : 'bg-indigo-600'}`} />
                           <p className="font-black text-slate-900 uppercase tracking-tight text-xs">
-                            {item.clientName}
+                            {item.clientName || 'Authorized Practitioner'}
                           </p>
                         </div>
                         {item.remarks && (
@@ -595,13 +361,13 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                         <span className={`inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                           isAppCategory 
                             ? 'bg-fuchsia-100 text-fuchsia-800' 
-                            : item.isCustom ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'
+                            : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
                         }`}>
-                          {isAppCategory ? '📱 Software / App User Credential' : item.isCustom ? 'Vault Custom' : 'Client Profile Sync'}
+                          {isAppCategory ? '📱 Software / App User Credential' : '⚖️ Authorized Practitioner Vault'}
                         </span>
                       </td>
 
-                      {/* Portal Category & Identifier */}
+                      {/* Portal & ID */}
                       <td className="py-4 px-4 align-top">
                         {isAppCategory ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-300 shadow-2xs">
@@ -632,14 +398,16 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                       {/* Username */}
                       <td className="py-4 px-4 align-top">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-slate-900">{item.username}</span>
+                          <span className="font-mono font-bold text-slate-900 text-xs">
+                            {item.username}
+                          </span>
                           <button
                             onClick={() => handleCopy(item.username, userCopyKey)}
-                            className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all"
+                            className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
                             title="Copy Username"
                           >
                             {copiedKey === userCopyKey ? (
-                              <span className="text-[9px] font-black text-emerald-600">✓</span>
+                              <span className="text-[9px] font-black text-emerald-600 uppercase">Copied!</span>
                             ) : (
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -657,37 +425,37 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
 
                       {/* Password */}
                       <td className="py-4 px-4 align-top">
-                        {item.password ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-slate-900">
-                              {isVisible ? item.password : '••••••••••••'}
-                            </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-black text-slate-800 text-xs bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 min-w-[100px] text-center">
+                            {isVisible ? (item.password || '---') : '••••••••••••'}
+                          </span>
+                          <button
+                            onClick={() => togglePasswordVisibility(item.id)}
+                            className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
+                            title={isVisible ? 'Hide Password' : 'Show Password'}
+                          >
+                            {isVisible ? '🙈' : '👁️'}
+                          </button>
+                          {item.password && (
                             <button
-                              onClick={() => togglePasswordVisibility(item.id)}
-                              className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all"
-                              title={isVisible ? 'Hide password' : 'Show password'}
-                            >
-                              <span className="text-xs">{isVisible ? '🙈' : '👁️'}</span>
-                            </button>
-                            <button
-                              onClick={() => handleCopy(item.password!, passCopyKey)}
-                              className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-all"
+                              onClick={() => handleCopy(item.password || '', passCopyKey)}
+                              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition-colors"
                               title="Copy Password"
                             >
                               {copiedKey === passCopyKey ? (
-                                <span className="text-[9px] font-black text-emerald-600">✓</span>
+                                <span className="text-[9px] font-black text-emerald-600 uppercase">Copied!</span>
                               ) : (
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
                               )}
                             </button>
-                          </div>
-                        ) : (
-                          <span className="text-slate-300 font-medium text-[11px]">No password stored</span>
-                        )}
+                          )}
+                        </div>
                         {item.securityKey && (
-                          <p className="text-[10px] text-amber-600 font-bold mt-0.5">PIN: {item.securityKey}</p>
+                          <p className="text-[10px] font-mono text-indigo-600 font-bold mt-1">
+                            PIN: {item.securityKey}
+                          </p>
                         )}
                       </td>
 
@@ -716,7 +484,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                           <button
                             onClick={() => handleShareWhatsApp(item)}
                             className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-all text-xs font-black flex items-center gap-1 shadow-2xs"
-                            title="Share Credentials via WhatsApp"
+                            title="Share Credential via WhatsApp"
                           >
                             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z" />
@@ -724,24 +492,20 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                             <span>Share</span>
                           </button>
 
-                          {item.isCustom && (
-                            <>
-                              <button
-                                onClick={() => handleOpenEditModal(item)}
-                                className="p-2 rounded-xl bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-600 transition-all"
-                                title="Edit Credential"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleDelete(item)}
-                                className="p-2 rounded-xl bg-slate-100 hover:bg-rose-600 hover:text-white text-slate-600 transition-all"
-                                title="Delete Credential"
-                              >
-                                🗑️
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={() => handleOpenEditModal(item)}
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all text-xs"
+                            title="Edit Practitioner Credential"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item)}
+                            className="p-2 rounded-xl bg-red-50 hover:bg-red-600 hover:text-white text-red-600 transition-all text-xs font-bold"
+                            title="Delete Credential Record"
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </td>
 
@@ -766,10 +530,10 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 <span className="text-2xl">🔑</span>
                 <div>
                   <h4 className="font-black text-lg uppercase tracking-tight">
-                    {editingCred ? 'Edit Portal Credential' : 'New Portal Credential'}
+                    {editingCred ? 'Edit Authorized Practitioner Credential' : 'Add Authorized Practitioner Credential'}
                   </h4>
-                  <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest">
-                    Store Practitioner or Client Portal Password
+                  <p className="text-fuchsia-300 text-[10px] font-bold uppercase tracking-widest">
+                    Save CA, Advocate, Tax Professional & Software App User Login
                   </p>
                 </div>
               </div>
@@ -784,85 +548,10 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
 
             <div className="p-8 space-y-5 overflow-y-auto max-h-[75vh]">
               
-              {/* Select Existing Client Link */}
-              <div>
-                <label className="text-[10px] font-black uppercase text-indigo-600 tracking-widest block mb-1.5 ml-1 flex items-center justify-between">
-                  <span>🔍 Pick Existing Client to Link (Auto-Fill & Sync)</span>
-                  <span className="text-[9px] text-slate-400 font-normal lowercase">Optional</span>
-                </label>
-                <select
-                  value={formData.clientId || ''}
-                  onChange={e => {
-                    const selectedId = e.target.value;
-                    if (!selectedId) {
-                      setFormData(prev => ({ ...prev, clientId: undefined }));
-                      return;
-                    }
-                    const client = dbClients.find(c => c.id === selectedId);
-                    if (client) {
-                      const cName = client.tradeName || client.legalName || 'Client';
-                      let identifier = formData.identifier || '';
-                      let username = formData.username || '';
-                      let password = formData.password || '';
-
-                      const currentCat = formData.category || 'GST Portal';
-
-                      if (currentCat === 'GST Portal') {
-                        identifier = client.gstProfile?.gstin || identifier;
-                        username = client.gstProfile?.username || username;
-                        password = client.gstProfile?.password || password;
-                      } else if (currentCat === 'E-Way Bill / E-Invoice') {
-                        identifier = client.gstProfile?.gstin || identifier;
-                        username = client.gstProfile?.ewayUsername || username;
-                        password = client.gstProfile?.ewayPassword || password;
-                      } else if (currentCat === 'GSTAT Portal') {
-                        identifier = client.gstProfile?.gstin || identifier;
-                        username = client.gstProfile?.gstatUsername || username;
-                        password = client.gstProfile?.gstatPassword || password;
-                      } else if (currentCat === 'Income Tax') {
-                        identifier = client.itProfile?.pan || identifier;
-                        username = client.itProfile?.username || client.itProfile?.pan || username;
-                        password = client.itProfile?.password || password;
-                      } else if (currentCat === 'FSSAI / Food') {
-                        const food = foodLicenses.find(f => 
-                          (f.tradeName && f.tradeName.toLowerCase() === cName.toLowerCase()) ||
-                          (f.legalName && f.legalName.toLowerCase() === (client.legalName || '').toLowerCase()) ||
-                          (f.clientName && f.clientName.toLowerCase() === cName.toLowerCase())
-                        );
-                        if (food) {
-                          identifier = food.licenseNo || identifier;
-                          username = food.licenseNo || food.mobile || username;
-                          password = food.password || password;
-                        }
-                      }
-
-                      setFormData(prev => ({
-                        ...prev,
-                        clientId: client.id,
-                        clientName: cName,
-                        identifier: identifier,
-                        username: username,
-                        password: password,
-                        associatedMobile: client.mobile || prev.associatedMobile,
-                        associatedEmail: client.email || prev.associatedEmail
-                      }));
-                    }
-                  }}
-                  className="w-full bg-indigo-50/50 border border-indigo-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
-                >
-                  <option value="">-- Custom / Firm Master Credential (No Client Link) --</option>
-                  {dbClients.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.tradeName || c.legalName} {c.gstProfile?.gstin ? `(GSTIN: ${c.gstProfile.gstin})` : c.itProfile?.pan ? `(PAN: ${c.itProfile.pan})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Category */}
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                  Portal Category
+                  Portal / Application Category
                 </label>
                 <select
                   required
@@ -877,48 +566,63 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                   }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
                 >
-                  <option value="GST Portal">GST Portal (www.gst.gov.in)</option>
-                  <option value="Income Tax">Income Tax Portal (eportal.incometax.gov.in)</option>
+                  <option value="App User Credential">📱 App & Software User Credentials (Software Apps / Firm)</option>
+                  <option value="GST Portal">GST Practitioner Portal (www.gst.gov.in)</option>
+                  <option value="Income Tax">Income Tax Portal / ERIC (eportal.incometax.gov.in)</option>
                   <option value="GSTAT Portal">GSTAT Appellate Tribunal (efiling.gstat.gov.in)</option>
                   <option value="E-Way Bill / E-Invoice">E-Way Bill & E-Invoice (ewaybillgst.gov.in)</option>
                   <option value="TRACES / TDS">TRACES / TDS Portal (contents.tdscpc.gov.in)</option>
                   <option value="FSSAI / Food">FSSAI / Food License (foscos.fssai.gov.in)</option>
-                  <option value="App User Credential">📱 App & Software User Credentials (Firm/Software Apps)</option>
-                  <option value="MCA / ROC V3">MCA / ROC V3 (contents.mca.gov.in)</option>
+                  <option value="MCA / ROC V3">MCA / ROC V3 Practitioner (contents.mca.gov.in)</option>
                   <option value="MSME / Udyam">MSME / Udyam (udyamregistration.gov.in)</option>
                   <option value="ICEGATE / Customs">ICEGATE / Customs (www.icegate.gov.in)</option>
                   <option value="DGFT">DGFT Portal (www.dgft.gov.in)</option>
                   <option value="PF & ESIC">PF & ESIC Portal</option>
-                  <option value="Other">Custom / Other Portal</option>
+                  <option value="Other">Custom Website / Other App</option>
                 </select>
               </div>
 
-              {/* Entity / Client Name */}
+              {/* Practitioner / Entity Name */}
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                  Client / Entity Name
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1 flex items-center justify-between">
+                  <span>Practitioner / Entity / Firm Name</span>
+                  <span className="text-[9px] text-indigo-600 lowercase font-bold">CA / Advocate / Firm</span>
                 </label>
                 <input
                   required
                   type="text"
                   value={formData.clientName || ''}
                   onChange={e => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                  placeholder="e.g. Firm Level Master OR Client Name"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs uppercase outline-none focus:ring-4 focus:ring-indigo-100"
+                  placeholder="e.g. CA M. K. Sharma & Co. / Advocate R. V. Patel"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
                 />
+                
+                {/* Preset Chips */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {PRACTITIONER_PRESETS.map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, clientName: preset }))}
+                      className="px-2.5 py-1 rounded-lg text-[9px] font-bold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 transition-colors"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Identifier (GSTIN / PAN / User ID) */}
+                {/* Identifier (Membership No / Reg ID / User Identifier) */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                    Identifier (GSTIN / PAN / User ID)
+                    Practitioner ID / Reg No. / Membership No
                   </label>
                   <input
                     type="text"
                     value={formData.identifier || ''}
                     onChange={e => setFormData(prev => ({ ...prev, identifier: e.target.value.toUpperCase() }))}
-                    placeholder="e.g. 07AAAAA0000A1Z5"
+                    placeholder="e.g. CA-123456 or ADV-8890"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs font-mono outline-none focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
@@ -926,14 +630,14 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 {/* Username */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                    Login Username
+                    Login User ID / Username
                   </label>
                   <input
                     required
                     type="text"
                     value={formData.username || ''}
                     onChange={e => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                    placeholder="Portal User ID / Username"
+                    placeholder="Portal User ID or Username"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
@@ -943,7 +647,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 {/* Password */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                    Portal Password
+                    Login Password
                   </label>
                   <input
                     type="text"
@@ -963,7 +667,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                     type="text"
                     value={formData.securityKey || ''}
                     onChange={e => setFormData(prev => ({ ...prev, securityKey: e.target.value }))}
-                    placeholder="PIN / Security Key"
+                    placeholder="Security PIN / Token PIN"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs font-mono outline-none focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
@@ -972,7 +676,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
               {/* Portal URL */}
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                  Portal Website URL
+                  Portal / Application Website URL
                 </label>
                 <input
                   type="url"
@@ -987,13 +691,13 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 {/* Associated Mobile */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                    Associated Mobile
+                    Associated Mobile for OTP
                   </label>
                   <input
                     type="text"
                     value={formData.associatedMobile || ''}
                     onChange={e => setFormData(prev => ({ ...prev, associatedMobile: e.target.value }))}
-                    placeholder="Mobile No for OTP..."
+                    placeholder="Mobile No..."
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
@@ -1001,7 +705,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
                 {/* Associated Email */}
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                    Associated Email
+                    Associated Email Address
                   </label>
                   <input
                     type="email"
@@ -1016,13 +720,13 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
               {/* Remarks */}
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1.5 ml-1">
-                  Remarks / Internal Notes
+                  Remarks / Practitioner Notes
                 </label>
                 <textarea
                   rows={2}
                   value={formData.remarks || ''}
                   onChange={e => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
-                  placeholder="e.g. Master CA Practitioner Portal login, OTP linked to Mobile XYZ..."
+                  placeholder="e.g. Master CA Practitioner Login, High Court Advocates Portal, Software Admin Password..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-bold text-slate-900 text-xs outline-none focus:ring-4 focus:ring-indigo-100"
                 />
               </div>
@@ -1053,4 +757,5 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
   );
 };
 
+export const CredentialVault = CredentialsVault;
 export default CredentialsVault;
