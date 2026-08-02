@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatDate } from '../../exportUtils';
+import { formatDate, getSectorGroupLabel } from '../../exportUtils';
 import { Client } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
@@ -148,13 +148,13 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
     const groups: Record<string, Client[]> = {};
     (filteredClients || []).forEach(c => {
       if (!c) return;
-      const sector = c.gstProfile?.sector || 'Uncategorized';
+      const sector = getSectorGroupLabel(c);
       if (!groups[sector]) groups[sector] = [];
       groups[sector].push(c);
     });
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-       if (a === 'Uncategorized') return 1;
-       if (b === 'Uncategorized') return -1;
+       if (a.startsWith('Uncategorized')) return 1;
+       if (b.startsWith('Uncategorized')) return -1;
        return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
     });
     return sortedKeys.map(k => ({ 

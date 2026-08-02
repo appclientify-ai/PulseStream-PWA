@@ -12,7 +12,7 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
-import { exportToCSV, printList } from '../../../exportUtils';
+import { exportToCSV, printList, getSectorGroupLabel } from '../../../exportUtils';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
@@ -130,13 +130,13 @@ const GSTR4: React.FC = () => {
   const groupedClients = useMemo(() => {
     const groups: Record<string, typeof filteredClients> = {};
     filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Uncategorized';
+      const sector = getSectorGroupLabel(c);
       if (!groups[sector]) groups[sector] = [];
       groups[sector].push(c);
     });
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-       if (a === 'Uncategorized') return 1;
-       if (b === 'Uncategorized') return -1;
+       if (a.startsWith('Uncategorized')) return 1;
+       if (b.startsWith('Uncategorized')) return -1;
        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
     return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));

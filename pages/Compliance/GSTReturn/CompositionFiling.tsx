@@ -7,7 +7,7 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
-import { exportToCSV, printList } from '../../../exportUtils';
+import { exportToCSV, printList, getSectorGroupLabel } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
@@ -119,13 +119,13 @@ const CompositionFiling: React.FC = () => {
     const groupedClients = useMemo(() => {
     const groups: Record<string, typeof filteredClients> = {};
     filteredClients.forEach(c => {
-      const sector = c.gstProfile?.sector || 'Uncategorized';
+      const sector = getSectorGroupLabel(c);
       if (!groups[sector]) groups[sector] = [];
       groups[sector].push(c);
     });
     const sortedKeys = Object.keys(groups).sort((a, b) => {
-       if (a === 'Uncategorized') return 1;
-       if (b === 'Uncategorized') return -1;
+       if (a.startsWith('Uncategorized')) return 1;
+       if (b.startsWith('Uncategorized')) return -1;
        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
     return sortedKeys.map(k => ({ sector: k, clients: groups[k].sort((c1, c2) => (c1.tradeName || '').localeCompare(c2.tradeName || '')) }));

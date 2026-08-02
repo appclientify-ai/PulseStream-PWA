@@ -53,4 +53,28 @@ export const printList = (title: string, headers: string[], rows: any[][]) => {
 
 import { formatDate } from './dateUtils';
 
+export const getSectorGroupLabel = (c: any): string => {
+  if (!c || !c.gstProfile) return 'Uncategorized';
+  
+  const rawSector = (c.gstProfile.sector || c.gstProfile.range || '').trim();
+  const baseSector = rawSector || 'Uncategorized';
+
+  let jur = c.gstProfile.jurisdictionType;
+  if (!jur) {
+    jur = c.gstProfile.range && !c.gstProfile.sector ? 'Center' : 'State';
+  }
+
+  const jurLabel = jur === 'Center' ? 'Center' : 'State';
+
+  const lower = baseSector.toLowerCase();
+  if (lower.includes('(state)') || lower.includes('(center)')) {
+    return baseSector;
+  }
+  if (lower.endsWith(' state') || lower.endsWith(' center')) {
+    return `${baseSector} (${jurLabel})`;
+  }
+
+  return `${baseSector} (${jurLabel})`;
+};
+
 export { formatDate };
