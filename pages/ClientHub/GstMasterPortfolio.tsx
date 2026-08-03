@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatDate, getSectorGroupLabel } from '../../exportUtils';
+import { formatDate, getSectorGroupLabel, getClientColorTheme } from '../../exportUtils';
 import { Client } from '../../types.ts';
 import { api } from '../../services/api.ts';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';

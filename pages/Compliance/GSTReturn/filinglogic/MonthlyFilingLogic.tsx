@@ -58,7 +58,7 @@ export const parseDateString = (dateStr?: string): Date | null => {
   const str = dateStr.trim();
   
   // Format DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
-  const ddmmyyyyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  const ddmmyyyyMatch = str.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
   if (ddmmyyyyMatch) {
     const day = parseInt(ddmmyyyyMatch[1], 10);
     const month = parseInt(ddmmyyyyMatch[2], 10) - 1;
@@ -68,7 +68,7 @@ export const parseDateString = (dateStr?: string): Date | null => {
   }
 
   // Format YYYY-MM-DD
-  const yyyymmddMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  const yyyymmddMatch = str.match(/^(\d{4})[/.-](\d{1,2})[/.-](\d{1,2})$/);
   if (yyyymmddMatch) {
     const year = parseInt(yyyymmddMatch[1], 10);
     const month = parseInt(yyyymmddMatch[2], 10) - 1;
@@ -101,9 +101,14 @@ export const periodToDate = (fy: string, monthName: string) => {
 export const isClientVisibleInPeriod = (client: Client, selectedYear: string, selectedMonth: string) => {
   if (!client || !client.gstProfile) return false;
   
+  // 1. Client Status Check: Only show active clients in return pages (hide Inactive / Litigation)
+  if (client.status === 'Inactive' || client.status === 'Litigation') {
+    return false;
+  }
+
   const periodDate = periodToDate(selectedYear, selectedMonth);
   
-  // 1. Check Registration Date - Only show from registration month onwards
+  // 2. Check Registration Date - Only show from registration month onwards
   if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
     const parsedReg = parseDateString(client.gstProfile.regDate);
     if (parsedReg) {
@@ -112,7 +117,7 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
     }
   }
 
-  // 2. Check Cancellation / Suspension Date
+  // 3. Check Cancellation / Suspension Date
   const status = client.gstProfile.gstStatus;
   if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
     const parsedCancel = parseDateString(client.gstProfile.cancelDate);
@@ -130,6 +135,12 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
  */
 export const isClientVisibleInFY = (client: Client, fy: string) => {
   if (!client || !client.gstProfile) return false;
+
+  // 1. Client Status Check: Only show active clients in annual return pages (hide Inactive / Litigation)
+  if (client.status === 'Inactive' || client.status === 'Litigation') {
+    return false;
+  }
+
   if (!fy) return true;
 
   const [startYearStr] = fy.split('-');
@@ -139,7 +150,7 @@ export const isClientVisibleInFY = (client: Client, fy: string) => {
   const fyStart = new Date(startYear, 3, 1); // April 1st
   const fyEnd = new Date(startYear + 1, 2, 31, 23, 59, 59); // March 31st
 
-  // 1. Check Registration Date
+  // 2. Check Registration Date
   if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
     const parsedReg = parseDateString(client.gstProfile.regDate);
     if (parsedReg) {
@@ -147,7 +158,7 @@ export const isClientVisibleInFY = (client: Client, fy: string) => {
     }
   }
 
-  // 2. Check Cancellation / Suspension Date
+  // 3. Check Cancellation / Suspension Date
   const status = client.gstProfile.gstStatus;
   if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
     const parsedCancel = parseDateString(client.gstProfile.cancelDate);
