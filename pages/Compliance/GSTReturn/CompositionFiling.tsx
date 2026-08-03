@@ -7,7 +7,7 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
-import { exportToCSV, printList, getSectorGroupLabel } from '../../../exportUtils';
+import { exportToCSV, printList, getSectorGroupLabel, getClientColorTheme } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
@@ -240,15 +240,16 @@ const CompositionFiling: React.FC = () => {
                 const st = getStatus(client.id);
                 const cmp08Status = getStatusLabel(st.cmp08);
                 const isEditingPass = editingPasswordId === client.id;
+                const theme = getClientColorTheme(client);
                 return (
-                  <tr key={client.id} className="hover:bg-indigo-50/10 transition-all group h-[44px] text-[12px]">
+                  <tr key={client.id} className={`transition-all group h-[44px] text-[12px] border-b border-slate-100 ${theme.rowClass}`}>
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] font-black truncate" title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className=" px-4 py-[2px] font-bold text-slate-600 truncate" title={client.legalName}>{client.legalName}</td>
+                    <td className={`px-4 py-[2px] truncate ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className={`px-4 py-[2px] truncate ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</td>
                     <td className=" px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
-                    <td className=" px-4 py-[2px] font-black text-indigo-600 font-mono tracking-widest">
+                    <td className=" px-4 py-[2px]">
                       <div className="flex items-center gap-2">
-                        <span className="truncate">{client.gstProfile?.gstin}</span>
+                        <span className={`truncate ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
                           <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

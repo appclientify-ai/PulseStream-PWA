@@ -519,6 +519,20 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                     />
                   </div>
 
+                  {(formData.gstProfile?.gstStatus === 'Closed' || (formData.gstProfile?.gstStatus as string) === 'Cancelled' || formData.gstProfile?.gstStatus === 'Suspended') && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-rose-600 tracking-wider">
+                        {formData.gstProfile?.gstStatus === 'Suspended' ? 'Suspension Date' : 'Cancellation Date'}
+                      </label>
+                      <input 
+                        type="date" 
+                        className="w-full bg-rose-50/50 border border-rose-200 p-3 rounded-xl font-bold text-xs outline-none uppercase text-rose-700" 
+                        value={formData.gstProfile?.cancelDate || ''} 
+                        onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, cancelDate: e.target.value}})} 
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Jurisdiction Authority</label>
                     <select 

@@ -6,7 +6,7 @@ import { Client } from '../../../types';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
-import { exportToCSV, printList, getSectorGroupLabel } from '../../../exportUtils';
+import { exportToCSV, printList, getSectorGroupLabel, getClientColorTheme } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
 import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
@@ -257,18 +257,19 @@ const MonthlyFiling: React.FC = () => {
                 const st = getStatus(client.id);
                 const r3bStatus = getStatusLabel(st.r3b);
                 const isEditingPass = editingPasswordId === client.id;
+                const theme = getClientColorTheme(client);
                 return (
-                  <tr key={client.id} className="hover:bg-indigo-50/10 transition-all border-b border-slate-50 h-[44px]">
+                  <tr key={client.id} className={`transition-all border-b border-slate-100 h-[44px] ${theme.rowClass}`}>
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
-     <div className="font-black text-slate-900 truncate leading-tight text-[12px]">{client.tradeName || '---'}</div>
-     <div className="font-bold text-[9px] text-slate-500 truncate leading-tight" title={client.legalName}>{client.legalName || '---'}</div>
-   </td>
-   
+                      <div className={`truncate leading-tight text-[12px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
+                      <div className={`text-[9px] truncate leading-tight ${theme.legalNameClass}`} title={client.legalName}>{client.legalName || '---'}</div>
+                    </td>
+    
                     <td className=" px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
-                    <td className=" px-4 py-[2px] font-black font-mono uppercase text-[12px] text-indigo-600">
+                    <td className=" px-4 py-[2px]">
                       <div className="flex items-center gap-2">
-                        <span className="truncate">{client.gstProfile?.gstin}</span>
+                        <span className={`truncate ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
                           <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

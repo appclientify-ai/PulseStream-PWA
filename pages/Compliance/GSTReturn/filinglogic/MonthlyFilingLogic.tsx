@@ -53,19 +53,46 @@ const getDynamicYears = () => {
 export const YEARS = getDynamicYears();
 export const QUARTERS = [...FY_QUARTERS];
 
+export const parseDateString = (dateStr?: string): Date | null => {
+  if (!dateStr || typeof dateStr !== 'string' || !dateStr.trim()) return null;
+  const str = dateStr.trim();
+  
+  // Format DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const ddmmyyyyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const day = parseInt(ddmmyyyyMatch[1], 10);
+    const month = parseInt(ddmmyyyyMatch[2], 10) - 1;
+    const year = parseInt(ddmmyyyyMatch[3], 10);
+    const d = new Date(year, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Format YYYY-MM-DD
+  const yyyymmddMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (yyyymmddMatch) {
+    const year = parseInt(yyyymmddMatch[1], 10);
+    const month = parseInt(yyyymmddMatch[2], 10) - 1;
+    const day = parseInt(yyyymmddMatch[3], 10);
+    const d = new Date(year, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 /**
  * HELPER: Convert FY + Month Name to a comparable Date object (1st of month)
  */
 export const periodToDate = (fy: string, monthName: string) => {
   if (!fy) return new Date();
   const [startYearStr] = fy.split('-');
-  let year = parseInt(startYearStr);
+  let year = parseInt(startYearStr, 10);
   const monthIdx = MONTHS.indexOf(monthName);
-  // If month is Jan/Feb/Mar, it belongs to the second half of the FY (next calendar year)
   if (monthIdx >= 0 && monthIdx <= 2) {
     year += 1;
   }
-  return new Date(year, monthIdx, 1);
+  return new Date(year, monthIdx >= 0 ? monthIdx : 0, 1);
 };
 
 /**
@@ -76,27 +103,24 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
   
   const periodDate = periodToDate(selectedYear, selectedMonth);
   
-  // 1. Check Registration Date - If no date is set, client is always visible
+  // 1. Check Registration Date - Only show from registration month onwards
   if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
-    const regDate = new Date(client.gstProfile.regDate);
-    if (!isNaN(regDate.getTime())) {
-      regDate.setDate(1); // Floor to 1st
-      regDate.setHours(0,0,0,0);
-      if (periodDate < regDate) return false;
+    const parsedReg = parseDateString(client.gstProfile.regDate);
+    if (parsedReg) {
+      const regMonthStart = new Date(parsedReg.getFullYear(), parsedReg.getMonth(), 1);
+      if (periodDate < regMonthStart) return false;
     }
   }
 
-  // 2. Check Cancellation Date
-  if (client.gstProfile.cancelDate && client.gstProfile.gstStatus === 'Closed') {
-    const cancelDate = new Date(client.gstProfile.cancelDate);
-    if (!isNaN(cancelDate.getTime())) {
-      const lastVisibleDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
-      if (periodDate > lastVisibleDate) return false;
+  // 2. Check Cancellation / Suspension Date
+  const status = client.gstProfile.gstStatus;
+  if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
+    const parsedCancel = parseDateString(client.gstProfile.cancelDate);
+    if (parsedCancel) {
+      const cancelMonthStart = new Date(parsedCancel.getFullYear(), parsedCancel.getMonth(), 1);
+      if (periodDate > cancelMonthStart) return false;
     }
   }
-
-  // 3. Status Check (Inactive / Litigation)
-  if (client.status === 'Litigation' || client.status === 'Inactive') return false;
 
   return true;
 };
@@ -106,21 +130,31 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
  */
 export const isClientVisibleInFY = (client: Client, fy: string) => {
   if (!client || !client.gstProfile) return false;
+  if (!fy) return true;
+
   const [startYearStr] = fy.split('-');
-  const fyStart = new Date(parseInt(startYearStr), 3, 1); // April 1st
-  const fyEnd = new Date(parseInt(startYearStr) + 1, 2, 31); // March 31st
+  const startYear = parseInt(startYearStr, 10);
+  if (isNaN(startYear)) return true;
 
+  const fyStart = new Date(startYear, 3, 1); // April 1st
+  const fyEnd = new Date(startYear + 1, 2, 31, 23, 59, 59); // March 31st
+
+  // 1. Check Registration Date
   if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
-    const regDate = new Date(client.gstProfile.regDate);
-    if (regDate > fyEnd) return false;
+    const parsedReg = parseDateString(client.gstProfile.regDate);
+    if (parsedReg) {
+      if (parsedReg > fyEnd) return false;
+    }
   }
 
-  if (client.gstProfile.cancelDate && client.gstProfile.gstStatus === 'Closed') {
-    const cancelDate = new Date(client.gstProfile.cancelDate);
-    if (cancelDate < fyStart) return false;
+  // 2. Check Cancellation / Suspension Date
+  const status = client.gstProfile.gstStatus;
+  if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
+    const parsedCancel = parseDateString(client.gstProfile.cancelDate);
+    if (parsedCancel) {
+      if (parsedCancel < fyStart) return false;
+    }
   }
-
-  if (client.status === 'Litigation' || client.status === 'Inactive') return false;
 
   return true;
 };

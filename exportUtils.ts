@@ -52,6 +52,85 @@ export const printList = (title: string, headers: string[], rows: any[][]) => {
 };
 
 import { formatDate } from './dateUtils';
+import { Client } from './types';
+
+export interface ClientColorTheme {
+  type: 'cancelled' | 'suspended' | 'inactive' | 'litigation' | 'active';
+  rowClass: string;
+  tradeNameClass: string;
+  legalNameClass: string;
+  gstinClass: string;
+  gstStatusBadgeClass: string;
+  clientStatusBadgeClass: string;
+}
+
+export const getClientColorTheme = (c: Client): ClientColorTheme => {
+  const gstStatus = c?.gstProfile?.gstStatus;
+  const clientStatus = c?.status;
+
+  // 1. Cancelled / Closed Registration -> RED
+  if (gstStatus === 'Closed' || gstStatus === 'Cancelled') {
+    return {
+      type: 'cancelled',
+      rowClass: 'bg-red-50/70 hover:bg-red-100/80 border-l-4 border-l-red-500',
+      tradeNameClass: 'text-red-700 font-black',
+      legalNameClass: 'text-red-600 font-bold',
+      gstinClass: 'text-red-700 font-mono font-bold',
+      gstStatusBadgeClass: 'bg-red-100 text-red-700 border border-red-300 font-black',
+      clientStatusBadgeClass: 'bg-red-100 text-red-700 border border-red-300 font-black',
+    };
+  }
+
+  // 2. Suspended Registration -> YELLOW / AMBER
+  if (gstStatus === 'Suspended') {
+    return {
+      type: 'suspended',
+      rowClass: 'bg-amber-50/70 hover:bg-amber-100/80 border-l-4 border-l-amber-500',
+      tradeNameClass: 'text-amber-800 font-black',
+      legalNameClass: 'text-amber-700 font-bold',
+      gstinClass: 'text-amber-800 font-mono font-bold',
+      gstStatusBadgeClass: 'bg-amber-100 text-amber-800 border border-amber-300 font-black',
+      clientStatusBadgeClass: 'bg-amber-100 text-amber-800 border border-amber-300 font-black',
+    };
+  }
+
+  // 3. Client Status = Inactive -> PINK
+  if (clientStatus === 'Inactive') {
+    return {
+      type: 'inactive',
+      rowClass: 'bg-pink-50/70 hover:bg-pink-100/80 border-l-4 border-l-pink-500',
+      tradeNameClass: 'text-pink-700 font-black',
+      legalNameClass: 'text-pink-600 font-bold',
+      gstinClass: 'text-pink-700 font-mono font-bold',
+      gstStatusBadgeClass: 'bg-pink-100 text-pink-700 border border-pink-300 font-black',
+      clientStatusBadgeClass: 'bg-pink-100 text-pink-700 border border-pink-300 font-black',
+    };
+  }
+
+  // 4. Client Status = Litigation -> PURPLE
+  if (clientStatus === 'Litigation') {
+    return {
+      type: 'litigation',
+      rowClass: 'bg-purple-50/70 hover:bg-purple-100/80 border-l-4 border-l-purple-500',
+      tradeNameClass: 'text-purple-800 font-black',
+      legalNameClass: 'text-purple-700 font-bold',
+      gstinClass: 'text-purple-800 font-mono font-bold',
+      gstStatusBadgeClass: 'bg-purple-100 text-purple-800 border border-purple-300 font-black',
+      clientStatusBadgeClass: 'bg-purple-100 text-purple-800 border border-purple-300 font-black',
+    };
+  }
+
+  // 5. Default Active Client
+  return {
+    type: 'active',
+    rowClass: 'hover:bg-indigo-50/20',
+    tradeNameClass: 'text-slate-900 font-black',
+    legalNameClass: 'text-slate-600 font-bold',
+    gstinClass: 'text-indigo-600 font-mono font-bold',
+    gstStatusBadgeClass: 'bg-emerald-50 text-emerald-600 border border-emerald-100 font-black',
+    clientStatusBadgeClass: 'bg-indigo-50 text-indigo-600 border border-indigo-100 font-black',
+  };
+};
 
 export const getSectorGroupLabel = (c: any): string => {
   if (!c || !c.gstProfile) return 'Uncategorized';

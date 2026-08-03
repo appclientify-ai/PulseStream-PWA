@@ -278,55 +278,49 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                   <tr>
                     <td colSpan={8} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
-                  {(sectorClients || []).map((client, idx) => (
-                <tr key={client.id} className="hover:bg-indigo-50/20 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
-                    {(idx + 1).toString().padStart(2, '0')}
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-900 truncate text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <div className="flex items-center gap-2 group/gstin">
-                        <span className={`font-black font-mono tracking-widest uppercase text-[12px] ${client.gstProfile?.gstStatus === 'Closed' ? 'text-red-600' : 'text-indigo-600'}`}>{client.gstProfile?.gstin}</span>
-                        <button 
-                           onClick={() => { 
-                             if (navigator.clipboard) {
-                               navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
-                             }
-                           }}
-                           className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
-                           title="Verify Ident."
-                        >
-                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        </button>
-                     </div>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                       client.gstProfile?.gstStatus === 'Closed' ? 'bg-red-50 text-red-600 border-red-100' : 
-                       client.gstProfile?.gstStatus === 'Suspended' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                       'bg-emerald-50 text-emerald-600 border-emerald-100'
-                     }`}>
-                       {client.gstProfile?.gstStatus || 'Active'}
-                     </span>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                       client.status === 'Active' || client.status === 'Active Filing' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 
-                       client.status === 'Litigation' ? 'bg-rose-50 text-rose-600 border-rose-100 animate-pulse' :
-                       'bg-slate-50 text-slate-400 border-slate-200'
-                     }`}>
-                       {client.status}
-                     </span>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
+                  {(sectorClients || []).map((client, idx) => {
+                    const theme = getClientColorTheme(client);
+                    return (
+                      <tr key={client.id} className={`transition-all group border-b border-slate-100 last:border-0 h-[44px] ${theme.rowClass}`}>
+                        <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <p className={`truncate text-[12px] ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <p className={`truncate text-[12px] ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <div className="flex items-center gap-2 group/gstin">
+                              <span className={`tracking-widest uppercase text-[12px] ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
+                              <button 
+                                 onClick={() => { 
+                                   if (navigator.clipboard) {
+                                     navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
+                                   }
+                                 }}
+                                 className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
+                                 title="Verify Ident."
+                              >
+                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                              </button>
+                           </div>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.gstStatusBadgeClass}`}>
+                             {client.gstProfile?.gstStatus === 'Closed' ? 'Cancelled' : (client.gstProfile?.gstStatus || 'Active')}
+                           </span>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px]">
+                           <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.clientStatusBadgeClass}`}>
+                             {client.status}
+                           </span>
+                        </td>
+                        <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
                      <div className="flex items-center justify-end gap-1">
                         <GSTViewIcon 
                           client={client}
@@ -344,7 +338,8 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                      </div>
                   </td>
                 </tr>
-                  ))}
+                    );
+                  })}
                 </React.Fragment>
               )))}
           </tbody>
