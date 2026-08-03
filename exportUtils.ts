@@ -94,16 +94,16 @@ export const getClientColorTheme = (c: Client): ClientColorTheme => {
     };
   }
 
-  // 3. Client Status = Inactive -> PINK
+  // 3. Client Status = Inactive -> ORANGE
   if (clientStatus === 'Inactive') {
     return {
       type: 'inactive',
-      rowClass: 'bg-pink-50/70 hover:bg-pink-100/80 border-l-4 border-l-pink-500',
-      tradeNameClass: 'text-pink-700 font-black',
-      legalNameClass: 'text-pink-600 font-bold',
-      gstinClass: 'text-pink-700 font-mono font-bold',
-      gstStatusBadgeClass: 'bg-pink-100 text-pink-700 border border-pink-300 font-black',
-      clientStatusBadgeClass: 'bg-pink-100 text-pink-700 border border-pink-300 font-black',
+      rowClass: 'bg-orange-50/70 hover:bg-orange-100/80 border-l-4 border-l-orange-500',
+      tradeNameClass: 'text-orange-800 font-black',
+      legalNameClass: 'text-orange-700 font-bold',
+      gstinClass: 'text-orange-800 font-mono font-bold',
+      gstStatusBadgeClass: 'bg-orange-100 text-orange-800 border border-orange-300 font-black',
+      clientStatusBadgeClass: 'bg-orange-100 text-orange-800 border border-orange-300 font-black',
     };
   }
 
