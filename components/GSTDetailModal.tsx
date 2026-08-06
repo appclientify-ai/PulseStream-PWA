@@ -509,6 +509,14 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
                   Registered {getStakeholderLabel(gstProf?.constitution)} Details
                 </h3>
+                {onEdit && (
+                  <button
+                    onClick={() => { onClose(); onEdit(currentClient); }}
+                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200 transition-all flex items-center gap-1.5"
+                  >
+                    <span>✏️ Edit {getStakeholderLabel(gstProf?.constitution)} Details</span>
+                  </button>
+                )}
               </div>
 
               {gstProf?.stakeholders && gstProf.stakeholders.length > 0 ? (
@@ -543,8 +551,16 @@ const GSTDetailModal: React.FC<GSTDetailModalProps> = ({ isOpen, onClose, client
                   ))}
                 </div>
               ) : (
-                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs font-medium">
-                  No individual stakeholders documented for this business entity.
+                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs font-medium space-y-3">
+                  <p>No individual {getStakeholderLabel(gstProf?.constitution).toLowerCase()}s documented for this business entity.</p>
+                  {onEdit && (
+                    <button
+                      onClick={() => { onClose(); onEdit(currentClient); }}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase transition-all shadow-sm"
+                    >
+                      + Add {getStakeholderLabel(gstProf?.constitution)} Details
+                    </button>
+                  )}
                 </div>
               )}
             </div>

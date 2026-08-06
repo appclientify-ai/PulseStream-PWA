@@ -16,6 +16,8 @@ const FoodLicenses: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<FoodLicenseRecord | null>(null);
   const [activeStatusRowId, setActiveStatusRowId] = useState<string | null>(null);
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [tempPassword, setTempPassword] = useState<string>('');
 
   const { data: records = [], isLoading } = useModuleData<FoodLicenseRecord[]>('food_licenses');
 
@@ -202,23 +204,119 @@ const FoodLicenses: React.FC = () => {
                            Mob: {rec.mobile || 'No Contact'}
                          </p>
                       </td>
-                      <td className=" px-6 py-5">
-                         <input 
-                           type="text" 
-                           value={rec.licenseNo || ''} 
-                           onChange={e => handleInlineUpdate(rec.id, 'licenseNo', e.target.value)}
-                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-black text-emerald-600 font-mono tracking-widest uppercase transition-all"
-                           placeholder="Awaiting Issue..."
-                         />
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`font-mono font-black text-xs tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60' : 'text-slate-400 italic font-normal text-xs'}`}>
+                            {rec.licenseNo || 'Awaiting Issue...'}
+                          </span>
+                          {rec.licenseNo && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(rec.licenseNo || '');
+                                toast.success('License No copied!');
+                              }}
+                              className="text-slate-400 hover:text-emerald-600 p-1 rounded-md hover:bg-emerald-50 transition-colors shrink-0"
+                              title="Copy License Number"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 012-2v-8a2 2 0 01-2-2h-8a2 2 0 01-2 2v8a2 2 0 012 2z" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </td>
-                      <td className=" px-6 py-5">
-                         <input 
-                           type="text" 
-                           value={rec.password || ''} 
-                           onChange={e => handleInlineUpdate(rec.id, 'password', e.target.value)}
-                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-emerald-50 rounded-lg px-2 py-1.5 font-mono font-bold text-slate-800 text-xs transition-all"
-                           placeholder="Set Password..."
-                         />
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          {editingPasswordId === rec.id ? (
+                            <div className="flex items-center gap-1">
+                              <input 
+                                type="text" 
+                                value={tempPassword} 
+                                onChange={e => setTempPassword(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    handleInlineUpdate(rec.id, 'password', tempPassword);
+                                    setEditingPasswordId(null);
+                                    toast.success("Password updated!");
+                                  } else if (e.key === 'Escape') {
+                                    setEditingPasswordId(null);
+                                  }
+                                }}
+                                autoFocus
+                                className="bg-white border border-emerald-300 focus:ring-2 focus:ring-emerald-400 rounded-lg px-2 py-1 font-mono font-bold text-slate-800 text-xs outline-none w-32 shadow-xs"
+                                placeholder="Password..."
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleInlineUpdate(rec.id, 'password', tempPassword);
+                                  setEditingPasswordId(null);
+                                  toast.success("Password updated!");
+                                }}
+                                className="p-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                                title="Save Password"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingPasswordId(null)}
+                                className="p-1 bg-slate-200 text-slate-600 rounded-md hover:bg-slate-300 transition-colors"
+                                title="Cancel"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-slate-800 text-xs">
+                                {rec.password || <span className="text-slate-300 italic font-normal text-xs">Not Set</span>}
+                              </span>
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPasswordId(rec.id);
+                                  setTempPassword(rec.password || '');
+                                }}
+                                className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-indigo-50 transition-colors shrink-0"
+                                title="Edit Password"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (rec.licenseNo) {
+                                    navigator.clipboard.writeText(rec.licenseNo);
+                                    toast.success("License No / User ID copied! Opening FoSCoS portal...");
+                                  } else if (rec.password) {
+                                    navigator.clipboard.writeText(rec.password);
+                                    toast.success("Password copied! Opening FoSCoS portal...");
+                                  } else {
+                                    toast.info("Opening FoSCoS Portal...");
+                                  }
+                                  window.open('https://foscos.fssai.gov.in/public/', '_blank');
+                                }}
+                                className="text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 p-1.5 rounded-lg transition-all flex items-center gap-1 shrink-0 text-[10px] font-black uppercase shadow-xs"
+                                title="Direct Login to FoSCoS Portal (https://foscos.fssai.gov.in/public/)"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                </svg>
+                                <span>Login</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
                       <td className=" px-6 py-5 text-center">

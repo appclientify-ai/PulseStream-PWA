@@ -51,9 +51,9 @@ export const useCompositionFilingLogic = (
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialData]);
 
-  const toggleStatus = useCallback((clientId: string) => {
-    // Calculate new value outside of state setter to prevent multi-triggering in React StrictMode
-    const periodData = allData[periodKey] || {};
+  const toggleStatus = useCallback((clientId: string, customPeriod?: string) => {
+    const targetPeriodKey = customPeriod || periodKey;
+    const periodData = allData[targetPeriodKey] || {};
     const clientData = periodData[clientId] || { cmp08: 'Pending' };
     
     const currentLabel = getStatusLabel(clientData.cmp08);
@@ -64,33 +64,35 @@ export const useCompositionFilingLogic = (
 
     // Optimistically update local state
     setAllData(prev => {
-      const pData = { ...(prev[periodKey] || {}) };
+      const pData = { ...(prev[targetPeriodKey] || {}) };
       const cData = { ...(pData[clientId] || { cmp08: 'Pending' }) };
       cData.cmp08 = newVal;
       pData[clientId] = cData;
-      return { ...prev, [periodKey]: pData };
+      return { ...prev, [targetPeriodKey]: pData };
     });
 
     // Make API request without duplicate socket emit
-    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.cmp08`]: newVal })
+    api.patchAppData(STORAGE_KEY, { [`data.${targetPeriodKey}.${clientId}.cmp08`]: newVal })
       .catch(err => {
         console.error('Failed to save composition data', err);
       });
   }, [periodKey, allData]);
 
-  const getStatus = useCallback((clientId: string): FilingStatus => {
-    return (allData[periodKey] || {})[clientId] || { cmp08: false };
+  const getStatus = useCallback((clientId: string, customPeriod?: string): FilingStatus => {
+    const targetPeriodKey = customPeriod || periodKey;
+    return (allData[targetPeriodKey] || {})[clientId] || { cmp08: false };
   }, [allData, periodKey]);
 
-  const updateRemark = useCallback((clientId: string, val: string) => {
+  const updateRemark = useCallback((clientId: string, val: string, customPeriod?: string) => {
+    const targetPeriodKey = customPeriod || periodKey;
     setAllData(prev => {
-      const pData = { ...(prev[periodKey] || {}) };
+      const pData = { ...(prev[targetPeriodKey] || {}) };
       const cData = { ...(pData[clientId] || { cmp08: false }), remark: val };
       pData[clientId] = cData;
-      return { ...prev, [periodKey]: pData };
+      return { ...prev, [targetPeriodKey]: pData };
     });
 
-    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.remark`]: val })
+    api.patchAppData(STORAGE_KEY, { [`data.${targetPeriodKey}.${clientId}.remark`]: val })
       .catch(err => console.error('Failed to save composition remark', err));
   }, [periodKey]);
 

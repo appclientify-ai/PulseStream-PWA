@@ -47,6 +47,7 @@ export interface Stakeholder {
   name: string;
   mobile: string;
   pan: string;
+  email?: string;
   itPassword?: string;
   address?: string;
 }

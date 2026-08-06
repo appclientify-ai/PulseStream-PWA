@@ -11,7 +11,9 @@ import { exportToCSV, printList, getSectorGroupLabel, getClientColorTheme } from
 import { TableFilter } from '../../../components/TableFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
-import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
+import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod, isClientVisibleInFY, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
+
+const QUARTER_SELECT_OPTIONS = ['All Quarters', ...QUARTERS];
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
@@ -82,25 +84,30 @@ const CompositionFiling: React.FC = () => {
     setSelectedClient(client);
   };
 
+  const isAllQuartersMode = selectedQuarter === 'All Quarters';
+
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
     let list = clients.filter(c => 
-      isClientVisibleInPeriod(c, selectedYear, quarterEndMonth) &&
+      (isAllQuartersMode ? isClientVisibleInFY(c, selectedYear) : isClientVisibleInPeriod(c, selectedYear, quarterEndMonth)) &&
       ((c.legalName || '').toLowerCase().includes(s) || 
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-    if (cmp08Filter !== 'All') {
+    if (!isAllQuartersMode && cmp08Filter !== 'All') {
       list = list.filter(c => getStatusLabel(getStatus(c.id).cmp08) === cmp08Filter);
     }
     return list;
-  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, getStatus]);
+  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, getStatus, isAllQuartersMode]);
 
   const stats = useMemo(() => {
+    if (isAllQuartersMode) {
+      return { total: filteredClients.length, cmp08: 0, cmp08Challan: 0 };
+    }
     const cmp08Filed = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Filed').length;
     const cmp08Challan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Challan').length;
     return { total: filteredClients.length, cmp08: cmp08Filed, cmp08Challan };
-  }, [filteredClients, getStatus]);
+  }, [filteredClients, getStatus, isAllQuartersMode]);
   
   const handleRefreshClients = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['composition_filing_page_data'] });
@@ -132,31 +139,59 @@ const CompositionFiling: React.FC = () => {
   }, [filteredClients]);
 
   const handleExportCSV = () => {
-    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
-    const rows = filteredClients.map((client, index) => [
-      (index + 1).toString().padStart(2, '0'),
-      client.tradeName,
-      client.mobile,
-      client.gstProfile?.gstin,
-      getStatusLabel(getStatus(client.id).cmp08),
-      client.gstProfile?.username,
-      client.gstProfile?.password
-    ]);
-    exportToCSV(headers, rows, `Composition_Filing_${selectedQuarter}_${selectedYear}.csv`);
+    if (isAllQuartersMode) {
+      const headers = ['S.No.', 'Trade Name', 'Legal Name', 'Mobile No.', 'GSTIN', ...QUARTERS.map(q => `CMP-08 ${q}`), 'User ID', 'Password'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.legalName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        ...QUARTERS.map(q => getStatusLabel(getStatus(client.id, `${selectedYear}_${q}`).cmp08)),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      exportToCSV(headers, rows, `Composition_Filing_AllQuarters_${selectedYear}.csv`);
+    } else {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        getStatusLabel(getStatus(client.id).cmp08),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      exportToCSV(headers, rows, `Composition_Filing_${selectedQuarter}_${selectedYear}.csv`);
+    }
   };
 
   const handlePrint = () => {
-    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
-    const rows = filteredClients.map((client, index) => [
-      (index + 1).toString().padStart(2, '0'),
-      client.tradeName,
-      client.mobile,
-      client.gstProfile?.gstin,
-      getStatusLabel(getStatus(client.id).cmp08),
-      client.gstProfile?.username,
-      client.gstProfile?.password
-    ]);
-    printList(`Composition Filing - ${selectedQuarter} ${selectedYear}`, headers, rows);
+    if (isAllQuartersMode) {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', ...QUARTERS.map(q => q.slice(0, 2)), 'User ID'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        ...QUARTERS.map(q => getStatusLabel(getStatus(client.id, `${selectedYear}_${q}`).cmp08)),
+        client.gstProfile?.username
+      ]);
+      printList(`Composition Filing All Quarters - ${selectedYear}`, headers, rows);
+    } else {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'CMP-08 Status', 'User ID', 'Password', 'Remark'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        getStatusLabel(getStatus(client.id).cmp08),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      printList(`Composition Filing - ${selectedQuarter} ${selectedYear}`, headers, rows);
+    }
   };
 
   if (isLoading) return <Loader />;
@@ -168,8 +203,12 @@ const CompositionFiling: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Quarter Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Challan: <strong className="font-black text-amber-900">{stats.cmp08Challan}</strong></span>
-          <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Filed: <strong className="font-black text-emerald-900">{stats.cmp08}</strong></span>
+          {!isAllQuartersMode && (
+            <>
+              <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Challan: <strong className="font-black text-amber-900">{stats.cmp08Challan}</strong></span>
+              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Filed: <strong className="font-black text-emerald-900">{stats.cmp08}</strong></span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
           {cmp08DueDate && <span>CMP-08 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(cmp08DueDate)}</strong></span>}
@@ -182,14 +221,23 @@ const CompositionFiling: React.FC = () => {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Quarter Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">CMP-08 Challan</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.cmp08Challan}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">CMP-08 Filed {cmp08DueDate && `(Due: ${formatISOToDDMMYYYY(cmp08DueDate)})`}</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.cmp08}</p>
-          </div>
+          {!isAllQuartersMode ? (
+            <>
+              <div className="text-center border-l border-slate-100 pl-6">
+                <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">CMP-08 Challan</p>
+                <p className="text-xl font-black text-amber-600 leading-none">{stats.cmp08Challan}</p>
+              </div>
+              <div className="text-center border-l border-slate-100 pl-6">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">CMP-08 Filed {cmp08DueDate && `(Due: ${formatISOToDDMMYYYY(cmp08DueDate)})`}</p>
+                <p className="text-xl font-black text-emerald-600 leading-none">{stats.cmp08}</p>
+              </div>
+            </>
+          ) : (
+            <div className="text-center border-l border-slate-100 pl-6">
+              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Full Year View</p>
+              <p className="text-xs font-bold text-slate-500">All 4 Quarters Summary</p>
+            </div>
+          )}
         </div>
         <div className="flex-1 relative group w-full">
           <input type="text" placeholder="Search composition client..." value={search} onChange={e => setSearch(e.target.value)}
@@ -204,7 +252,7 @@ const CompositionFiling: React.FC = () => {
              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{QUARTERS.map(q => <option key={q} value={q}>{q}</option>)}</select>
+          <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{QUARTER_SELECT_OPTIONS.map(q => <option key={q} value={q}>{q}</option>)}</select>
         </div>
       </div>
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -213,20 +261,32 @@ const CompositionFiling: React.FC = () => {
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[12px]">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Trade Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Legal Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[150px]">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[150px]">Legal Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Mobile No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">GSTIN</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
-                   <div className="flex justify-center flex-col items-center">
-                     <TableFilter label="CMP-08" isActive={cmp08Filter !== 'All'}>
-                       {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
-                     </TableFilter>
-                   </div>
-                </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">User ID</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Password</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[140px]">GSTIN</th>
+                
+                {isAllQuartersMode ? (
+                  QUARTERS.map(q => (
+                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 border-b border-slate-200 text-[11px] font-black uppercase text-slate-800 text-center min-w-[120px]">
+                      {q}
+                    </th>
+                  ))
+                ) : (
+                  <>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                       <div className="flex justify-center flex-col items-center">
+                         <TableFilter label="CMP-08" isActive={cmp08Filter !== 'All'}>
+                           {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                         </TableFilter>
+                       </div>
+                    </th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">User ID</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Password</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Remark</th>
+                  </>
+                )}
+
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
@@ -234,7 +294,7 @@ const CompositionFiling: React.FC = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={12} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
@@ -257,44 +317,74 @@ const CompositionFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className=" px-4 py-[2px] text-center">
-                      <button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
-                        cmp08Status === 'Filed' 
-                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
-                          : cmp08Status === 'Challan' 
-                            ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                            : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-                      }`} title="Click to cycle: Pending → Challan → Filed">
-                        {cmp08Status}
-                        <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                      </button>
-                    </td>
-                    <td className=" px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
-                    <td className=" px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
-                      <div className="flex items-center gap-2">
-                        <span>
-                          {isEditingPass ? (
-                            <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
-                          ) : (
-                            <div className="flex items-center gap-2">
-                               <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
-                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                               {client.gstProfile?.username && (
-                                 <button onClick={() => { 
-                                   navigator.clipboard.writeText(client.gstProfile?.username || ''); 
-                                   window.open('https://services.gst.gov.in/services/login', '_blank'); 
-                                 }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
-                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                 </button>
-                               )}
-                            </div>
-                          )}
-                        </span>
-                      </div>
-                    </td>
-                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
-                       <EditableRemark value={st?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
-                    </td>
+
+                    {isAllQuartersMode ? (
+                      QUARTERS.map(q => {
+                        const targetKey = `${selectedYear}_${q}`;
+                        const qSt = getStatus(client.id, targetKey);
+                        const qStatusLabel = getStatusLabel(qSt.cmp08);
+                        return (
+                          <td key={q} className="px-2 py-1.5 text-center border-x border-slate-100/60 align-middle">
+                            <button
+                              type="button"
+                              onClick={() => toggleStatus(client.id, targetKey)}
+                              className={`w-full px-2 py-1 rounded text-[10px] font-black uppercase border flex items-center justify-between gap-1 transition-all ${
+                                qStatusLabel === 'Filed' 
+                                  ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                                  : qStatusLabel === 'Challan' 
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                    : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                              }`}
+                              title={`CMP-08 (${q}): Click to cycle (Pending → Challan → Filed)`}
+                            >
+                              <span>{qStatusLabel}</span>
+                              <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                          </td>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <td className=" px-4 py-[2px] text-center">
+                          <button onClick={() => toggleStatus(client.id)} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                            cmp08Status === 'Filed' 
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                              : cmp08Status === 'Challan' 
+                                ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                          }`} title="Click to cycle: Pending → Challan → Filed">
+                            {cmp08Status}
+                            <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                        </td>
+                        <td className=" px-4 py-[2px] font-black text-slate-700 truncate">{client.gstProfile?.username}</td>
+                        <td className=" px-4 py-[2px] font-black text-indigo-400 tracking-widest relative group/pass">
+                          <div className="flex items-center gap-2">
+                            <span>
+                              {isEditingPass ? (
+                                <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                   <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
+                                   <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                   {client.gstProfile?.username && (
+                                     <button onClick={() => { 
+                                       navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                       window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                     }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
+                                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                     </button>
+                                   )}
+                                </div>
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                        <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                           <EditableRemark value={st?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
+                        </td>
+                      </>
+                    )}
                     <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={handleRefreshClients} />

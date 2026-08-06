@@ -8,11 +8,13 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { exportToCSV, printList, getSectorGroupLabel, getClientColorTheme } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
-import { useMonthlyFilingLogic, MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
+import { useMonthlyFilingLogic, MONTHS, FY_MONTHS, YEARS, getDefaultPeriod, isClientVisibleInPeriod, isClientVisibleInFY, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
+
+const MONTH_SELECT_OPTIONS = ['All Months', ...FY_MONTHS];
 
 const MonthlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
@@ -75,26 +77,33 @@ const MonthlyFiling: React.FC = () => {
     return `${prefix}/${val || '?'}/${rank}`;
   }, [allClientsBase]);
 
+  const isAllMonthsMode = selectedMonth === 'All Months';
+
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
     let list = clients.filter(c => 
-      (isClientVisibleInPeriod(c, selectedYear, selectedMonth)) &&
+      (isAllMonthsMode ? isClientVisibleInFY(c, selectedYear) : isClientVisibleInPeriod(c, selectedYear, selectedMonth)) &&
       ((c.legalName || '').toLowerCase().includes(s) || 
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
 
-    if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
-    if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
+    if (!isAllMonthsMode) {
+      if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
+      if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
+    }
     return list;
-  }, [clients, search, r1Filter, r3bFilter, getStatus, selectedYear, selectedMonth]);
+  }, [clients, search, r1Filter, r3bFilter, getStatus, selectedYear, selectedMonth, isAllMonthsMode]);
 
   const stats = useMemo(() => {
+    if (isAllMonthsMode) {
+      return { total: filteredClients.length, r1: 0, r3b: 0, r3bChallan: 0 };
+    }
     const r1 = filteredClients.filter(c => getStatus(c.id).r1).length;
     const r3bFiled = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Filed').length;
     const r3bChallan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Challan').length;
     return { total: filteredClients.length, r1, r3b: r3bFiled, r3bChallan };
-  }, [filteredClients, getStatus]);
+  }, [filteredClients, getStatus, isAllMonthsMode]);
 
   const handleRefreshClients = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -133,33 +142,66 @@ const MonthlyFiling: React.FC = () => {
   }, [filteredClients]);
 
   const handleExportCSV = () => {
-    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password', 'Remark'];
-    const rows = filteredClients.map((client, index) => [
-      (index + 1).toString().padStart(2, '0'),
-      client.tradeName,
-      client.mobile,
-      client.gstProfile?.gstin,
-      getStatus(client.id).r1 ? 'Filed' : 'Pending',
-      getStatusLabel(getStatus(client.id).r3b),
-      client.gstProfile?.username,
-      client.gstProfile?.password
-    ]);
-    exportToCSV(headers, rows, `Monthly_Filing_${selectedMonth}_${selectedYear}.csv`);
+    if (isAllMonthsMode) {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', ...FY_MONTHS.map(m => `${m} (R1 / 3B)`), 'User ID', 'Password'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        ...FY_MONTHS.map(m => {
+          const st = getStatus(client.id, `${selectedYear}_${m}`);
+          return `R1:${st.r1 ? 'Filed' : 'Pend'} | 3B:${getStatusLabel(st.r3b)}`;
+        }),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      exportToCSV(headers, rows, `Monthly_Filing_AllMonths_${selectedYear}.csv`);
+    } else {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password', 'Remark'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        getStatus(client.id).r1 ? 'Filed' : 'Pending',
+        getStatusLabel(getStatus(client.id).r3b),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      exportToCSV(headers, rows, `Monthly_Filing_${selectedMonth}_${selectedYear}.csv`);
+    }
   };
 
   const handlePrint = () => {
-    const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password', 'Remark'];
-    const rows = filteredClients.map((client, index) => [
-      (index + 1).toString().padStart(2, '0'),
-      client.tradeName,
-      client.mobile,
-      client.gstProfile?.gstin,
-      getStatus(client.id).r1 ? 'Filed' : 'Pending',
-      getStatusLabel(getStatus(client.id).r3b),
-      client.gstProfile?.username,
-      client.gstProfile?.password
-    ]);
-    printList(`Monthly Filing - ${selectedMonth} ${selectedYear}`, headers, rows);
+    if (isAllMonthsMode) {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', ...FY_MONTHS.map(m => `${m.slice(0,3)}`), 'User ID'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        ...FY_MONTHS.map(m => {
+          const st = getStatus(client.id, `${selectedYear}_${m}`);
+          return `R1:${st.r1 ? 'F' : 'P'} 3B:${getStatusLabel(st.r3b).slice(0,1)}`;
+        }),
+        client.gstProfile?.username
+      ]);
+      printList(`Monthly Filing All Months - ${selectedYear}`, headers, rows);
+    } else {
+      const headers = ['S.No.', 'Trade Name', 'Mobile No.', 'GSTIN', 'GSTR-1 Status', 'GSTR-3B Status', 'User ID', 'Password', 'Remark'];
+      const rows = filteredClients.map((client, index) => [
+        (index + 1).toString().padStart(2, '0'),
+        client.tradeName,
+        client.mobile,
+        client.gstProfile?.gstin,
+        getStatus(client.id).r1 ? 'Filed' : 'Pending',
+        getStatusLabel(getStatus(client.id).r3b),
+        client.gstProfile?.username,
+        client.gstProfile?.password
+      ]);
+      printList(`Monthly Filing - ${selectedMonth} ${selectedYear}`, headers, rows);
+    }
   };
 
   if (isLoading) return <Loader />;
@@ -171,9 +213,13 @@ const MonthlyFiling: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">R1 Filed: <strong className="font-black text-indigo-900">{stats.r1}</strong></span>
-          <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Challan: <strong className="font-black text-amber-900">{stats.r3bChallan}</strong></span>
-          <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Filed: <strong className="font-black text-emerald-900">{stats.r3b}</strong></span>
+          {!isAllMonthsMode && (
+            <>
+              <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">R1 Filed: <strong className="font-black text-indigo-900">{stats.r1}</strong></span>
+              <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Challan: <strong className="font-black text-amber-900">{stats.r3bChallan}</strong></span>
+              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Filed: <strong className="font-black text-emerald-900">{stats.r3b}</strong></span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
           {r1DueDate && <span>R1 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(r1DueDate)}</strong></span>}
@@ -188,18 +234,27 @@ const MonthlyFiling: React.FC = () => {
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Monthly Total</p>
             <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">R1 Filed {r1DueDate && `(Due: ${formatISOToDDMMYYYY(r1DueDate)})`}</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">3B Challan</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.r3bChallan}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">3B Filed {r3bDueDate && `(Due: ${formatISOToDDMMYYYY(r3bDueDate)})`}</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3b}</p>
-          </div>
+          {!isAllMonthsMode ? (
+            <>
+              <div className="text-center border-l border-slate-100 pl-6">
+                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">R1 Filed {r1DueDate && `(Due: ${formatISOToDDMMYYYY(r1DueDate)})`}</p>
+                <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
+              </div>
+              <div className="text-center border-l border-slate-100 pl-6">
+                <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">3B Challan</p>
+                <p className="text-xl font-black text-amber-600 leading-none">{stats.r3bChallan}</p>
+              </div>
+              <div className="text-center border-l border-slate-100 pl-6">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">3B Filed {r3bDueDate && `(Due: ${formatISOToDDMMYYYY(r3bDueDate)})`}</p>
+                <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3b}</p>
+              </div>
+            </>
+          ) : (
+            <div className="text-center border-l border-slate-100 pl-6">
+              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Full Year View</p>
+              <p className="text-xs font-bold text-slate-500">12 Months Summary (April to March)</p>
+            </div>
+          )}
         </div>
         <div className="relative flex-1 w-full group">
           <input type="text" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)}
@@ -214,7 +269,7 @@ const MonthlyFiling: React.FC = () => {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
            </button>
            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTHS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTH_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
@@ -224,26 +279,38 @@ const MonthlyFiling: React.FC = () => {
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 min-w-[150px]">Trade Name</th>
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
-                   <div className="flex justify-center flex-col items-center">
-                     <TableFilter label="GSTR-1" isActive={r1Filter !== 'All'}>
-                       {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
-                     </TableFilter>
-                   </div>
-                </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
-                   <div className="flex justify-center flex-col items-center">
-                     <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
-                       {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
-                     </TableFilter>
-                   </div>
-                </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">User ID</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 min-w-[140px]">GSTIN</th>
+                
+                {isAllMonthsMode ? (
+                  FY_MONTHS.map(m => (
+                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 text-center min-w-[105px]">
+                      {m}
+                    </th>
+                  ))
+                ) : (
+                  <>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+                       <div className="flex justify-center flex-col items-center">
+                         <TableFilter label="GSTR-1" isActive={r1Filter !== 'All'}>
+                           {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                         </TableFilter>
+                       </div>
+                    </th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+                       <div className="flex justify-center flex-col items-center">
+                         <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
+                           {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
+                         </TableFilter>
+                       </div>
+                    </th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">User ID</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
+                  </>
+                )}
+
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
@@ -251,7 +318,7 @@ const MonthlyFiling: React.FC = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
               <React.Fragment key={sector}>
                 <tr>
-                  <td colSpan={12} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                  <td colSpan={isAllMonthsMode ? 17 : 10} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                 </tr>
                 {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
@@ -259,7 +326,7 @@ const MonthlyFiling: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 const theme = getClientColorTheme(client);
                 return (
-                  <tr key={client.id} className={`transition-all border-b border-slate-100 h-[44px] ${theme.rowClass}`}>
+                  <tr key={client.id} className={`transition-all border-b border-slate-100 ${isAllMonthsMode ? 'h-[52px]' : 'h-[44px]'} ${theme.rowClass}`}>
                     <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
                     <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
                       <div className={`truncate leading-tight text-[12px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
@@ -277,48 +344,92 @@ const MonthlyFiling: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className=" px-4 py-[2px] text-center">
-                       <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
-                          {st.r1 ? 'Filed' : 'Pending'}
-                          <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                       </button>
-                    </td>
-                    <td className=" px-4 py-[2px] text-center">
-                       <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
-                          r3bStatus === 'Filed' 
-                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
-                            : r3bStatus === 'Challan' 
-                              ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-                       }`} title="Click to cycle: Pending → Challan → Filed">
-                          {r3bStatus}
-                          <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                       </button>
-                    </td>
-                    <td className=" px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
-                    <td className=" px-4 py-[2px]">
-                       <div className="flex items-center gap-2 group/pass">
-                          {isEditingPass ? (
-                            <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
-                          ) : (
-                            <>
-                               <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
-                               <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                               {client.gstProfile?.username && (
-                                 <button onClick={() => { 
-                                   navigator.clipboard.writeText(client.gstProfile?.username || ''); 
-                                   window.open('https://services.gst.gov.in/services/login', '_blank'); 
-                                 }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
-                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                 </button>
-                               )}
-                            </>
-                          )}
-                       </div>
-                    </td>
-                    <td className=" px-4 py-[2px] truncate max-w-[150px]">
-                       <EditableRemark value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
-                     </td>
+
+                    {isAllMonthsMode ? (
+                      FY_MONTHS.map(m => {
+                        const periodKey = `${selectedYear}_${m}`;
+                        const monthSt = getStatus(client.id, periodKey);
+                        const monthR3b = getStatusLabel(monthSt.r3b);
+                        return (
+                          <td key={m} className="px-1.5 py-1 text-center border-x border-slate-100/60 align-middle">
+                            <div className="flex flex-col items-center gap-1 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => toggleStatus(client.id, 'r1', periodKey)}
+                                className={`w-full px-1.5 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between transition-all ${
+                                  monthSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                }`}
+                                title={`GSTR-1 (${m}): Click to toggle`}
+                              >
+                                <span className="text-[8px] font-bold text-slate-400">R1</span>
+                                <span>{monthSt.r1 ? 'Filed' : 'Pend'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleStatus(client.id, 'r3b', periodKey)}
+                                className={`w-full px-1.5 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between transition-all ${
+                                  monthR3b === 'Filed' 
+                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                                    : monthR3b === 'Challan' 
+                                      ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                      : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                }`}
+                                title={`GSTR-3B (${m}): Click to cycle (Pending → Challan → Filed)`}
+                              >
+                                <span className="text-[8px] font-bold text-slate-400">3B</span>
+                                <span>{monthR3b === 'Filed' ? 'Filed' : monthR3b === 'Challan' ? 'Chal' : 'Pend'}</span>
+                              </button>
+                            </div>
+                          </td>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <td className=" px-4 py-[2px] text-center">
+                           <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
+                              {st.r1 ? 'Filed' : 'Pending'}
+                              <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                           </button>
+                        </td>
+                        <td className=" px-4 py-[2px] text-center">
+                           <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                              r3bStatus === 'Filed' 
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                                : r3bStatus === 'Challan' 
+                                  ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                  : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                           }`} title="Click to cycle: Pending → Challan → Filed">
+                              {r3bStatus}
+                              <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                           </button>
+                        </td>
+                        <td className=" px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
+                        <td className=" px-4 py-[2px]">
+                           <div className="flex items-center gap-2 group/pass">
+                              {isEditingPass ? (
+                                <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
+                              ) : (
+                                <>
+                                   <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
+                                   <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                   {client.gstProfile?.username && (
+                                     <button onClick={() => { 
+                                       navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                       window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                     }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
+                                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                     </button>
+                                   )}
+                                </>
+                              )}
+                           </div>
+                        </td>
+                        <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                           <EditableRemark value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
+                        </td>
+                      </>
+                    )}
+
                      <td className=" px-4 py-[2px] text-right">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={handleRefreshClients} />

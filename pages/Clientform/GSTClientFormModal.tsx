@@ -66,6 +66,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     name: '',
     mobile: '',
     pan: '',
+    email: '',
     itPassword: '',
     address: ''
   });
@@ -108,11 +109,48 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     if (isOpen) {
       setActiveTabStep(1);
       if (initialData) {
+        const existingStakeholders = initialData.gstProfile?.stakeholders;
+        const validStakeholders = (Array.isArray(existingStakeholders) && existingStakeholders.length > 0)
+          ? existingStakeholders
+          : [createStakeholder()];
+
+        const constitution = initialData.gstProfile?.constitution || 'Proprietorship';
+        if (constitution === 'Proprietorship' && validStakeholders.length > 0) {
+          const first = validStakeholders[0];
+          validStakeholders[0] = {
+            ...first,
+            name: first.name || initialData.legalName || initialData.tradeName || '',
+            pan: first.pan || initialData.gstProfile?.pan || '',
+            mobile: first.mobile || initialData.mobile || '',
+            email: first.email || initialData.email || '',
+          };
+        }
+
         setFormData({
           ...initialData,
           gstProfile: {
-            ...initialData.gstProfile!,
-            stakeholders: initialData.gstProfile?.stakeholders || [createStakeholder()]
+            gstin: '',
+            pan: '',
+            username: '',
+            password: '',
+            gstStatus: 'Active',
+            regDate: '',
+            cancelDate: '',
+            regType: 'Regular',
+            filingFreq: 'Monthly',
+            constitution: 'Proprietorship',
+            accountantName: '',
+            accountantMobile: '',
+            address: '',
+            jurisdictionType: 'State',
+            sector: '',
+            range: '',
+            ewayBillId: '',
+            ewayBillPass: '',
+            gstatId: '',
+            gstatPass: '',
+            ...(initialData.gstProfile || {}),
+            stakeholders: validStakeholders
           }
         });
       } else {
@@ -211,6 +249,79 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
     }));
   };
 
+  const autoPickupProprietorInfo = (force = false) => {
+    setFormData(prev => {
+      const existingStakeholders = prev.gstProfile?.stakeholders && prev.gstProfile.stakeholders.length > 0
+        ? [...prev.gstProfile.stakeholders]
+        : [createStakeholder()];
+
+      const propName = prev.legalName || prev.tradeName || '';
+      const propPan = prev.gstProfile?.pan || '';
+      const propMobile = prev.mobile || '';
+      const propEmail = prev.email || '';
+
+      existingStakeholders[0] = {
+        ...existingStakeholders[0],
+        name: force ? (propName || existingStakeholders[0].name) : (existingStakeholders[0].name || propName),
+        pan: force ? (propPan || existingStakeholders[0].pan) : (existingStakeholders[0].pan || propPan),
+        mobile: force ? (propMobile || existingStakeholders[0].mobile) : (existingStakeholders[0].mobile || propMobile),
+        email: force ? (propEmail || existingStakeholders[0].email) : (existingStakeholders[0].email || propEmail),
+      };
+
+      if (force) {
+        toast.success("Proprietor details auto-picked from Legal Name, PAN, Mobile & Email!");
+      }
+
+      return {
+        ...prev,
+        gstProfile: {
+          ...prev.gstProfile!,
+          stakeholders: existingStakeholders
+        }
+      };
+    });
+  };
+
+  const handleConstitutionChange = (newConstitution: ConstitutionType) => {
+    setFormData(prev => {
+      const updatedProfile = { ...prev.gstProfile!, constitution: newConstitution };
+
+      if (newConstitution === 'Proprietorship') {
+        const existingStakeholders = updatedProfile.stakeholders && updatedProfile.stakeholders.length > 0
+          ? [...updatedProfile.stakeholders]
+          : [createStakeholder()];
+
+        const propName = prev.legalName || prev.tradeName || '';
+        const propPan = prev.gstProfile?.pan || '';
+        const propMobile = prev.mobile || '';
+        const propEmail = prev.email || '';
+
+        existingStakeholders[0] = {
+          ...existingStakeholders[0],
+          name: existingStakeholders[0].name || propName,
+          pan: existingStakeholders[0].pan || propPan,
+          mobile: existingStakeholders[0].mobile || propMobile,
+          email: existingStakeholders[0].email || propEmail,
+        };
+
+        updatedProfile.stakeholders = existingStakeholders;
+        toast.success("Auto-picked Proprietor name, PAN, mobile & email from primary details!");
+      }
+
+      return {
+        ...prev,
+        gstProfile: updatedProfile
+      };
+    });
+  };
+
+  const handleTabClick = (stepId: number) => {
+    setActiveTabStep(stepId);
+    if (stepId === 3 && (formData.gstProfile?.constitution || 'Proprietorship') === 'Proprietorship') {
+      autoPickupProprietorInfo(false);
+    }
+  };
+
   const addStakeholder = () => {
     setFormData(prev => ({
       ...prev,
@@ -284,7 +395,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
           {FORM_TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTabStep(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTabStep === tab.id
                   ? 'bg-white text-indigo-600 shadow-sm border border-slate-200 ring-2 ring-indigo-600/10'
@@ -457,7 +568,7 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                     <select 
                       className="w-full bg-white border border-slate-200 p-3 rounded-xl font-bold text-xs outline-none" 
                       value={formData.gstProfile?.constitution} 
-                      onChange={e => setFormData({...formData, gstProfile: {...formData.gstProfile!, constitution: e.target.value as ConstitutionType}})}
+                      onChange={e => handleConstitutionChange(e.target.value as ConstitutionType)}
                     >
                       <option value="Proprietorship">Proprietorship</option>
                       <option value="Partnership">Partnership</option>
@@ -599,11 +710,21 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
 
               {/* Stakeholders List */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-xs font-black uppercase tracking-wider text-indigo-600">
                     {getStakeholderLabel(formData.gstProfile?.constitution)}s Information
                   </h3>
-                  {formData.gstProfile?.constitution !== 'Proprietorship' && (
+                  <div className="flex items-center gap-2">
+                    {formData.gstProfile?.constitution === 'Proprietorship' && (
+                      <button 
+                        type="button" 
+                        onClick={() => autoPickupProprietorInfo(true)} 
+                        className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-600 hover:text-white transition-all border border-emerald-200 flex items-center gap-1 shadow-sm"
+                        title="Auto-fill Proprietor Name, PAN, Mobile & Email from Primary Details"
+                      >
+                        <span>⚡</span> Auto Pickup Primary Info
+                      </button>
+                    )}
                     <button 
                       type="button" 
                       onClick={addStakeholder} 
@@ -611,83 +732,118 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                     >
                       + Add {getStakeholderLabel(formData.gstProfile?.constitution)}
                     </button>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  {formData.gstProfile?.stakeholders.map((s, idx) => (
-                    <div key={s.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 relative space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                          {getStakeholderLabel(formData.gstProfile?.constitution)} #{idx + 1}
-                        </span>
-                        {formData.gstProfile!.stakeholders.length > 1 && (
-                          <button 
-                            type="button" 
-                            onClick={() => removeStakeholder(s.id)} 
-                            className="text-rose-500 text-xs font-bold hover:underline"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-slate-500">Name</label>
-                          <input 
-                            className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold uppercase w-full outline-none" 
-                            value={s.name} 
-                            onChange={e => {
-                              const next = [...formData.gstProfile!.stakeholders];
-                              next[idx].name = e.target.value;
-                              setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
-                            }} 
-                            placeholder="Full Name" 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-slate-500">Mobile</label>
-                          <input 
-                            className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-mono font-bold w-full outline-none" 
-                            value={s.mobile} 
-                            onChange={e => {
-                              const next = [...formData.gstProfile!.stakeholders];
-                              next[idx].mobile = e.target.value.replace(/\D/g, '').slice(0, 10);
-                              setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
-                            }} 
-                            placeholder="Mobile No" 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-slate-500">PAN</label>
-                          <input 
-                            className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-mono font-bold uppercase w-full outline-none" 
-                            value={s.pan} 
-                            onChange={e => {
-                              const next = [...formData.gstProfile!.stakeholders];
-                              next[idx].pan = e.target.value.toUpperCase().slice(0, 10);
-                              setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
-                            }} 
-                            placeholder="PAN No" 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-slate-500">Email</label>
-                          <input 
-                            className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold lowercase w-full outline-none" 
-                            value={s.itPassword} 
-                            onChange={e => {
-                              const next = [...formData.gstProfile!.stakeholders];
-                              next[idx].itPassword = e.target.value;
-                              setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
-                            }} 
-                            placeholder="Email" 
-                          />
-                        </div>
-                      </div>
+                  {(!formData.gstProfile?.stakeholders || formData.gstProfile.stakeholders.length === 0) ? (
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300 text-center space-y-3">
+                      <p className="text-xs font-semibold text-slate-500">No {getStakeholderLabel(formData.gstProfile?.constitution).toLowerCase()} information added yet.</p>
+                      <button
+                        type="button"
+                        onClick={addStakeholder}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase hover:bg-indigo-700 transition-all shadow-sm"
+                      >
+                        + Add {getStakeholderLabel(formData.gstProfile?.constitution)}
+                      </button>
                     </div>
-                  ))}
+                  ) : (
+                    formData.gstProfile.stakeholders.map((s, idx) => (
+                      <div key={s.id || idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 relative space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                              {getStakeholderLabel(formData.gstProfile?.constitution)} #{idx + 1}
+                            </span>
+                            {(formData.legalName || formData.tradeName || formData.mobile || formData.email || formData.gstProfile?.pan) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = [...formData.gstProfile!.stakeholders];
+                                  next[idx] = {
+                                    ...next[idx],
+                                    name: next[idx].name || formData.legalName || formData.tradeName || '',
+                                    pan: next[idx].pan || formData.gstProfile?.pan || '',
+                                    mobile: next[idx].mobile || formData.mobile || '',
+                                    email: next[idx].email || formData.email || '',
+                                  };
+                                  setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
+                                  toast.success("Filled details from Client Primary Info!");
+                                }}
+                                className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 transition-all border border-indigo-100 flex items-center gap-1"
+                              >
+                                ⚡ Fill from Primary Info
+                              </button>
+                            )}
+                          </div>
+                          {formData.gstProfile!.stakeholders.length > 1 && (
+                            <button 
+                              type="button" 
+                              onClick={() => removeStakeholder(s.id)} 
+                              className="text-rose-500 text-xs font-bold hover:underline"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-500">Name</label>
+                            <input 
+                              className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold uppercase w-full outline-none" 
+                              value={s.name || ''} 
+                              onChange={e => {
+                                const next = [...formData.gstProfile!.stakeholders];
+                                next[idx].name = e.target.value;
+                                setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
+                              }} 
+                              placeholder="Full Name" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-500">Mobile</label>
+                            <input 
+                              className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-mono font-bold w-full outline-none" 
+                              value={s.mobile || ''} 
+                              onChange={e => {
+                                const next = [...formData.gstProfile!.stakeholders];
+                                next[idx].mobile = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
+                              }} 
+                              placeholder="Mobile No" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-500">PAN</label>
+                            <input 
+                              className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-mono font-bold uppercase w-full outline-none" 
+                              value={s.pan || ''} 
+                              onChange={e => {
+                                const next = [...formData.gstProfile!.stakeholders];
+                                next[idx].pan = e.target.value.toUpperCase().slice(0, 10);
+                                setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
+                              }} 
+                              placeholder="PAN No" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-500">Email</label>
+                            <input 
+                              className="bg-white border border-slate-200 p-2.5 rounded-xl text-xs font-bold lowercase w-full outline-none" 
+                              value={s.email || ''} 
+                              onChange={e => {
+                                const next = [...formData.gstProfile!.stakeholders];
+                                next[idx].email = e.target.value;
+                                setFormData({...formData, gstProfile: {...formData.gstProfile!, stakeholders: next}});
+                              }} 
+                              placeholder="Email" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
