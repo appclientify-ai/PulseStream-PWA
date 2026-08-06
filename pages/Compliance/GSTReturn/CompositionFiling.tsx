@@ -14,6 +14,13 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod, isClientVisibleInFY, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
 
 const QUARTER_SELECT_OPTIONS = ['All Quarters', ...QUARTERS];
+
+const SHORT_QUARTER_MAP: Record<string, string> = {
+  'April-June (Q1)': 'Q1 (Apr-Jun)',
+  'July-September (Q2)': 'Q2 (Jul-Sep)',
+  'October-December (Q3)': 'Q3 (Oct-Dec)',
+  'January-March (Q4)': 'Q4 (Jan-Mar)',
+};
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
@@ -94,7 +101,15 @@ const CompositionFiling: React.FC = () => {
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-    if (!isAllQuartersMode && cmp08Filter !== 'All') {
+    if (isAllQuartersMode && cmp08Filter !== 'All') {
+      if (cmp08Filter === 'Filed') {
+        list = list.filter(c => QUARTERS.every(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Filed'));
+      } else if (cmp08Filter === 'Challan') {
+        list = list.filter(c => QUARTERS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Challan'));
+      } else if (cmp08Filter === 'Pending') {
+        list = list.filter(c => QUARTERS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Pending'));
+      }
+    } else if (!isAllQuartersMode && cmp08Filter !== 'All') {
       list = list.filter(c => getStatusLabel(getStatus(c.id).cmp08) === cmp08Filter);
     }
     return list;
@@ -251,8 +266,8 @@ const CompositionFiling: React.FC = () => {
           <button onClick={handleExportCSV} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center" title="Export Excel / CSV">
              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{QUARTER_SELECT_OPTIONS.map(q => <option key={q} value={q}>{q}</option>)}</select>
+           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+           <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{QUARTER_SELECT_OPTIONS.map(q => <option key={q} value={q}>{q}</option>)}</select>
         </div>
       </div>
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -268,8 +283,8 @@ const CompositionFiling: React.FC = () => {
                 
                 {isAllQuartersMode ? (
                   QUARTERS.map(q => (
-                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 border-b border-slate-200 text-[11px] font-black uppercase text-slate-800 text-center min-w-[120px]">
-                      {q}
+                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 border-b border-slate-200 text-[10px] font-black uppercase text-slate-800 text-center min-w-[95px]">
+                      {SHORT_QUARTER_MAP[q] || q}
                     </th>
                   ))
                 ) : (
@@ -324,21 +339,21 @@ const CompositionFiling: React.FC = () => {
                         const qSt = getStatus(client.id, targetKey);
                         const qStatusLabel = getStatusLabel(qSt.cmp08);
                         return (
-                          <td key={q} className="px-2 py-1.5 text-center border-x border-slate-100/60 align-middle">
+                          <td key={q} className="px-1 py-1 text-center border-x border-slate-100/60 align-middle">
                             <button
                               type="button"
                               onClick={() => toggleStatus(client.id, targetKey)}
-                              className={`w-full px-2 py-1 rounded text-[10px] font-black uppercase border flex items-center justify-between gap-1 transition-all ${
+                              className={`w-full px-1.5 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between transition-all ${
                                 qStatusLabel === 'Filed' 
                                   ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                                   : qStatusLabel === 'Challan' 
                                     ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                                    : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                               }`}
                               title={`CMP-08 (${q}): Click to cycle (Pending → Challan → Filed)`}
                             >
-                              <span>{qStatusLabel}</span>
-                              <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                              <span>{qStatusLabel === 'Filed' ? 'Filed' : qStatusLabel === 'Challan' ? 'Chal' : 'Pend'}</span>
+                              <svg className="h-2 w-2 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                           </td>
                         );

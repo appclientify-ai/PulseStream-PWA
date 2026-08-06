@@ -15,8 +15,7 @@ const QUARTERLY_PERIOD_OPTIONS = [
   'April-June (Q1)',
   'July-September (Q2)',
   'October-December (Q3)',
-  'January-March (Q4)',
-  ...MONTHS
+  'January-March (Q4)'
 ];
 
 const QUARTER_CONFIGS = [
@@ -74,14 +73,20 @@ const QuarterlyFiling: React.FC = () => {
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
   const [isR1FilterOpen, setIsR1FilterOpen] = useState(false);
   const [isR3bFilterOpen, setIsR3bFilterOpen] = useState(false);
+  const getDefaultQuarterOption = () => {
+    const m = defaultPeriod.month;
+    if (['April', 'May', 'June'].includes(m)) return 'April-June (Q1)';
+    if (['July', 'August', 'September'].includes(m)) return 'July-September (Q2)';
+    if (['October', 'November', 'December'].includes(m)) return 'October-December (Q3)';
+    return 'January-March (Q4)';
+  };
+
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
-  const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
+  const [selectedMonth, setSelectedMonth] = useState(getDefaultQuarterOption());
   
   const currentQuarter = useMemo(() => {
-    if (['April', 'May', 'June'].includes(selectedMonth)) return 'April-June (Q1)';
-    if (['July', 'August', 'September'].includes(selectedMonth)) return 'July-September (Q2)';
-    if (['October', 'November', 'December'].includes(selectedMonth)) return 'October-December (Q3)';
-    return 'January-March (Q4)';
+    if (selectedMonth === 'All Quarters') return 'April-June (Q1)';
+    return selectedMonth;
   }, [selectedMonth]);
 
   const { getGlobalDueDate } = useGlobalDueDates(selectedYear);
@@ -122,30 +127,20 @@ const QuarterlyFiling: React.FC = () => {
 
   const isAllQuartersMode = selectedMonth === 'All Quarters';
 
-  const isQuarterEnd = useMemo(() => ['June', 'September', 'December', 'March'].includes(selectedMonth), [selectedMonth]);
-
   const activeQuarterConfig = useMemo(() => {
-    return QUARTER_CONFIGS.find(q => q.label === selectedMonth || q.months.some(m => m.name === selectedMonth));
+    return QUARTER_CONFIGS.find(q => q.label === selectedMonth || selectedMonth.includes(q.key)) || QUARTER_CONFIGS[0];
   }, [selectedMonth]);
 
-  const checkQrmpVisibility = (c: Client) => {
+  const isQuarterEnd = true;
+
+  const checkQrmpVisibility = useCallback((c: Client) => {
     if (!c || !c.gstProfile) return false;
     if (isAllQuartersMode) {
       return isClientVisibleInFY(c, selectedYear);
     }
-    const visibleInMonth = isClientVisibleInPeriod(c, selectedYear, selectedMonth);
-    if (isQuarterEnd) {
-      if (c.gstProfile.cancelDate && c.gstProfile.gstStatus === 'Closed') {
-        const cancelDate = new Date(c.gstProfile.cancelDate);
-        if (!isNaN(cancelDate.getTime())) {
-          const periodDate = periodToDate(selectedYear, selectedMonth);
-          const lastVisibleMonthDate = new Date(cancelDate.getFullYear(), cancelDate.getMonth(), 1);
-          if (periodDate > lastVisibleMonthDate) return true;
-        }
-      }
-    }
-    return visibleInMonth;
-  };
+    const targetMonth = activeQuarterConfig ? activeQuarterConfig.r3bMonth : 'June';
+    return isClientVisibleInPeriod(c, selectedYear, targetMonth);
+  }, [isAllQuartersMode, selectedYear, activeQuarterConfig]);
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
@@ -156,12 +151,37 @@ const QuarterlyFiling: React.FC = () => {
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
 
-    if (!isAllQuartersMode) {
-      if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
-      if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
+    if (isAllQuartersMode) {
+      if (r1Filter === 'Filed') {
+        list = list.filter(c => QUARTER_CONFIGS.every(q => q.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1)));
+      } else if (r1Filter === 'Pending') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => q.months.some(m => !getStatus(c.id, `${selectedYear}_${m.name}`).r1)));
+      }
+
+      if (r3bFilter === 'Filed') {
+        list = list.filter(c => QUARTER_CONFIGS.every(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q.r3bMonth}`).r3b) === 'Filed'));
+      } else if (r3bFilter === 'Challan') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q.r3bMonth}`).r3b) === 'Challan'));
+      } else if (r3bFilter === 'Pending') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q.r3bMonth}`).r3b) === 'Pending'));
+      }
+    } else {
+      if (r1Filter === 'Filed') {
+        list = list.filter(c => activeQuarterConfig.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1));
+      } else if (r1Filter === 'Pending') {
+        list = list.filter(c => activeQuarterConfig.months.some(m => !getStatus(c.id, `${selectedYear}_${m.name}`).r1));
+      }
+
+      if (r3bFilter === 'Filed') {
+        list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${activeQuarterConfig.r3bMonth}`).r3b) === 'Filed');
+      } else if (r3bFilter === 'Challan') {
+        list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${activeQuarterConfig.r3bMonth}`).r3b) === 'Challan');
+      } else if (r3bFilter === 'Pending') {
+        list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${activeQuarterConfig.r3bMonth}`).r3b) === 'Pending');
+      }
     }
     return list;
-  }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, getStatus, checkQrmpVisibility, isAllQuartersMode]);
+  }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, getStatus, checkQrmpVisibility, isAllQuartersMode, activeQuarterConfig]);
 
   const stats = useMemo(() => {
     if (isAllQuartersMode) return { total: filteredClients.length, r1: 0, r3b: 0, r3bChallan: 0 };
@@ -358,7 +378,7 @@ const QuarterlyFiling: React.FC = () => {
 
                 {isAllQuartersMode ? (
                   QUARTER_CONFIGS.map(q => (
-                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-black uppercase text-slate-800 border-b border-slate-200 text-center min-w-[160px]">
+                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase text-slate-800 border-b border-slate-200 text-center min-w-[110px]">
                       {q.label}
                     </th>
                   ))
@@ -420,8 +440,8 @@ const QuarterlyFiling: React.FC = () => {
 
                     {isAllQuartersMode ? (
                       QUARTER_CONFIGS.map(qConfig => (
-                        <td key={qConfig.key} className="px-2 py-1 text-center border-x border-slate-100/80 align-middle">
-                          <div className="flex flex-col gap-1 text-[10px]">
+                        <td key={qConfig.key} className="px-1 py-1 text-center border-x border-slate-100/80 align-middle">
+                          <div className="flex flex-col gap-0.5 text-[9px]">
                             <div className="grid grid-cols-3 gap-0.5">
                               {qConfig.months.map(m => {
                                 const mPeriod = `${selectedYear}_${m.name}`;
@@ -431,7 +451,7 @@ const QuarterlyFiling: React.FC = () => {
                                     key={m.name}
                                     type="button"
                                     onClick={() => toggleStatus(client.id, 'r1', mPeriod)}
-                                    className={`px-1 py-0.5 rounded text-[8px] font-black uppercase border text-center transition-all ${
+                                    className={`px-0.5 py-0.5 rounded text-[8px] font-black uppercase border text-center transition-all ${
                                       mSt.r1
                                         ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
                                         : 'bg-slate-50 text-slate-400 border-slate-200'
@@ -451,17 +471,17 @@ const QuarterlyFiling: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => toggleStatus(client.id, 'r3b', r3bPeriod)}
-                                  className={`w-full px-2 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between gap-1 transition-all ${
+                                  className={`w-full px-1 py-0.5 rounded text-[8px] font-black uppercase border flex items-center justify-between gap-0.5 transition-all ${
                                     label3B === 'Filed'
                                       ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                                       : label3B === 'Challan'
                                       ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                      : 'bg-slate-100 text-slate-400 border-slate-200'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200'
                                   }`}
                                   title={`Toggle ${qConfig.key} GSTR-3B`}
                                 >
-                                  <span>{qConfig.key} 3B</span>
-                                  <span>{label3B}</span>
+                                  <span className="text-[7px] text-slate-400">3B</span>
+                                  <span>{label3B === 'Filed' ? 'Filed' : label3B === 'Challan' ? 'Chal' : 'Pend'}</span>
                                 </button>
                               );
                             })()}

@@ -16,6 +16,21 @@ import { formatISOToDDMMYYYY } from '../../../dateUtils';
 
 const MONTH_SELECT_OPTIONS = ['All Months', ...FY_MONTHS];
 
+const SHORT_MONTH_MAP: Record<string, string> = {
+  April: 'Apr',
+  May: 'May',
+  June: 'Jun',
+  July: 'Jul',
+  August: 'Aug',
+  September: 'Sep',
+  October: 'Oct',
+  November: 'Nov',
+  December: 'Dec',
+  January: 'Jan',
+  February: 'Feb',
+  March: 'Mar',
+};
+
 const MonthlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
   const queryClient = useQueryClient();
@@ -88,7 +103,21 @@ const MonthlyFiling: React.FC = () => {
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
 
-    if (!isAllMonthsMode) {
+    if (isAllMonthsMode) {
+      if (r1Filter === 'Filed') {
+        list = list.filter(c => FY_MONTHS.every(m => getStatus(c.id, `${selectedYear}_${m}`).r1));
+      } else if (r1Filter === 'Pending') {
+        list = list.filter(c => FY_MONTHS.some(m => !getStatus(c.id, `${selectedYear}_${m}`).r1));
+      }
+
+      if (r3bFilter === 'Filed') {
+        list = list.filter(c => FY_MONTHS.every(m => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Filed'));
+      } else if (r3bFilter === 'Challan') {
+        list = list.filter(c => FY_MONTHS.some(m => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Challan'));
+      } else if (r3bFilter === 'Pending') {
+        list = list.filter(c => FY_MONTHS.some(m => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Pending'));
+      }
+    } else {
       if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
       if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
     }
@@ -285,8 +314,8 @@ const MonthlyFiling: React.FC = () => {
                 
                 {isAllMonthsMode ? (
                   FY_MONTHS.map(m => (
-                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-black uppercase tracking-wider text-slate-800 border-b border-slate-200 text-center min-w-[105px]">
-                      {m}
+                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase tracking-tight text-slate-800 border-b border-slate-200 text-center min-w-[58px]">
+                      {SHORT_MONTH_MAP[m] || m.slice(0, 3)}
                     </th>
                   ))
                 ) : (
@@ -351,32 +380,32 @@ const MonthlyFiling: React.FC = () => {
                         const monthSt = getStatus(client.id, periodKey);
                         const monthR3b = getStatusLabel(monthSt.r3b);
                         return (
-                          <td key={m} className="px-1.5 py-1 text-center border-x border-slate-100/60 align-middle">
-                            <div className="flex flex-col items-center gap-1 justify-center">
+                          <td key={m} className="px-0.5 py-1 text-center border-x border-slate-100/60 align-middle">
+                            <div className="flex flex-col items-center gap-0.5 justify-center">
                               <button
                                 type="button"
                                 onClick={() => toggleStatus(client.id, 'r1', periodKey)}
-                                className={`w-full px-1.5 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between transition-all ${
-                                  monthSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                className={`w-full px-1 py-0.5 rounded text-[8px] font-black uppercase border flex items-center justify-between transition-all ${
+                                  monthSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                                 }`}
                                 title={`GSTR-1 (${m}): Click to toggle`}
                               >
-                                <span className="text-[8px] font-bold text-slate-400">R1</span>
+                                <span className="text-[7px] font-bold text-slate-400">R1</span>
                                 <span>{monthSt.r1 ? 'Filed' : 'Pend'}</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => toggleStatus(client.id, 'r3b', periodKey)}
-                                className={`w-full px-1.5 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between transition-all ${
+                                className={`w-full px-1 py-0.5 rounded text-[8px] font-black uppercase border flex items-center justify-between transition-all ${
                                   monthR3b === 'Filed' 
                                     ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                                     : monthR3b === 'Challan' 
                                       ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                                      : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                                 }`}
                                 title={`GSTR-3B (${m}): Click to cycle (Pending → Challan → Filed)`}
                               >
-                                <span className="text-[8px] font-bold text-slate-400">3B</span>
+                                <span className="text-[7px] font-bold text-slate-400">3B</span>
                                 <span>{monthR3b === 'Filed' ? 'Filed' : monthR3b === 'Challan' ? 'Chal' : 'Pend'}</span>
                               </button>
                             </div>
