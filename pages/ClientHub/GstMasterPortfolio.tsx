@@ -137,7 +137,11 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       list = list.filter(c => c && (c.gstProfile?.gstStatus || 'Active') === statusFilter);
     }
     if (relFilter !== 'All') {
-      list = list.filter(c => c?.status === relFilter);
+      list = list.filter(c => {
+        if (!c) return false;
+        if (relFilter === 'Active') return c.status === 'Active' || c.status === 'Active Filing';
+        return c.status === relFilter;
+      });
     }
 
     return list;
@@ -449,7 +453,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
       {activeFilterMenu === 'rel' && (
         <div ref={filterMenuRef} style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-44 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
-          {['All', 'Active', 'Active Filing', 'Litigation', 'Inactive'].map(f => (
+          {['All', 'Active', 'Litigation', 'Inactive'].map(f => (
             <button key={f} onClick={() => { setRelFilter(f); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${relFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
           ))}
         </div>

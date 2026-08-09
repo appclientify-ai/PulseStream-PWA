@@ -5,6 +5,7 @@ import { useModuleData } from '../../hooks/useModuleData.ts';
 import { Client } from '../../types';
 import { api } from '../../services/api.ts';
 import Loader from '../../components/Loader';
+import { TableFilter } from '../../components/TableFilter';
 import { toast } from 'sonner';
 
 
@@ -29,6 +30,8 @@ const Messenger: React.FC = () => {
   const [queueIndex, setQueueIndex] = useState(0);
 
   const [activeSection, setActiveSection] = useState<'All' | 'GST' | 'ITR' | 'Audit' | 'GSTR-4' | 'GSTR-9/9C'>('All');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [relFilter, setRelFilter] = useState<string>('All');
 
   // Specific query for each segment to achieve fast access and database-level pre-filtering
   const { data: clientsData = [], isLoading } = useModuleData<Client[]>('messenger_clients', activeSection);
@@ -82,14 +85,35 @@ const Messenger: React.FC = () => {
 
   const filteredClients = useMemo(() => {
     const s = search.toLowerCase();
-    return clientsData.filter(c => {
+    let list = clientsData.filter(c => {
       return (
         (c.legalName || '').toLowerCase().includes(s) || 
         (c.tradeName || '').toLowerCase().includes(s) ||
-        (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s))
+        (c.gstProfile?.gstin && c.gstProfile.gstin.toLowerCase().includes(s)) ||
+        (c.mobile && String(c.mobile).includes(s))
       );
     });
-  }, [clientsData, search]);
+
+    if (statusFilter !== 'All') {
+      list = list.filter(c => {
+        const gstSt = c.gstProfile?.gstStatus || 'Active';
+        if (statusFilter === 'Active') return gstSt === 'Active' || c.status?.includes('Active');
+        if (statusFilter === 'Suspended') return gstSt === 'Suspended';
+        if (statusFilter === 'Closed') return gstSt === 'Closed';
+        if (statusFilter === 'Inactive') return c.status === 'Inactive' || gstSt === 'Closed';
+        return gstSt === statusFilter || c.status === statusFilter;
+      });
+    }
+
+    if (relFilter !== 'All') {
+      list = list.filter(c => {
+        if (relFilter === 'Active') return c.status === 'Active' || c.status === 'Active Filing';
+        return c.status === relFilter;
+      });
+    }
+
+    return list;
+  }, [clientsData, search, statusFilter, relFilter]);
 
   const selectedClientsList = useMemo(() => {
     return Object.values(selectedClients);
@@ -261,7 +285,36 @@ const Messenger: React.FC = () => {
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Legal Name</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">GSTIN</th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Mobile No.</th>
-                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Status</th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <TableFilter label="Status" isActive={statusFilter !== 'All'}>
+                    {['All', 'Active', 'Suspended', 'Closed', 'Inactive'].map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setStatusFilter(f)}
+                        className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${
+                          statusFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </TableFilter>
+                </th>
+                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
+                  <TableFilter label="Relationship" isActive={relFilter !== 'All'}>
+                    {['All', 'Active', 'Litigation', 'Inactive'].map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setRelFilter(f)}
+                        className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${
+                          relFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </TableFilter>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -277,9 +330,20 @@ const Messenger: React.FC = () => {
                   <td className=" px-4 py-5 text-[11px] font-bold text-slate-400 truncate" title={c.legalName}>{c.legalName}</td>
                   <td className=" px-4 py-5 font-black text-slate-600 font-mono text-[11px] uppercase tracking-widest">{c.gstProfile?.gstin || 'N/A'}</td>
                   <td className=" px-4 py-5 font-black text-slate-600 text-[12px]">+91 {c.mobile}</td>
-                  <td className="px-4 py-5 text-right ">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${c.status.includes('Active') ? 'text-green-500' : 'text-slate-300'}`}>
-                      {c.status.includes('Active') ? 'Active' : 'Inact.'}
+                  <td className="px-4 py-5">
+                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                      (c.gstProfile?.gstStatus || 'Active') === 'Active' ? 'bg-emerald-100 text-emerald-700' :
+                      (c.gstProfile?.gstStatus || 'Active') === 'Suspended' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                    }`}>
+                      {c.gstProfile?.gstStatus || (c.status?.includes('Active') ? 'Active' : 'Inact.')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-5 text-right">
+                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                      c.status === 'Active' || c.status === 'Active Filing' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' :
+                      c.status === 'Litigation' ? 'text-amber-700 bg-amber-50 border border-amber-200' : 'text-slate-500 bg-slate-100 border border-slate-200'
+                    }`}>
+                      {c.status || 'Active'}
                     </span>
                   </td>
                 </tr>

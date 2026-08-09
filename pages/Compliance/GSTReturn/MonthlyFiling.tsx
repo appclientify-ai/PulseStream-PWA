@@ -48,6 +48,7 @@ const MonthlyFiling: React.FC = () => {
 
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [monthFilters, setMonthFilters] = useState<Record<string, string>>({});
   const [isR1FilterOpen, setIsR1FilterOpen] = useState(false);
   const [isR3bFilterOpen, setIsR3bFilterOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -117,12 +118,28 @@ const MonthlyFiling: React.FC = () => {
       } else if (r3bFilter === 'Pending') {
         list = list.filter(c => FY_MONTHS.some(m => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Pending'));
       }
+
+      FY_MONTHS.forEach(m => {
+        const filter = monthFilters[m];
+        if (!filter || filter === 'All') return;
+        if (filter === 'R1 Filed') {
+          list = list.filter(c => getStatus(c.id, `${selectedYear}_${m}`).r1);
+        } else if (filter === 'R1 Pending') {
+          list = list.filter(c => !getStatus(c.id, `${selectedYear}_${m}`).r1);
+        } else if (filter === '3B Filed') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Filed');
+        } else if (filter === '3B Challan') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Challan');
+        } else if (filter === '3B Pending') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${m}`).r3b) === 'Pending');
+        }
+      });
     } else {
       if (r1Filter !== 'All') list = list.filter(c => r1Filter === 'Filed' ? getStatus(c.id).r1 : !getStatus(c.id).r1);
       if (r3bFilter !== 'All') list = list.filter(c => getStatusLabel(getStatus(c.id).r3b) === r3bFilter);
     }
     return list;
-  }, [clients, search, r1Filter, r3bFilter, getStatus, selectedYear, selectedMonth, isAllMonthsMode]);
+  }, [clients, search, r1Filter, r3bFilter, monthFilters, getStatus, selectedYear, selectedMonth, isAllMonthsMode]);
 
   const stats = useMemo(() => {
     if (isAllMonthsMode) {
@@ -314,8 +331,25 @@ const MonthlyFiling: React.FC = () => {
                 
                 {isAllMonthsMode ? (
                   FY_MONTHS.map(m => (
-                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase tracking-tight text-slate-800 border-b border-slate-200 text-center min-w-[58px]">
-                      {SHORT_MONTH_MAP[m] || m.slice(0, 3)}
+                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase tracking-tight text-slate-800 border-b border-slate-200 text-center min-w-[68px]">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <TableFilter 
+                          label={SHORT_MONTH_MAP[m] || m.slice(0, 3)} 
+                          isActive={!!monthFilters[m] && monthFilters[m] !== 'All'}
+                        >
+                          {['All', 'R1 Filed', 'R1 Pending', '3B Filed', '3B Challan', '3B Pending'].map(f => (
+                            <button 
+                              key={f} 
+                              onClick={() => setMonthFilters(prev => ({ ...prev, [m]: f }))} 
+                              className={`w-full text-left px-2.5 py-1.5 text-[10px] font-black uppercase rounded-lg ${
+                                (monthFilters[m] || 'All') === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {f}
+                            </button>
+                          ))}
+                        </TableFilter>
+                      </div>
                     </th>
                   ))
                 ) : (

@@ -71,6 +71,7 @@ const QuarterlyFiling: React.FC = () => {
   const [search, setSearch] = useState('');
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [quarterFilters, setQuarterFilters] = useState<Record<string, string>>({});
   const [isR1FilterOpen, setIsR1FilterOpen] = useState(false);
   const [isR3bFilterOpen, setIsR3bFilterOpen] = useState(false);
   const getDefaultQuarterOption = () => {
@@ -165,6 +166,22 @@ const QuarterlyFiling: React.FC = () => {
       } else if (r3bFilter === 'Pending') {
         list = list.filter(c => QUARTER_CONFIGS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q.r3bMonth}`).r3b) === 'Pending'));
       }
+
+      QUARTER_CONFIGS.forEach(qConfig => {
+        const filter = quarterFilters[qConfig.key];
+        if (!filter || filter === 'All') return;
+        if (filter === '3B Filed') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${qConfig.r3bMonth}`).r3b) === 'Filed');
+        } else if (filter === '3B Challan') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${qConfig.r3bMonth}`).r3b) === 'Challan');
+        } else if (filter === '3B Pending') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${qConfig.r3bMonth}`).r3b) === 'Pending');
+        } else if (filter === 'R1 Filed') {
+          list = list.filter(c => qConfig.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1));
+        } else if (filter === 'R1 Pending') {
+          list = list.filter(c => qConfig.months.some(m => !getStatus(c.id, `${selectedYear}_${m.name}`).r1));
+        }
+      });
     } else {
       if (r1Filter === 'Filed') {
         list = list.filter(c => activeQuarterConfig.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1));
@@ -181,7 +198,7 @@ const QuarterlyFiling: React.FC = () => {
       }
     }
     return list;
-  }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, getStatus, checkQrmpVisibility, isAllQuartersMode, activeQuarterConfig]);
+  }, [clients, search, selectedYear, selectedMonth, r1Filter, r3bFilter, quarterFilters, getStatus, checkQrmpVisibility, isAllQuartersMode, activeQuarterConfig]);
 
   const stats = useMemo(() => {
     if (isAllQuartersMode) return { total: filteredClients.length, r1: 0, r3b: 0, r3bChallan: 0 };
@@ -378,8 +395,25 @@ const QuarterlyFiling: React.FC = () => {
 
                 {isAllQuartersMode ? (
                   QUARTER_CONFIGS.map(q => (
-                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase text-slate-800 border-b border-slate-200 text-center min-w-[110px]">
-                      {q.label}
+                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase text-slate-800 border-b border-slate-200 text-center min-w-[125px]">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <TableFilter 
+                          label={q.label} 
+                          isActive={!!quarterFilters[q.key] && quarterFilters[q.key] !== 'All'}
+                        >
+                          {['All', '3B Filed', '3B Challan', '3B Pending', 'R1 Filed', 'R1 Pending'].map(f => (
+                            <button 
+                              key={f} 
+                              onClick={() => setQuarterFilters(prev => ({ ...prev, [q.key]: f }))} 
+                              className={`w-full text-left px-2.5 py-1.5 text-[10px] font-black uppercase rounded-lg ${
+                                (quarterFilters[q.key] || 'All') === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {f === 'R1 Filed' ? 'All IFF/R1 Filed' : f === 'R1 Pending' ? 'Any IFF/R1 Pend' : f}
+                            </button>
+                          ))}
+                        </TableFilter>
+                      </div>
                     </th>
                   ))
                 ) : (

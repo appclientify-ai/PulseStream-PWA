@@ -30,6 +30,7 @@ const CompositionFiling: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [quarterFilters, setQuarterFilters] = useState<Record<string, string>>({});
   const [isCmp08FilterOpen, setIsCmp08FilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.quarterYear);
   const [selectedQuarter, setSelectedQuarter] = useState(defaultPeriod.quarter);
@@ -101,7 +102,7 @@ const CompositionFiling: React.FC = () => {
        (c.tradeName || '').toLowerCase().includes(s) ||
        (c.gstProfile?.gstin || '').toLowerCase().includes(s))
     );
-    if (isAllQuartersMode && cmp08Filter !== 'All') {
+    if (isAllQuartersMode) {
       if (cmp08Filter === 'Filed') {
         list = list.filter(c => QUARTERS.every(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Filed'));
       } else if (cmp08Filter === 'Challan') {
@@ -109,11 +110,23 @@ const CompositionFiling: React.FC = () => {
       } else if (cmp08Filter === 'Pending') {
         list = list.filter(c => QUARTERS.some(q => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Pending'));
       }
+
+      QUARTERS.forEach(q => {
+        const filter = quarterFilters[q];
+        if (!filter || filter === 'All') return;
+        if (filter === 'Filed') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Filed');
+        } else if (filter === 'Challan') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Challan');
+        } else if (filter === 'Pending') {
+          list = list.filter(c => getStatusLabel(getStatus(c.id, `${selectedYear}_${q}`).cmp08) === 'Pending');
+        }
+      });
     } else if (!isAllQuartersMode && cmp08Filter !== 'All') {
       list = list.filter(c => getStatusLabel(getStatus(c.id).cmp08) === cmp08Filter);
     }
     return list;
-  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, getStatus, isAllQuartersMode]);
+  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, quarterFilters, getStatus, isAllQuartersMode]);
 
   const stats = useMemo(() => {
     if (isAllQuartersMode) {
@@ -283,8 +296,25 @@ const CompositionFiling: React.FC = () => {
                 
                 {isAllQuartersMode ? (
                   QUARTERS.map(q => (
-                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 border-b border-slate-200 text-[10px] font-black uppercase text-slate-800 text-center min-w-[95px]">
-                      {SHORT_QUARTER_MAP[q] || q}
+                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 border-b border-slate-200 text-[10px] font-black uppercase text-slate-800 text-center min-w-[105px]">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <TableFilter 
+                          label={SHORT_QUARTER_MAP[q] || q} 
+                          isActive={!!quarterFilters[q] && quarterFilters[q] !== 'All'}
+                        >
+                          {['All', 'Filed', 'Challan', 'Pending'].map(f => (
+                            <button 
+                              key={f} 
+                              onClick={() => setQuarterFilters(prev => ({ ...prev, [q]: f }))} 
+                              className={`w-full text-left px-2.5 py-1.5 text-[10px] font-black uppercase rounded-lg ${
+                                (quarterFilters[q] || 'All') === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'
+                              }`}
+                            >
+                              {f}
+                            </button>
+                          ))}
+                        </TableFilter>
+                      </div>
                     </th>
                   ))
                 ) : (
