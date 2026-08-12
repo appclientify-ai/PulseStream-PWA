@@ -208,21 +208,71 @@ const GSTPortfolioContent: React.FC = () => {
           )}
         </div>
 
-        {/* Quick Filter Pills */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full py-1 shrink-0">
-          {quickFilterChips.map(chip => (
-            <button
-              key={chip.value}
-              onClick={() => setQuickFilter(chip.value)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${
-                quickFilter === chip.value 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {chip.label}
-            </button>
-          ))}
+        {/* Count Pills in Search Bar Line */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-1">
+          <button
+            onClick={() => setQuickFilter('All')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              quickFilter === 'All' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            <span>Total</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+              quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>
+              {stats.total}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setQuickFilter('Active')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              quickFilter === 'Active' 
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                : 'bg-emerald-50/60 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+            }`}
+          >
+            <span>Active</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+              quickFilter === 'Active' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 text-emerald-900'
+            }`}>
+              {stats.active}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setQuickFilter('Litigation')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              quickFilter === 'Litigation' 
+                ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                : 'bg-amber-50/60 text-amber-700 border-amber-200 hover:bg-amber-100'
+            }`}
+          >
+            <span>Litigation</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+              quickFilter === 'Litigation' ? 'bg-amber-500 text-white' : 'bg-amber-200/80 text-amber-900'
+            }`}>
+              {stats.litigation}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setQuickFilter('Inactive')}
+            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              quickFilter === 'Inactive' 
+                ? 'bg-slate-700 text-white border-slate-700 shadow-xs' 
+                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+            }`}
+          >
+            <span>Inactive</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+              quickFilter === 'Inactive' ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-700'
+            }`}>
+              {stats.inactive}
+            </span>
+          </button>
         </div>
 
         {/* Controls: View Mode, Utilities, Add Client */}
