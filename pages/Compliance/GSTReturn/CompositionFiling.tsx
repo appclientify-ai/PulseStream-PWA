@@ -302,16 +302,16 @@ const CompositionFiling: React.FC = () => {
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
           <table className="w-full text-left border-collapse min-w-full">
             <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-widest text-slate-900 text-[12px]">
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[150px]">Trade Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[150px]">Legal Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Mobile No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 min-w-[140px]">GSTIN</th>
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900 text-[10px]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200 min-w-[150px]">Trade Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200 min-w-[150px]">Legal Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">Mobile No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200 min-w-[140px]">GSTIN</th>
                 
                 {isAllQuartersMode ? (
                   QUARTERS.map(q => (
-                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 border-b border-slate-200 text-[10px] font-black uppercase text-slate-800 text-center min-w-[105px]">
+                    <th key={q} className="sticky top-0 z-30 bg-slate-100 px-1 py-1 border-b border-slate-200 text-[10px] font-black uppercase text-slate-800 text-center min-w-[105px]">
                       <div className="flex items-center justify-center gap-0.5">
                         <TableFilter 
                           label={SHORT_QUARTER_MAP[q] || q} 
@@ -334,27 +334,27 @@ const CompositionFiling: React.FC = () => {
                   ))
                 ) : (
                   <>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-center">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-900 text-center">
                        <div className="flex justify-center flex-col items-center">
                          <TableFilter label="CMP-08" isActive={cmp08Filter !== 'All'}>
                            {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setCmp08Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${cmp08Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
                          </TableFilter>
                        </div>
                     </th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">User ID</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Password</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200">Remark</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">User ID</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">Password</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">Remark</th>
                   </>
                 )}
 
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 border-b border-slate-200 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-0.5 px-2 uppercase text-[9px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
@@ -362,11 +362,11 @@ const CompositionFiling: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 const theme = getClientColorTheme(client);
                 return (
-                  <tr key={client.id} className={`transition-all group h-[44px] text-[12px] border-b border-slate-100 ${theme.rowClass}`}>
-                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className={`px-4 py-[2px] truncate ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</td>
-                    <td className={`px-4 py-[2px] truncate ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</td>
-                    <td className=" px-4 py-[2px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
+                  <tr key={client.id} className={`transition-all group h-[30px] text-[11.5px] border-b border-slate-100 animate-in fade-in slide-in-from-bottom-1 duration-150 ${theme.rowClass}`}>
+                    <td className="px-2 py-[1px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className={`px-2 py-[1px] truncate ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</td>
+                    <td className={`px-2 py-[1px] truncate ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</td>
+                    <td className="px-2 py-[1px] font-black text-slate-500 truncate">{client.mobile || '---'}</td>
                     <td className=" px-4 py-[2px]">
                       <div className="flex items-center gap-2">
                         <span className={`truncate ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>

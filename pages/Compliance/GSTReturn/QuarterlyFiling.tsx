@@ -459,23 +459,23 @@ const QuarterlyFiling: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
-                  <tr>
-                    <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
-                  </tr>
-                  {sectorClients.map((client, idx) => {
-                const st = getStatus(client.id);
-                const r3bStatus = getStatusLabel(st.r3b);
-                const isEditingPass = editingPasswordId === client.id;
-                const theme = getClientColorTheme(client);
-                return (
-                  <tr key={client.id} className={`transition-all border-b border-slate-100 last:border-0 ${isAllQuartersMode ? 'h-[64px]' : 'h-[44px]'} ${theme.rowClass}`}>
-                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono text-[12px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px] truncate max-w-[200px]" title={client.tradeName}>
-                      <div className={`truncate leading-tight text-[12px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
-                      <div className={`text-[9px] truncate leading-tight ${theme.legalNameClass}`} title={client.legalName}>{client.legalName || '---'}</div>
-                    </td>
-    
-                    <td className=" px-4 py-[2px] font-black text-slate-500 text-[12px] truncate">{client.mobile || '---'}</td>
+                <tr>
+                  <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-0.5 px-2 uppercase text-[9px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                </tr>
+                {sectorClients.map((client, idx) => {
+              const st = getStatus(client.id);
+              const r3bStatus = getStatusLabel(st.r3b);
+              const isEditingPass = editingPasswordId === client.id;
+              const theme = getClientColorTheme(client);
+              return (
+                <tr key={client.id} className={`transition-all border-b border-slate-100 last:border-0 animate-in fade-in slide-in-from-bottom-1 duration-150 ${isAllQuartersMode ? 'h-[44px]' : 'h-[30px]'} ${theme.rowClass}`}>
+                  <td className="px-2 py-[1px] font-black text-indigo-400 font-mono text-[11px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
+                  <td className="px-2 py-[1px] truncate max-w-[200px]" title={client.tradeName}>
+                    <div className={`truncate leading-tight text-[11.5px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
+                    <div className={`text-[9px] truncate leading-tight ${theme.legalNameClass}`} title={client.legalName}>{client.legalName || '---'}</div>
+                  </td>
+  
+                  <td className="px-2 py-[1px] font-black text-slate-500 text-[11px] truncate">{client.mobile || '---'}</td>
                     <td className=" px-4 py-[2px]">
                       <div className="flex items-center gap-2">
                         <span className={`truncate ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>

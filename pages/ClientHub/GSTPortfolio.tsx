@@ -174,7 +174,6 @@ const GSTPortfolioContent: React.FC = () => {
   const quickFilterChips = [
     { label: 'All', value: 'All' },
     { label: 'Active', value: 'Active' },
-    { label: 'Active Filing', value: 'Active Filing' },
     { label: 'Regular', value: 'Regular' },
     { label: 'Composition', value: 'Composition' },
     { label: 'Monthly', value: 'Monthly' },
@@ -184,91 +183,8 @@ const GSTPortfolioContent: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-1.5 pb-1 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Interactive Stat Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 shrink-0">
-        <button 
-          onClick={() => setQuickFilter('All')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'All' ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-400' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total Vault</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.total}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Active')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Active' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-300' : 'bg-emerald-50/50 border-emerald-200 text-emerald-900 hover:bg-emerald-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Active' ? 'text-emerald-100' : 'text-emerald-600'}`}>Active</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.active}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Regular')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Regular' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-300' : 'bg-indigo-50/50 border-indigo-200 text-indigo-900 hover:bg-indigo-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Regular' ? 'text-indigo-100' : 'text-indigo-600'}`}>Regular</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.regular}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Composition')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Composition' ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-300' : 'bg-purple-50/50 border-purple-200 text-purple-900 hover:bg-purple-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Composition' ? 'text-purple-100' : 'text-purple-600'}`}>Composition</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.composition}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Monthly')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Monthly' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md ring-2 ring-cyan-300' : 'bg-cyan-50/50 border-cyan-200 text-cyan-900 hover:bg-cyan-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Monthly' ? 'text-cyan-100' : 'text-cyan-600'}`}>Monthly</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.monthly}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Quarterly')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Quarterly' ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' : 'bg-blue-50/50 border-blue-200 text-blue-900 hover:bg-blue-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Quarterly' ? 'text-blue-100' : 'text-blue-600'}`}>Quarterly</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.quarterly}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Litigation')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Litigation' ? 'bg-rose-600 text-white border-rose-600 shadow-md ring-2 ring-rose-300' : 'bg-rose-50/50 border-rose-200 text-rose-900 hover:bg-rose-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Litigation' ? 'text-rose-100' : 'text-rose-600'}`}>Litigation</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.litigation}</p>
-        </button>
-
-        <button 
-          onClick={() => setQuickFilter('Inactive')}
-          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
-            quickFilter === 'Inactive' ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-300' : 'bg-amber-50/50 border-amber-200 text-amber-900 hover:bg-amber-100/50'
-          }`}
-        >
-          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Inactive' ? 'text-amber-100' : 'text-amber-600'}`}>Inactive</p>
-          <p className="text-lg font-black leading-tight mt-0.5">{stats.inactive}</p>
-        </button>
-      </div>
-
       {/* Search and Action Toolbar */}
       <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm shrink-0">
         

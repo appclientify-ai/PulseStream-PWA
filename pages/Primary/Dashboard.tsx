@@ -924,7 +924,7 @@ const Dashboard: React.FC = () => {
             setIsGuidelinesOpen(true);
           }}
         />
-        <div className="flex-1 flex flex-col min-h-0 pt-4 md:pt-8 pb-20 md:pb-12 px-3 sm:px-6 overflow-y-auto no-scrollbar scroll-smooth">
+        <div className="flex-1 flex flex-col min-h-0 pt-1.5 md:pt-2 pb-16 md:pb-8 px-2 sm:px-4 overflow-y-auto no-scrollbar scroll-smooth">
           {isInitialLoad && activeView === 'dashboard' ? <Loader /> : (
             <Suspense fallback={<Loader />}>{renderContent()}</Suspense>
           )}

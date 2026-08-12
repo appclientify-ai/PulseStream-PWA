@@ -334,9 +334,9 @@ const GSTR9_9C: React.FC = () => {
                 const isEditingPass = editingPasswordId === client.id;
                 const theme = getClientColorTheme(client);
                 return (
-                  <tr key={client.id} className={`transition-all group h-[44px] text-[12px] border-b border-slate-100 ${theme.rowClass}`}>
-                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px]" title={`${client.tradeName || ''} (${client.legalName || ''})`}>
+                  <tr key={client.id} className={`transition-all group h-[30px] text-[11.5px] border-b border-slate-100 animate-in fade-in slide-in-from-bottom-1 duration-150 ${theme.rowClass}`}>
+                    <td className="px-2 py-[1px] font-black text-indigo-400 font-mono truncate">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="px-2 py-[1px]" title={`${client.tradeName || ''} (${client.legalName || ''})`}>
                      <div className={`leading-tight text-[12px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
                      <div className={`text-[9px] leading-tight ${theme.legalNameClass}`} title={client.legalName}>{client.legalName || '---'}</div>
                     </td>

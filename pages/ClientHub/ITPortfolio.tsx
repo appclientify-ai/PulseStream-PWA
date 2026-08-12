@@ -169,45 +169,10 @@ const ITPortfolio: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-2.5 pb-2 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-1.5 pb-1 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Interactive Stat Cards Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 shrink-0">
-        {[
-          { key: 'All', label: 'Total IT Vault', count: stats.total, color: 'emerald', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-          { key: 'Active', label: 'Active Clients', count: stats.active, color: 'teal', bg: 'bg-teal-50 text-teal-700 border-teal-200' },
-          { key: 'ITR-1', label: 'ITR-1 (Sahaj)', count: stats.itr1, color: 'sky', bg: 'bg-sky-50 text-sky-700 border-sky-200' },
-          { key: 'ITR-2', label: 'ITR-2', count: stats.itr2, color: 'blue', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
-          { key: 'ITR-3', label: 'ITR-3 (Business)', count: stats.itr3, color: 'indigo', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-          { key: 'ITR-4', label: 'ITR-4 (Sugam)', count: stats.itr4, color: 'purple', bg: 'bg-purple-50 text-purple-700 border-purple-200' },
-          { key: 'Litigation', label: 'Litigation', count: stats.litigation, color: 'rose', bg: 'bg-rose-50 text-rose-700 border-rose-200' },
-          { key: 'Inactive', label: 'Inactive / Susp', count: stats.inactive, color: 'slate', bg: 'bg-slate-100 text-slate-700 border-slate-300' },
-        ].map(item => {
-          const isActive = quickFilter === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => setQuickFilter(item.key)}
-              className={`p-2.5 rounded-2xl border transition-all text-left flex flex-col justify-between shadow-xs ${
-                isActive 
-                  ? `${item.bg} ring-2 ring-emerald-500/40 font-black scale-[1.02]` 
-                  : 'bg-white border-slate-200 hover:border-emerald-300 text-slate-600'
-              }`}
-            >
-              <span className="text-[9px] font-black uppercase tracking-wider truncate block opacity-80">
-                {item.label}
-              </span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-base font-black tracking-tight">{item.count}</span>
-                {isActive && <span className="text-[8px] uppercase tracking-widest font-black">● Active</span>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
       {/* Main Controls & Search Strip */}
-      <div className="flex flex-col sm:flex-row items-center gap-2.5 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
+      <div className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0">
         
         {/* Search Input */}
         <div className="relative flex-1 group w-full">

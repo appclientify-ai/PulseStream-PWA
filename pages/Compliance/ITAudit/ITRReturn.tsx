@@ -311,9 +311,9 @@ const ITRReturn: React.FC = () => {
                 const isPassVisible = visiblePasswords.has(client.id);
                 const isEditingPass = editingPasswordId === client.id;
                 return (
-                  <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[44px] text-[12px]">
-                    <td className=" px-4 py-[2px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className=" px-4 py-[2px]" title={client.legalName}>
+                  <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all h-[30px] text-[11.5px] animate-in fade-in slide-in-from-bottom-1 duration-150">
+                    <td className="px-2 py-[1px] font-black text-indigo-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className="px-2 py-[1px]" title={client.legalName}>
                        <div className="font-black text-slate-900 leading-tight text-[12px]">{client.legalName || '---'}</div>
                        {client.tradeName && (
                          <div className="font-bold text-[9px] text-indigo-600 leading-tight" title={client.tradeName}>

@@ -167,7 +167,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
     // Apply Quick Filters
     if (quickFilter !== 'All') {
-      if (quickFilter === 'Active' || quickFilter === 'Active Filing' || quickFilter === 'Litigation' || quickFilter === 'Inactive' || quickFilter === 'Suspended') {
+      if (quickFilter === 'Active' || quickFilter === 'Litigation' || quickFilter === 'Inactive' || quickFilter === 'Suspended') {
         list = list.filter(c => c?.status === quickFilter);
       } else if (quickFilter.startsWith('ITR-')) {
         list = list.filter(c => c?.itProfile?.itrFiled === quickFilter);
@@ -352,7 +352,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   return (
     <div className="w-full h-full flex flex-col min-h-0 relative">
       {viewMode === 'grid' ? (
-        <div className="overflow-auto no-scrollbar flex-1 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="overflow-auto no-scrollbar flex-1 p-2.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
           {filteredClients.length === 0 ? (
             <div className="col-span-full py-24 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
               No matching IT clients found
@@ -364,22 +364,14 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
               return (
                 <div 
                   key={client.id}
-                  className={`bg-white border rounded-2xl p-4 flex flex-col justify-between transition-all relative hover:shadow-lg ${
-                    isSelected ? 'border-emerald-600 bg-emerald-50/20 ring-2 ring-emerald-500/20' : 'border-slate-200 hover:border-emerald-300'
+                  className={`bg-white border rounded-xl p-3 flex flex-col justify-between transition-all relative hover:shadow-md animate-in fade-in slide-in-from-bottom-1 duration-200 ${
+                    isSelected ? 'border-emerald-600 bg-emerald-50/20 ring-1 ring-emerald-500/20' : 'border-slate-200 hover:border-emerald-300'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected}
-                        onChange={() => toggleSelectRow(client.id)}
-                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                      />
-                      <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-wider">
-                        {client.itProfile?.itrFiled || 'ITR'}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-wider">
+                      {client.itProfile?.itrFiled || 'ITR'}
+                    </span>
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
                       client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
                     }`}>
@@ -387,8 +379,8 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                     </span>
                   </div>
 
-                  <div className="mb-3">
-                    <h4 className="font-black text-slate-900 text-sm truncate" title={client.legalName || client.tradeName}>
+                  <div className="mb-2">
+                    <h4 className="font-black text-slate-900 text-xs truncate" title={client.legalName || client.tradeName}>
                       {client.legalName || client.tradeName}
                     </h4>
                     {client.itProfile?.fatherName && (
@@ -398,10 +390,10 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                     )}
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 mb-3 space-y-1.5">
+                  <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 mb-2 space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">PAN</span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <span className="font-black font-mono text-emerald-700 text-[11px] tracking-wider uppercase">
                           {client.itProfile?.pan || '---'}
                         </span>
@@ -413,7 +405,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                                 toast.success('PAN Copied!');
                               }
                             }}
-                            className="p-1 hover:bg-emerald-100 text-emerald-600 rounded transition-colors"
+                            className="p-0.5 hover:bg-emerald-100 text-emerald-600 rounded transition-colors"
                             title="Copy PAN"
                           >
                             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
@@ -429,11 +421,11 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
                     <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60">
                       <span className="text-slate-500 font-bold">Email</span>
-                      <span className="font-medium text-slate-600 truncate max-w-[140px]">{client.email || '---'}</span>
+                      <span className="font-medium text-slate-600 truncate max-w-[130px]">{client.email || '---'}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-1">
+                  <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 gap-1">
                     <button
                       onClick={() => {
                         setLoginToolClient(client);
@@ -442,7 +434,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         setIsEditingLoginPass(false);
                         setIsLoginBoxOpen(true);
                       }}
-                      className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs"
+                      className="flex-1 py-1 px-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-black text-[9px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs"
                     >
                       <span>🔐 IT Portal</span>
                     </button>
@@ -450,13 +442,13 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                       client={client}
                       onEdit={handleEdit}
                       onDataChange={handleDataChange}
-                      className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                      className="h-6.5 w-6.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
                     />
                     <button 
                       onClick={(e) => openActionsMenu(e, client)}
-                      className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-emerald-600 hover:bg-white'}`}
+                      className={`h-6.5 w-6.5 rounded-lg border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-emerald-600 hover:bg-white'}`}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                     </button>
                   </div>
                 </div>
@@ -469,59 +461,51 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           <table className="w-full text-left border-collapse table-auto min-w-full">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 border-b border-slate-200 text-center w-8">
-                  <input 
-                    type="checkbox"
-                    checked={selectedClientIds.size > 0 && selectedClientIds.size === filteredClients.length}
-                    onChange={toggleSelectAll}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                  />
-                </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
                 <th 
                   onClick={() => handleSort('legalName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     Name
-                    <span className="text-[10px] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[9px] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
                 <th 
                   onClick={() => handleSort('itr')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     ITR
-                    <span className="text-[10px] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[9px] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Father Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Father Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Mobile No.</th>
                 <th 
                   onClick={() => handleSort('pan')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     PAN No.
-                    <span className="text-[10px] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[9px] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Address</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Address</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">
                   <div className="flex items-center gap-1">
                     Status
                     <button 
                       ref={statusFilterBtnRef}
                       onClick={(e) => openFilterMenu(e, 'status')} 
-                      className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      className={`p-0.5 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
                       title="Filter Status"
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -534,71 +518,63 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   return (
                     <tr 
                       key={client.id} 
-                      className={`transition-all group border-b border-slate-50 last:border-0 h-[44px] ${
+                      className={`transition-all group border-b border-slate-50 last:border-0 h-[30px] animate-in fade-in slide-in-from-bottom-1 duration-150 ${
                         isSelected ? 'bg-emerald-50/60' : 'hover:bg-emerald-50/10'
                       }`}
                     >
-                      <td className="px-3 py-[2px] text-center">
-                        <input 
-                          type="checkbox" 
-                          checked={isSelected}
-                          onChange={() => toggleSelectRow(client.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                        />
-                      </td>
-                      <td className=" px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
+                      <td className="px-2 py-[1px] font-black text-emerald-600 font-mono text-[11px] truncate">
                         {(idx + 1).toString().padStart(2, '0')}
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <p className="font-black text-slate-900 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
+                      <td className="px-2 py-[1px]">
+                         <p className="font-black text-slate-900 truncate text-[11.5px]" title={client.legalName}>{client.legalName}</p>
                          {client.tradeName && (
-                            <p className="font-bold text-indigo-600 text-[10px] truncate leading-tight" title={client.tradeName}>
+                            <p className="font-bold text-indigo-600 text-[9px] truncate leading-tight" title={client.tradeName}>
                               Trade: {client.tradeName}
                             </p>
                          )}
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-[10px] tracking-wide">
+                      <td className="px-2 py-[1px]">
+                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-1.5 py-0 rounded-md font-black text-[9px] tracking-wide">
                             {client.itProfile?.itrFiled || 'N/A'}
                          </span>
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
+                      <td className="px-2 py-[1px]">
+                         <p className="font-bold text-slate-600 truncate text-[11px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
+                      <td className="px-2 py-[1px]">
+                         <p className="font-black text-slate-500 text-[11px]">{client.mobile || '---'}</p>
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <div className="flex items-center gap-2 group/pan">
-                            <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
+                      <td className="px-2 py-[1px]">
+                         <div className="flex items-center gap-1.5 group/pan">
+                            <span className="font-black font-mono tracking-widest text-[11px] text-emerald-600">{client.itProfile?.pan}</span>
                             <button 
                                onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
-                               className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-sm border border-emerald-100"
+                               className="h-5 w-5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-xs border border-emerald-100"
                                title="Copy PAN"
                             >
-                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
                             </button>
                          </div>
                       </td>
-                      <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                         <p className="font-bold text-slate-500 text-[11px] truncate" title={client.itProfile?.address}>
+                      <td className="px-2 py-[1px] max-w-[150px]">
+                         <p className="font-bold text-slate-500 text-[10px] truncate" title={client.itProfile?.address}>
                             {client.itProfile?.address || '---'}
                          </p>
                       </td>
-                      <td className=" px-[5.5px] py-[2px]">
-                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
+                      <td className="px-2 py-[1px]">
+                         <span className={`px-1.5 py-0 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
                            client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                          }`}>
                            {client.status}
                          </span>
                       </td>
-                      <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
+                      <td className="px-2 py-[1px] text-right overflow-visible">
                          <div className="flex items-center justify-end gap-1">
                             <ITViewIcon 
                               client={client}
                               onEdit={handleEdit}
                               onDataChange={handleDataChange}
-                              className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                              className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
                             />
                             {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
                             
@@ -610,17 +586,17 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                                 setIsEditingLoginPass(false);
                                 setIsLoginBoxOpen(true);
                               }}
-                              className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                              className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
                               title="IT Portal Access Utility"
                             >
-                               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
 
                             <button 
                               onClick={(e) => openActionsMenu(e, client)}
-                              className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                              className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
                             >
-                               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                             </button>
                          </div>
                       </td>
@@ -669,7 +645,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
             {isBulkStatusMenuOpen && (
               <div className="absolute bottom-full mb-2 left-0 w-44 bg-white text-slate-800 rounded-xl shadow-2xl p-1 border border-slate-200 z-50 animate-in zoom-in-95">
-                {['Active', 'Active Filing', 'Litigation', 'Consulting', 'Suspended', 'Inactive'].map((status) => (
+                {['Active', 'Litigation', 'Suspended', 'Inactive'].map((status) => (
                   <button
                     key={status}
                     onClick={() => handleBulkStatusChange(status)}
