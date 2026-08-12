@@ -8,6 +8,7 @@ import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
+import { SectorJurisdictionFilter, filterClientsBySectorJurisdiction } from '../../../components/SectorJurisdictionFilter';
 import { useGSTR9Logic } from './GSTR9_9Clogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS, isClientVisibleInFY } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
@@ -51,6 +52,8 @@ const GSTR9_9C: React.FC = () => {
   // Filters
   const [gstr9Filter, setGstr9Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [gstr9cFilter, setGstr9cFilter] = useState<'All' | 'Filed' | 'Pending' | 'N/A'>('All');
+  const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
 
   // Actions Menu State
   const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
@@ -124,7 +127,7 @@ const GSTR9_9C: React.FC = () => {
     const s = search.toLowerCase();
     const currentWatchlist = watchlist[selectedYear] || [];
     
-    return allClients.filter(c => {
+    const list = allClients.filter(c => {
       if (!c) return false;
       const inWatchlist = currentWatchlist.includes(c.id);
       if (!inWatchlist) return false;
@@ -148,7 +151,9 @@ const GSTR9_9C: React.FC = () => {
       }
       return true;
     });
-  }, [allClients, search, selectedYear, watchlist, gstr9Filter, gstr9cFilter, getStatus, is9CApplicable]);
+
+    return filterClientsBySectorJurisdiction(list, authorityFilter, selectedSectors);
+  }, [allClients, search, selectedYear, watchlist, gstr9Filter, gstr9cFilter, authorityFilter, selectedSectors, getStatus, is9CApplicable]);
 
 
     const groupedClients = useMemo(() => {
@@ -261,6 +266,15 @@ const GSTR9_9C: React.FC = () => {
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <SectorJurisdictionFilter
+            clients={allClients}
+            authority={authorityFilter}
+            setAuthority={setAuthorityFilter}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
+            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            totalFilteredCount={filteredDisplayList.length}
+          />
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button onClick={() => { setSelectedClient(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-5 landscape:px-3 bg-indigo-600 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>

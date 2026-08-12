@@ -104,6 +104,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
           category: category,
           status: initialData.status || 'Pending',
           filingNo: initialData.filingNo || '',
+          caseNo: initialData.caseNo || '',
           filedDate: initialData.filedDate || '',
           replyReferenceNo: initialData.replyReferenceNo || '',
           orderDate: initialData.orderDate || '',
@@ -119,6 +120,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
         section: '',
         referenceNo: '',
         filingNo: '',
+        caseNo: '',
         issuedDate: '',
         dueDate: '',
         filedDate: '',
@@ -497,7 +499,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
             </div>
 
             {/* Reference & Filing Numbers */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 ${isTribunal ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} gap-4`}>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
                   {isHighCourt ? 'Impugned GSTAT Order No / Ref' : isTribunal ? 'Order-In-Appeal (OIA) No / Ref' : isAppeal ? 'Appeal ARN / Order No' : 'Notice Reference No / DIN'} <span className="text-red-500">*</span>
@@ -512,19 +514,21 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block flex items-center justify-between">
-                  <span>Filing No.</span>
-                  {(isTribunal || isHighCourt) && <span className="text-[9px] text-indigo-600 font-bold lowercase">gstat / hc filing no</span>}
-                </label>
-                <input
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
-                  placeholder={isHighCourt ? 'e.g. HC/FIL/2024/00192' : isTribunal ? 'e.g. GSTAT/FIL/2024/00812' : 'e.g. FIL-12345'}
-                  value={formData.filingNo || ''}
-                  onChange={e => setFormData({ ...formData, filingNo: e.target.value })}
-                />
-              </div>
+              {!isTribunal && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block flex items-center justify-between">
+                    <span>Filing No.</span>
+                    {isHighCourt && <span className="text-[9px] text-indigo-600 font-bold lowercase">hc filing no</span>}
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                    placeholder={isHighCourt ? 'e.g. HC/FIL/2024/00192' : 'e.g. FIL-12345'}
+                    value={formData.filingNo || ''}
+                    onChange={e => setFormData({ ...formData, filingNo: e.target.value })}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -647,7 +651,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
 
             {/* Conditional Dates depending on status */}
             {formData.status === 'Filed' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100">
+              <div className={`grid grid-cols-1 ${isTribunal ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4 bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100`}>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
                     {isHighCourt ? 'Date of Filing (High Court)' : isTribunal ? 'Date of Filing (Tribunal)' : isAppeal ? 'Appeal Filing Date (APL-01)' : 'Reply Filed Date'}
@@ -659,18 +663,48 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({
                     onChange={e => setFormData({ ...formData, filedDate: e.target.value })}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
-                    {isHighCourt ? 'Writ Petition No / High Court Appeal No' : isTribunal ? 'Tribunal Appeal No / GSTAT ARN' : isAppeal ? 'APL-01 ARN / Acknowledgment No' : 'Reply ARN / Reference'}
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono uppercase"
-                    placeholder={isHighCourt ? 'e.g. WP-12345/2024 or HC-APPEAL/99/2024' : isTribunal ? 'e.g. GSTAT-DEL/2024/0091 or APL-05/ARN...' : 'e.g. AA2703241234567'}
-                    value={formData.replyReferenceNo || ''}
-                    onChange={e => setFormData({ ...formData, replyReferenceNo: e.target.value })}
-                  />
-                </div>
+
+                {isTribunal ? (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
+                        Tribunal Filing No.
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono uppercase"
+                        placeholder="e.g. GSTAT/FIL/2024/00812"
+                        value={formData.filingNo || ''}
+                        onChange={e => setFormData({ ...formData, filingNo: e.target.value, replyReferenceNo: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
+                        Tribunal Case No.
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono uppercase"
+                        placeholder="e.g. APL-5/DEL/2024/01"
+                        value={formData.caseNo || ''}
+                        onChange={e => setFormData({ ...formData, caseNo: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase text-emerald-800 tracking-wider block">
+                      {isHighCourt ? 'Writ Petition No / High Court Appeal No' : isAppeal ? 'APL-01 ARN / Acknowledgment No' : 'Reply ARN / Reference'}
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-white border border-emerald-200 rounded-xl p-3 font-bold text-xs outline-none focus:ring-2 focus:ring-emerald-600/20 font-mono uppercase"
+                      placeholder={isHighCourt ? 'e.g. WP-12345/2024 or HC-APPEAL/99/2024' : 'e.g. AA2703241234567'}
+                      value={formData.replyReferenceNo || ''}
+                      onChange={e => setFormData({ ...formData, replyReferenceNo: e.target.value })}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

@@ -302,7 +302,7 @@ const Messenger: React.FC = () => {
                 </th>
                 <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">
                   <TableFilter label="Relationship" isActive={relFilter !== 'All'}>
-                    {['All', 'Active', 'Litigation', 'Inactive'].map(f => (
+                    {['All', 'Active', 'Active Filing', 'Litigation', 'Consulting', 'Suspended', 'Inactive'].map(f => (
                       <button
                         key={f}
                         onClick={() => setRelFilter(f)}

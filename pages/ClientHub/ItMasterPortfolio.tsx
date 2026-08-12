@@ -12,11 +12,15 @@ import { TableFilter } from '../../components/TableFilter';
 
 interface ItMasterPortfolioProps {
   externalSearch?: string;
+  quickFilter?: string;
+  viewMode?: 'table' | 'grid';
   onDataChange?: () => void;
 }
 
 const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({ 
   externalSearch = '', 
+  quickFilter = 'All',
+  viewMode = 'table',
   onDataChange
 }) => {
   const queryClient = useQueryClient();
@@ -26,6 +30,14 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState('');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Multi-Select & Bulk State
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [isBulkStatusMenuOpen, setIsBulkStatusMenuOpen] = useState(false);
+
+  // Sorting State
+  const [sortField, setSortField] = useState<'legalName' | 'pan' | 'itr' | 'status'>('legalName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ['clients'],
@@ -141,19 +153,40 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
     setIsEditModalOpen(true);
   };
 
+  const handleSort = (field: 'legalName' | 'pan' | 'itr' | 'status') => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
   const filteredClients = useMemo(() => {
     let list = clients || [];
+
+    // Apply Quick Filters
+    if (quickFilter !== 'All') {
+      if (quickFilter === 'Active' || quickFilter === 'Active Filing' || quickFilter === 'Litigation' || quickFilter === 'Inactive' || quickFilter === 'Suspended') {
+        list = list.filter(c => c?.status === quickFilter);
+      } else if (quickFilter.startsWith('ITR-')) {
+        list = list.filter(c => c?.itProfile?.itrFiled === quickFilter);
+      }
+    }
+
     if (statusFilter !== 'All') {
       list = list.filter(c => c?.status === statusFilter);
     }
+
     if (itrFilter !== 'All') {
       list = list.filter(c => {
         const itr = c?.itProfile?.itrFiled || 'N/A';
         return itr === itrFilter;
       });
     }
+
     const s = (externalSearch || '').toLowerCase();
-    const result = list.filter(c => {
+    const searchFiltered = list.filter(c => {
       if (!c) return false;
       return (c.legalName || '').toLowerCase().includes(s) || 
       (c.tradeName || '').toLowerCase().includes(s) ||
@@ -161,8 +194,107 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
       (c.itProfile?.fatherName || '').toLowerCase().includes(s) ||
       String(c.mobile || '').toLowerCase().includes(s);
     });
-    return [...result].sort((a, b) => (a.legalName || '').localeCompare(b.legalName || ''));
-  }, [clients, externalSearch, statusFilter, itrFilter]);
+
+    // Apply Sorting
+    return [...searchFiltered].sort((a, b) => {
+      let valA = '';
+      let valB = '';
+
+      if (sortField === 'legalName') {
+        valA = a.legalName || a.tradeName || '';
+        valB = b.legalName || b.tradeName || '';
+      } else if (sortField === 'pan') {
+        valA = a.itProfile?.pan || '';
+        valB = b.itProfile?.pan || '';
+      } else if (sortField === 'itr') {
+        valA = a.itProfile?.itrFiled || '';
+        valB = b.itProfile?.itrFiled || '';
+      } else if (sortField === 'status') {
+        valA = a.status || '';
+        valB = b.status || '';
+      }
+
+      const cmp = valA.localeCompare(valB);
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }, [clients, externalSearch, quickFilter, statusFilter, itrFilter, sortField, sortOrder]);
+
+  // Multi-select handlers
+  const toggleSelectAll = () => {
+    if (selectedClientIds.size === filteredClients.length) {
+      setSelectedClientIds(new Set());
+    } else {
+      setSelectedClientIds(new Set(filteredClients.map(c => c.id)));
+    }
+  };
+
+  const toggleSelectRow = (id: string) => {
+    setSelectedClientIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Bulk Operations
+  const selectedClientsList = useMemo(() => {
+    return (clients || []).filter(c => selectedClientIds.has(c.id));
+  }, [clients, selectedClientIds]);
+
+  const handleBulkCopyCreds = () => {
+    if (selectedClientsList.length === 0) return;
+    const credsText = selectedClientsList.map(c => 
+      `Entity: ${c.legalName || c.tradeName}\nPAN: ${c.itProfile?.pan || 'N/A'}\nUser ID: ${c.itProfile?.pan || 'N/A'}\nPassword: ${c.itProfile?.password || 'N/A'}`
+    ).join('\n---------------------\n');
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(credsText);
+      toast.success(`Copied IT credentials for ${selectedClientsList.length} clients!`);
+    }
+  };
+
+  const handleBulkExportCSV = () => {
+    if (selectedClientsList.length === 0) return;
+    const headers = [
+      "Legal Name", "Trade Name", "PAN", "Father Name", "Mobile", "Email", 
+      "ITR Form", "Portal Password", "Status"
+    ].join(",");
+
+    const rows = selectedClientsList.map(c => [
+      c?.legalName, c?.tradeName, c?.itProfile?.pan, c?.itProfile?.fatherName, 
+      c?.mobile, c?.email, c?.itProfile?.itrFiled, c?.itProfile?.password, c?.status
+    ].map(v => `"${v || ''}"`).join(",")).join("\n");
+
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `IT_Selected_Clients_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported ${selectedClientsList.length} clients!`);
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedClientsList.length === 0) return;
+    try {
+      toast.loading(`Updating status for ${selectedClientsList.length} clients...`);
+      for (const client of selectedClientsList) {
+        const updated = { ...client, status: newStatus as any };
+        await api.saveClient(updated);
+      }
+      handleDataChange();
+      setSelectedClientIds(new Set());
+      setIsBulkStatusMenuOpen(false);
+      toast.dismiss();
+      toast.success(`Updated status for ${selectedClientsList.length} clients to ${newStatus}`);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Failed to update status for selected clients.");
+    }
+  };
 
   const togglePassword = (id: string) => {
     setVisiblePasswords(prev => {
@@ -218,130 +350,347 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
   if (isLoading) return <Loader />;
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
-      <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-        <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className="sticky top-0 z-30 bg-slate-100">
-            <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Name</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
-                <TableFilter label="ITR" isActive={itrFilter !== 'All'}>
-                  {['All', 'ITR-1', 'ITR-2', 'ITR-3', 'ITR-4', 'N/A'].map(f => (
-                    <button key={f} onClick={() => setItrFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${itrFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50'}`}>{f}</button>
-                  ))}
-                </TableFilter>
-              </th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Father Name</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Pan No.</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Address</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
-                <div className="flex items-center gap-1">
-                  Status
-                  <button 
-                    ref={statusFilterBtnRef}
-                    onClick={(e) => openFilterMenu(e, 'status')} 
-                    className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
-                    title="Filter Status"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  </button>
-                </div>
-              </th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredClients.length === 0 ? (
-              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
-            ) : (
-              filteredClients.map((client, idx) => (
-                <tr key={client.id} className="hover:bg-emerald-50/10 transition-all group border-b border-slate-50 last:border-0 h-[44px]">
-                  <td className=" px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
-                    {(idx + 1).toString().padStart(2, '0')}
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-900 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
-                     {client.tradeName && (
-                        <p className="font-bold text-indigo-600 text-[10px] truncate leading-tight" title={client.tradeName}>
-                          Trade: {client.tradeName}
-                        </p>
-                     )}
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-[10px] tracking-wide">
-                        {client.itProfile?.itrFiled || 'N/A'}
-                     </span>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
-                  </td>
-                                    <td className=" px-[5.5px] py-[2px]">
-                     <div className="flex items-center gap-2 group/pan">
-                        <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
-                        <button 
-                           onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
-                           className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-sm border border-emerald-100"
-                           title="Copy PAN"
-                        >
-                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
-                        </button>
-                     </div>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px] max-w-[150px]">
-                     <p className="font-bold text-slate-500 text-[11px] truncate" title={client.itProfile?.address}>
-                        {client.itProfile?.address || '---'}
-                     </p>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px]">
-                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                       client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
-                     }`}>
-                       {client.status}
-                     </span>
-                  </td>
-                  <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
-                     <div className="flex items-center justify-end gap-1">
-                        <ITViewIcon 
-                          client={client}
-                          onEdit={handleEdit}
-                          onDataChange={handleDataChange}
-                          className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                        />
-                        {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
-                        
-                        <button 
-                          onClick={() => {
-                            setLoginToolClient(client);
-                            setTempPass(client.itProfile?.password || '');
-                            setShowLoginPass(true);
-                            setIsEditingLoginPass(false);
-                            setIsLoginBoxOpen(true);
-                          }}
-                          className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                          title="IT Portal Access Utility"
-                        >
-                           <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        </button>
+    <div className="w-full h-full flex flex-col min-h-0 relative">
+      {viewMode === 'grid' ? (
+        <div className="overflow-auto no-scrollbar flex-1 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filteredClients.length === 0 ? (
+            <div className="col-span-full py-24 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
+              No matching IT clients found
+            </div>
+          ) : (
+            filteredClients.map((client) => {
+              const isSelected = selectedClientIds.has(client.id);
 
-                        <button 
-                          onClick={(e) => openActionsMenu(e, client)}
-                          className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
-                        >
-                           <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                        </button>
-                     </div>
-                  </td>
-                </tr>
-              ))
+              return (
+                <div 
+                  key={client.id}
+                  className={`bg-white border rounded-2xl p-4 flex flex-col justify-between transition-all relative hover:shadow-lg ${
+                    isSelected ? 'border-emerald-600 bg-emerald-50/20 ring-2 ring-emerald-500/20' : 'border-slate-200 hover:border-emerald-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        onChange={() => toggleSelectRow(client.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[9px] font-black uppercase tracking-wider">
+                        {client.itProfile?.itrFiled || 'ITR'}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                      client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {client.status}
+                    </span>
+                  </div>
+
+                  <div className="mb-3">
+                    <h4 className="font-black text-slate-900 text-sm truncate" title={client.legalName || client.tradeName}>
+                      {client.legalName || client.tradeName}
+                    </h4>
+                    {client.itProfile?.fatherName && (
+                      <p className="text-[10px] font-bold text-slate-400 truncate">
+                        S/O: {client.itProfile.fatherName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 mb-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">PAN</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black font-mono text-emerald-700 text-[11px] tracking-wider uppercase">
+                          {client.itProfile?.pan || '---'}
+                        </span>
+                        {client.itProfile?.pan && (
+                          <button 
+                            onClick={() => {
+                              if (navigator.clipboard) {
+                                navigator.clipboard.writeText(client.itProfile?.pan || '');
+                                toast.success('PAN Copied!');
+                              }
+                            }}
+                            className="p-1 hover:bg-emerald-100 text-emerald-600 rounded transition-colors"
+                            title="Copy PAN"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-500 font-bold">Mobile</span>
+                      <span className="font-mono font-bold text-slate-800">{client.mobile || '---'}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60">
+                      <span className="text-slate-500 font-bold">Email</span>
+                      <span className="font-medium text-slate-600 truncate max-w-[140px]">{client.email || '---'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-1">
+                    <button
+                      onClick={() => {
+                        setLoginToolClient(client);
+                        setTempPass(client.itProfile?.password || '');
+                        setShowLoginPass(true);
+                        setIsEditingLoginPass(false);
+                        setIsLoginBoxOpen(true);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs"
+                    >
+                      <span>🔐 IT Portal</span>
+                    </button>
+                    <ITViewIcon 
+                      client={client}
+                      onEdit={handleEdit}
+                      onDataChange={handleDataChange}
+                      className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                    />
+                    <button 
+                      onClick={(e) => openActionsMenu(e, client)}
+                      className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-emerald-600 hover:bg-white'}`}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 border-b border-slate-200 text-center w-8">
+                  <input 
+                    type="checkbox"
+                    checked={selectedClientIds.size > 0 && selectedClientIds.size === filteredClients.length}
+                    onChange={toggleSelectAll}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  />
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th 
+                  onClick={() => handleSort('legalName')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    Name
+                    <span className="text-[10px] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('itr')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    ITR
+                    <span className="text-[10px] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Father Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No.</th>
+                <th 
+                  onClick={() => handleSort('pan')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    PAN No.
+                    <span className="text-[10px] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Address</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
+                  <div className="flex items-center gap-1">
+                    Status
+                    <button 
+                      ref={statusFilterBtnRef}
+                      onClick={(e) => openFilterMenu(e, 'status')} 
+                      className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      title="Filter Status"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    </button>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredClients.length === 0 ? (
+                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
+              ) : (
+                filteredClients.map((client, idx) => {
+                  const isSelected = selectedClientIds.has(client.id);
+
+                  return (
+                    <tr 
+                      key={client.id} 
+                      className={`transition-all group border-b border-slate-50 last:border-0 h-[44px] ${
+                        isSelected ? 'bg-emerald-50/60' : 'hover:bg-emerald-50/10'
+                      }`}
+                    >
+                      <td className="px-3 py-[2px] text-center">
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(client.id)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                      </td>
+                      <td className=" px-[5.5px] py-[2px] font-black text-emerald-600 font-mono text-[12px] truncate">
+                        {(idx + 1).toString().padStart(2, '0')}
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <p className="font-black text-slate-900 truncate text-[12px]" title={client.legalName}>{client.legalName}</p>
+                         {client.tradeName && (
+                            <p className="font-bold text-indigo-600 text-[10px] truncate leading-tight" title={client.tradeName}>
+                              Trade: {client.tradeName}
+                            </p>
+                         )}
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-black text-[10px] tracking-wide">
+                            {client.itProfile?.itrFiled || 'N/A'}
+                         </span>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <p className="font-bold text-slate-600 truncate text-[12px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <div className="flex items-center gap-2 group/pan">
+                            <span className="font-black font-mono tracking-widest text-[12px] text-emerald-600">{client.itProfile?.pan}</span>
+                            <button 
+                               onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
+                               className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-sm border border-emerald-100"
+                               title="Copy PAN"
+                            >
+                               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                            </button>
+                         </div>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px] max-w-[150px]">
+                         <p className="font-bold text-slate-500 text-[11px] truncate" title={client.itProfile?.address}>
+                            {client.itProfile?.address || '---'}
+                         </p>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px]">
+                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
+                           client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
+                         }`}>
+                           {client.status}
+                         </span>
+                      </td>
+                      <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
+                         <div className="flex items-center justify-end gap-1">
+                            <ITViewIcon 
+                              client={client}
+                              onEdit={handleEdit}
+                              onDataChange={handleDataChange}
+                              className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                            />
+                            {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
+                            
+                            <button 
+                              onClick={() => {
+                                setLoginToolClient(client);
+                                setTempPass(client.itProfile?.password || '');
+                                setShowLoginPass(true);
+                                setIsEditingLoginPass(false);
+                                setIsLoginBoxOpen(true);
+                              }}
+                              className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                              title="IT Portal Access Utility"
+                            >
+                               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            </button>
+
+                            <button 
+                              onClick={(e) => openActionsMenu(e, client)}
+                              className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                            >
+                               <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                            </button>
+                         </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Floating Bulk Operations Toolbar */}
+      {selectedClientIds.size > 0 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl px-4 py-2.5 flex items-center gap-3 border border-slate-700 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2 border-r border-slate-700 pr-3">
+            <span className="h-6 w-6 rounded-full bg-emerald-600 text-white font-black text-xs flex items-center justify-center">
+              {selectedClientIds.size}
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">Selected</span>
+          </div>
+
+          <button 
+            onClick={handleBulkCopyCreds}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            title="Copy IT Credentials for selected clients"
+          >
+            <span>📋 Copy Credentials</span>
+          </button>
+
+          <button 
+            onClick={handleBulkExportCSV}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            title="Export selected clients to CSV"
+          >
+            <span>📥 Export CSV</span>
+          </button>
+
+          <div className="relative">
+            <button 
+              onClick={() => setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen)}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            >
+              <span>⚡ Change Status ▾</span>
+            </button>
+
+            {isBulkStatusMenuOpen && (
+              <div className="absolute bottom-full mb-2 left-0 w-44 bg-white text-slate-800 rounded-xl shadow-2xl p-1 border border-slate-200 z-50 animate-in zoom-in-95">
+                {['Active', 'Active Filing', 'Litigation', 'Consulting', 'Suspended', 'Inactive'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => handleBulkStatusChange(status)}
+                    className="w-full text-left px-3 py-1.5 text-[10px] font-black uppercase rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                  >
+                    Set {status}
+                  </button>
+                ))}
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          <button 
+            onClick={() => setSelectedClientIds(new Set())}
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            title="Deselect All"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
 
       {/* Global Actions Menu - Fixed Positioned */}
       {activeActionsId && selectedClient && (

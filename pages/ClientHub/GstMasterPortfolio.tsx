@@ -10,13 +10,23 @@ import Loader from '../../components/Loader';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
 
+import { filterClientsBySectorJurisdiction } from '../../components/SectorJurisdictionFilter';
+
 interface GstMasterPortfolioProps {
   externalSearch?: string;
+  quickFilter?: string;
+  viewMode?: 'table' | 'grid';
+  authorityFilter?: 'All' | 'State' | 'Center';
+  selectedSectors?: string[];
   onDataChange?: () => void;
 }
 
 const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({ 
   externalSearch = '', 
+  quickFilter = 'All',
+  viewMode = 'table',
+  authorityFilter = 'All',
+  selectedSectors = [],
   onDataChange
 }) => {
   const queryClient = useQueryClient();
@@ -25,6 +35,14 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   const [shareText, setShareText] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState('');
+
+  // Multi-select & Bulk operations state
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [isBulkStatusMenuOpen, setIsBulkStatusMenuOpen] = useState(false);
+
+  // Sorting state
+  const [sortField, setSortField] = useState<'tradeName' | 'legalName' | 'gstin' | 'status' | 'regType'>('tradeName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: clientsData, isLoading: isClientsLoading } = useQuery({
     queryKey: ['clients'],
@@ -133,6 +151,27 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
              safeString(c.mobile).includes(s);
     });
 
+    // Handle Quick Filter Pill
+    if (quickFilter && quickFilter !== 'All') {
+      if (quickFilter === 'Active') {
+        list = list.filter(c => c.status === 'Active' || c.status === 'Active Filing');
+      } else if (quickFilter === 'Active Filing') {
+        list = list.filter(c => c.status === 'Active Filing');
+      } else if (quickFilter === 'Regular') {
+        list = list.filter(c => c.gstProfile?.regType === 'Regular');
+      } else if (quickFilter === 'Composition') {
+        list = list.filter(c => c.gstProfile?.regType === 'Composition');
+      } else if (quickFilter === 'Monthly') {
+        list = list.filter(c => !c.gstProfile?.filingFreq || c.gstProfile?.filingFreq === 'Monthly');
+      } else if (quickFilter === 'Quarterly') {
+        list = list.filter(c => c.gstProfile?.filingFreq === 'Quarterly');
+      } else if (quickFilter === 'Litigation') {
+        list = list.filter(c => c.status === 'Litigation');
+      } else if (quickFilter === 'Inactive') {
+        list = list.filter(c => c.status === 'Inactive' || c.status === 'Suspended');
+      }
+    }
+
     if (statusFilter !== 'All') {
       list = list.filter(c => c && (c.gstProfile?.gstStatus || 'Active') === statusFilter);
     }
@@ -144,10 +183,23 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       });
     }
 
-    return list;
-  }, [clients, externalSearch, statusFilter, relFilter]);
+    // Apply Sector & Jurisdiction Filter
+    list = filterClientsBySectorJurisdiction(list, authorityFilter, selectedSectors);
 
-  // Grouped clients hook using filteredClients
+    return list;
+  }, [clients, externalSearch, quickFilter, statusFilter, relFilter, authorityFilter, selectedSectors]);
+
+  // Handle Sort Toggle
+  const handleSort = (field: 'tradeName' | 'legalName' | 'gstin' | 'status' | 'regType') => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Grouped clients hook using filteredClients with sorting support
   const groupedClients = useMemo(() => {
     const groups: Record<string, Client[]> = {};
     (filteredClients || []).forEach(c => {
@@ -161,15 +213,119 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
        if (b.startsWith('Uncategorized')) return -1;
        return (a || '').localeCompare(b || '', undefined, { numeric: true, sensitivity: 'base' });
     });
-    return sortedKeys.map(k => ({ 
-      sector: k, 
-      clients: (groups[k] || []).sort((c1, c2) => {
-        const name1 = c1?.tradeName || c1?.legalName || '';
-        const name2 = c2?.tradeName || c2?.legalName || '';
-        return name1.localeCompare(name2);
-      }) 
-    }));
-  }, [filteredClients]);
+
+    return sortedKeys.map(k => {
+      const sortedGroup = [...(groups[k] || [])].sort((c1, c2) => {
+        let val1 = '';
+        let val2 = '';
+        if (sortField === 'tradeName') {
+          val1 = c1.tradeName || c1.legalName || '';
+          val2 = c2.tradeName || c2.legalName || '';
+        } else if (sortField === 'legalName') {
+          val1 = c1.legalName || '';
+          val2 = c2.legalName || '';
+        } else if (sortField === 'gstin') {
+          val1 = c1.gstProfile?.gstin || '';
+          val2 = c2.gstProfile?.gstin || '';
+        } else if (sortField === 'status') {
+          val1 = c1.status || '';
+          val2 = c2.status || '';
+        } else if (sortField === 'regType') {
+          val1 = c1.gstProfile?.regType || '';
+          val2 = c2.gstProfile?.regType || '';
+        }
+
+        const cmp = val1.localeCompare(val2, undefined, { numeric: true, sensitivity: 'base' });
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+
+      return {
+        sector: k,
+        clients: sortedGroup
+      };
+    });
+  }, [filteredClients, sortField, sortOrder]);
+
+  // Toggle selection
+  const toggleSelectAll = () => {
+    if (selectedClientIds.size === filteredClients.length && filteredClients.length > 0) {
+      setSelectedClientIds(new Set());
+    } else {
+      const allIds = new Set(filteredClients.map(c => c.id));
+      setSelectedClientIds(allIds);
+    }
+  };
+
+  const toggleSelectRow = (id: string) => {
+    setSelectedClientIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Bulk Operations
+  const selectedClientsList = useMemo(() => {
+    return (clients || []).filter(c => selectedClientIds.has(c.id));
+  }, [clients, selectedClientIds]);
+
+  const handleBulkCopyCreds = () => {
+    if (selectedClientsList.length === 0) return;
+    const credsText = selectedClientsList.map(c => 
+      `Entity: ${c.tradeName || c.legalName}\nGSTIN: ${c.gstProfile?.gstin || 'N/A'}\nUser ID: ${c.gstProfile?.username || 'N/A'}\nPassword: ${c.gstProfile?.password || 'N/A'}`
+    ).join('\n---------------------\n');
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(credsText);
+      toast.success(`Copied credentials for ${selectedClientsList.length} clients!`);
+    }
+  };
+
+  const handleBulkExportCSV = () => {
+    if (selectedClientsList.length === 0) return;
+    const headers = [
+      "Trade Name", "Legal Name", "Mobile", "Email", "Address", "GSTIN", "PAN", 
+      "Portal User ID", "Portal Password", "Constitution", "Registration Date", 
+      "Category", "Filing Frequency", "Status"
+    ].join(",");
+
+    const rows = selectedClientsList.map(c => [
+      c?.tradeName, c?.legalName, c?.mobile, c?.email, c?.address,
+      c?.gstProfile?.gstin, c?.gstProfile?.pan, c?.gstProfile?.username, c?.gstProfile?.password,
+      c?.gstProfile?.constitution, formatDate(c?.gstProfile?.regDate), c?.gstProfile?.regType,
+      c?.gstProfile?.filingFreq, c?.status
+    ].map(v => `"${v || ''}"`).join(",")).join("\n");
+
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `GST_Selected_Clients_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported ${selectedClientsList.length} clients!`);
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedClientsList.length === 0) return;
+    try {
+      toast.loading(`Updating status for ${selectedClientsList.length} clients...`);
+      for (const client of selectedClientsList) {
+        const updated = { ...client, status: newStatus as any };
+        await api.saveClient(updated);
+      }
+      handleDataChange();
+      setSelectedClientIds(new Set());
+      setIsBulkStatusMenuOpen(false);
+      toast.dismiss();
+      toast.success(`Updated status for ${selectedClientsList.length} clients to ${newStatus}`);
+    } catch (err) {
+      toast.dismiss();
+      toast.error("Failed to update status for selected clients.");
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     if (navigator.clipboard) {
@@ -234,121 +390,343 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
   if (isLoading) return <Loader />;
 
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
-      <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-        <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className="sticky top-0 z-30 bg-slate-100">
-            <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Legal Name</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN</th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
-                <div className="flex items-center gap-1">
-                  Status
-                  <button 
-                    ref={statusFilterBtnRef}
-                    onClick={(e) => openFilterMenu(e, 'status')} 
-                    className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
-                    title="Filter Status"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  </button>
+    <div className="w-full h-full flex flex-col min-h-0 relative">
+      {viewMode === 'grid' ? (
+        <div className="overflow-auto no-scrollbar flex-1 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filteredClients.length === 0 ? (
+            <div className="col-span-full py-24 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
+              No matching clients found
+            </div>
+          ) : (
+            filteredClients.map((client) => {
+              const theme = getClientColorTheme(client);
+              const isSelected = selectedClientIds.has(client.id);
+
+              return (
+                <div 
+                  key={client.id}
+                  className={`bg-white border rounded-2xl p-4 flex flex-col justify-between transition-all relative hover:shadow-lg ${
+                    isSelected ? 'border-indigo-600 bg-indigo-50/20 ring-2 ring-indigo-500/20' : 'border-slate-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        onChange={() => toggleSelectRow(client.id)}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-wider">
+                        {client.gstProfile?.constitution || 'Proprietorship'}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${theme.clientStatusBadgeClass}`}>
+                      {client.status}
+                    </span>
+                  </div>
+
+                  <div className="mb-3">
+                    <h4 className="font-black text-slate-900 text-sm truncate" title={client.tradeName || client.legalName}>
+                      {client.tradeName || client.legalName}
+                    </h4>
+                    {client.tradeName && client.legalName && (
+                      <p className="text-[10px] font-bold text-slate-400 truncate">
+                        Legal: {client.legalName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 mb-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">GSTIN</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black font-mono text-indigo-700 text-[11px] tracking-wider uppercase">
+                          {client.gstProfile?.gstin || '---'}
+                        </span>
+                        {client.gstProfile?.gstin && (
+                          <button 
+                            onClick={() => {
+                              if (navigator.clipboard) {
+                                navigator.clipboard.writeText(client.gstProfile?.gstin || '');
+                                toast.success('GSTIN Copied!');
+                              }
+                            }}
+                            className="p-1 hover:bg-indigo-100 text-indigo-600 rounded transition-colors"
+                            title="Copy GSTIN"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60">
+                      <span className="text-slate-500 font-bold">Category</span>
+                      <span className="font-black text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {client.gstProfile?.regType || 'Regular'} ({client.gstProfile?.filingFreq || 'Monthly'})
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-slate-500 font-bold">Mobile</span>
+                      <span className="font-mono font-bold text-slate-800">{client.mobile || '---'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-1">
+                    <button
+                      onClick={() => {
+                        setLoginToolClient(client);
+                        setLoginPortalType('gst');
+                        setIsLoginBoxOpen(true);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs"
+                    >
+                      <span>🔐 GST Portal</span>
+                    </button>
+                    <GSTViewIcon 
+                      client={client}
+                      onEdit={handleEdit}
+                      onDataChange={handleDataChange}
+                      className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                    />
+                    <button 
+                      onClick={(e) => openActionsMenu(e, client)}
+                      className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                    </button>
+                  </div>
                 </div>
-              </th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
-                <div className="flex items-center gap-1">
-                  Relationship
-                  <button 
-                    ref={relFilterBtnRef}
-                    onClick={(e) => openFilterMenu(e, 'rel')} 
-                    className={`p-1 rounded transition-colors ${relFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
-                    title="Filter Relationship"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 00-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  </button>
-                </div>
-              </th>
-              <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {(!filteredClients || filteredClients.length === 0) ? (
-              <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
-            ) : (
-              (groupedClients || []).map(({ sector, clients: sectorClients }) => (
-                <React.Fragment key={sector}>
-                  <tr>
-                    <td colSpan={8} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
-                  </tr>
-                  {(sectorClients || []).map((client, idx) => {
-                    const theme = getClientColorTheme(client);
-                    return (
-                      <tr key={client.id} className={`transition-all group border-b border-slate-100 last:border-0 h-[44px] ${theme.rowClass}`}>
-                        <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
-                          {(idx + 1).toString().padStart(2, '0')}
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <p className={`truncate text-[12px] ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <p className={`truncate text-[12px] ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <div className="flex items-center gap-2 group/gstin">
-                              <span className={`tracking-widest uppercase text-[12px] ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
-                              <button 
-                                 onClick={() => { 
-                                   if (navigator.clipboard) {
-                                     navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
-                                   }
-                                 }}
-                                 className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
-                                 title="Verify Ident."
-                              >
-                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                              </button>
-                           </div>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.gstStatusBadgeClass}`}>
-                             {client.gstProfile?.gstStatus === 'Closed' ? 'Cancelled' : (client.gstProfile?.gstStatus || 'Active')}
-                           </span>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px]">
-                           <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.clientStatusBadgeClass}`}>
-                             {client.status}
-                           </span>
-                        </td>
-                        <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
-                     <div className="flex items-center justify-end gap-1">
-                        <GSTViewIcon 
-                          client={client}
-                          onEdit={handleEdit}
-                          onDataChange={handleDataChange}
-                          className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
-                        />
-                        
-                        <button 
-                          onClick={(e) => openActionsMenu(e, client)}
-                          className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full">
+            <thead className="sticky top-0 z-30 bg-slate-100">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 border-b border-slate-200 text-center w-8">
+                  <input 
+                    type="checkbox"
+                    checked={selectedClientIds.size > 0 && selectedClientIds.size === filteredClients.length}
+                    onChange={toggleSelectAll}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  />
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                <th 
+                  onClick={() => handleSort('tradeName')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    Trade Name
+                    <span className="text-[10px] text-indigo-600">{sortField === 'tradeName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('legalName')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    Legal Name
+                    <span className="text-[10px] text-indigo-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Mobile No</th>
+                <th 
+                  onClick={() => handleSort('gstin')}
+                  className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    GSTIN
+                    <span className="text-[10px] text-indigo-600">{sortField === 'gstin' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
+                  <div className="flex items-center gap-1">
+                    Status
+                    <button 
+                      ref={statusFilterBtnRef}
+                      onClick={(e) => openFilterMenu(e, 'status')} 
+                      className={`p-1 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      title="Filter Status"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    </button>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">
+                  <div className="flex items-center gap-1">
+                    Relationship
+                    <button 
+                      ref={relFilterBtnRef}
+                      onClick={(e) => openFilterMenu(e, 'rel')} 
+                      className={`p-1 rounded transition-colors ${relFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      title="Filter Relationship"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                    </button>
+                  </div>
+                </th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-900 text-right border-b border-slate-200">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(!filteredClients || filteredClients.length === 0) ? (
+                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+              ) : (
+                (groupedClients || []).map(({ sector, clients: sectorClients }) => (
+                  <React.Fragment key={sector}>
+                    <tr>
+                      <td colSpan={9} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">
+                        {sector} ({sectorClients.length})
+                      </td>
+                    </tr>
+                    {(sectorClients || []).map((client, idx) => {
+                      const theme = getClientColorTheme(client);
+                      const isSelected = selectedClientIds.has(client.id);
+
+                      return (
+                        <tr 
+                          key={client.id} 
+                          className={`transition-all group border-b border-slate-100 last:border-0 h-[44px] ${
+                            isSelected ? 'bg-indigo-50/50' : theme.rowClass
+                          }`}
                         >
-                           <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                        </button>
-                     </div>
-                  </td>
-                </tr>
-                    );
-                  })}
-                </React.Fragment>
-              )))}
-          </tbody>
-        </table>
-      </div>
+                          <td className="px-3 py-[2px] text-center">
+                            <input 
+                              type="checkbox" 
+                              checked={isSelected}
+                              onChange={() => toggleSelectRow(client.id)}
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            />
+                          </td>
+                          <td className=" px-[5.5px] py-[2px] font-black text-indigo-400 font-mono text-[11px] truncate">
+                            {(idx + 1).toString().padStart(2, '0')}
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <p className={`truncate text-[12px] ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <p className={`truncate text-[12px] ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <p className="font-black text-slate-500 text-[12px]">{client.mobile || '---'}</p>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <div className="flex items-center gap-2 group/gstin">
+                                <span className={`tracking-widest uppercase text-[12px] ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
+                                <button 
+                                   onClick={() => { 
+                                     if (navigator.clipboard) {
+                                       navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
+                                     }
+                                   }}
+                                   className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-sm border border-indigo-100"
+                                   title="Verify Ident."
+                                >
+                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                </button>
+                             </div>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.gstStatusBadgeClass}`}>
+                               {client.gstProfile?.gstStatus === 'Closed' ? 'Cancelled' : (client.gstProfile?.gstStatus || 'Active')}
+                             </span>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px]">
+                             <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-tighter ${theme.clientStatusBadgeClass}`}>
+                               {client.status}
+                             </span>
+                          </td>
+                          <td className=" px-[5.5px] py-[2px] text-right overflow-visible">
+                       <div className="flex items-center justify-end gap-1">
+                          <GSTViewIcon 
+                            client={client}
+                            onEdit={handleEdit}
+                            onDataChange={handleDataChange}
+                            className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm"
+                          />
+                          
+                          <button 
+                            onClick={(e) => openActionsMenu(e, client)}
+                            className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                          >
+                             <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                          </button>
+                       </div>
+                    </td>
+                  </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                )))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Floating Bulk Operations Toolbar */}
+      {selectedClientIds.size > 0 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl px-4 py-2.5 flex items-center gap-3 border border-slate-700 animate-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2 border-r border-slate-700 pr-3">
+            <span className="h-6 w-6 rounded-full bg-indigo-600 text-white font-black text-xs flex items-center justify-center">
+              {selectedClientIds.size}
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">Selected</span>
+          </div>
+
+          <button 
+            onClick={handleBulkCopyCreds}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            title="Copy Credentials for all selected clients"
+          >
+            <span>📋 Copy Credentials</span>
+          </button>
+
+          <button 
+            onClick={handleBulkExportCSV}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            title="Export selected clients to CSV"
+          >
+            <span>📥 Export CSV</span>
+          </button>
+
+          <div className="relative">
+            <button 
+              onClick={() => setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen)}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            >
+              <span>⚡ Change Status ▾</span>
+            </button>
+
+            {isBulkStatusMenuOpen && (
+              <div className="absolute bottom-full mb-2 left-0 w-44 bg-white text-slate-800 rounded-xl shadow-2xl p-1 border border-slate-200 z-50 animate-in zoom-in-95">
+                {['Active', 'Active Filing', 'Litigation', 'Consulting', 'Suspended', 'Inactive'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => handleBulkStatusChange(status)}
+                    className="w-full text-left px-3 py-1.5 text-[10px] font-black uppercase rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                  >
+                    Set {status}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button 
+            onClick={() => setSelectedClientIds(new Set())}
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            title="Deselect All"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
       
 
       {/* Global Actions Menu - Fixed Positioned to avoid clipping */}
@@ -453,7 +831,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
       {activeFilterMenu === 'rel' && (
         <div ref={filterMenuRef} style={{ top: filterMenuPos.top, left: filterMenuPos.left }} className="fixed w-44 bg-white border border-slate-200 rounded-[1rem] shadow-xl z-[9999] p-1 animate-in zoom-in-95 origin-top text-left">
-          {['All', 'Active', 'Litigation', 'Inactive'].map(f => (
+          {['All', 'Active', 'Active Filing', 'Litigation', 'Consulting', 'Suspended', 'Inactive'].map(f => (
             <button key={f} onClick={() => { setRelFilter(f); setActiveFilterMenu(null); }} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${relFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
           ))}
         </div>

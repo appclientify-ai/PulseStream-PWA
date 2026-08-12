@@ -90,7 +90,7 @@ const TribunalDrop: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing No.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing / Case No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center">Status</th>
@@ -122,13 +122,22 @@ const TribunalDrop: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className=" px-6 py-5 font-mono font-bold text-slate-800 uppercase">
-                        {rec.filingNo ? (
-                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono">
-                            {rec.filingNo}
+                      <td className=" px-6 py-5 font-mono text-slate-800 uppercase">
+                        {rec.caseNo ? (
+                          <div className="flex flex-col gap-0.5 items-start">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[10px] font-black tracking-wider uppercase">
+                              {rec.filingNo || rec.replyReferenceNo || 'FIL: ---'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black tracking-wider uppercase">
+                              CASE: {rec.caseNo}
+                            </span>
+                          </div>
+                        ) : rec.filingNo || rec.replyReferenceNo ? (
+                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono font-bold">
+                            {rec.filingNo || rec.replyReferenceNo}
                           </span>
                         ) : (
-                          <span className="text-slate-300">---</span>
+                          <span className="text-slate-300 font-bold">---</span>
                         )}
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>

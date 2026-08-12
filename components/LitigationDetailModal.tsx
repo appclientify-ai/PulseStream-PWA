@@ -379,8 +379,17 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
               </div>
 
               <div className="bg-white p-3.5 rounded-xl border border-slate-200/80">
-                <p className="text-[10px] font-black uppercase text-slate-400">Filing Reference No</p>
-                <p className="text-xs font-black font-mono text-slate-900 uppercase">{record.filingNo || 'N/A'}</p>
+                <p className="text-[10px] font-black uppercase text-slate-400">Filing No / Case No</p>
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                  <span className="text-xs font-black font-mono text-slate-900 uppercase">
+                    {record.filingNo || 'N/A'}
+                  </span>
+                  {record.caseNo && (
+                    <span className="text-[10px] font-black font-mono text-indigo-600 uppercase">
+                      Case: {record.caseNo}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

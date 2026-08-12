@@ -130,7 +130,7 @@ const AppContent: React.FC = () => {
       <OfflineBanner isOnline={isOnline} />
       <React.Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/" element={<><Navbar onLoginClick={() => navigate('/login')} onHomeClick={() => navigate('/')} /><Home onGetStarted={() => navigate('/signup')} /></>} />
+          <Route path="/" element={<><Navbar onLoginClick={() => navigate('/login')} onHomeClick={() => navigate('/')} /><Home onGetStarted={(targetPath) => navigate(isAuthenticated ? `/${targetPath || 'dashboard'}` : '/login')} /></>} />
           <Route path="/login" element={<Login onSwitch={() => navigate('/signup')} onBackToHome={() => navigate('/')} />} />
           <Route path="/signup" element={<Signup onSwitch={() => navigate('/login')} onBackToHome={() => navigate('/')} />} />
           <Route path="/:view" element={

@@ -9,9 +9,15 @@ import { Client, GstRegType, GstFilingFreq, ConstitutionType, ClientStatus } fro
 import ErrorBoundary from '../../components/ErrorBoundary';
 import { toast } from 'sonner';
 
+import { SectorJurisdictionFilter } from '../../components/SectorJurisdictionFilter';
+
 const GSTPortfolioContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [quickFilter, setQuickFilter] = useState<string>('All');
+  const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,13 +55,16 @@ const GSTPortfolioContent: React.FC = () => {
   }, [queryClient]);
 
   const stats = useMemo(() => {
-    return {
-      total: (clients || []).length,
-      active: (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length,
-      litigation: (clients || []).filter(c => c?.status === 'Litigation').length,
-      inactive: (clients || []).filter(c => c?.status === 'Inactive').length,
-      monthly: (clients || []).filter(c => !c?.gstProfile?.filingFreq || c?.gstProfile?.filingFreq === 'Monthly').length
-    };
+    const total = (clients || []).length;
+    const active = (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;
+    const regular = (clients || []).filter(c => c?.gstProfile?.regType === 'Regular').length;
+    const composition = (clients || []).filter(c => c?.gstProfile?.regType === 'Composition').length;
+    const monthly = (clients || []).filter(c => !c?.gstProfile?.filingFreq || c?.gstProfile?.filingFreq === 'Monthly').length;
+    const quarterly = (clients || []).filter(c => c?.gstProfile?.filingFreq === 'Quarterly').length;
+    const litigation = (clients || []).filter(c => c?.status === 'Litigation').length;
+    const inactive = (clients || []).filter(c => c?.status === 'Inactive' || c?.status === 'Suspended').length;
+
+    return { total, active, regular, composition, monthly, quarterly, litigation, inactive };
   }, [clients]);
 
   const handleExportCSV = () => {
@@ -162,60 +171,192 @@ const GSTPortfolioContent: React.FC = () => {
     reader.readAsText(file);
   };
 
+  const quickFilterChips = [
+    { label: 'All', value: 'All' },
+    { label: 'Active', value: 'Active' },
+    { label: 'Active Filing', value: 'Active Filing' },
+    { label: 'Regular', value: 'Regular' },
+    { label: 'Composition', value: 'Composition' },
+    { label: 'Monthly', value: 'Monthly' },
+    { label: 'Quarterly', value: 'Quarterly' },
+    { label: 'Litigation', value: 'Litigation' },
+    { label: 'Inactive', value: 'Inactive' },
+  ];
+
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Compact stats strip for Mobile & Tablet */}
-      <div className="flex items-center justify-between w-full md:hidden gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0 overflow-x-auto no-scrollbar">
-        <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Active: <strong className="font-black text-emerald-900">{stats.active}</strong></span>
-        <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Inactive: <strong className="font-black text-amber-900">{stats.inactive}</strong></span>
-        <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Litigation: <strong className="font-black text-rose-900">{stats.litigation}</strong></span>
+      {/* Interactive Stat Cards Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 shrink-0">
+        <button 
+          onClick={() => setQuickFilter('All')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'All' ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-400' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total Vault</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.total}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Active')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Active' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-300' : 'bg-emerald-50/50 border-emerald-200 text-emerald-900 hover:bg-emerald-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Active' ? 'text-emerald-100' : 'text-emerald-600'}`}>Active</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.active}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Regular')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Regular' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-300' : 'bg-indigo-50/50 border-indigo-200 text-indigo-900 hover:bg-indigo-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Regular' ? 'text-indigo-100' : 'text-indigo-600'}`}>Regular</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.regular}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Composition')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Composition' ? 'bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-300' : 'bg-purple-50/50 border-purple-200 text-purple-900 hover:bg-purple-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Composition' ? 'text-purple-100' : 'text-purple-600'}`}>Composition</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.composition}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Monthly')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Monthly' ? 'bg-cyan-600 text-white border-cyan-600 shadow-md ring-2 ring-cyan-300' : 'bg-cyan-50/50 border-cyan-200 text-cyan-900 hover:bg-cyan-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Monthly' ? 'text-cyan-100' : 'text-cyan-600'}`}>Monthly</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.monthly}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Quarterly')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Quarterly' ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-300' : 'bg-blue-50/50 border-blue-200 text-blue-900 hover:bg-blue-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Quarterly' ? 'text-blue-100' : 'text-blue-600'}`}>Quarterly</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.quarterly}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Litigation')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Litigation' ? 'bg-rose-600 text-white border-rose-600 shadow-md ring-2 ring-rose-300' : 'bg-rose-50/50 border-rose-200 text-rose-900 hover:bg-rose-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Litigation' ? 'text-rose-100' : 'text-rose-600'}`}>Litigation</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.litigation}</p>
+        </button>
+
+        <button 
+          onClick={() => setQuickFilter('Inactive')}
+          className={`p-2 rounded-xl border text-left transition-all hover:scale-[1.02] ${
+            quickFilter === 'Inactive' ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-300' : 'bg-amber-50/50 border-amber-200 text-amber-900 hover:bg-amber-100/50'
+          }`}
+        >
+          <p className={`text-[8px] font-black uppercase tracking-widest ${quickFilter === 'Inactive' ? 'text-amber-100' : 'text-amber-600'}`}>Inactive</p>
+          <p className="text-lg font-black leading-tight mt-0.5">{stats.inactive}</p>
+        </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Active</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Inactive</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.inactive}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Litigation</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.litigation}</p>
-          </div>
-        </div>
-
+      {/* Search and Action Toolbar */}
+      <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+        
+        {/* Search input */}
         <div className="relative flex-1 group w-full">
           <input 
             type="text" 
-            placeholder="Search GST Portfolio by Trade Name, GSTIN or PAN..." 
+            placeholder="Search GST Portfolio by Trade Name, Legal Name, GSTIN or PAN..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-100 transition-all outline-none" 
+            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all outline-none" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          {search && (
+            <button 
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 rounded-full hover:bg-slate-200"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Quick Filter Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full py-1 shrink-0">
+          {quickFilterChips.map(chip => (
+            <button
+              key={chip.value}
+              onClick={() => setQuickFilter(chip.value)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${
+                quickFilter === chip.value 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Controls: View Mode, Utilities, Add Client */}
+        <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto justify-end">
+          
+          {/* View Mode Switcher */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                viewMode === 'table' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+              title="Table View"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+              <span>Table</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                viewMode === 'grid' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+              title="Grid View"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              <span>Grid</span>
+            </button>
+          </div>
+
+          {/* Sector / Jurisdiction Filter Icon */}
+          <SectorJurisdictionFilter
+            clients={clients}
+            authority={authorityFilter}
+            setAuthority={setAuthorityFilter}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
+          />
+
           <div className="relative">
             <button 
               onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className={`h-10 landscape:h-8 w-10 landscape:w-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ${isImporting ? 'animate-pulse' : ''}`}
+              className={`h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs ${isImporting ? 'animate-pulse' : ''}`}
               title="Bulk Utilities"
               disabled={isImporting}
             >
               {isImporting ? (
                 <div className="h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg className="h-5 w-5 landscape:h-4 landscape:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               )}
             </button>
             
@@ -250,7 +391,7 @@ const GSTPortfolioContent: React.FC = () => {
 
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-indigo-600 text-white font-black uppercase tracking-widest px-5 landscape:px-3 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-[11px] landscape:text-[10px] shrink-0 flex items-center gap-1.5"
+            className="bg-indigo-600 text-white font-black uppercase tracking-widest px-4 h-9 rounded-xl shadow-md hover:bg-slate-900 transition-all text-[10px] shrink-0 flex items-center gap-1.5"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add GST Client
@@ -258,9 +399,13 @@ const GSTPortfolioContent: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <GstMasterPortfolio 
-          externalSearch={search} 
+          externalSearch={search}
+          quickFilter={quickFilter}
+          viewMode={viewMode}
+          authorityFilter={authorityFilter}
+          selectedSectors={selectedSectors}
           onDataChange={handleRefresh}
         />
       </div>

@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 const ITPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [quickFilter, setQuickFilter] = useState<string>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,9 +46,14 @@ const ITPortfolio: React.FC = () => {
 
   const stats = useMemo(() => {
     const total = clients.length;
-    const active = (clients || []).filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;
-    const inactive = (clients || []).filter(c => c?.status === 'Inactive').length;
-    return { total, active, inactive };
+    const active = clients.filter(c => c?.status === 'Active' || c?.status === 'Active Filing').length;
+    const itr1 = clients.filter(c => c?.itProfile?.itrFiled === 'ITR-1').length;
+    const itr2 = clients.filter(c => c?.itProfile?.itrFiled === 'ITR-2').length;
+    const itr3 = clients.filter(c => c?.itProfile?.itrFiled === 'ITR-3').length;
+    const itr4 = clients.filter(c => c?.itProfile?.itrFiled === 'ITR-4').length;
+    const litigation = clients.filter(c => c?.status === 'Litigation').length;
+    const inactive = clients.filter(c => c?.status === 'Inactive' || c?.status === 'Suspended').length;
+    return { total, active, itr1, itr2, itr3, itr4, litigation, inactive };
   }, [clients]);
 
   const handleRefresh = () => {
@@ -162,77 +169,122 @@ const ITPortfolio: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex flex-col h-full space-y-2.5 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Compact stats strip for Mobile & Tablet */}
-      <div className="flex items-center justify-between w-full md:hidden gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-        <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Active: <strong className="font-black text-emerald-900">{stats.active}</strong></span>
-        <span className="bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Inactive: <strong className="font-black text-amber-900">{stats.inactive}</strong></span>
+      {/* Interactive Stat Cards Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 shrink-0">
+        {[
+          { key: 'All', label: 'Total IT Vault', count: stats.total, color: 'emerald', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { key: 'Active', label: 'Active Clients', count: stats.active, color: 'teal', bg: 'bg-teal-50 text-teal-700 border-teal-200' },
+          { key: 'ITR-1', label: 'ITR-1 (Sahaj)', count: stats.itr1, color: 'sky', bg: 'bg-sky-50 text-sky-700 border-sky-200' },
+          { key: 'ITR-2', label: 'ITR-2', count: stats.itr2, color: 'blue', bg: 'bg-blue-50 text-blue-700 border-blue-200' },
+          { key: 'ITR-3', label: 'ITR-3 (Business)', count: stats.itr3, color: 'indigo', bg: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+          { key: 'ITR-4', label: 'ITR-4 (Sugam)', count: stats.itr4, color: 'purple', bg: 'bg-purple-50 text-purple-700 border-purple-200' },
+          { key: 'Litigation', label: 'Litigation', count: stats.litigation, color: 'rose', bg: 'bg-rose-50 text-rose-700 border-rose-200' },
+          { key: 'Inactive', label: 'Inactive / Susp', count: stats.inactive, color: 'slate', bg: 'bg-slate-100 text-slate-700 border-slate-300' },
+        ].map(item => {
+          const isActive = quickFilter === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setQuickFilter(item.key)}
+              className={`p-2.5 rounded-2xl border transition-all text-left flex flex-col justify-between shadow-xs ${
+                isActive 
+                  ? `${item.bg} ring-2 ring-emerald-500/40 font-black scale-[1.02]` 
+                  : 'bg-white border-slate-200 hover:border-emerald-300 text-slate-600'
+              }`}
+            >
+              <span className="text-[9px] font-black uppercase tracking-wider truncate block opacity-80">
+                {item.label}
+              </span>
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-base font-black tracking-tight">{item.count}</span>
+                {isActive && <span className="text-[8px] uppercase tracking-widest font-black">● Active</span>}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+      {/* Main Controls & Search Strip */}
+      <div className="flex flex-col sm:flex-row items-center gap-2.5 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
         
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vault</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Active</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Inactive</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.inactive}</p>
-          </div>
-        </div>
-
+        {/* Search Input */}
         <div className="relative flex-1 group w-full">
           <input 
             type="text" 
-            placeholder="Search IT Portfolio by PAN, Name or Father's Name..." 
+            placeholder="Search IT Portfolio by PAN, Legal Name, Father's Name or Mobile..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-emerald-100 transition-all outline-none" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-emerald-200 transition-all outline-none" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          {search && (
+            <button 
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-black text-xs p-1"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* View Mode Switcher & Actions */}
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                viewMode === 'table' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" /></svg>
+              Table
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              Grid
+            </button>
+          </div>
+
           <div className="relative">
             <button 
               onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className={`h-10 landscape:h-8 w-10 landscape:w-8 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-sm ${isImporting ? 'animate-pulse' : ''}`}
+              className={`h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs ${isImporting ? 'animate-pulse' : ''}`}
               title="Bulk Utilities"
               disabled={isImporting}
             >
               {isImporting ? (
                 <div className="h-4 w-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg className="h-5 w-5 landscape:h-4 landscape:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               )}
             </button>
             
             {isUtilityOpen && (
-              <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[100] p-2 animate-in zoom-in-95 origin-top-right">
-                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[100] p-2 animate-in zoom-in-95 origin-top-right">
+                 <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
                     <div className="flex flex-col">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import IT Clients (CSV)</span>
                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Bulk onboarding sequence</span>
                     </div>
                  </button>
-                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
+                 <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 013 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
                     <div className="flex flex-col">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Export IT Portfolio</span>
                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Vault snapshot download</span>
                     </div>
                  </button>
                  <div className="h-px bg-slate-100 my-1 mx-2" />
-                 <button onClick={handleDownloadTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                 <button onClick={handleDownloadTemplate} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
                     <div className="flex flex-col">
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import Template</span>
                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Excel-ready formatting</span>
@@ -245,7 +297,7 @@ const ITPortfolio: React.FC = () => {
 
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-emerald-600 text-white font-black uppercase tracking-tight px-5 landscape:px-3 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 text-[11px] landscape:text-[10px] shrink-0"
+            className="bg-emerald-600 text-white font-black uppercase tracking-tight px-4 h-9 rounded-xl shadow-xs hover:bg-slate-900 transition-all flex items-center gap-1.5 text-[11px] shrink-0"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add Profile
@@ -253,9 +305,11 @@ const ITPortfolio: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
         <ItMasterPortfolio 
-          externalSearch={search} 
+          externalSearch={search}
+          quickFilter={quickFilter}
+          viewMode={viewMode}
           onDataChange={handleRefresh}
         />
       </div>

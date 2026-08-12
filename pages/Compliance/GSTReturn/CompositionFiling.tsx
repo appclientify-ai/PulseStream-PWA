@@ -9,6 +9,7 @@ import Loader from '../../../components/Loader';
 import GSTViewIcon from '../../../components/GSTViewIcon';
 import { exportToCSV, printList, getSectorGroupLabel, getClientColorTheme } from '../../../exportUtils';
 import { TableFilter } from '../../../components/TableFilter';
+import { SectorJurisdictionFilter, filterClientsBySectorJurisdiction } from '../../../components/SectorJurisdictionFilter';
 import { useCompositionFilingLogic } from './filinglogic/CompositionFilingLogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { getDefaultPeriod, YEARS, QUARTERS, isClientVisibleInPeriod, isClientVisibleInFY, getStatusLabel } from './filinglogic/MonthlyFilingLogic';
@@ -30,6 +31,8 @@ const CompositionFiling: React.FC = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [quarterFilters, setQuarterFilters] = useState<Record<string, string>>({});
   const [isCmp08FilterOpen, setIsCmp08FilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.quarterYear);
@@ -125,8 +128,11 @@ const CompositionFiling: React.FC = () => {
     } else if (!isAllQuartersMode && cmp08Filter !== 'All') {
       list = list.filter(c => getStatusLabel(getStatus(c.id).cmp08) === cmp08Filter);
     }
+
+    list = filterClientsBySectorJurisdiction(list, authorityFilter, selectedSectors);
+
     return list;
-  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, quarterFilters, getStatus, isAllQuartersMode]);
+  }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, authorityFilter, selectedSectors, quarterFilters, getStatus, isAllQuartersMode]);
 
   const stats = useMemo(() => {
     if (isAllQuartersMode) {
@@ -273,6 +279,15 @@ const CompositionFiling: React.FC = () => {
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <SectorJurisdictionFilter
+            clients={clients}
+            authority={authorityFilter}
+            setAuthority={setAuthorityFilter}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
+            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            totalFilteredCount={filteredClients.length}
+          />
           <button onClick={handlePrint} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center" title="Print List">
              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
           </button>

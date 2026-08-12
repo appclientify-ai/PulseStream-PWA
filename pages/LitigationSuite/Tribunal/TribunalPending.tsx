@@ -34,7 +34,8 @@ const TribunalPending: React.FC = () => {
   const [isFilingModalOpen, setIsFilingModalOpen] = useState(false);
   const [recordToFiled, setRecordToFiled] = useState<LitigationRecord | null>(null);
   const [filingDate, setFilingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [appealNo, setAppealNo] = useState('');
+  const [filingNo, setFilingNo] = useState('');
+  const [caseNo, setCaseNo] = useState('');
 
   const refreshData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['tribunal_records'] });
@@ -62,7 +63,8 @@ const TribunalPending: React.FC = () => {
   const openFilingModal = (record: LitigationRecord) => {
     setRecordToFiled(record);
     setFilingDate(record.filedDate || new Date().toISOString().split('T')[0]);
-    setAppealNo(record.replyReferenceNo || '');
+    setFilingNo(record.filingNo || record.replyReferenceNo || '');
+    setCaseNo(record.caseNo || '');
     setIsFilingModalOpen(true);
     setActiveStatusMenuId(null);
   };
@@ -75,13 +77,16 @@ const TribunalPending: React.FC = () => {
         ...recordToFiled,
         status: 'Filed' as LitigationStatus,
         filedDate: filingDate,
-        replyReferenceNo: appealNo,
+        filingNo: filingNo,
+        caseNo: caseNo,
+        replyReferenceNo: filingNo || caseNo || recordToFiled.replyReferenceNo,
         category: 'Tribunal' as const
       };
       await api.saveTribunalRecord(updated);
       setIsFilingModalOpen(false);
       setRecordToFiled(null);
-      setAppealNo('');
+      setFilingNo('');
+      setCaseNo('');
       refreshData();
       toast.success("Tribunal Appeal marked as Filed");
     } catch (err) {
@@ -152,7 +157,7 @@ const TribunalPending: React.FC = () => {
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing No.</th>
+                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Filing / Case No.</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order U/s</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
                 <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
@@ -186,13 +191,22 @@ const TribunalPending: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className=" px-6 py-5 font-mono font-bold text-slate-800 uppercase">
-                        {rec.filingNo ? (
-                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono">
+                      <td className=" px-6 py-5 font-mono text-slate-800 uppercase">
+                        {rec.caseNo ? (
+                          <div className="flex flex-col gap-0.5 items-start">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[10px] font-black tracking-wider uppercase">
+                              {rec.filingNo || 'FIL: ---'}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black tracking-wider uppercase">
+                              CASE: {rec.caseNo}
+                            </span>
+                          </div>
+                        ) : rec.filingNo ? (
+                          <span className="px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-mono font-bold">
                             {rec.filingNo}
                           </span>
                         ) : (
-                          <span className="text-slate-300">---</span>
+                          <span className="text-slate-300 font-bold">---</span>
                         )}
                       </td>
                       <td className=" px-6 py-5 font-black text-slate-600">U/s {rec.section || '---'}</td>
@@ -282,14 +296,24 @@ const TribunalPending: React.FC = () => {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Tribunal Appeal No. / ARN <span className="text-red-500">*</span></label>
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Tribunal Filing No. <span className="text-red-500">*</span></label>
                 <input
                   required
                   type="text"
-                  placeholder="e.g. GSTAT-DEL/2024/0091 or APL-05/ARN..."
+                  placeholder="e.g. GSTAT/FIL/2024/00812"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
-                  value={appealNo}
-                  onChange={e => setAppealNo(e.target.value)}
+                  value={filingNo}
+                  onChange={e => setFilingNo(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Tribunal Case No. (If Allotted)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. APL-5/DEL/2024/01"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-xs outline-none focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 font-mono uppercase"
+                  value={caseNo}
+                  onChange={e => setCaseNo(e.target.value)}
                 />
               </div>
             </div>

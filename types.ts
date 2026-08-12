@@ -35,7 +35,7 @@ export interface User {
 
 export type ActiveView = string;
 
-export type ClientStatus = 'Active' | 'Litigation' | 'Inactive' | 'Active Filing';
+export type ClientStatus = 'Active' | 'Active Filing' | 'Litigation' | 'Consulting' | 'Suspended' | 'Inactive';
 export type GstStatus = 'Active' | 'Suspended' | 'Closed';
 export type GstRegType = 'Regular' | 'Composition';
 export type GstFilingFreq = 'Monthly' | 'Quarterly';
@@ -201,6 +201,7 @@ export interface LitigationRecord {
   status: LitigationStatus;
   referenceNo: string;
   filingNo?: string;
+  caseNo?: string;
   section: string;
   taxPeriod?: string;
   issuedDate: string;
