@@ -185,9 +185,48 @@ const GSTPortfolioContent: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-1.5 pb-1 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Search and Action Toolbar */}
-      <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+      {/* Header with Stats (Same like Monthly page) */}
+      <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
+        {/* Left Stats Block (Desktop - Same like Monthly Page) */}
+        <div className="flex items-center gap-5 px-3 border-r border-slate-100 hidden lg:flex shrink-0">
+          <div 
+            onClick={() => setQuickFilter('All')}
+            className={`text-center cursor-pointer transition-all ${quickFilter === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+            title="Show All Clients"
+          >
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+          </div>
+          
+          <div 
+            onClick={() => setQuickFilter('Active')}
+            className={`text-center border-l border-slate-100 pl-4 cursor-pointer transition-all ${quickFilter === 'Active' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+            title="Filter Active Clients"
+          >
+            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">Active</p>
+            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
+          </div>
+
+          <div 
+            onClick={() => setQuickFilter('Litigation')}
+            className={`text-center border-l border-slate-100 pl-4 cursor-pointer transition-all ${quickFilter === 'Litigation' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+            title="Filter Litigation Clients"
+          >
+            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Litigation</p>
+            <p className="text-xl font-black text-amber-600 leading-none">{stats.litigation}</p>
+          </div>
+
+          <div 
+            onClick={() => setQuickFilter('Inactive')}
+            className={`text-center border-l border-slate-100 pl-4 cursor-pointer transition-all ${quickFilter === 'Inactive' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+            title="Filter Inactive Clients"
+          >
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Inactive</p>
+            <p className="text-xl font-black text-slate-500 leading-none">{stats.inactive}</p>
+          </div>
+        </div>
+
         {/* Search input */}
         <div className="relative flex-1 group w-full">
           <input 
