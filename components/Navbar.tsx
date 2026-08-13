@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { getStoredUiSettings, applyUiSettings, THEME_COLORS, THEME_MODES, FONT_SIZES } from '../services/theme.ts';
+import { NotificationCenter } from './NotificationCenter';
 
 interface NavbarProps {
   onLoginClick: () => void;

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatDate } from '../dateUtils';
+import { Calendar } from 'lucide-react';
+import { syncDeadlineToGoogleCalendar } from '../services/googleCalendar';
 
 const STORAGE_KEY = 'clientify_global_compliance_dates_v1';
 
@@ -144,11 +146,24 @@ const UpcomingDeadlinesWidget: React.FC = () => {
             const isUrgent = diffDays <= 3 && diffDays >= 0;
 
             return (
-              <div key={d.key} className={`p-4 rounded-2xl border ${isUrgent ? 'bg-red-50/50 border-red-100' : 'bg-slate-50 border-slate-100'} flex items-center justify-between group transition-all`}>
+              <div key={d.key} className={`p-4 rounded-2xl border ${isUrgent ? 'bg-red-50/50 border-red-100' : 'bg-slate-50 border-slate-100'} flex items-center justify-between group hover:shadow-xs transition-all relative`}>
                 <div>
-                  <p className={`text-[11px] font-black uppercase tracking-widest ${isUrgent ? 'text-red-600' : 'text-slate-900'} mb-1`}>
-                    {moduleNames[d.moduleId] || d.moduleId}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className={`text-[11px] font-black uppercase tracking-widest ${isUrgent ? 'text-red-600' : 'text-slate-900'} mb-1`}>
+                      {moduleNames[d.moduleId] || d.moduleId}
+                    </p>
+                    <button
+                      onClick={() => syncDeadlineToGoogleCalendar(
+                        moduleNames[d.moduleId] || d.moduleId,
+                        `Filing deadline for period ${d.period} (${d.year}). Sync from Clientify Legal Vault.`,
+                        d.dateString
+                      )}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-white/80 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg border border-slate-200/50 dark:border-slate-700/50 cursor-pointer"
+                      title="Add to Google Calendar"
+                    >
+                      <Calendar className="h-3 w-3 text-slate-500 hover:text-indigo-600" />
+                    </button>
+                  </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                     {d.period} • {d.year}
                   </p>

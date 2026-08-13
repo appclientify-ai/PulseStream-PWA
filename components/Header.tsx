@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import { useTheme } from '../hooks/useTheme';
 import { THEME_COLORS, FONT_SIZES, FONT_STYLES, THEME_MODES } from '../services/theme';
+import { NotificationCenter } from './NotificationCenter';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -225,6 +226,8 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
             </div>
           )}
         </div>
+
+        <NotificationCenter placement="header" />
 
         <div className="relative">
           <button 

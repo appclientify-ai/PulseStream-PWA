@@ -12,19 +12,10 @@ export const formatDate = (dateInput: string | Date | undefined | null): string 
   const str = String(dateInput).trim();
   if (!str) return '---';
 
-  // Handle ISO string or date string with timestamp T
-  if (str.includes('T')) {
-    const d = new Date(str);
-    if (!isNaN(d.getTime())) {
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${day}/${month}/${year}`;
-    }
-  }
+  // Extract the date portion (ignore time/timezone)
+  const datePart = str.split('T')[0].trim();
+  const parts = datePart.split(/[-/]/);
 
-  // Handle date string separated by - or /
-  const parts = str.split(/[-/]/);
   if (parts.length === 3) {
     const [p1, p2, p3] = parts;
     // Case 1: YYYY-MM-DD or YYYY/MM/DD
@@ -39,7 +30,7 @@ export const formatDate = (dateInput: string | Date | undefined | null): string 
       const year = p3;
       const num1 = parseInt(p1, 10);
       const num2 = parseInt(p2, 10);
-      
+
       // If p1 > 12, p1 MUST be day, p2 is month -> DD/MM/YYYY
       if (num1 > 12) {
         return `${p1.padStart(2, '0')}/${p2.padStart(2, '0')}/${year}`;
@@ -67,13 +58,7 @@ export const formatDate = (dateInput: string | Date | undefined | null): string 
 
 export const formatISOToDDMMYYYY = (isoStr: string | null | undefined): string => {
   if (!isoStr || !isoStr.trim()) return 'DD/MM/YYYY';
-  const str = isoStr.trim();
-  const parts = str.split(/[-/]/);
-  if (parts.length === 3 && parts[0].length === 4) {
-    // YYYY-MM-DD
-    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
-  }
-  return formatDate(str);
+  return formatDate(isoStr);
 };
 
 export const calculateRenewalDueDate = (expiryDateStr?: string, monthsPrior: number = 2): string => {

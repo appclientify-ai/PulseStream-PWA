@@ -567,7 +567,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
       </section>
 
       {/* Interactive Platform Modules Grid */}
-      <section id="modules" className="w-full bg-slate-100/60 dark:bg-slate-900/60 py-12 sm:py-20 border-y border-slate-200/80 dark:border-slate-800 px-4 sm:px-6">
+      <section id="platform" className="w-full bg-slate-100/60 dark:bg-slate-900/60 py-12 sm:py-20 border-y border-slate-200/80 dark:border-slate-800 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-10 text-center space-y-3">
              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[10px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-800">
@@ -632,6 +632,82 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                 </div>
               </ParallaxCard>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bank-Grade Security & AES-256 Confidentiality Section */}
+      <section id="security" className="w-full bg-slate-50 dark:bg-slate-950 py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden">
+        {/* Decorative Grid Lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="mb-12 text-center space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-800">
+              🛡️ Statutory Client Privacy Shield
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+              Bank-Grade <span className="text-emerald-600 dark:text-emerald-400">AES-256 Encryption</span>
+            </h2>
+            <p className="text-slate-600 dark:text-slate-300 font-medium text-sm sm:text-base max-w-2xl mx-auto">
+              Your clients' critical credentials, sensitive litigation briefs, and filing logs are shielded by enterprise-grade cryptographic standards.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {/* Security Card 1 */}
+            <ParallaxCard index={10} className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-6 shadow-xs">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Zero-Knowledge Vault</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Credentials and critical client API secrets are encrypted locally client-side before sync. Not even Clientify systems can access your plain-text data.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest">End-to-End Cryptography</span>
+              </div>
+            </ParallaxCard>
+
+            {/* Security Card 2 */}
+            <ParallaxCard index={11} className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6 shadow-xs">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Statutory Compliance Safeguard</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Engineered to fully align with data residency acts, keeping taxpayer data housed securely inside certified ISO 27001 data storage zones.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest">ISO 27001 Certified Host</span>
+              </div>
+            </ParallaxCard>
+
+            {/* Security Card 3 */}
+            <ParallaxCard index={12} className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col justify-between">
+              <div>
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 shadow-xs">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Automated Threat Mitigation</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Real-time threat monitoring filters malicious access attempts, provides secure session bounds, and prevents automated portal scrapers.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-widest">24/7 Shield Active</span>
+              </div>
+            </ParallaxCard>
           </div>
         </div>
       </section>
