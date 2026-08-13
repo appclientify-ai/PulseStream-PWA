@@ -222,37 +222,45 @@ const ITRReturn: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Filed: <strong className="font-black text-indigo-900">{stats.filed}</strong></span>
-          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Prepared: <strong className="font-black text-amber-900">{stats.prepared}</strong></span>
-          <span className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-tight shrink-0">Pending: <strong className="font-black text-rose-900">{stats.pending}</strong></span>
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          {itrDueDate && <span>ITR Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(itrDueDate)}</strong></span>}
-        </div>
-      </div>
-
+      {/* Header Search & Count Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total IT Return</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed {itrDueDate && `(Due: ${formatISOToDDMMYYYY(itrDueDate)})`}</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">Prepared</p>
-            <p className="text-xl font-black text-amber-600 leading-none">{stats.prepared}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-0.5">Pending</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
-          </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button 
+            onClick={() => setStatusFilter('All')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              statusFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span>Total</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Filed')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              statusFilter === 'Filed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            <span>Filed</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.filed}</span>
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Prepared')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              statusFilter === 'Prepared' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            <span>Prepared</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.prepared}</span>
+          </button>
+          <button 
+            onClick={() => setStatusFilter('Pending')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              statusFilter === 'Pending' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            <span>Pending</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.pending}</span>
+          </button>
         </div>
 
         <div className="relative flex-1 group w-full">
@@ -278,6 +286,100 @@ const ITRReturn: React.FC = () => {
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredClients.map((client, idx) => {
+              const status = getStatus(client.id);
+              const isPassVisible = visiblePasswords.has(client.id);
+              return (
+                <div key={client.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-black text-slate-700 font-mono">{client.panProfile?.pan || 'NO PAN'}</span>
+                        {client.panProfile?.pan && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.panProfile?.pan || ''); toast.success('PAN Copied!'); window.open('https://eportal.incometax.gov.in', '_blank'); }} className="p-1 text-slate-400 hover:text-indigo-600" title="Search PAN on IT Portal">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={client.legalName}>{client.legalName || client.tradeName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate">S/O: {client.panProfile?.fatherName || 'N/A'}</p>
+
+                    {/* Credentials Section */}
+                    <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">PAN / ID:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-slate-800">{client.panProfile?.pan || '---'}</span>
+                          {client.panProfile?.pan && (
+                            <button onClick={() => { navigator.clipboard.writeText(client.panProfile?.pan || ''); toast.success('PAN copied'); }} className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all inline-flex" title="Copy PAN">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">PWD:</span>
+                        <div className="flex items-center gap-1">
+                          {editingPasswordId === client.id ? (
+                            <input 
+                              autoFocus 
+                              value={newPasswordValue} 
+                              onChange={e => setNewPasswordValue(e.target.value)} 
+                              onBlur={() => saveQuickPassword(client)} 
+                              onKeyDown={e => e.key === 'Enter' && saveQuickPassword(client)} 
+                              className="bg-white border border-indigo-200 rounded px-1.5 py-0.5 text-[10px] font-bold w-20 outline-none h-5" 
+                            />
+                          ) : (
+                            <>
+                              <span className="font-mono font-bold text-indigo-500">{client.itProfile?.password || '---'}</span>
+                              <button 
+                                onClick={() => { setEditingPasswordId(client.id); setNewPasswordValue(client.itProfile?.password || ''); }} 
+                                className="p-0.5 text-slate-300 hover:text-amber-500 transition-all inline-flex"
+                                title="Edit Password"
+                              >
+                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                              </button>
+                              <button 
+                                onClick={() => { 
+                                  navigator.clipboard.writeText(client.panProfile?.pan || ''); 
+                                  window.open('https://eportal.incometax.gov.in', '_blank'); 
+                                }} 
+                                className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all inline-flex" 
+                                title="Login to Portal"
+                              >
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
+                    <span className="font-bold text-slate-500">ITR Status ({status.itrType || 'ITR'}):</span>
+                    <button onClick={() => updateField(client.id, 'status', status.status === 'Filed' ? 'Pending' : status.status === 'Prepared' ? 'Filed' : 'Prepared')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                      status.status === 'Filed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : status.status === 'Prepared' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-rose-100 text-rose-800 border-rose-200'
+                    }`}>
+                      {status.status || 'Pending'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">AY {selectedAY}</span>
+                    <button onClick={(e) => openActionsMenu(e, client)} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
+                      Actions
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
           <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
@@ -389,6 +491,7 @@ const ITRReturn: React.FC = () => {
             </tbody>
           </table>
         </div>
+      )}
       </div>
 
       {/* ACTIONS MENU */}

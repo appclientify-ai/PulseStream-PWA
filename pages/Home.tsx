@@ -1,8 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'motion/react';
 
 interface HomeProps {
   onGetStarted: (targetPath?: string) => void;
 }
+
+const ParallaxCard: React.FC<{
+  children: React.ReactNode;
+  index: number;
+  onClick?: () => void;
+  className?: string;
+}> = ({ children, index, onClick, className = "" }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [brightness, setBrightness] = useState(1);
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  // Mouse move tilt calculation
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const card = cardRef.current;
+    const rect = card.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+    
+    // Max tilt angles: 10 degrees for a pronounced 3D effect
+    const rX = -(mouseY / (height / 2)) * 10;
+    const rY = (mouseX / (width / 2)) * 10;
+    
+    setRotateX(rX);
+    setRotateY(rY);
+
+    // Dynamic light highlight (glare effect)
+    const glareBrightness = 1 + (mouseY / height) * 0.15;
+    setBrightness(glareBrightness);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setBrightness(1);
+  };
+
+  // Parallax Scroll offset based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const cardCenterY = rect.top + rect.height / 2;
+      // Calculate position relative to viewport center
+      const diff = cardCenterY - viewportHeight / 2;
+      // Stagger speed based on index (even vs odd cards float at slightly different speeds)
+      const speed = index % 2 === 0 ? 0.03 : 0.045;
+      setScrollOffset(diff * speed);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Run after DOM has painted
+    const timer = setTimeout(handleScroll, 100);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(timer);
+    };
+  }, [index]);
+
+  // Calculate dynamic offset shadows that cast in the opposite direction of tilt
+  const shadowX = -rotateY * 1.5;
+  const shadowY = rotateX * 1.5;
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      animate={{
+        rotateX,
+        rotateY,
+        y: scrollOffset,
+        scale: rotateX !== 0 ? 1.035 : 1,
+        filter: `brightness(${brightness})`,
+        boxShadow: rotateX !== 0 
+          ? `${shadowX}px ${shadowY + 16}px 32px rgba(9, 13, 22, 0.22)` 
+          : '0px 10px 24px rgba(9, 13, 22, 0.06)',
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 150,
+        damping: 18,
+        mass: 0.6,
+      }}
+      style={{
+        transformStyle: 'preserve-3d',
+        perspective: 1000,
+      }}
+      className={`group cursor-pointer transition-all ${className}`}
+    >
+      {/* Glossy Reflection Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-15 bg-gradient-to-tr from-transparent via-white/20 to-white/40 transition-opacity duration-300 z-30 rounded-3xl"
+        style={{
+          transform: `translate(${rotateY * 2}px, ${-rotateX * 2}px) translateZ(10px)`,
+        }}
+      />
+      {/* 3D floating inner container */}
+      <div 
+        style={{ 
+          transform: rotateX !== 0 ? 'translateZ(30px)' : 'translateZ(0px)',
+          transformStyle: 'preserve-3d'
+        }} 
+        className="h-full w-full transition-transform duration-300 ease-out"
+      >
+        {children}
+      </div>
+    </motion.div>
+  );
+};
 
 type ModuleCategory = 'all' | 'gst' | 'itr' | 'litigation' | 'vault';
 
@@ -279,7 +396,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Card 1: Key Platform Activity Overview */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <ParallaxCard index={0} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
@@ -303,7 +420,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                       <p className="text-[10px] text-slate-500">142 GSTR-1/3B Filed • 18 Pending</p>
                     </div>
                   </div>
-                  <button onClick={() => onGetStarted('gst-monthly')} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black">View</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('gst-monthly'); }} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black z-45 relative">View</button>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
@@ -314,7 +431,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                       <p className="text-[10px] text-slate-500">86 ITR Returns • 12 Audit Drafts</p>
                     </div>
                   </div>
-                  <button onClick={() => onGetStarted('itr-filing')} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black">View</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('itr-filing'); }} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black z-45 relative">View</button>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
@@ -325,19 +442,19 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                       <p className="text-[10px] text-slate-500">8 Active SCNs • 4 Hearings Scheduled</p>
                     </div>
                   </div>
-                  <button onClick={() => onGetStarted('lit-notice-pending')} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black">View</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('lit-notice-pending'); }} className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-black z-45 relative">View</button>
                 </div>
               </div>
             </div>
 
-            <button onClick={() => onGetStarted('dashboard')} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+            <button onClick={(e) => { e.stopPropagation(); onGetStarted('dashboard'); }} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5 z-45 relative">
               <span>Open Executive Dashboard</span>
               <span>→</span>
             </button>
-          </div>
+          </ParallaxCard>
 
           {/* Card 2: Upcoming Statutory Compliance Deadlines */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <ParallaxCard index={1} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
@@ -388,14 +505,14 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
               </div>
             </div>
 
-            <button onClick={() => onGetStarted('due-dates')} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+            <button onClick={(e) => { e.stopPropagation(); onGetStarted('due-dates'); }} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5 z-45 relative">
               <span>View All Compliance Timelines</span>
               <span>→</span>
             </button>
-          </div>
+          </ParallaxCard>
 
           {/* Card 3: Recent Notifications & Practice Alerts */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <ParallaxCard index={2} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
@@ -417,7 +534,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">DSC Token Expiry Warning</p>
                     <p className="text-[10px] text-slate-500">Digital signature for Apex Infra expires in 7 days.</p>
                   </div>
-                  <button onClick={() => onGetStarted('credentials')} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0">Vault</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('credentials'); }} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0 z-45 relative">Vault</button>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
@@ -426,7 +543,7 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">GSTAT Hearing Reminder</p>
                     <p className="text-[10px] text-slate-500">Re: Zenith Trade Tribunal Appeal hearing on 18th Aug.</p>
                   </div>
-                  <button onClick={() => onGetStarted('lit-notice-pending')} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0">Litigation</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('lit-notice-pending'); }} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0 z-45 relative">Litigation</button>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-2.5">
@@ -435,16 +552,16 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
                     <p className="text-xs font-bold text-slate-900 dark:text-slate-100">New Client Onboarding</p>
                     <p className="text-[10px] text-slate-500">New GST registration document set uploaded for Review.</p>
                   </div>
-                  <button onClick={() => onGetStarted('gst-reg')} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0">Reg Hub</button>
+                  <button onClick={(e) => { e.stopPropagation(); onGetStarted('gst-reg'); }} className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black hover:underline shrink-0 z-45 relative">Reg Hub</button>
                 </div>
               </div>
             </div>
 
-            <button onClick={() => onGetStarted('reminders')} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5">
+            <button onClick={(e) => { e.stopPropagation(); onGetStarted('reminders'); }} className="mt-5 w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-700 dark:text-slate-200 text-xs font-black transition-colors flex items-center justify-center gap-1.5 z-45 relative">
               <span>Manage Notifications & Reminders</span>
               <span>→</span>
             </button>
-          </div>
+          </ParallaxCard>
 
         </div>
       </section>
@@ -488,29 +605,32 @@ const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {filteredModules.map((m) => (
-              <div 
+            {filteredModules.map((m, idx) => (
+              <ParallaxCard 
                 key={m.id} 
+                index={idx + 3}
                 onClick={() => onGetStarted(m.targetPath)}
-                className="group rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200 dark:border-slate-800 transition-all hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl flex flex-col justify-between cursor-pointer text-left active:scale-[0.98]"
+                className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className={`h-12 w-12 rounded-2xl ${m.bg} border flex items-center justify-center ${m.color} shadow-xs group-hover:scale-110 transition-transform`}>
-                      {m.icon}
+                <div className="w-full flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className={`h-12 w-12 rounded-2xl ${m.bg} border flex items-center justify-center ${m.color} shadow-xs group-hover:scale-110 transition-transform`}>
+                        {m.icon}
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                        {m.badge}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                      {m.badge}
-                    </span>
+                    <h3 className="mb-2 text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{m.title}</h3>
+                    <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">{m.desc}</p>
                   </div>
-                  <h3 className="mb-2 text-xl font-black text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{m.title}</h3>
-                  <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">{m.desc}</p>
+                  <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Open Module</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1.5 transition-transform font-bold">→</span>
+                  </div>
                 </div>
-                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">Open Module</span>
-                  <span className="text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1.5 transition-transform font-bold">→</span>
-                </div>
-              </div>
+              </ParallaxCard>
             ))}
           </div>
         </div>

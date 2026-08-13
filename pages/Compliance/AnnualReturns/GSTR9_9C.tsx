@@ -255,7 +255,7 @@ const GSTR9_9C: React.FC = () => {
           </div>
 
           {/* Count Badges Pill Filter Group */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-0.5">
             <button
               onClick={() => setQuickFilter('All')}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
@@ -341,10 +341,40 @@ const GSTR9_9C: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
-                      <span className="text-[10px] font-black text-slate-500 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-black text-slate-700 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                        {client.gstProfile?.gstin && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || ''); toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }} className="p-1 text-slate-400 hover:text-indigo-600" title="Search GSTIN">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <h4 className="text-xs font-black text-slate-900 truncate">{client.tradeName || client.legalName}</h4>
-                    <p className="text-[10px] font-bold text-slate-500">{getClientDisplayId(client)}</p>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate">{getClientDisplayId(client)}</p>
+
+                    {/* Credentials Card Section */}
+                    <div className="mt-2 p-2 bg-white rounded-xl border border-slate-200/80 space-y-1 text-[10px]">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>User: <strong className="text-slate-900">{client.gstProfile?.username || 'N/A'}</strong></span>
+                        {client.gstProfile?.username && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.username || ''); toast.success('Username copied'); }} className="text-indigo-600 font-bold hover:underline">Copy</button>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Pass: <strong className="text-indigo-600">{client.gstProfile?.password || 'N/A'}</strong></span>
+                        <div className="flex items-center gap-1.5">
+                          {client.gstProfile?.password && (
+                            <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.password || ''); toast.success('Password copied'); }} className="text-indigo-600 font-bold hover:underline">Copy</button>
+                          )}
+                          {client.gstProfile?.username && (
+                            <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.username || ''); window.open('https://services.gst.gov.in/services/login', '_blank'); }} className="p-1 text-emerald-600 hover:text-emerald-800" title="Login to Portal">
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
@@ -403,7 +433,7 @@ const GSTR9_9C: React.FC = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={9} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={9} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);

@@ -40,7 +40,7 @@ const GSTR4: React.FC = () => {
   const { getGlobalDueDate } = useGlobalDueDates(selectedYear);
   const gstr4DueDate = getGlobalDueDate('annual_gstr4', 'Annual');
 
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [quickFilter, setQuickFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -119,10 +119,10 @@ const GSTR4: React.FC = () => {
        (c.tradeName || '').toLowerCase().includes(search.toLowerCase()) || 
        (c.gstProfile?.gstin || '').toLowerCase().includes(search.toLowerCase()))
     );
-    if (statusFilter !== 'All') list = list.filter(c => statusFilter === 'Filed' ? getStatus(c.id).filed : !getStatus(c.id).filed);
+    if (quickFilter !== 'All') list = list.filter(c => quickFilter === 'Filed' ? getStatus(c.id).filed : !getStatus(c.id).filed);
     list = filterClientsBySectorJurisdiction(list, authorityFilter, selectedSectors);
     return list;
-  }, [clients, search, statusFilter, authorityFilter, selectedSectors, getStatus, selectedYear]);
+  }, [clients, search, quickFilter, authorityFilter, selectedSectors, getStatus, selectedYear]);
 
   
   const handleUpdatePassword = async () => {
@@ -211,38 +211,49 @@ const handleExportPDF = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Filed: <strong className="font-black text-indigo-900">{stats.filed}</strong></span>
-          <span className="bg-rose-50 text-rose-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Pending: <strong className="font-black text-rose-900">{stats.pending}</strong></span>
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          {gstr4DueDate && <span>GSTR-4 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(gstr4DueDate)}</strong></span>}
-        </div>
-      </div>
-
+      {/* Header Search & Count Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">GSTR-4 Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Filed {gstr4DueDate && `(Due: ${formatISOToDDMMYYYY(gstr4DueDate)})`}</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.filed}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-0.5">Pending</p>
-            <p className="text-xl font-black text-rose-600 leading-none">{stats.pending}</p>
-          </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button 
+            onClick={() => setQuickFilter('All')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              quickFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span>Total</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
+          </button>
+          <button 
+            onClick={() => setQuickFilter('Filed')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              quickFilter === 'Filed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            <span>Filed</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.filed}</span>
+          </button>
+          <button 
+            onClick={() => setQuickFilter('Pending')} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+              quickFilter === 'Pending' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            <span>Pending</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.pending}</span>
+          </button>
+          {gstr4DueDate && (
+            <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 hidden xl:inline-block">
+              GSTR-4 Due: <strong>{formatISOToDDMMYYYY(gstr4DueDate)}</strong>
+            </span>
+          )}
         </div>
+
         <div className="relative flex-1 group w-full">
           <input type="text" placeholder="Search composition annual entity..." value={search} onChange={e => setSearch(e.target.value)}
             className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
+
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <ViewControl 
             viewMode={viewMode} 
@@ -265,6 +276,93 @@ const handleExportPDF = () => {
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredClients.map((client, idx) => {
+              const status = getStatus(client.id);
+              const theme = getClientColorTheme(client);
+              return (
+                <div key={client.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-700 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                        {client.gstProfile?.gstin && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || ''); toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }} className="p-0.5 text-slate-400 hover:text-indigo-600 transition-colors inline-flex" title="Search GSTIN">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate mb-2">{client.legalName}</p>
+                    
+                    {/* Credentials Section with Edit/Login Buttons */}
+                    <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">ID:</span>
+                        <span className="font-mono font-bold text-slate-800">{client.gstProfile?.username || '---'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">PWD:</span>
+                        <div className="flex items-center gap-1">
+                          {editingPasswordId === client.id ? (
+                            <input 
+                              autoFocus 
+                              value={newPassVal} 
+                              onChange={e => setNewPassVal(e.target.value)} 
+                              onBlur={handleUpdatePassword} 
+                              onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} 
+                              className="bg-white border border-indigo-200 rounded px-1.5 py-0.5 text-[10px] font-bold w-20 outline-none h-5" 
+                            />
+                          ) : (
+                            <>
+                              <span className="font-mono font-bold text-indigo-500">{client.gstProfile?.password || '---'}</span>
+                              <button 
+                                onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} 
+                                className="p-0.5 text-slate-300 hover:text-amber-500 transition-all"
+                                title="Edit Password"
+                              >
+                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                              </button>
+                              {client.gstProfile?.username && (
+                                <button 
+                                  onClick={() => { 
+                                    navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                    window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                  }} 
+                                  className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all" 
+                                  title="Login to Portal"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
+                    <span className="font-bold text-slate-500">GSTR-4 Status:</span>
+                    <button onClick={() => toggleStatus(client.id)} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${status.filed ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-100 text-rose-800 border-rose-200'}`}>
+                      {status.filed ? 'Filed' : 'Pending'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
+                    <button onClick={(e) => openActionsMenu(e, client)} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
+                      Actions
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
           <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
@@ -284,7 +382,7 @@ const handleExportPDF = () => {
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={9} className="sticky top-[37px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-[5.5px] uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={9} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const status = getStatus(client.id);
@@ -359,16 +457,19 @@ const handleExportPDF = () => {
             </tbody>
           </table>
         </div>
+      )}
       </div>
 
       {/* FIXED ACTIONS MENU */}
       {activeActionsId && selectedClient && (
         <div ref={actionsRef} style={{ top: menuPosition.top, left: menuPosition.left }} className="fixed w-64 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl z-[9999] p-2 animate-in zoom-in-95 origin-top-right overflow-y-auto max-h-[calc(100vh-24px)] text-left">
-          <button onClick={() => { shareViaWhatsApp(`*GSTR-4 Annual Credentials*\n*Entity:* ${selectedClient.tradeName}\n*GSTIN:* ${selectedClient.gstProfile?.gstin}\n*User ID:* ${selectedClient.gstProfile?.username}\n*Password:* ${selectedClient.gstProfile?.password}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
-              <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div>
+          <button onClick={() => { shareViaWhatsApp(`*GSTR-4 Annual Credentials*\nEntity: ${selectedClient.tradeName}\nGSTIN: ${selectedClient.gstProfile?.gstin}\nUser ID: ${selectedClient.gstProfile?.username}\nPassword: ${selectedClient.gstProfile?.password}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group">
+              <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Share Creds</span>
           </button>
-          <button onClick={() => { shareViaWhatsApp(`*Entity Profile*\nTrade Name: ${selectedClient.tradeName || 'N/A'}\nLegal Name: ${selectedClient.legalName || 'N/A'}\nMobile: ${selectedClient.mobile || 'N/A'}\nEmail: ${selectedClient.email || 'N/A'}\n\n*GST Details*\nGSTIN: ${selectedClient.gstProfile?.gstin || 'N/A'}\nStatus: ${selectedClient.gstProfile?.gstStatus || 'N/A'}\nReg Type: ${selectedClient.gstProfile?.regType || 'N/A'}\nFiling: ${selectedClient.gstProfile?.filingFreq || 'N/A'}\nReg Date: ${formatDate(selectedClient.gstProfile?.regDate)}\nJurisdiction: ${selectedClient.gstProfile?.jurisdictionType || 'N/A'}\nSector/Range: ${selectedClient.gstProfile?.sector || selectedClient.gstProfile?.range || 'N/A'}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group border-t border-slate-50">
+          <button onClick={() => { shareViaWhatsApp(`*Entity Profile*\nTrade Name: ${selectedClient.tradeName || 'N/A'}\nLegal Name: ${selectedClient.legalName || 'N/A'}\nMobile: ${selectedClient.mobile || 'N/A'}\nEmail: ${selectedClient.email || 'N/A'}\nGSTIN: ${selectedClient.gstProfile?.gstin || 'N/A'}`); setActiveActionsId(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group border-t border-slate-50">
               <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-sm"><svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Share Full Detail</span>
           </button>

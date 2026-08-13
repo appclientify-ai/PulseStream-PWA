@@ -415,7 +415,59 @@ const MonthlyFiling: React.FC = () => {
                         <span className="text-[10px] font-bold text-slate-400">{client.mobile || '---'}</span>
                       </div>
                       <h4 className="font-bold text-xs text-slate-900 truncate" title={client.tradeName}>{client.tradeName || '---'}</h4>
-                      <p className="text-[10px] text-slate-500 font-mono mb-1 truncate">{client.gstProfile?.gstin || '---'}</p>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <p className="text-[10px] text-slate-500 font-mono truncate">{client.gstProfile?.gstin || '---'}</p>
+                        {client.gstProfile?.gstin && (
+                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors inline-flex shrink-0" title="Search Taxpayer">
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
+                        <div className="flex items-center justify-between text-slate-700">
+                          <span className="font-bold text-[10px] text-slate-400 uppercase">ID:</span>
+                          <span className="font-mono font-bold text-slate-800">{client.gstProfile?.username || '---'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-700">
+                          <span className="font-bold text-[10px] text-slate-400 uppercase">PWD:</span>
+                          <div className="flex items-center gap-1">
+                            {editingPasswordId === client.id ? (
+                              <input 
+                                autoFocus 
+                                value={newPassVal} 
+                                onChange={e => setNewPassVal(e.target.value)} 
+                                onBlur={handleUpdatePassword} 
+                                onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} 
+                                className="bg-white border border-indigo-200 rounded px-1.5 py-0.5 text-[10px] font-bold w-20 outline-none h-5" 
+                              />
+                            ) : (
+                              <>
+                                <span className="font-mono font-bold text-indigo-500">{client.gstProfile?.password || '---'}</span>
+                                <button 
+                                  onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} 
+                                  className="p-0.5 text-slate-300 hover:text-amber-500 transition-all"
+                                  title="Edit Password"
+                                >
+                                  <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                </button>
+                                {client.gstProfile?.username && (
+                                  <button 
+                                    onClick={() => { 
+                                      navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                      window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                    }} 
+                                    className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all" 
+                                    title="Login to Portal"
+                                  >
+                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       
                       {!isAllMonthsMode && (
                         <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-100">
@@ -430,7 +482,7 @@ const MonthlyFiling: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-500 truncate">{client.gstProfile?.username || '---'}</span>
+                      <div className="text-[9px] text-slate-400 font-medium">Click Actions Menu →</div>
                       <div className="flex items-center gap-1">
                         <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
                         <button onClick={(e) => openActionsMenu(e, client)} className="h-7 w-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-2xs">

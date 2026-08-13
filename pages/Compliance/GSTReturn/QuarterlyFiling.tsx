@@ -357,7 +357,7 @@ const QuarterlyFiling: React.FC = () => {
           </div>
 
           {/* Count Badges Pill Filter Group */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-0.5">
             <button
               onClick={() => setQuickFilter('All')}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
@@ -463,7 +463,7 @@ const QuarterlyFiling: React.FC = () => {
           </button>
 
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{QUARTER_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{QUARTERLY_PERIOD_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
@@ -479,10 +479,63 @@ const QuarterlyFiling: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
-                      <span className="text-[10px] font-black text-slate-500 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-500 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                        {client.gstProfile?.gstin && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || ''); toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }} className="p-0.5 text-slate-400 hover:text-indigo-600 transition-colors inline-flex" title="Search GSTIN">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <h4 className="text-xs font-black text-slate-900 truncate">{client.tradeName || client.legalName}</h4>
-                    <p className="text-[10px] font-bold text-slate-500">{client.mobile || 'No Mobile'}</p>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate mb-2">{client.legalName}</p>
+                    
+                    {/* Credentials Section */}
+                    <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">ID:</span>
+                        <span className="font-mono font-bold text-slate-800">{client.gstProfile?.username || '---'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">PWD:</span>
+                        <div className="flex items-center gap-1">
+                          {editingPasswordId === client.id ? (
+                            <input 
+                              autoFocus 
+                              value={newPassVal} 
+                              onChange={e => setNewPassVal(e.target.value)} 
+                              onBlur={handleUpdatePassword} 
+                              onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} 
+                              className="bg-white border border-indigo-200 rounded px-1.5 py-0.5 text-[10px] font-bold w-20 outline-none h-5" 
+                            />
+                          ) : (
+                            <>
+                              <span className="font-mono font-bold text-indigo-500">{client.gstProfile?.password || '---'}</span>
+                              <button 
+                                onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} 
+                                className="p-0.5 text-slate-300 hover:text-amber-500 transition-all inline-flex"
+                                title="Edit Password"
+                              >
+                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                              </button>
+                              {client.gstProfile?.username && (
+                                <button 
+                                  onClick={() => { 
+                                    navigator.clipboard.writeText(client.gstProfile?.username || ''); 
+                                    window.open('https://services.gst.gov.in/services/login', '_blank'); 
+                                  }} 
+                                  className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all inline-flex" 
+                                  title="Login to Portal"
+                                >
+                                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-[10px]">

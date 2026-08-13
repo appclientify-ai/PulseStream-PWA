@@ -174,20 +174,26 @@ const TAXAudit: React.FC = () => {
         </div>
       </div>
 
+      {/* Header Search & Count Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Portfolio</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">B/S Ready</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.bsReady}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-6">
-            <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Audited {auditTaxDueDate && `(Due: ${formatISOToDDMMYYYY(auditTaxDueDate)})`}</p>
-            <p className="text-xl font-black text-indigo-600 leading-none">{stats.audited}</p>
-          </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-900 text-white shadow-sm flex items-center gap-1.5">
+            <span>Total</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
+          </span>
+          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 flex items-center gap-1.5">
+            <span>B/S Ready</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-xs font-black">{stats.bsReady}</span>
+          </span>
+          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 flex items-center gap-1.5">
+            <span>Audited</span>
+            <span className="px-1.5 py-0.2 rounded-md bg-indigo-200 text-xs font-black">{stats.audited}</span>
+          </span>
+          {auditTaxDueDate && (
+            <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 hidden xl:inline-block">
+              Due: <strong>{formatISOToDDMMYYYY(auditTaxDueDate)}</strong>
+            </span>
+          )}
         </div>
 
         <div className="relative flex-1 w-full group">
@@ -203,7 +209,7 @@ const TAXAudit: React.FC = () => {
             compactMode={compactMode} 
             onCompactToggle={() => setCompactMode(!compactMode)} 
           />
-          <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-5 landscape:px-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+          <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add To Audit
           </button>
@@ -211,15 +217,83 @@ const TAXAudit: React.FC = () => {
             className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
-          {auditTaxDueDate && (
-            <div className="flex items-center bg-indigo-50 border border-indigo-100 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 text-indigo-700 font-bold text-[10px] uppercase shrink-0">
-              <span>Due: <strong>{formatISOToDDMMYYYY(auditTaxDueDate)}</strong></span>
-            </div>
-          )}
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredTracked.map((client, idx) => {
+              const status = getStatus(client.id);
+              return (
+                <div key={client.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-slate-500 font-mono">{client.gstProfile?.gstin || client.itProfile?.pan || 'NO ID'}</span>
+                        {(client.gstProfile?.gstin || client.itProfile?.pan) && (
+                          <button onClick={() => { navigator.clipboard.writeText(client.gstProfile?.gstin || client.itProfile?.pan || ''); toast.success('ID Copied!'); window.open(client.gstProfile?.gstin ? 'https://services.gst.gov.in/services/searchtp' : 'https://eportal.incometax.gov.in', '_blank'); }} className="p-0.5 text-slate-400 hover:text-indigo-600 transition-colors inline-flex" title="Search Taxpayer">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={client.tradeName}>{client.tradeName || client.legalName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate mb-2">{client.legalName}</p>
+
+                    {/* Credentials Section */}
+                    <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">ID:</span>
+                        <span className="font-mono font-bold text-slate-800">{client.gstProfile?.username || client.itProfile?.pan || '---'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[9px] text-slate-400 uppercase">PWD:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-indigo-500">{client.gstProfile?.password || client.itProfile?.password || '---'}</span>
+                          {(client.gstProfile?.password || client.itProfile?.password) && (
+                            <button 
+                              onClick={() => { 
+                                navigator.clipboard.writeText(client.gstProfile?.password || client.itProfile?.password || ''); 
+                                toast.success('Password Copied!'); 
+                              }} 
+                              className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all inline-flex"
+                              title="Copy Password"
+                            >
+                              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-6 4h6m-6 4h6" /></svg>
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => window.open(client.gstProfile?.gstin ? 'https://services.gst.gov.in/services/login' : 'https://eportal.incometax.gov.in', '_blank')} 
+                            className="p-0.5 text-slate-300 hover:text-emerald-600 transition-all inline-flex" 
+                            title="Login to Portal"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
+                    <span className="font-bold text-slate-500">Audit Status:</span>
+                    <span className={`px-2.5 py-0.5 rounded-md font-black uppercase ${status.audited ? 'bg-indigo-100 text-indigo-800' : status.bsReady ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
+                      {status.audited ? 'Audited' : status.bsReady ? 'B/S Ready' : 'In Progress'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <span className="text-[9px] font-black text-slate-400 uppercase">FY {selectedYear}</span>
+                    <button onClick={(e) => openActionsMenu(e, client)} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
+                      Actions
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
           <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
@@ -303,6 +377,7 @@ const TAXAudit: React.FC = () => {
             </tbody>
           </table>
         </div>
+      )}
       </div>
 
       {/* VIEW MODAL (SHOWS FULL DETAILS + CA NAME EDIT) */}

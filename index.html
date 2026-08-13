@@ -207,25 +207,47 @@
       /* Standardized Compact Mode Data Table Utilities */
       .compact-mode table th,
       .compact-mode table td,
-      .compact-table th,
-      .compact-table td,
       table.compact-mode th,
       table.compact-mode td,
-      table.compact-table th,
-      table.compact-table td {
-        padding-top: 0.2rem !important;  /* py-1 */
-        padding-bottom: 0.2rem !important; /* py-1 */
-        padding-left: 0.4rem !important;  /* px-2 */
-        padding-right: 0.4rem !important; /* px-2 */
-        font-size: 0.72rem !important;   /* text-xs */
-        line-height: 0.95rem !important;
+      .compact-mode th,
+      .compact-mode td {
+        padding-top: 0.15rem !important;  /* py-0.5 */
+        padding-bottom: 0.15rem !important; /* py-0.5 */
+        padding-left: 0.35rem !important;  /* px-1.5 */
+        padding-right: 0.35rem !important; /* px-1.5 */
+        font-size: 0.68rem !important;   /* text-[11px] */
+        line-height: 0.85rem !important;
+      }
+      .compact-mode tr, table.compact-mode tr {
+        height: auto !important;
+        min-height: unset !important;
       }
       .compact-mode .py-3, .compact-mode .py-4, .compact-mode .py-3\.5, .compact-mode .py-2\.5 {
-        padding-top: 0.2rem !important;
-        padding-bottom: 0.2rem !important;
+        padding-top: 0.15rem !important;
+        padding-bottom: 0.15rem !important;
       }
       .compact-mode .p-4, .compact-mode .p-3 {
-        padding: 0.35rem !important;
+        padding: 0.25rem !important;
+      }
+
+      /* Fix sticky table headers and sector header row offsets to prevent client name overlapping and layout conflicts */
+      .compact-mode .sticky.top-\[27px\] {
+        top: 21px !important;
+      }
+      :not(.compact-mode) .sticky.top-\[27px\],
+      table:not(.compact-mode) .sticky.top-\[27px\] {
+        top: 36px !important;
+      }
+
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow 10s linear infinite;
+      }
+      .animate-spin-slow:hover {
+        animation-duration: 3s;
       }
 
       .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }

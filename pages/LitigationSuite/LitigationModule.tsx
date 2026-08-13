@@ -136,34 +136,73 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
-            <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Ref No</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredRecords.map((rec, idx) => (
-                <tr key={rec.id} className="hover:bg-slate-50/50 transition-all text-[12px]">
-                  <td className=" px-6 py-5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                  <td className=" px-6 py-5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
-                  <td className=" px-6 py-5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
-                  <td className=" px-6 py-5 font-black text-slate-400">{formatISOToDDMMYYYY(rec.issuedDate || '')}</td>
-                  <td className="px-6 py-5 text-right ">
-                     <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
-                     </button>
-                  </td>
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredRecords.length === 0 ? (
+              <div className="col-span-full py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No litigation cases found</div>
+            ) : (
+              filteredRecords.map((rec, idx) => (
+                <div key={rec.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3 relative">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">{formatISOToDDMMYYYY(rec.issuedDate || '')}</span>
+                    </div>
+                    <h4 className="text-xs font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName || '---'}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 truncate">Ref No: {rec.referenceNo || '---'}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-200/40">
+                      {rec.status}
+                    </span>
+
+                    <button 
+                      onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
+                      className="h-8 px-3 rounded-lg bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-500 font-black text-[10px] uppercase tracking-wider border border-slate-200 hover:border-indigo-500 transition-all flex items-center gap-1 shrink-0"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
+                      <span>View</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+              <thead className="sticky top-0 z-30 bg-slate-100">
+                <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Ref No</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredRecords.length === 0 ? (
+                  <tr><td colSpan={5} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No litigation cases found</td></tr>
+                ) : (
+                  filteredRecords.map((rec, idx) => (
+                    <tr key={rec.id} className="hover:bg-slate-50/50 transition-all text-[12px]">
+                      <td className=" px-4 py-2.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className=" px-4 py-2.5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
+                      <td className=" px-4 py-2.5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
+                      <td className=" px-4 py-2.5 font-black text-slate-400">{formatISOToDDMMYYYY(rec.issuedDate || '')}</td>
+                      <td className="px-4 py-2.5 text-right ">
+                         <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center inline-flex">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
+                         </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <NoticeForm isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSave} onDelete={handleDelete} clients={clients} category={category} initialData={selectedRecord} />
