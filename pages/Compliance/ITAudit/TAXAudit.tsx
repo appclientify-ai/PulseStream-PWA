@@ -11,6 +11,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
+import { ViewControl } from '../../../components/ViewControl';
 
 const TAXAudit: React.FC = () => {
   const queryClient = useQueryClient();
@@ -33,6 +34,8 @@ const TAXAudit: React.FC = () => {
   
   const [bsFilter, setBsFilter] = useState<'All' | BSStatus>('All');
   const [auditFilter, setAuditFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [isBsFilterOpen, setIsBsFilterOpen] = useState(false);
   const [isAuditFilterOpen, setIsAuditFilterOpen] = useState(false);
 
@@ -193,7 +196,13 @@ const TAXAudit: React.FC = () => {
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
           <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-5 landscape:px-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add To Audit
@@ -212,7 +221,7 @@ const TAXAudit: React.FC = () => {
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
+          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No</th>

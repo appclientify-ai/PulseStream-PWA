@@ -161,7 +161,73 @@
       html.theme-mode-dark .border-slate-200 {
         border-color: #1e293b !important;
       }
+
+      /* Neo 3D Mode */
+      html.theme-mode-neo body {
+        background-color: #e6ecf5 !important;
+        color: #1e293b !important;
+      }
+      html.theme-mode-neo .bg-white {
+        background-color: #e6ecf5 !important;
+        box-shadow: 6px 6px 14px #c2c9d6, -6px -6px 14px #ffffff !important;
+        border-radius: 1rem !important;
+        border: 1px solid rgba(255,255,255,0.6) !important;
+      }
+      html.theme-mode-neo .bg-slate-50 {
+        background-color: #dce3ee !important;
+      }
+
+      /* 3D Glass Mode */
+      html.theme-mode-glass body {
+        background: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 50%, #2e103f 100%) fixed !important;
+        color: #f8fafc !important;
+      }
+      html.theme-mode-glass .bg-white {
+        background: rgba(255, 255, 255, 0.07) !important;
+        backdrop-filter: blur(18px) !important;
+        -webkit-backdrop-filter: blur(18px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #f8fafc !important;
+        box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.35) !important;
+      }
+      html.theme-mode-glass .bg-slate-50 {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: #f1f5f9 !important;
+      }
+      html.theme-mode-glass .text-slate-900,
+      html.theme-mode-glass .text-slate-800,
+      html.theme-mode-glass .text-slate-700 {
+        color: #f8fafc !important;
+      }
+      html.theme-mode-glass .border-slate-100,
+      html.theme-mode-glass .border-slate-200 {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+      }
       
+      /* Standardized Compact Mode Data Table Utilities */
+      .compact-mode table th,
+      .compact-mode table td,
+      .compact-table th,
+      .compact-table td,
+      table.compact-mode th,
+      table.compact-mode td,
+      table.compact-table th,
+      table.compact-table td {
+        padding-top: 0.2rem !important;  /* py-1 */
+        padding-bottom: 0.2rem !important; /* py-1 */
+        padding-left: 0.4rem !important;  /* px-2 */
+        padding-right: 0.4rem !important; /* px-2 */
+        font-size: 0.72rem !important;   /* text-xs */
+        line-height: 0.95rem !important;
+      }
+      .compact-mode .py-3, .compact-mode .py-4, .compact-mode .py-3\.5, .compact-mode .py-2\.5 {
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+      }
+      .compact-mode .p-4, .compact-mode .p-3 {
+        padding: 0.35rem !important;
+      }
+
       .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
       .traffic-amber { background-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
       .traffic-green { background-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }

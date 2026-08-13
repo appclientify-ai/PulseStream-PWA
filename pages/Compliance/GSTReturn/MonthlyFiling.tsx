@@ -14,6 +14,7 @@ import { EditableRemark } from '../../../components/EditableRemark';
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
+import { ViewControl } from '../../../components/ViewControl';
 
 const MONTH_SELECT_OPTIONS = ['All Months', ...FY_MONTHS];
 
@@ -49,6 +50,9 @@ const MonthlyFiling: React.FC = () => {
 
   const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [quickFilter, setQuickFilter] = useState<'All' | 'R1Filed' | '3BFiled' | '3BChallan' | 'Pending'>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [monthFilters, setMonthFilters] = useState<Record<string, string>>({});
@@ -98,7 +102,7 @@ const MonthlyFiling: React.FC = () => {
 
   const isAllMonthsMode = selectedMonth === 'All Months';
 
-  const filteredClients = useMemo(() => {
+  const baseClients = useMemo(() => {
     const s = search.toLowerCase();
     let list = clients.filter(c => 
       (isAllMonthsMode ? isClientVisibleInFY(c, selectedYear) : isClientVisibleInPeriod(c, selectedYear, selectedMonth)) &&
@@ -143,19 +147,27 @@ const MonthlyFiling: React.FC = () => {
     }
 
     list = filterClientsBySectorJurisdiction(list, authorityFilter, selectedSectors);
-
     return list;
   }, [clients, search, r1Filter, r3bFilter, authorityFilter, selectedSectors, monthFilters, getStatus, selectedYear, selectedMonth, isAllMonthsMode]);
 
   const stats = useMemo(() => {
-    if (isAllMonthsMode) {
-      return { total: filteredClients.length, r1: 0, r3b: 0, r3bChallan: 0 };
-    }
-    const r1 = filteredClients.filter(c => getStatus(c.id).r1).length;
-    const r3bFiled = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Filed').length;
-    const r3bChallan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Challan').length;
-    return { total: filteredClients.length, r1, r3b: r3bFiled, r3bChallan };
-  }, [filteredClients, getStatus, isAllMonthsMode]);
+    const total = baseClients.length;
+    if (isAllMonthsMode) return { total, r1: 0, r3b: 0, r3bChallan: 0, pending: 0 };
+    const r1 = baseClients.filter(c => getStatus(c.id).r1).length;
+    const r3bFiled = baseClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Filed').length;
+    const r3bChallan = baseClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Challan').length;
+    const pending = baseClients.filter(c => !getStatus(c.id).r1 || getStatusLabel(getStatus(c.id).r3b) === 'Pending').length;
+    return { total, r1, r3b: r3bFiled, r3bChallan, pending };
+  }, [baseClients, getStatus, isAllMonthsMode]);
+
+  const filteredClients = useMemo(() => {
+    if (quickFilter === 'All') return baseClients;
+    if (quickFilter === 'R1Filed') return baseClients.filter(c => getStatus(c.id).r1);
+    if (quickFilter === '3BFiled') return baseClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Filed');
+    if (quickFilter === '3BChallan') return baseClients.filter(c => getStatusLabel(getStatus(c.id).r3b) === 'Challan');
+    if (quickFilter === 'Pending') return baseClients.filter(c => !getStatus(c.id).r1 || getStatusLabel(getStatus(c.id).r3b) === 'Pending');
+    return baseClients;
+  }, [baseClients, quickFilter, getStatus]);
 
   const handleRefreshClients = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -261,82 +273,179 @@ const MonthlyFiling: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          {!isAllMonthsMode && (
-            <>
-              <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">R1 Filed: <strong className="font-black text-indigo-900">{stats.r1}</strong></span>
-              <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Challan: <strong className="font-black text-amber-900">{stats.r3bChallan}</strong></span>
-              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">3B Filed: <strong className="font-black text-emerald-900">{stats.r3b}</strong></span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          {r1DueDate && <span>R1 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(r1DueDate)}</strong></span>}
-          {r3bDueDate && <span>3B Due: <strong className="text-emerald-600">{formatISOToDDMMYYYY(r3bDueDate)}</strong></span>}
-        </div>
-      </div>
-
-      {/* Header with Stats */}
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Monthly Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+      {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
+        
+        {/* Search Bar & Interactive Count Badges */}
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+          <div className="relative flex-1 group min-w-[180px]">
+            <input 
+              type="text" 
+              placeholder="Search trade name, GSTIN, mobile..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-          {!isAllMonthsMode ? (
-            <>
-              <div className="text-center border-l border-slate-100 pl-6">
-                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">R1 Filed {r1DueDate && `(Due: ${formatISOToDDMMYYYY(r1DueDate)})`}</p>
-                <p className="text-xl font-black text-indigo-600 leading-none">{stats.r1}</p>
-              </div>
-              <div className="text-center border-l border-slate-100 pl-6">
-                <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">3B Challan</p>
-                <p className="text-xl font-black text-amber-600 leading-none">{stats.r3bChallan}</p>
-              </div>
-              <div className="text-center border-l border-slate-100 pl-6">
-                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">3B Filed {r3bDueDate && `(Due: ${formatISOToDDMMYYYY(r3bDueDate)})`}</p>
-                <p className="text-xl font-black text-emerald-600 leading-none">{stats.r3b}</p>
-              </div>
-            </>
-          ) : (
-            <div className="text-center border-l border-slate-100 pl-6">
-              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Full Year View</p>
-              <p className="text-xs font-bold text-slate-500">12 Months Summary (April to March)</p>
-            </div>
-          )}
+
+          {/* Count Badges Pill Filter Group */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+            <button
+              onClick={() => setQuickFilter('All')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                quickFilter === 'All' 
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>Total</span>
+              <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+              }`}>{stats.total}</span>
+            </button>
+
+            {!isAllMonthsMode && (
+              <>
+                <button
+                  onClick={() => setQuickFilter('R1Filed')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === 'R1Filed' 
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                      : 'bg-indigo-50/70 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                >
+                  <span>R1 Filed</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === 'R1Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
+                  }`}>{stats.r1}</span>
+                </button>
+
+                <button
+                  onClick={() => setQuickFilter('3BChallan')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === '3BChallan' 
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                      : 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
+                  }`}
+                >
+                  <span>3B Challan</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === '3BChallan' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
+                  }`}>{stats.r3bChallan}</span>
+                </button>
+
+                <button
+                  onClick={() => setQuickFilter('3BFiled')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === '3BFiled' 
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                      : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span>3B Filed</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === '3BFiled' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+                  }`}>{stats.r3b}</span>
+                </button>
+
+                <button
+                  onClick={() => setQuickFilter('Pending')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === 'Pending' 
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
+                      : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
+                  }`}
+                >
+                  <span>Pending</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+                  }`}>{stats.pending}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Quick search..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-           <SectorJurisdictionFilter
-             clients={clients}
-             authority={authorityFilter}
-             setAuthority={setAuthorityFilter}
-             selectedSectors={selectedSectors}
-             setSelectedSectors={setSelectedSectors}
-             buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
-             totalFilteredCount={filteredClients.length}
-           />
-           <button onClick={handlePrint} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center" title="Print List">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-           </button>
-           <button onClick={handleExportCSV} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center" title="Export Excel / CSV">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-           </button>
-           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-           <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTH_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+
+        {/* Controls: View Mode, Filter, Year/Month, Print, Export */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-between lg:justify-end">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
+
+          <SectorJurisdictionFilter
+            clients={clients}
+            authority={authorityFilter}
+            setAuthority={setAuthorityFilter}
+            selectedSectors={selectedSectors}
+            setSelectedSectors={setSelectedSectors}
+            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            totalFilteredCount={filteredClients.length}
+          />
+
+          <button onClick={handlePrint} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0" title="Print List">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+          </button>
+          <button onClick={handleExportCSV} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center shrink-0" title="Export Excel / CSV">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </button>
+
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTH_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
+        {viewMode === 'grid' ? (
+          <div className="overflow-auto no-scrollbar flex-1 p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {filteredClients.map(client => {
+                const st = getStatus(client.id);
+                const r3bStatus = getStatusLabel(st.r3b);
+                return (
+                  <div key={client.id} className="bg-slate-50/50 hover:bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{getClientDisplayId(client)}</span>
+                        <span className="text-[10px] font-bold text-slate-400">{client.mobile || '---'}</span>
+                      </div>
+                      <h4 className="font-bold text-xs text-slate-900 truncate" title={client.tradeName}>{client.tradeName || '---'}</h4>
+                      <p className="text-[10px] text-slate-500 font-mono mb-1 truncate">{client.gstProfile?.gstin || '---'}</p>
+                      
+                      {!isAllMonthsMode && (
+                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                          <button onClick={() => toggleStatus(client.id, 'r1')} className={`flex-1 py-1 rounded-lg text-[9px] font-black uppercase border transition-all ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-white text-slate-400 border-slate-200'}`}>
+                            R1: {st.r1 ? 'Filed' : 'Pend'}
+                          </button>
+                          <button onClick={() => toggleStatus(client.id, 'r3b')} className={`flex-1 py-1 rounded-lg text-[9px] font-black uppercase border transition-all ${r3bStatus === 'Filed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : r3bStatus === 'Challan' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-slate-400 border-slate-200'}`}>
+                            3B: {r3bStatus}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-500 truncate">{client.gstProfile?.username || '---'}</span>
+                      <div className="flex items-center gap-1">
+                        <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
+                        <button onClick={(e) => openActionsMenu(e, client)} className="h-7 w-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-2xs">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
@@ -524,6 +633,7 @@ const MonthlyFiling: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Floating Action Menu */}

@@ -10,6 +10,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import html2pdf from 'html2pdf.js';
 import { TableFilter } from '../../../components/TableFilter';
 import { formatDate } from '../../../dateUtils.ts';
+import { ViewControl } from '../../../components/ViewControl';
 import {
   usePaginatedCategory,
   useUpdateInvoiceMutation,
@@ -26,6 +27,8 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Draft' | 'Sent' | 'Partial' | 'Paid' | 'Cancelled'>('Active');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const [page, setPage] = useState(1);
@@ -259,7 +262,13 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
             className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <div className="flex gap-1.5 shrink-0">
+        <div className="flex gap-1.5 shrink-0 flex-wrap">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
           <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} className="bg-slate-900 text-white font-black uppercase tracking-widest px-4 h-10 landscape:h-8 rounded-xl hover:bg-slate-800 transition-all text-[10px] flex items-center gap-1.5 shrink-0 shadow-sm">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             Ledger
@@ -277,7 +286,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
 
       <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
+          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>

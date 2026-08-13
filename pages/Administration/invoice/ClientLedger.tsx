@@ -408,7 +408,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
                    </div>
 
                    {/* Ledger Table */}
-                                       <table className="w-full text-left border-collapse table-auto mt-6">
+                                       <table className="w-full text-left border-collapse table-auto mt-6 compact-table compact-mode">
                       <thead className="bg-slate-50 border-b-2 border-slate-900">
                         <tr>
                           <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-900 tracking-widest">Date</th>

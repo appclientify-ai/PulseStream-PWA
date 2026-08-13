@@ -9,6 +9,7 @@ import LitigationGuidelinesModal from '../../components/LitigationGuidelinesModa
 import LitigationDetailModal from '../../components/LitigationDetailModal';
 import { toast } from 'sonner';
 import { formatISOToDDMMYYYY } from '../../dateUtils';
+import { ViewControl } from '../../components/ViewControl';
 
 interface LitigationModuleProps {
   category: LitigationCategory;
@@ -32,6 +33,8 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
@@ -107,8 +110,15 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
             className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <button 
-          onClick={() => setIsGuidelinesOpen(true)}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
+          <button 
+            onClick={() => setIsGuidelinesOpen(true)}
           className="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-black uppercase tracking-wider px-4 h-10 landscape:h-8 rounded-xl transition-all text-xs flex items-center gap-1.5 shrink-0"
           title="View Statutory Guidelines for Notice, Appeal, Tribunal & High Court"
         >
@@ -122,11 +132,12 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
             Add Case
           </button>
         )}
+        </div>
       </div>
 
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
+          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>

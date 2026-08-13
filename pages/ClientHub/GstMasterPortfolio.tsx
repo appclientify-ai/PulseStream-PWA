@@ -505,7 +505,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
         </div>
       ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
+          <table className="w-full text-left border-collapse table-auto min-w-full compact-table compact-mode">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                 <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>

@@ -7,12 +7,14 @@ import ITClientFormModal from '../Clientform/ITClientFormModal';
 import { api } from '../../services/api.ts';
 import { Client, ClientStatus, NatureOfWork } from '../../types';
 import { toast } from 'sonner';
+import { ViewControl } from '../../components/ViewControl';
 
 const ITPortfolio: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [quickFilter, setQuickFilter] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,46 +174,16 @@ const ITPortfolio: React.FC = () => {
     <div className="flex flex-col h-full space-y-1.5 pb-1 overflow-hidden animate-in fade-in duration-500">
       
       {/* Main Controls & Search Strip */}
-      <div className="flex flex-col lg:flex-row items-center gap-2 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-xs shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs shrink-0 w-full">
         
-        {/* Left Stats Block (Desktop - Same like Monthly Page) */}
-        <div className="flex items-center gap-5 px-3 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div 
-            onClick={() => setQuickFilter('All')}
-            className={`text-center cursor-pointer transition-all ${quickFilter === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
-            title="Show All Clients"
-          >
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
-          </div>
-          
-          <div 
-            onClick={() => setQuickFilter('Active')}
-            className={`text-center border-l border-slate-100 pl-4 cursor-pointer transition-all ${quickFilter === 'Active' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
-            title="Filter Active Clients"
-          >
-            <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">Active</p>
-            <p className="text-xl font-black text-emerald-600 leading-none">{stats.active}</p>
-          </div>
-
-          <div 
-            onClick={() => setQuickFilter('Inactive')}
-            className={`text-center border-l border-slate-100 pl-4 cursor-pointer transition-all ${quickFilter === 'Inactive' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
-            title="Filter Inactive Clients"
-          >
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Inactive</p>
-            <p className="text-xl font-black text-slate-500 leading-none">{stats.inactive}</p>
-          </div>
-        </div>
-
         {/* Search Input */}
-        <div className="relative flex-1 group w-full">
+        <div className="relative flex-1 min-w-[220px] group">
           <input 
             type="text" 
             placeholder="Search IT Portfolio by PAN, Legal Name, Father's Name or Mobile..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-emerald-200 transition-all outline-none" 
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-200 transition-all outline-none" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {search && (
@@ -225,18 +197,18 @@ const ITPortfolio: React.FC = () => {
         </div>
 
         {/* Count Pills in Search Bar Line */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-1">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
           <button
             onClick={() => setQuickFilter('All')}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
               quickFilter === 'All' 
                 ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs' 
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
             }`}
           >
             <span>Total</span>
             <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
-              quickFilter === 'All' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-800'
+              quickFilter === 'All' ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
             }`}>
               {stats.total}
             </span>
@@ -247,12 +219,12 @@ const ITPortfolio: React.FC = () => {
             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
               quickFilter === 'Active' 
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
-                : 'bg-emerald-50/60 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
             }`}
           >
             <span>Active</span>
             <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
-              quickFilter === 'Active' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 text-emerald-900'
+              quickFilter === 'Active' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100'
             }`}>
               {stats.active}
             </span>
@@ -263,40 +235,26 @@ const ITPortfolio: React.FC = () => {
             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
               quickFilter === 'Inactive' 
                 ? 'bg-slate-700 text-white border-slate-700 shadow-xs' 
-                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
             }`}
           >
             <span>Inactive</span>
             <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
-              quickFilter === 'Inactive' ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-700'
+              quickFilter === 'Inactive' ? 'bg-slate-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
             }`}>
               {stats.inactive}
             </span>
           </button>
         </div>
 
-        {/* View Mode Switcher & Actions */}
-        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
-                viewMode === 'table' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" /></svg>
-              Table
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
-                viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-              Grid
-            </button>
-          </div>
+        {/* View Control & Actions */}
+        <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
 
           <div className="relative">
             <button 

@@ -32,9 +32,11 @@ export const THEME_COLORS = [
 ] as const;
 
 export const THEME_MODES = [
-  { id: 'light', name: 'Clean Studio Light', bg: '#fcfdfe', text: '#0f172a', cardBg: '#ffffff', desc: 'Crisp, high-contrast studio light theme' },
-  { id: 'parchment', name: 'Parchment Executive', bg: '#faf8f5', text: '#1c1917', cardBg: '#f3efe6', desc: 'Soft paper tone designed for prolonged reading' },
-  { id: 'dark', name: 'Midnight Dark', bg: '#090d16', text: '#f1f5f9', cardBg: '#111827', desc: 'Sleek dark canvas for night focus' }
+  { id: 'light', name: 'Simple Light', bg: '#fcfdfe', text: '#0f172a', cardBg: '#ffffff', desc: 'Crisp, clean & simple light studio theme' },
+  { id: 'dark', name: 'Midnight Dark', bg: '#090d16', text: '#f1f5f9', cardBg: '#111827', desc: 'Sleek dark canvas for high-contrast focus' },
+  { id: 'neo', name: 'Neo 3D Mode', bg: '#e0e5ec', text: '#1e293b', cardBg: '#e0e5ec', desc: 'Tactile 3D neumorphic depth & soft embossed shadows' },
+  { id: 'glass', name: '3D Glass Mode', bg: '#0f172a', text: '#f8fafc', cardBg: 'rgba(255, 255, 255, 0.08)', desc: 'Translucent frosted glass depth with glowing accents' },
+  { id: 'parchment', name: 'Executive Parchment', bg: '#faf8f5', text: '#1c1917', cardBg: '#f3efe6', desc: 'Soft paper tone designed for prolonged reading' }
 ] as const;
 
 export const DEFAULT_UI_SETTINGS: UISettings = {

@@ -346,7 +346,7 @@ export const CredentialsVault: React.FC<CredentialsVaultProps> = ({ onShowMessag
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+            <table className="w-full text-left border-collapse min-w-[900px] compact-table compact-mode">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
                   <th className="py-4 px-6">Practitioner / Entity Name</th>

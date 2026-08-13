@@ -764,7 +764,7 @@ const Setting: React.FC = () => {
                    <p className="text-xs font-medium text-slate-500 mt-1">Select contrast canvas mode for optimal reading comfort.</p>
                  </div>
 
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                    {THEME_MODES.map(m => (
                      <button
                        key={m.id}

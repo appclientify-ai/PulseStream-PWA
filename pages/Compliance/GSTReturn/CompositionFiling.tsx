@@ -25,12 +25,16 @@ const SHORT_QUARTER_MAP: Record<string, string> = {
 import { toast } from 'sonner';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
 import { formatISOToDDMMYYYY } from '../../../dateUtils';
+import { ViewControl } from '../../../components/ViewControl';
 
 const CompositionFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [cmp08Filter, setCmp08Filter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [quickFilter, setQuickFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [quarterFilters, setQuarterFilters] = useState<Record<string, string>>({});
@@ -97,7 +101,7 @@ const CompositionFiling: React.FC = () => {
 
   const isAllQuartersMode = selectedQuarter === 'All Quarters';
 
-  const filteredClients = useMemo(() => {
+  const baseClients = useMemo(() => {
     const s = search.toLowerCase();
     let list = clients.filter(c => 
       (isAllQuartersMode ? isClientVisibleInFY(c, selectedYear) : isClientVisibleInPeriod(c, selectedYear, quarterEndMonth)) &&
@@ -135,13 +139,23 @@ const CompositionFiling: React.FC = () => {
   }, [clients, search, selectedYear, quarterEndMonth, cmp08Filter, authorityFilter, selectedSectors, quarterFilters, getStatus, isAllQuartersMode]);
 
   const stats = useMemo(() => {
+    const total = baseClients.length;
     if (isAllQuartersMode) {
-      return { total: filteredClients.length, cmp08: 0, cmp08Challan: 0 };
+      return { total, cmp08: 0, cmp08Challan: 0, cmp08Pending: 0 };
     }
-    const cmp08Filed = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Filed').length;
-    const cmp08Challan = filteredClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Challan').length;
-    return { total: filteredClients.length, cmp08: cmp08Filed, cmp08Challan };
-  }, [filteredClients, getStatus, isAllQuartersMode]);
+    const cmp08Filed = baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Filed').length;
+    const cmp08Challan = baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Challan').length;
+    const cmp08Pending = baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Pending').length;
+    return { total, cmp08: cmp08Filed, cmp08Challan, cmp08Pending };
+  }, [baseClients, getStatus, isAllQuartersMode]);
+
+  const filteredClients = useMemo(() => {
+    if (quickFilter === 'All') return baseClients;
+    if (quickFilter === 'Filed') return baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Filed');
+    if (quickFilter === 'Challan') return baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Challan');
+    if (quickFilter === 'Pending') return baseClients.filter(c => getStatusLabel(getStatus(c.id).cmp08) === 'Pending');
+    return baseClients;
+  }, [baseClients, quickFilter, getStatus]);
   
   const handleRefreshClients = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['composition_filing_page_data'] });
@@ -233,74 +247,156 @@ const CompositionFiling: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Quarter Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          {!isAllQuartersMode && (
-            <>
-              <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Challan: <strong className="font-black text-amber-900">{stats.cmp08Challan}</strong></span>
-              <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">CMP-08 Filed: <strong className="font-black text-emerald-900">{stats.cmp08}</strong></span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          {cmp08DueDate && <span>CMP-08 Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(cmp08DueDate)}</strong></span>}
-        </div>
-      </div>
-
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden lg:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Quarter Total</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{stats.total}</p>
+      {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
+        
+        {/* Search Bar & Interactive Count Badges */}
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+          <div className="relative flex-1 group min-w-[180px]">
+            <input 
+              type="text" 
+              placeholder="Search trade name, GSTIN, mobile..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-          {!isAllQuartersMode ? (
-            <>
-              <div className="text-center border-l border-slate-100 pl-6">
-                <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-0.5">CMP-08 Challan</p>
-                <p className="text-xl font-black text-amber-600 leading-none">{stats.cmp08Challan}</p>
-              </div>
-              <div className="text-center border-l border-slate-100 pl-6">
-                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-0.5">CMP-08 Filed {cmp08DueDate && `(Due: ${formatISOToDDMMYYYY(cmp08DueDate)})`}</p>
-                <p className="text-xl font-black text-emerald-600 leading-none">{stats.cmp08}</p>
-              </div>
-            </>
-          ) : (
-            <div className="text-center border-l border-slate-100 pl-6">
-              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Full Year View</p>
-              <p className="text-xs font-bold text-slate-500">All 4 Quarters Summary</p>
-            </div>
-          )}
+
+          {/* Count Badges Pill Filter Group */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+            <button
+              onClick={() => setQuickFilter('All')}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                quickFilter === 'All' 
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>Total</span>
+              <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+              }`}>{stats.total}</span>
+            </button>
+
+            {!isAllQuartersMode && (
+              <>
+                <button
+                  onClick={() => setQuickFilter('Filed')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === 'Filed' 
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                      : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span>CMP-08 Filed</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === 'Filed' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+                  }`}>{stats.cmp08}</span>
+                </button>
+
+                <button
+                  onClick={() => setQuickFilter('Challan')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === 'Challan' 
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                      : 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
+                  }`}
+                >
+                  <span>CMP-08 Challan</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === 'Challan' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
+                  }`}>{stats.cmp08Challan}</span>
+                </button>
+
+                <button
+                  onClick={() => setQuickFilter('Pending')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                    quickFilter === 'Pending' 
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
+                      : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
+                  }`}
+                >
+                  <span>Pending</span>
+                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                    quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+                  }`}>{stats.cmp08Pending}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex-1 relative group w-full">
-          <input type="text" placeholder="Search composition client..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
+
+        {/* Controls: View Control, Filter, Year/Quarter, Print, Export */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-between lg:justify-end">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+            compactMode={compactMode} 
+            onCompactToggle={() => setCompactMode(!compactMode)} 
+          />
+
           <SectorJurisdictionFilter
             clients={clients}
             authority={authorityFilter}
             setAuthority={setAuthorityFilter}
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
-            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
             totalFilteredCount={filteredClients.length}
           />
-          <button onClick={handlePrint} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center" title="Print List">
-             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+
+          <button onClick={handlePrint} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0" title="Print List">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
           </button>
-          <button onClick={handleExportCSV} className="h-10 landscape:h-8 w-10 landscape:w-8 bg-white border border-slate-200 rounded-xl shadow-sm text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center" title="Export Excel / CSV">
-             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <button onClick={handleExportCSV} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center shrink-0" title="Export Excel / CSV">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
-           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-           <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{QUARTER_SELECT_OPTIONS.map(q => <option key={q} value={q}>{q}</option>)}</select>
+
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+          <select value={selectedQuarter} onChange={e => setSelectedQuarter(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{COMPOSITION_PERIOD_OPTIONS.map(q => <option key={q} value={q}>{q}</option>)}</select>
         </div>
       </div>
+
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredClients.map((client, idx) => {
+              const statusLabel = getStatusLabel(getStatus(client.id).cmp08);
+              return (
+                <div key={client.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">#{idx + 1}</span>
+                      <span className="text-[10px] font-black text-slate-500 font-mono">{client.gstProfile?.gstin || 'NO GSTIN'}</span>
+                    </div>
+                    <h4 className="text-xs font-black text-slate-900 truncate">{client.tradeName || client.legalName}</h4>
+                    <p className="text-[10px] font-bold text-slate-500">{client.mobile || 'No Mobile'}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
+                    <span className={`px-2 py-0.5 rounded-md font-black uppercase ${
+                      statusLabel === 'Filed' ? 'bg-emerald-100 text-emerald-800' : statusLabel === 'Challan' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      CMP-08: {statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <span className="text-[9px] font-black uppercase text-slate-400">Composition</span>
+                    <button onClick={(e) => openActionsMenu(e, client)} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
+                      Actions
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse min-w-full">
+          <table className={`w-full text-left border-collapse min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900 text-[10px]">
                 <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1 border-b border-slate-200">S.No.</th>
@@ -461,6 +557,7 @@ const CompositionFiling: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {activeActionsId && selectedClient && (
