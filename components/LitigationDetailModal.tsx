@@ -4,6 +4,7 @@ import EditableCaseHistory from './EditableCaseHistory';
 import { formatISOToDDMMYYYY } from '../dateUtils';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { syncDeadlineToGoogleCalendar } from '../services/googleCalendar';
 
 interface LitigationDetailModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
   const [isSavingRemarks, setIsSavingRemarks] = useState(false);
   const [editingRemarks, setEditingRemarks] = useState(false);
   const [remarksText, setRemarksText] = useState('');
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
 
   if (!isOpen || !record) return null;
 
@@ -35,9 +37,38 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
   const isTribunal = category === 'Tribunal';
   const isHighCourt = category === 'HighCourt' || category === 'High Court';
 
+  const tradeName = client?.tradeName || record.clientName;
+
   const formatDisplayDate = (d?: string) => {
     if (!d) return 'N/A';
     return formatISOToDDMMYYYY(d);
+  };
+
+  const handleToggleCalendarSync = async () => {
+    setIsSyncingCalendar(true);
+    const newSyncState = !record.isCalendarSynced;
+    try {
+      if (newSyncState) {
+        const title = `${record.category}: ${record.referenceNo || 'Case'} - ${tradeName}`;
+        const body = `Filing/action required for Section ${record.section || 'N/A'}.\nClient: ${tradeName}\nFiling/Case No: ${record.filingNo || 'N/A'}\nDue Date: ${formatDisplayDate(record.dueDate)}`;
+        const dateString = record.dueDate || new Date().toISOString();
+        
+        await syncDeadlineToGoogleCalendar(title, body, dateString);
+        toast.success('Google Calendar event synchronization initiated!');
+      } else {
+        toast.info('Google Calendar sync disabled for this case.');
+      }
+      
+      const updatedRecord = { ...record, isCalendarSynced: newSyncState };
+      await api.saveLitigationRecord(updatedRecord);
+      record.isCalendarSynced = newSyncState;
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      console.error('Failed to update calendar sync settings:', err);
+      toast.error('Failed to update calendar sync settings');
+    } finally {
+      setIsSyncingCalendar(false);
+    }
   };
 
   const getDaysLeft = (dueDateStr?: string) => {
@@ -133,7 +164,6 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
     }
   };
 
-  const tradeName = client?.tradeName || record.clientName;
   const legalName = client?.legalName;
   const gstin = client?.gstProfile?.gstin;
   const pan = client?.itProfile?.pan || client?.gstProfile?.pan;
@@ -464,6 +494,38 @@ export const LitigationDetailModal: React.FC<LitigationDetailModalProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Google Calendar Toggle Switch */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100/80 mt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-500/10 text-indigo-600 rounded-xl shrink-0">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h5 className="text-[11px] font-black uppercase tracking-wider text-slate-800">Google Calendar Synchronization</h5>
+                  <p className="text-[10px] font-medium text-slate-500 mt-0.5 leading-normal">
+                    Sync this specific deadline to your calendar with high-priority 3-day and 1-day reminders.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={isSyncingCalendar}
+                onClick={handleToggleCalendarSync}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
+                  record.isCalendarSynced ? 'bg-indigo-600' : 'bg-slate-200'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    record.isCalendarSynced ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
           </div>
 
           {/* Preceding History / Escalation Trail */}

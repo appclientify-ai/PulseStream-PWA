@@ -222,6 +222,7 @@ export interface LitigationRecord {
   tioRefNo?: string;
   tioDate?: string;
   caseHistory?: string;
+  isCalendarSynced?: boolean;
 }
 
 export type GSTRegistrationType = 'New Registration' | 'Amendment' | 'Cancellation';
