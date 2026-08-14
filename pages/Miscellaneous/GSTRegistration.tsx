@@ -288,22 +288,22 @@ const GSTRegistration: React.FC = () => {
             <table className={`w-full text-left border-collapse table-auto min-w-full gst-registration-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Entity Identity</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Mobile</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Application Type</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[150px]">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Entity Identity</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[130px] whitespace-nowrap">Mobile</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[150px] whitespace-nowrap">Application Type</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[160px] whitespace-nowrap">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                          {['All', 'Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
-                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[var(--app-font-size)] font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                          ))}
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">App Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">ARN Identity</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[125px] whitespace-nowrap">App Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[180px] whitespace-nowrap">ARN Identity</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[100px] whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -312,19 +312,19 @@ const GSTRegistration: React.FC = () => {
                 ) : (
                   filteredRegistrations.map((rec, idx) => (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
-                      <td className="px-3 py-1.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className="px-3 py-1.5">
-                         <p className="font-black text-slate-900 uppercase leading-snug" title={rec.clientName}>{rec.clientName}</p>
-                         <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{rec.arn ? 'Tracking Active' : 'Drafting Stage'}</p>
+                      <td className="px-3 py-2.5 text-slate-400 font-bold whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className="px-3 py-2.5">
+                         <p className="font-bold text-slate-900 uppercase leading-snug text-[var(--app-font-size)]" title={rec.clientName}>{rec.clientName}</p>
+                         <p className="sub-text text-slate-500 uppercase mt-0.5">{rec.arn ? 'Tracking Active' : 'Drafting Stage'}</p>
                       </td>
-                      <td className="px-3 py-1.5 font-black text-slate-600">{rec.mobile || '---'}</td>
-                      <td className="px-3 py-1.5">
-                         <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 border border-indigo-100">{rec.appType}</span>
+                      <td className="px-3 py-2.5 font-medium text-slate-700 text-[var(--app-font-size)] whitespace-nowrap">{rec.mobile || '---'}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                         <span className="px-2.5 py-1 rounded text-[var(--app-font-size)] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">{rec.appType}</span>
                       </td>
-                      <td className="px-3 py-1.5 text-center relative overflow-visible">
+                      <td className="px-3 py-2.5 text-center relative overflow-visible whitespace-nowrap">
                           <button 
                             onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
-                            className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusColor(rec.status)}`}
+                            className={`w-full px-3 py-1.5 rounded-full text-[var(--app-font-size)] font-bold uppercase tracking-wider border transition-all flex items-center justify-between ${getStatusColor(rec.status)}`}
                           >
                             <span className="truncate">{rec.status}</span>
                             <svg className="h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
@@ -332,22 +332,22 @@ const GSTRegistration: React.FC = () => {
                           {activeStatusRowId === rec.id && (
                             <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl p-1 animate-in zoom-in-95 text-left">
                                {['Pending', 'Data Requested', 'In Progress', 'ARN Generated', 'Completed', 'Rejected'].map(st => (
-                                 <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as GSTRegistrationStatus)} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
+                                 <button key={st} onClick={() => handleInlineUpdate(rec.id, 'status', st as GSTRegistrationStatus)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-bold uppercase rounded-lg hover:bg-indigo-50 text-slate-600">{st}</button>
                                ))}
                             </div>
                           )}
                       </td>
-                      <td className="px-3 py-1.5 font-black text-slate-500 uppercase">{formatDateDisplay(rec.appDate)}</td>
-                      <td className="px-3 py-1.5">
+                      <td className="px-3 py-2.5 font-medium text-slate-700 uppercase text-[var(--app-font-size)] whitespace-nowrap">{formatDateDisplay(rec.appDate)}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
                          <input 
                            type="text" 
                            value={rec.arn || ''} 
                            onChange={e => handleInlineUpdate(rec.id, 'arn', e.target.value)}
-                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-black text-indigo-600 font-mono tracking-widest uppercase transition-all"
+                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-bold text-indigo-600 font-mono tracking-wider uppercase transition-all text-[var(--app-font-size)]"
                            placeholder="AA0000..."
                          />
                       </td>
-                      <td className="px-3 py-1.5 text-right">
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                            <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>

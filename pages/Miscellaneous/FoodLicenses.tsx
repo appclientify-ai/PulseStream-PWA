@@ -362,24 +362,24 @@ const FoodLicenses: React.FC = () => {
             <table className={`w-full text-left border-collapse table-auto min-w-full food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Trade Name</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">License Number (ID)</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Password</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">License Type</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[150px]">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Trade Name</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[170px] whitespace-nowrap">License Number (ID)</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[150px] whitespace-nowrap">Password</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[140px] whitespace-nowrap">License Type</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[150px] whitespace-nowrap">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                          {['All', 'Pending', 'Applied', 'Completed', 'Renewal Due', 'Rejected'].map(st => (
-                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-emerald-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[var(--app-font-size)] font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-emerald-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                          ))}
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Applied On</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-amber-600 border-b border-slate-200">Renewal Due Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Expiry Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[125px] whitespace-nowrap">Applied On</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-amber-600 border-b border-slate-200 min-w-[145px] whitespace-nowrap">Renewal Due Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[145px] whitespace-nowrap">Expiry Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[100px] whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -393,21 +393,21 @@ const FoodLicenses: React.FC = () => {
 
                     return (
                       <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
-                        <td className="px-3 py-1.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                        <td className="px-3 py-1.5">
-                           <p className="font-black text-slate-900 uppercase leading-snug" title={rec.tradeName || rec.clientName}>
+                        <td className="px-3 py-2.5 text-slate-400 font-bold whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
+                        <td className="px-3 py-2.5">
+                           <p className="font-bold text-slate-900 uppercase leading-snug text-[var(--app-font-size)]" title={rec.tradeName || rec.clientName}>
                              {rec.tradeName || rec.clientName || '---'}
                            </p>
-                           <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5" title={rec.legalName || rec.clientName}>
+                           <p className="sub-text text-slate-500 uppercase mt-0.5" title={rec.legalName || rec.clientName}>
                              Legal: {rec.legalName || rec.clientName || '---'}
                            </p>
-                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                           <p className="sub-text text-slate-500 uppercase mt-0.5">
                              Mob: {rec.mobile || 'No Contact'}
                            </p>
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-3 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-mono font-black text-[var(--app-font-size)] tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60' : 'text-slate-400 italic font-normal text-xs'}`}>
+                            <span className={`font-mono font-bold text-[var(--app-font-size)] tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80' : 'text-slate-400 italic font-normal'}`}>
                               {rec.licenseNo || 'Awaiting Issue...'}
                             </span>
                             {rec.licenseNo && (
@@ -427,7 +427,7 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-1.5">
+                        <td className="px-3 py-2.5 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             {editingPasswordId === rec.id ? (
                               <div className="flex items-center gap-1">
@@ -445,7 +445,7 @@ const FoodLicenses: React.FC = () => {
                                     }
                                   }}
                                   autoFocus
-                                  className="bg-white border border-emerald-300 focus:ring-2 focus:ring-emerald-400 rounded-lg px-2 py-1 font-mono font-bold text-slate-800 text-xs outline-none w-32 shadow-xs"
+                                  className="bg-white border border-emerald-300 focus:ring-2 focus:ring-emerald-400 rounded-lg px-2 py-1 font-mono font-bold text-slate-800 text-[var(--app-font-size)] outline-none w-32 shadow-xs"
                                   placeholder="Password..."
                                 />
                                 <button
@@ -475,8 +475,8 @@ const FoodLicenses: React.FC = () => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-slate-800 text-xs">
-                                  {rec.password || <span className="text-slate-300 italic font-normal text-xs">Not Set</span>}
+                                <span className="font-mono font-medium text-slate-800 text-[var(--app-font-size)]">
+                                  {rec.password || <span className="text-slate-400 italic font-normal">Not Set</span>}
                                 </span>
                                 
                                 <button
@@ -507,7 +507,7 @@ const FoodLicenses: React.FC = () => {
                                     }
                                     window.open('https://foscos.fssai.gov.in/public/', '_blank');
                                   }}
-                                  className="text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 p-1.5 rounded-lg transition-all flex items-center gap-1 shrink-0 text-[10px] font-black uppercase shadow-xs"
+                                  className="text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 p-1.5 rounded-lg transition-all flex items-center gap-1 shrink-0 text-[var(--app-font-size)] font-bold uppercase shadow-xs"
                                   title="Direct Login to FoSCoS Portal (https://foscos.fssai.gov.in/public/)"
                                 >
                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -519,12 +519,12 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-1.5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
-                        <td className="px-3 py-1.5 text-center">
+                        <td className="px-3 py-2.5 font-medium text-slate-700 uppercase truncate text-[var(--app-font-size)] whitespace-nowrap">{rec.licenseType}</td>
+                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
                             <select 
                               value={rec.status || 'Pending'}
                               onChange={e => handleInlineUpdate(rec.id, 'status', e.target.value as FoodLicenseStatus)}
-                              className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
+                              className={`px-3 py-1.5 rounded-full text-[var(--app-font-size)] font-bold uppercase tracking-wider border transition-all cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
                             >
                               <option value="Pending" className="bg-white text-slate-900 font-bold">Pending</option>
                               <option value="Applied" className="bg-white text-slate-900 font-bold">Applied</option>
@@ -532,28 +532,28 @@ const FoodLicenses: React.FC = () => {
                               <option value="Rejected" className="bg-white text-slate-900 font-bold">Rejected</option>
                             </select>
                         </td>
-                        <td className="px-3 py-1.5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
-                        <td className="px-3 py-1.5 font-black uppercase">
-                          <span className={isRenewalDueNow ? 'text-amber-600 font-black' : 'text-slate-700 font-semibold'}>
+                        <td className="px-3 py-2.5 font-medium text-slate-700 uppercase text-[var(--app-font-size)] whitespace-nowrap">{formatDate(rec.appDate)}</td>
+                        <td className="px-3 py-2.5 font-medium uppercase text-[var(--app-font-size)] whitespace-nowrap">
+                          <span className={isRenewalDueNow ? 'text-amber-600 font-bold' : 'text-slate-700'}>
                             {formatDate(renewalDueDate)}
                           </span>
                           {isRenewalDueNow && (
-                            <span className="block mt-0.5 text-[8px] font-black text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
+                            <span className="block mt-0.5 text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
                               Renewal Due (2 Mo Window)
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-1.5 font-black uppercase">
-                          <span className={rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) ? 'text-red-600 font-black' : 'text-rose-500 font-semibold'}>
+                        <td className="px-3 py-2.5 font-medium uppercase text-[var(--app-font-size)] whitespace-nowrap">
+                          <span className={rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) ? 'text-red-600 font-bold' : 'text-slate-700'}>
                             {formatDate(rec.expiryDate)}
                           </span>
                           {Boolean(rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) && rec.status !== 'Rejected') && (
-                            <span className="block mt-0.5 text-[8px] font-black text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
+                            <span className="block mt-0.5 text-xs font-bold text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
                               Expired • Late Fees Apply
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-1.5 text-right">
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                              <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
