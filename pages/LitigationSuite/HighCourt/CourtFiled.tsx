@@ -48,6 +48,8 @@ const CourtFiled: React.FC = () => {
 
   const refreshData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['highcourt_records'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 

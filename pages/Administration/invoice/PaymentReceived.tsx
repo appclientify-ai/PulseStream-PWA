@@ -420,6 +420,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
         <div className="flex items-center gap-2 shrink-0">
           <ViewControl 
             viewMode={viewMode}
+            onViewChange={setViewMode}
             onViewModeChange={setViewMode}
             compactMode={compactMode}
             onCompactModeChange={setCompactMode}

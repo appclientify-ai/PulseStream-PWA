@@ -46,6 +46,8 @@ const AppealFiled: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['gst_appeal_filed'] });
     queryClient.invalidateQueries({ queryKey: ['litigation_filing_page_data'] });
     queryClient.invalidateQueries({ queryKey: ['litigationRecords'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 

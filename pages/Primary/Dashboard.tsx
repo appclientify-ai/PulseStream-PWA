@@ -364,10 +364,11 @@ const Dashboard: React.FC = () => {
     };
 
     const sortedPending = useMemo(() => {
-      const pendingList = litigation.filter(r => r.category === forum && r.status === 'Pending');
-      return [...pendingList].sort((a, b) => {
+      const activeList = litigation.filter(r => r.category === forum && (r.status === 'Pending' || r.status === 'Filed'));
+      return [...activeList].sort((a, b) => {
         const dateA = getEffectiveDate(a);
         const dateB = getEffectiveDate(b);
+        if (!dateA && !dateB) return 0;
         if (!dateA) return 1;
         if (!dateB) return -1;
         return new Date(dateA).getTime() - new Date(dateB).getTime();
@@ -473,7 +474,7 @@ const Dashboard: React.FC = () => {
                     return (
                       <div 
                         key={item.id}
-                        onClick={() => handleViewChange(`${prefix}-pending`)}
+                        onClick={() => handleViewChange(`${prefix}-${item.status === 'Filed' ? 'filed' : 'pending'}`)}
                         className="p-3.5 rounded-xl border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/10 transition-all cursor-pointer flex items-center justify-between gap-4"
                       >
                         <div className="min-w-0 flex-1">

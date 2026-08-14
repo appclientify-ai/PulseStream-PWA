@@ -48,6 +48,8 @@ const TribunalFiled: React.FC = () => {
 
   const refreshData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['tribunal_records'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard_summary'] });
     queryClient.invalidateQueries({ queryKey: ['clients'] });
   }, [queryClient]);
 

@@ -2,7 +2,11 @@ import React from 'react';
 
 export interface ViewControlProps {
   viewMode: 'table' | 'grid';
-  onViewChange: (mode: 'table' | 'grid') => void;
+  onViewChange?: (mode: 'table' | 'grid') => void;
+  onViewModeChange?: (mode: 'table' | 'grid') => void;
+  compactMode?: boolean;
+  onCompactToggle?: () => void;
+  onCompactModeChange?: (compact: boolean) => void;
   extraActions?: React.ReactNode;
   className?: string;
 }
@@ -10,16 +14,22 @@ export interface ViewControlProps {
 export const ViewControl: React.FC<ViewControlProps> = ({
   viewMode,
   onViewChange,
+  onViewModeChange,
   extraActions,
   className = ''
 }) => {
+  const handleChange = (mode: 'table' | 'grid') => {
+    if (onViewChange) onViewChange(mode);
+    if (onViewModeChange) onViewModeChange(mode);
+  };
+
   return (
     <div className={`flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0 ${className}`}>
       {/* Table View Button */}
       <button
         type="button"
-        onClick={() => onViewChange('table')}
-        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+        onClick={() => handleChange('table')}
+        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
           viewMode === 'table'
             ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
             : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
@@ -35,8 +45,8 @@ export const ViewControl: React.FC<ViewControlProps> = ({
       {/* Grid View Button */}
       <button
         type="button"
-        onClick={() => onViewChange('grid')}
-        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+        onClick={() => handleChange('grid')}
+        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
           viewMode === 'grid'
             ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
             : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'

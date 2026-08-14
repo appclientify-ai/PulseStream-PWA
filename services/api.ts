@@ -210,6 +210,18 @@ class ApiService {
     try {
       const res = await this.get('/items/dashboard/summary');
       if (res && res.summary) {
+        const [tribunal, highcourt] = await Promise.all([
+          this.getTribunalRecords().catch(() => []),
+          this.getHighCourtRecords().catch(() => [])
+        ]);
+        const existingIds = new Set((res.summary.litigation || []).map((r: any) => r.id || r._id));
+        const extraTribunal = (tribunal || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'Tribunal' }));
+        const extraHighcourt = (highcourt || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }));
+        res.summary.litigation = [
+          ...(res.summary.litigation || []),
+          ...extraTribunal,
+          ...extraHighcourt
+        ];
         return res;
       }
     } catch (e) {
@@ -322,15 +334,31 @@ class ApiService {
   async getLitigationFilingData(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
     try {
       const res = await this.get('/items/filing/litigation');
-      if (res && res.clients && res.litigation) return res;
+      if (res && res.clients && res.litigation) {
+        const [tribunal, highcourt] = await Promise.all([
+          this.getTribunalRecords().catch(() => []),
+          this.getHighCourtRecords().catch(() => [])
+        ]);
+        const existingIds = new Set(res.litigation.map((r: any) => r.id || r._id));
+        const extraTribunal = (tribunal || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'Tribunal' }));
+        const extraHighcourt = (highcourt || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }));
+        return { clients: res.clients, litigation: [...res.litigation, ...extraTribunal, ...extraHighcourt] };
+      }
     } catch (e) {
       console.warn('Dedicated litigation endpoint failed, falling back:', e);
     }
-    const [clients, litigation] = await Promise.all([
+    const [clients, litigation, tribunal, highcourt] = await Promise.all([
       this.getClients(),
-      this.getLitigationRecords()
+      this.getLitigationRecords(),
+      this.getTribunalRecords().catch(() => []),
+      this.getHighCourtRecords().catch(() => [])
     ]);
-    return { clients, litigation };
+    const allLitigation = [
+      ...(litigation || []),
+      ...(tribunal || []).map((r: any) => ({ ...r, category: r.category || 'Tribunal' })),
+      ...(highcourt || []).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }))
+    ];
+    return { clients, litigation: allLitigation };
   }
 
   async getGstNoticePending(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
@@ -552,7 +580,7 @@ class ApiService {
   }
 
   async getDashboardSummary() {
-    const [clients, litigation, invoices, work, gstReg, foodLic, msme, payments] = await Promise.all([
+    const [clients, litigation, invoices, work, gstReg, foodLic, msme, payments, tribunal, highcourt] = await Promise.all([
       this.getClients(),
       this.getLitigationRecords(),
       this.getInvoices(),
@@ -560,9 +588,16 @@ class ApiService {
       this.getGSTRegistrations(),
       this.getFoodLicenses(),
       this.getMSMERegistrations(),
-      this.getPayments()
+      this.getPayments(),
+      this.getTribunalRecords().catch(() => []),
+      this.getHighCourtRecords().catch(() => [])
     ]);
-    return { clients, litigation, invoices, work, gstReg, foodLic, msme, payments };
+    const allLitigation = [
+      ...(litigation || []),
+      ...(tribunal || []).map((r: any) => ({ ...r, category: r.category || 'Tribunal' })),
+      ...(highcourt || []).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }))
+    ];
+    return { clients, litigation: allLitigation, invoices, work, gstReg, foodLic, msme, payments };
   }
 
   // --- Clients ---

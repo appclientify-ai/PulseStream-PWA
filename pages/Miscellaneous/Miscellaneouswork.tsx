@@ -66,7 +66,11 @@ const Miscellaneouswork: React.FC = () => {
 
   const filteredRecords = useMemo(() => {
     let list = records;
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Pending' || statusFilter === 'In Progress') {
+      list = list.filter(r => r.status !== 'Completed');
+    } else if (statusFilter === 'Completed') {
+      list = list.filter(r => r.status === 'Completed');
+    } else if (statusFilter !== 'All') {
       list = list.filter(r => r.status === statusFilter);
     }
     const s = search.toLowerCase();
@@ -109,36 +113,80 @@ const Miscellaneouswork: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      {/* Compact Counts Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-[10px] uppercase tracking-tight">Total: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[10px] uppercase tracking-tight">Pending: <strong className="font-black text-amber-900">{stats.pending}</strong></span>
-          <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] uppercase tracking-tight">Completed: <strong className="font-black text-emerald-900">{stats.completed}</strong></span>
-        </div>
-      </div>
-
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-900 text-white shadow-sm flex items-center gap-1.5">
-            <span>Queue</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
-          </span>
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 flex items-center gap-1.5">
-            <span>Pending</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-amber-200 text-xs font-black">{stats.pending}</span>
-          </span>
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 flex items-center gap-1.5">
-            <span>Completed</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-xs font-black">{stats.completed}</span>
-          </span>
+      <div className="flex flex-col lg:flex-row items-center gap-2.5 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0 w-full">
+        {/* Search input */}
+        <div className="relative flex-1 w-full min-w-[200px] group">
+          <input 
+            type="text" 
+            placeholder="Search by Client, Task Description or Staff Assigned..." 
+            value={search} 
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          {search && (
+            <button 
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 rounded-full hover:bg-slate-200"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
         </div>
 
-        <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search by Client, Task Description or Staff Assigned..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        {/* Count Filter Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-0.5">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('All')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+              statusFilter === 'All' 
+                ? 'bg-slate-900 text-white border-slate-900 shadow-xs' 
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            <span>Queue</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              statusFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>
+              {stats.total}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('Pending')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+              statusFilter === 'Pending' || statusFilter === 'In Progress'
+                ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                : 'bg-amber-50/70 text-amber-800 border-amber-200 hover:bg-amber-100/80'
+            }`}
+          >
+            <span>Pending</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              statusFilter === 'Pending' || statusFilter === 'In Progress' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
+            }`}>
+              {stats.pending}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('Completed')}
+            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+              statusFilter === 'Completed'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
+            }`}
+          >
+            <span>Completed</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              statusFilter === 'Completed' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+            }`}>
+              {stats.completed}
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
