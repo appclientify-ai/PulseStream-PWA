@@ -280,13 +280,13 @@ const Miscellaneouswork: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+            <table className={`w-full text-left border-collapse table-auto min-w-full misc-work-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity Identity</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Task Description</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Entity Identity</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Task Description</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                          {['All', 'Pending', 'In Progress', 'Completed', 'On Hold'].map(st => (
@@ -295,9 +295,9 @@ const Miscellaneouswork: React.FC = () => {
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Staff Head</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Logged Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Staff Head</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Logged Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -305,22 +305,22 @@ const Miscellaneouswork: React.FC = () => {
                   <tr><td colSpan={7} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No miscellaneous tasks archived</td></tr>
                 ) : (
                   filteredRecords.map((rec, idx) => (
-                    <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[12px]">
-                      <td className=" px-4 py-2.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className=" px-4 py-2.5">
+                    <tr key={rec.id} className="hover:bg-indigo-50/20 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
+                      <td className="px-3 py-1.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                      <td className="px-3 py-1.5">
                          <p className="font-black text-slate-900 uppercase leading-snug" title={rec.clientName}>{rec.clientName}</p>
                          <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{rec.mobile || 'No Mobile'}</p>
                       </td>
-                      <td className=" px-4 py-2.5">
+                      <td className="px-3 py-1.5">
                          <input 
                            type="text" 
                            value={rec.description || ''} 
                            onChange={e => handleInlineUpdate(rec.id, 'description', e.target.value)}
-                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-bold text-slate-700 transition-all uppercase text-[12px]"
+                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-bold text-slate-700 transition-all uppercase text-[var(--app-font-size)]"
                            placeholder="Description..."
                          />
                       </td>
-                      <td className=" px-4 py-2.5 text-center relative overflow-visible">
+                      <td className="px-3 py-1.5 text-center relative overflow-visible">
                           <button 
                             onClick={() => setActiveStatusRowId(activeStatusRowId === rec.id ? null : rec.id)}
                             className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${getStatusColor(rec.status)}`}
@@ -336,17 +336,17 @@ const Miscellaneouswork: React.FC = () => {
                             </div>
                           )}
                       </td>
-                      <td className=" px-4 py-2.5">
+                      <td className="px-3 py-1.5">
                          <input 
                            type="text" 
                            value={rec.assignedTo || ''} 
                            onChange={e => handleInlineUpdate(rec.id, 'assignedTo', e.target.value)}
-                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-black text-slate-600 uppercase transition-all text-[12px]"
+                           className="w-full bg-transparent border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 rounded-lg px-2 py-1.5 font-black text-slate-600 uppercase transition-all text-[var(--app-font-size)]"
                            placeholder="Unassigned"
                          />
                       </td>
-                      <td className=" px-4 py-2.5 font-black text-slate-400 uppercase">{formatDate(rec.startDate)}</td>
-                      <td className="px-4 py-2.5 text-right ">
+                      <td className="px-3 py-1.5 font-black text-slate-400 uppercase">{formatDate(rec.startDate)}</td>
+                      <td className="px-3 py-1.5 text-right">
                         <div className="flex items-center justify-end gap-2">
                            <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>

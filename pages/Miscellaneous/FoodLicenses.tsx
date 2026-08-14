@@ -359,15 +359,15 @@ const FoodLicenses: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+            <table className={`w-full text-left border-collapse table-auto min-w-full food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Trade Name</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">License Number (ID)</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">License Type</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center min-w-[150px]">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Trade Name</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">License Number (ID)</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Password</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">License Type</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[150px]">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                          {['All', 'Pending', 'Applied', 'Completed', 'Renewal Due', 'Rejected'].map(st => (
@@ -376,10 +376,10 @@ const FoodLicenses: React.FC = () => {
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Applied On</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-amber-600 border-b border-slate-200">Renewal Due Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Expiry Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Applied On</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-amber-600 border-b border-slate-200">Renewal Due Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Expiry Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -392,9 +392,9 @@ const FoodLicenses: React.FC = () => {
                     const isRenewalDueNow = Boolean(renewalDueDate && renewalDueDate <= todayStr && rec.status !== 'Rejected');
 
                     return (
-                      <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[12px]">
-                        <td className=" px-4 py-2.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
-                        <td className=" px-4 py-2.5">
+                      <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
+                        <td className="px-3 py-1.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
+                        <td className="px-3 py-1.5">
                            <p className="font-black text-slate-900 uppercase leading-snug" title={rec.tradeName || rec.clientName}>
                              {rec.tradeName || rec.clientName || '---'}
                            </p>
@@ -405,9 +405,9 @@ const FoodLicenses: React.FC = () => {
                              Mob: {rec.mobile || 'No Contact'}
                            </p>
                         </td>
-                        <td className="px-4 py-2.5">
+                        <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-mono font-black text-xs tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60' : 'text-slate-400 italic font-normal text-xs'}`}>
+                            <span className={`font-mono font-black text-[var(--app-font-size)] tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60' : 'text-slate-400 italic font-normal text-xs'}`}>
                               {rec.licenseNo || 'Awaiting Issue...'}
                             </span>
                             {rec.licenseNo && (
@@ -427,7 +427,7 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-2.5">
+                        <td className="px-3 py-1.5">
                           <div className="flex items-center gap-2">
                             {editingPasswordId === rec.id ? (
                               <div className="flex items-center gap-1">
@@ -519,8 +519,8 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className=" px-4 py-2.5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
-                        <td className=" px-4 py-2.5 text-center">
+                        <td className="px-3 py-1.5 font-black text-slate-500 uppercase truncate">{rec.licenseType}</td>
+                        <td className="px-3 py-1.5 text-center">
                             <select 
                               value={rec.status || 'Pending'}
                               onChange={e => handleInlineUpdate(rec.id, 'status', e.target.value as FoodLicenseStatus)}
@@ -532,8 +532,8 @@ const FoodLicenses: React.FC = () => {
                               <option value="Rejected" className="bg-white text-slate-900 font-bold">Rejected</option>
                             </select>
                         </td>
-                        <td className=" px-4 py-2.5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
-                        <td className=" px-4 py-2.5 font-black uppercase">
+                        <td className="px-3 py-1.5 font-black text-slate-500 uppercase">{formatDate(rec.appDate)}</td>
+                        <td className="px-3 py-1.5 font-black uppercase">
                           <span className={isRenewalDueNow ? 'text-amber-600 font-black' : 'text-slate-700 font-semibold'}>
                             {formatDate(renewalDueDate)}
                           </span>
@@ -543,7 +543,7 @@ const FoodLicenses: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className=" px-4 py-2.5 font-black uppercase">
+                        <td className="px-3 py-1.5 font-black uppercase">
                           <span className={rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) ? 'text-red-600 font-black' : 'text-rose-500 font-semibold'}>
                             {formatDate(rec.expiryDate)}
                           </span>
@@ -553,7 +553,7 @@ const FoodLicenses: React.FC = () => {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-2.5 text-right ">
+                        <td className="px-3 py-1.5 text-right">
                           <div className="flex items-center justify-end gap-2">
                              <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
