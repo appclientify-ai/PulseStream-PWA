@@ -174,11 +174,11 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
             <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Ref No</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Ref No</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Due / Hearing Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -190,7 +190,15 @@ const LitigationModule: React.FC<LitigationModuleProps> = ({ category, status })
                       <td className=" px-4 py-2.5 text-slate-300 font-black">{(idx + 1).toString().padStart(2, '0')}</td>
                       <td className=" px-4 py-2.5 font-black text-slate-900 uppercase truncate">{rec.clientName}</td>
                       <td className=" px-4 py-2.5 font-black text-slate-600 uppercase truncate">{rec.referenceNo}</td>
-                      <td className=" px-4 py-2.5 font-black text-slate-400">{formatISOToDDMMYYYY(rec.issuedDate || '')}</td>
+                      <td className=" px-4 py-2.5 font-black text-slate-600">
+                        {rec.hearingDate ? (
+                          <span className="text-indigo-600 font-black">H: {formatISOToDDMMYYYY(rec.hearingDate)}</span>
+                        ) : rec.dueDate ? (
+                          <span className="text-amber-600 font-black">D: {formatISOToDDMMYYYY(rec.dueDate)}</span>
+                        ) : (
+                          <span className="text-slate-400 font-bold">{formatISOToDDMMYYYY(rec.issuedDate || '')}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5 text-right ">
                          <button onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center inline-flex">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>

@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
                 {item.icon}
               </svg>
               {isCollapsed && count !== undefined && count > 0 && (
-                <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-indigo-600 text-[8px] font-black text-white ring-2 ring-white shadow-xs">
+                <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white ring-2 ring-white shadow-xs">
                   {count > 99 ? '99+' : count}
                 </span>
               )}
@@ -205,13 +205,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
           )}
           
           {!isCollapsed && (
-            <span className="flex-1 text-left truncate font-black text-[11px] uppercase tracking-wider">
+            <span className="flex-1 text-left truncate font-black text-xs md:text-sm uppercase tracking-wider">
               {item.label}
             </span>
           )}
 
           {!isCollapsed && count !== undefined && count > 0 && (
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 transition-colors ${
+            <span className={`px-2 py-0.5 rounded-full text-xs font-black shrink-0 transition-colors ${
               isActive 
                 ? 'bg-white text-indigo-700 shadow-xs' 
                 : 'bg-indigo-100 text-indigo-700 group-hover/item:bg-indigo-200'
@@ -236,7 +236,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
                 <button
                   key={child.id}
                   onClick={() => handleChildClick(child.id)}
-                  className={`w-full text-left py-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors flex items-center justify-between ${
+                  className={`w-full text-left py-2 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-between ${
                     isChildActive 
                       ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/60' 
                       : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
@@ -314,7 +314,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
         <nav className="flex-1 overflow-y-auto py-6 space-y-8 no-scrollbar scroll-smooth">
           {navigation.map((group, i) => (
             <div key={i} className="space-y-3">
-              {!isCollapsed && <h5 className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">{group.group}</h5>}
+              {!isCollapsed && <h5 className="px-6 text-xs font-black uppercase tracking-[0.2em] text-slate-400">{group.group}</h5>}
               <div className="space-y-1">{group.items.map(item => renderItem(item))}</div>
             </div>
           ))}
@@ -335,7 +335,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isCollapsed
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                </svg>
              )}
-             {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest ml-3">Minimize Vault</span>}
+             {!isCollapsed && <span className="text-xs font-black uppercase tracking-widest ml-3">Minimize Vault</span>}
            </button>
         </div>
       </aside>

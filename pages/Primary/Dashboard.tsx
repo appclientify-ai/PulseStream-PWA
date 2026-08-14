@@ -352,14 +352,27 @@ const Dashboard: React.FC = () => {
     const droppedCount = getLitCounts(forum, 'Drop');
     const demandCount = getLitCounts(forum, 'Demand');
 
+    const getEffectiveDate = (item: LitigationRecord) => {
+      if (item.hearingDate && item.dueDate) {
+        const hTime = new Date(item.hearingDate).getTime();
+        const dTime = new Date(item.dueDate).getTime();
+        if (isNaN(hTime)) return item.dueDate;
+        if (isNaN(dTime)) return item.hearingDate;
+        return hTime <= dTime ? item.hearingDate : item.dueDate;
+      }
+      return item.hearingDate || item.dueDate || '';
+    };
+
     const sortedPending = useMemo(() => {
       const pendingList = litigation.filter(r => r.category === forum && r.status === 'Pending');
       return [...pendingList].sort((a, b) => {
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        const dateA = getEffectiveDate(a);
+        const dateB = getEffectiveDate(b);
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return new Date(dateA).getTime() - new Date(dateB).getTime();
       }).slice(0, 5);
-    }, [forum]);
+    }, [forum, litigation]);
 
     const forumSingular = forum === 'HighCourt' ? 'Matter' : forum;
 
@@ -432,7 +445,7 @@ const Dashboard: React.FC = () => {
             {/* Right Side: Top 5 Pending items */}
             <div className="flex flex-col border-t lg:border-t-0 lg:border-l border-slate-100 pt-6 lg:pt-0 lg:pl-8">
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Top 5 Pending Deadlines</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Top 5 Pending Deadlines/Hearing Date</span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border border-slate-100 rounded-full px-2.5 py-0.5">
                   Priority
                 </span>
@@ -451,9 +464,11 @@ const Dashboard: React.FC = () => {
               ) : (
                 <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar max-h-[280px]">
                   {sortedPending.map((item) => {
-                    const overdue = isOverdue(item.dueDate);
-                    const neardue = isNearDue(item.dueDate);
-                    const formattedDate = item.dueDate ? formatDate(item.dueDate) : 'No Due Date';
+                    const effDate = getEffectiveDate(item);
+                    const isHearing = Boolean(item.hearingDate && (effDate === item.hearingDate || !item.dueDate));
+                    const overdue = isOverdue(effDate);
+                    const neardue = isNearDue(effDate);
+                    const formattedDate = effDate ? formatDate(effDate) : 'No Date Set';
                     
                     return (
                       <div 
@@ -473,12 +488,16 @@ const Dashboard: React.FC = () => {
                               ? 'bg-rose-50 border-rose-100 text-rose-600' 
                               : neardue 
                               ? 'bg-amber-50 border-amber-100 text-amber-600' 
+                              : isHearing
+                              ? 'bg-indigo-50 border-indigo-100 text-indigo-700 font-black'
                               : 'bg-slate-50 border-slate-100 text-slate-600'
                           }`}>
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <span className="whitespace-nowrap">{formattedDate}</span>
+                            <span className="whitespace-nowrap">
+                              {isHearing ? `Hearing: ${formattedDate}` : formattedDate}
+                            </span>
                           </div>
                         </div>
                       </div>

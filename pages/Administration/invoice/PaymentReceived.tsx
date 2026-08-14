@@ -325,50 +325,90 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       )}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
-        <div className="flex items-center justify-between sm:justify-start gap-3 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
           <button 
             type="button" 
             onClick={() => setModeFilter('All')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer ${modeFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              modeFilter === 'All' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total</p>
-            <p className="text-base md:text-lg font-black leading-none">{paymentStats.total}</p>
+            <span>Total</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              modeFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>
+              {paymentStats.total}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setModeFilter('Online')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Online' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-indigo-50 text-indigo-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              modeFilter === 'Online' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                : 'bg-indigo-50/70 text-indigo-800 border-indigo-200 hover:bg-indigo-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Online' ? 'text-indigo-200' : 'text-indigo-400'}`}>Online</p>
-            <p className="text-base md:text-lg font-black leading-none">{paymentStats.online}</p>
+            <span>Online</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              modeFilter === 'Online' ? 'bg-indigo-500 text-white' : 'bg-indigo-200/80 text-indigo-900'
+            }`}>
+              {paymentStats.online}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setModeFilter('UPI')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'UPI' ? 'bg-emerald-600 text-white shadow-sm' : 'hover:bg-emerald-50 text-emerald-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              modeFilter === 'UPI' 
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'UPI' ? 'text-emerald-200' : 'text-emerald-400'}`}>UPI</p>
-            <p className="text-base md:text-lg font-black leading-none">{paymentStats.upi}</p>
+            <span>UPI</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              modeFilter === 'UPI' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 text-emerald-900'
+            }`}>
+              {paymentStats.upi}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setModeFilter('Cash')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Cash' ? 'bg-amber-600 text-white shadow-sm' : 'hover:bg-amber-50 text-amber-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              modeFilter === 'Cash' 
+                ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                : 'bg-amber-50/70 text-amber-800 border-amber-200 hover:bg-amber-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Cash' ? 'text-amber-200' : 'text-amber-400'}`}>Cash</p>
-            <p className="text-base md:text-lg font-black leading-none">{paymentStats.cash}</p>
+            <span>Cash</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              modeFilter === 'Cash' ? 'bg-amber-500 text-white' : 'bg-amber-200/80 text-amber-900'
+            }`}>
+              {paymentStats.cash}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setModeFilter('Cheque')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Cheque' ? 'bg-purple-600 text-white shadow-sm' : 'hover:bg-purple-50 text-purple-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              modeFilter === 'Cheque' 
+                ? 'bg-purple-600 text-white border-purple-600 shadow-xs' 
+                : 'bg-purple-50/70 text-purple-800 border-purple-200 hover:bg-purple-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Cheque' ? 'text-purple-200' : 'text-purple-400'}`}>Cheque/Bank</p>
-            <p className="text-base md:text-lg font-black leading-none">{paymentStats.cheque}</p>
+            <span>Cheque/Bank</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              modeFilter === 'Cheque' ? 'bg-purple-500 text-white' : 'bg-purple-200/80 text-purple-900'
+            }`}>
+              {paymentStats.cheque}
+            </span>
           </button>
         </div>
 
@@ -387,7 +427,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
 
           <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-payments')} className="shrink-0 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-95">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            <span className="font-black text-xs uppercase tracking-widest">Client Ledger</span>
+            <span className="font-black text-xs md:text-sm uppercase tracking-widest">Client Ledger</span>
           </button>
         </div>
       </div>

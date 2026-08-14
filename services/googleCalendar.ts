@@ -1,7 +1,8 @@
 import { triggerInAppNotification } from '../components/NotificationCenter';
 import { toast } from 'sonner';
+import firebaseConfig from '../firebase-applet-config.json';
 
-const CLIENT_ID = '780811365983-mcg3jsqjlns18j8gtqjn16e7ql44ijij.apps.googleusercontent.com';
+const CLIENT_ID = (firebaseConfig as any).oAuthClientId || '780811365983-mcg3jsqjlns18j8gtqjn16e7ql44ijij.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email';
 
 export interface GoogleCalendarPreferences {

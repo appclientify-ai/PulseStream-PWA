@@ -52,13 +52,13 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
 
         <div className="min-w-0 flex-1">
            <div className="flex items-center gap-1.5 md:gap-2.5 overflow-hidden min-w-0">
-             <h2 className="text-sm md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
+             <h2 className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-none truncate uppercase">{activeViewLabel}</h2>
              <span className="text-xs md:text-sm font-bold text-slate-300 shrink-0">|</span>
              <div className="flex items-center gap-1.5 shrink-0">
-               <span className="text-sm md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
+               <span className="text-base md:text-xl font-black text-indigo-600 tracking-tight">Clientify</span>
              </div>
            </div>
-           <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
+           <p className="text-xs md:text-sm font-bold uppercase tracking-[0.15em] text-slate-400 truncate mt-1.5 hidden sm:block" title={activeViewDescription}>
              {activeViewDescription}
            </p>
         </div>
@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
           </button>
         )}
         {canInstall && (
-          <button onClick={triggerInstall} className="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-md shadow-indigo-600/20">
+          <button onClick={triggerInstall} className="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl font-black text-xs md:text-sm uppercase tracking-widest transition-colors shadow-md shadow-indigo-600/20">
              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
              App
           </button>
@@ -97,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, currentUser, onMenuClick, 
         )}
         <div className="hidden lg:flex items-center gap-3 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
+           <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{isConnected ? 'Vault Live' : 'Local Snapshot'}</span>
         </div>
 
         {/* Unified Guideline Button (All Pages, All Guides) */}

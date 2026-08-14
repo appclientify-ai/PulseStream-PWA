@@ -657,41 +657,73 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
         
         {/* Count Badges */}
-        <div className="flex items-center justify-between sm:justify-start gap-3 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
           <button 
             type="button" 
             onClick={() => setBalanceFilter('All')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer ${balanceFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              balanceFilter === 'All' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total Clients</p>
-            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.total}</p>
+            <span>Total Clients</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              balanceFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>
+              {ledgerStats.total}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Due')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Due' ? 'bg-rose-600 text-white shadow-sm' : 'hover:bg-rose-50 text-rose-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              balanceFilter === 'Due' 
+                ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
+                : 'bg-rose-50/70 text-rose-800 border-rose-200 hover:bg-rose-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Due' ? 'text-rose-200' : 'text-rose-400'}`}>Pending (Due)</p>
-            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.due}</p>
+            <span>Pending (Due)</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              balanceFilter === 'Due' ? 'bg-rose-500 text-white' : 'bg-rose-200/80 text-rose-900'
+            }`}>
+              {ledgerStats.due}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Settled')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Settled' ? 'bg-emerald-600 text-white shadow-sm' : 'hover:bg-emerald-50 text-emerald-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              balanceFilter === 'Settled' 
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Settled' ? 'text-emerald-200' : 'text-emerald-400'}`}>Settled</p>
-            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.settled}</p>
+            <span>Settled</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              balanceFilter === 'Settled' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 text-emerald-900'
+            }`}>
+              {ledgerStats.settled}
+            </span>
           </button>
 
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Advance')} 
-            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Advance' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-indigo-50 text-indigo-900'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+              balanceFilter === 'Advance' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                : 'bg-indigo-50/70 text-indigo-800 border-indigo-200 hover:bg-indigo-100/80'
+            }`}
           >
-            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Advance' ? 'text-indigo-200' : 'text-indigo-400'}`}>Advance</p>
-            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.advance}</p>
+            <span>Advance</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+              balanceFilter === 'Advance' ? 'bg-indigo-500 text-white' : 'bg-indigo-200/80 text-indigo-900'
+            }`}>
+              {ledgerStats.advance}
+            </span>
           </button>
         </div>
 
@@ -730,7 +762,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
           <button
             onClick={handlePurgeDatabase}
-            className="h-10 px-3 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors shrink-0"
+            className="h-10 px-3 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-black text-xs md:text-sm uppercase tracking-wider transition-colors shrink-0"
             title="Purge deleted invoices and orphaned payments from database"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
