@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { calculateRenewalDueDate } from '../dateUtils.ts';
+import { getAllStatutoryDeadlines } from '../services/statutoryDeadlines';
 
 export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
   return useQuery<T>({
@@ -154,11 +155,16 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
           });
           return mappedFood.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
         }
+        if (filter === 'Statutory Deadlines' || filter === 'Statutory') {
+          const statutory = getAllStatutoryDeadlines(false);
+          return statutory as unknown as T;
+        }
         const [litigation, work, licenses] = await Promise.all([
           api.getRemindersLitigation().catch(() => []),
           api.getRemindersMiscWork().catch(() => []),
           api.getFoodLicenses().catch(() => [])
         ]);
+        const statutory = getAllStatutoryDeadlines(false);
         const mappedLit = litigation.map((r: any) => ({
           id: r.id,
           title: `${r.category} - ${r.section ? `U/s ${r.section}` : r.referenceNo}`,
@@ -194,7 +200,7 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
             expiryDate: l.expiryDate
           };
         });
-        const combined = [...mappedLit, ...mappedWork, ...mappedFood];
+        const combined = [...statutory, ...mappedLit, ...mappedWork, ...mappedFood];
         return combined.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
       }
       const items = await api.getItemsByCategory(moduleKey, true);

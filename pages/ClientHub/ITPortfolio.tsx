@@ -14,7 +14,6 @@ const ITPortfolio: React.FC = () => {
   const [search, setSearch] = useState('');
   const [quickFilter, setQuickFilter] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [compactMode, setCompactMode] = useState(true);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -252,8 +251,6 @@ const ITPortfolio: React.FC = () => {
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
-            compactMode={compactMode} 
-            onCompactToggle={() => setCompactMode(!compactMode)} 
           />
 
           <div className="relative">

@@ -8,6 +8,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { api } from '../../../services/api.ts';
 import Loader from '../../../components/Loader';
+import { TableFilter } from '../../../components/TableFilter';
+import { ViewControl } from '../../../components/ViewControl';
 import { formatDate } from '../../../dateUtils.ts';
 
 interface PaymentReceivedProps {
@@ -15,10 +17,10 @@ interface PaymentReceivedProps {
 }
 
 const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
-  
   const [search, setSearch] = useState('');
-  
-  
+  const [modeFilter, setModeFilter] = useState<'All' | 'Online' | 'UPI' | 'Cash' | 'Cheque' | 'Bank Transfer'>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
   
   const [showLedger, setShowLedger] = useState(false);
   const [selectedLedgerClient, setSelectedLedgerClient] = useState<string>('');
@@ -128,16 +130,36 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
   const handleDelete = async (id: string) => { if(confirm('Delete payment record?')) { await deleteMutation.mutateAsync(id); } };
 
 
+  const paymentStats = useMemo(() => {
+    return {
+      total: payments.length,
+      online: payments.filter(p => p.mode === 'Online').length,
+      upi: payments.filter(p => p.mode === 'UPI').length,
+      cash: payments.filter(p => p.mode === 'Cash').length,
+      cheque: payments.filter(p => p.mode === 'Cheque' || p.mode === 'Bank Transfer').length,
+    };
+  }, [payments]);
+
   const filteredPayments = useMemo(() => {
     const s = search.toLowerCase();
-    return payments.filter(p => {
+    let list = payments.filter(p => {
       const cliName = (p.clientName || '').toLowerCase();
       const tradeName = (p.clientTradeName || '').toLowerCase();
-      const refNo = (p.referenceNo || '').toLowerCase();
+      const refNo = (p.referenceNo || p.chequeNo || '').toLowerCase();
       const invNo = (p.invoiceNo || '').toLowerCase();
       return cliName.includes(s) || tradeName.includes(s) || refNo.includes(s) || invNo.includes(s);
-    }).sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
-  }, [payments, search]);
+    });
+
+    if (modeFilter !== 'All') {
+      if (modeFilter === 'Cheque') {
+        list = list.filter(p => p.mode === 'Cheque' || p.mode === 'Bank Transfer');
+      } else {
+        list = list.filter(p => p.mode === modeFilter);
+      }
+    }
+
+    return list.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+  }, [payments, search, modeFilter]);
 
   
   const handlePrintPayment = (pay: PaymentRecord) => {
@@ -303,23 +325,51 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       )}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
-        <div className="flex items-center justify-between sm:justify-start gap-4 md:gap-6 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-            <p className="text-lg md:text-xl font-black text-emerald-600 leading-none">{filteredPayments.length}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Online</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Online').length}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">UPI</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'UPI').length}</p>
-          </div>
-          <div className="text-center border-l border-slate-100 pl-4 md:pl-6">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Cash</p>
-            <p className="text-lg md:text-xl font-black text-slate-900 leading-none">{filteredPayments.filter(p => p.mode === 'Cash').length}</p>
-          </div>
+        <div className="flex items-center justify-between sm:justify-start gap-3 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
+          <button 
+            type="button" 
+            onClick={() => setModeFilter('All')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer ${modeFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total</p>
+            <p className="text-base md:text-lg font-black leading-none">{paymentStats.total}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setModeFilter('Online')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Online' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-indigo-50 text-indigo-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Online' ? 'text-indigo-200' : 'text-indigo-400'}`}>Online</p>
+            <p className="text-base md:text-lg font-black leading-none">{paymentStats.online}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setModeFilter('UPI')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'UPI' ? 'bg-emerald-600 text-white shadow-sm' : 'hover:bg-emerald-50 text-emerald-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'UPI' ? 'text-emerald-200' : 'text-emerald-400'}`}>UPI</p>
+            <p className="text-base md:text-lg font-black leading-none">{paymentStats.upi}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setModeFilter('Cash')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Cash' ? 'bg-amber-600 text-white shadow-sm' : 'hover:bg-amber-50 text-amber-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Cash' ? 'text-amber-200' : 'text-amber-400'}`}>Cash</p>
+            <p className="text-base md:text-lg font-black leading-none">{paymentStats.cash}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setModeFilter('Cheque')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${modeFilter === 'Cheque' ? 'bg-purple-600 text-white shadow-sm' : 'hover:bg-purple-50 text-purple-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${modeFilter === 'Cheque' ? 'text-purple-200' : 'text-purple-400'}`}>Cheque/Bank</p>
+            <p className="text-base md:text-lg font-black leading-none">{paymentStats.cheque}</p>
+          </button>
         </div>
 
         <div className="relative flex-1 group w-full">
@@ -327,59 +377,159 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
             className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" />
         </div>
         
-        <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-payments')} className="shrink-0 flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-95">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-          <span className="font-black text-xs uppercase tracking-widest">Client Ledger</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <ViewControl 
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            compactMode={compactMode}
+            onCompactModeChange={setCompactMode}
+          />
+
+          <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-payments')} className="shrink-0 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-colors shadow-md active:scale-95">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span className="font-black text-xs uppercase tracking-widest">Client Ledger</span>
+          </button>
+        </div>
       </div>
-      <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full compact-table compact-mode">
-            <thead className=" sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Inv. No.</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Client (Trade/Legal)</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Amount</th>
-                <th className=" px-6 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Payment Date</th>
-                <th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Mode</th><th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400">Ref No.</th>
-<th className=" px-4 py-5 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredPayments.map((pay, idx) => (
-                <tr key={pay.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className=" px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
-                  <td className=" px-6 py-6 font-black text-slate-400 text-[11px] uppercase">{pay.invoiceNo || '---'}</td>
-                  <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase truncate">{pay.clientTradeName ? `${pay.clientTradeName} (${pay.clientName})` : pay.clientName}</td>
-                  <td className=" px-6 py-6 font-black text-emerald-600 text-[12px]">₹{(pay.amount || 0).toLocaleString()}</td>
-                  <td className=" px-6 py-6 font-black text-slate-700 text-[11px] uppercase">{formatDate(pay.date)}</td>
-                  <td className=" px-4 py-6">
-                    <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-100 text-slate-600">{pay.mode}</span>
-                  </td>
-                  <td className=" px-4 py-6 font-bold text-slate-500 text-[11px] uppercase">
-                    {pay.chequeNo || pay.referenceNo || '---'}
-                  </td>
-                  <td className="px-4 py-6 text-right">
-                    <div className="flex items-center justify-end gap-2">
-      <button onClick={() => handlePrintPayment(pay)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm" title="View/Print Receipt">
-         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
-      </button>
-      <button onClick={() => handleStartEdit(pay)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm" title="Modify Payment">
-         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-      </button>
-      <button onClick={() => handleDelete(pay.id)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm" title="Delete Payment">
-         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-      </button>
-  </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        
+
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pr-1">
+          {filteredPayments.map((pay) => (
+            <div key={pay.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                    Inv #{pay.invoiceNo || 'N/A'}
+                  </span>
+                  <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                    pay.mode === 'UPI' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                    pay.mode === 'Online' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                    pay.mode === 'Cash' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                    'bg-purple-50 text-purple-700 border border-purple-200'
+                  }`}>
+                    {pay.mode}
+                  </span>
+                </div>
+
+                <h4 className="font-black text-slate-900 text-sm uppercase leading-tight line-clamp-1">
+                  {pay.clientTradeName ? `${pay.clientTradeName}` : pay.clientName}
+                </h4>
+                {pay.clientTradeName && (
+                  <p className="text-[11px] font-bold text-slate-400 uppercase line-clamp-1">{pay.clientName}</p>
+                )}
+
+                <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Amount</p>
+                    <p className="font-black text-emerald-600 text-sm">₹{(pay.amount || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Payment Date</p>
+                    <p className="font-black text-slate-700 text-xs uppercase">{formatDate(pay.date)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ref / Cheque No</p>
+                    <p className="font-bold text-slate-600 text-xs uppercase">{pay.chequeNo || pay.referenceNo || '---'}</p>
+                  </div>
+                </div>
               </div>
-      </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button onClick={() => handlePrintPayment(pay)} className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-indigo-600 font-black text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
+                  Receipt
+                </button>
+                <button onClick={() => handleStartEdit(pay)} className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-emerald-600 font-black text-[10px] uppercase tracking-wider transition-all flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(pay.id)} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="overflow-x-auto no-scrollbar flex-1">
+            <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+              <thead className="sticky top-0 z-20">
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Inv. No.</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Client (Trade/Legal)</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Amount</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Payment Date</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <TableFilter
+                      label="Mode"
+                      isActive={modeFilter !== 'All'}
+                      onClear={() => setModeFilter('All')}
+                    >
+                      <div className="py-1">
+                        {(['All', 'Online', 'UPI', 'Cash', 'Cheque'] as const).map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setModeFilter(m)}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-bold transition-colors ${
+                              modeFilter === m ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            {m === 'Cheque' ? 'Cheque / Bank' : m}
+                          </button>
+                        ))}
+                      </div>
+                    </TableFilter>
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Ref No.</th>
+                  <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPayments.map((pay, idx) => (
+                  <tr key={pay.id} className="hover:bg-slate-50/50 transition-all group">
+                    <td className="px-4 py-3 text-slate-400 font-bold text-xs">{idx + 1}</td>
+                    <td className="px-4 py-3 font-black text-slate-500 text-xs uppercase">{pay.invoiceNo || '---'}</td>
+                    <td className="px-4 py-3 font-black text-slate-900 text-xs uppercase truncate max-w-[220px]">
+                      {pay.clientTradeName ? `${pay.clientTradeName} (${pay.clientName})` : pay.clientName}
+                    </td>
+                    <td className="px-4 py-3 font-black text-emerald-600 text-xs">₹{(pay.amount || 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-bold text-slate-700 text-xs uppercase">{formatDate(pay.date)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border ${
+                        pay.mode === 'UPI' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        pay.mode === 'Online' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                        pay.mode === 'Cash' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-purple-50 text-purple-700 border-purple-200'
+                      }`}>
+                        {pay.mode}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-slate-500 text-xs uppercase">
+                      {pay.chequeNo || pay.referenceNo || '---'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button onClick={() => handlePrintPayment(pay)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm" title="View/Print Receipt">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 12z" /></svg>
+                        </button>
+                        <button onClick={() => handleStartEdit(pay)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm" title="Modify Payment">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                        <button onClick={() => handleDelete(pay.id)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm" title="Delete Payment">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       {/* Receipt Modal */}
       {previewPayment && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">

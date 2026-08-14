@@ -13,9 +13,10 @@ import { toast } from 'sonner';
 import { ExportMenu } from '../../../components/ExportMenu';
 import { exportToCSV, printList } from '../../../exportUtils';
 import { EditableRemark } from '../../../components/EditableRemark';
-import { EditableCaseHistory } from '../../../components/EditableCaseHistory';
 import { formatDate } from '../../../dateUtils';
+import ViewControl from '../../../components/ViewControl';
 
+type DueDateFilter = 'All' | 'gt15' | 'gt5' | 'urgent';
 
 const NoticePending: React.FC = () => {
   const queryClient = useQueryClient();
@@ -29,15 +30,14 @@ const NoticePending: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [dueFilter, setDueFilter] = useState<DueDateFilter>('All');
+  const [sectionFilter, setSectionFilter] = useState('All');
   const [selectedRecord, setSelectedRecord] = useState<Partial<LitigationRecord> | null>(null);
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingRecord, setViewingRecord] = useState<LitigationRecord | null>(null);
   const [activeStatusMenuId, setActiveStatusMenuId] = useState<string | null>(null);
-  const [sectionFilter, setSectionFilter] = useState('All');
-  const [daysLeftFilter, setDaysLeftFilter] = useState<'All' | 'Critical' | 'Healthy'>('All');
-  const [activeHeaderFilter, setActiveHeaderFilter] = useState<'section' | 'days' | null>(null);
 
   const [isLoginBoxOpen, setIsLoginBoxOpen] = useState(false);
   const [selectedClientForLogin, setSelectedClientForLogin] = useState<Client | null>(null);
@@ -66,15 +66,6 @@ const NoticePending: React.FC = () => {
     setIsModalOpen(false); setIsViewModalOpen(false); refreshData();
   };
 
-  const updateRecordStatus = async (record: LitigationRecord, newStatus: LitigationStatus) => {
-    try {
-      const updated = { ...record, status: newStatus };
-      await api.saveLitigationRecord(updated);
-      refreshData();
-    } catch (err) { toast.error("Status update failed."); }
-    setActiveStatusMenuId(null);
-  };
-
   const submitReply = async () => {
     if (!recordToReply) return;
     try {
@@ -100,11 +91,8 @@ const NoticePending: React.FC = () => {
     }
   };
 
-  const formatDisplayDate = (dateStr?: string) => {
-    return formatDate(dateStr);
-  };
-
-  const getDaysLeft = (dueDate: string) => {
+  const getDaysLeft = (dueDate?: string) => {
+    if (!dueDate) return 999;
     const due = new Date(dueDate);
     due.setHours(0, 0, 0, 0);
     const now = new Date();
@@ -115,6 +103,23 @@ const NoticePending: React.FC = () => {
 
   const sections = useMemo(() => Array.from(new Set(records.map(r => r.section).filter(Boolean))).sort(), [records]);
 
+  // Dynamic statistics for top badges
+  const stats = useMemo(() => {
+    const total = records.length;
+    let gt15 = 0;
+    let gt5 = 0;
+    let urgent = 0;
+
+    records.forEach(r => {
+      const dl = getDaysLeft(r.dueDate);
+      if (dl > 15) gt15++;
+      else if (dl > 5 && dl <= 15) gt5++;
+      else urgent++;
+    });
+
+    return { total, gt15, gt5, urgent };
+  }, [records]);
+
   const filteredRecords = useMemo(() => {
     const s = search.toLowerCase();
     let list = records.filter(r => {
@@ -123,20 +128,28 @@ const NoticePending: React.FC = () => {
              (r.referenceNo || '').toLowerCase().includes(s) ||
              (client?.gstProfile?.gstin || '').toLowerCase().includes(s);
     });
-    if (sectionFilter !== 'All') list = list.filter(r => r.section === sectionFilter);
-    if (daysLeftFilter !== 'All') {
+
+    if (sectionFilter !== 'All') {
+      list = list.filter(r => r.section === sectionFilter);
+    }
+
+    if (dueFilter === 'gt15') {
+      list = list.filter(r => getDaysLeft(r.dueDate) > 15);
+    } else if (dueFilter === 'gt5') {
       list = list.filter(r => {
         const dl = getDaysLeft(r.dueDate);
-        return daysLeftFilter === 'Critical' ? dl <= 7 : dl > 7;
+        return dl > 5 && dl <= 15;
       });
+    } else if (dueFilter === 'urgent') {
+      list = list.filter(r => getDaysLeft(r.dueDate) <= 5);
     }
+
     return [...list].sort((a, b) => {
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
       return a.dueDate.localeCompare(b.dueDate);
     });
-  }, [records, clients, search, sectionFilter, daysLeftFilter]);
-
+  }, [records, clients, search, sectionFilter, dueFilter]);
 
   const handleExportCSV = () => {
     const headers = ['S.No.', 'Trade Name', 'GSTIN', 'Section', 'Tax Period', 'Notice Date', 'Due Date', 'Status'];
@@ -175,166 +188,340 @@ const NoticePending: React.FC = () => {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col space-y-4 overflow-hidden">
+    <div className="animate-in fade-in duration-500 h-full flex flex-col space-y-3 overflow-hidden">
       
-      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Notices</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{records.length}</p>
-          </div>
+      {/* Top Filter & Count Bar */}
+      <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
+        
+        {/* Count Badges (Click to Filter) */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <button 
+            type="button"
+            onClick={() => setDueFilter(prev => prev === 'All' ? 'All' : 'All')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              dueFilter === 'All' 
+                ? 'bg-slate-900 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <span>Total</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              dueFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>{stats.total}</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setDueFilter(prev => prev === 'gt15' ? 'All' : 'gt15')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              dueFilter === 'gt15' 
+                ? 'bg-emerald-600 text-white shadow-sm' 
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            <span>&gt; 15 Days</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              dueFilter === 'gt15' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+            }`}>{stats.gt15}</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setDueFilter(prev => prev === 'gt5' ? 'All' : 'gt5')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              dueFilter === 'gt5' 
+                ? 'bg-amber-600 text-white shadow-sm' 
+                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            <span>&gt; 5 Days</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              dueFilter === 'gt5' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
+            }`}>{stats.gt5}</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => setDueFilter(prev => prev === 'urgent' ? 'All' : 'urgent')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              dueFilter === 'urgent' 
+                ? 'bg-rose-600 text-white shadow-sm' 
+                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            <span>Last Day / Urgent</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              dueFilter === 'urgent' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+            }`}>{stats.urgent}</span>
+          </button>
         </div>
 
+        {/* Search */}
         <div className="relative flex-1 w-full group">
           <input 
             type="text" 
-            placeholder="Search by Trade Name, GSTIN or Order Reference..." 
+            placeholder="Search Trade Name, GSTIN or Notice Ref..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
           />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
-        <button 
-          onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }}
-          className="bg-indigo-600 text-white font-black uppercase tracking-widest px-8 h-11 rounded-xl shadow-lg hover:bg-slate-900 transition-all text-xs flex items-center gap-2 shrink-0"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-          Record Notice
-        </button>
+        {/* View Control & Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <ViewControl 
+            viewMode={viewMode} 
+            onViewChange={setViewMode} 
+          />
+
+          <ExportMenu 
+            onExportCSV={handleExportCSV} 
+            onExportPDF={handleExportPDF} 
+          />
+
+          <button 
+            onClick={() => { setSelectedRecord(null); setIsModalOpen(true); }}
+            className="bg-indigo-600 text-white font-black uppercase tracking-wider px-4 py-2 rounded-xl shadow-xs hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            <span>Record Notice</span>
+          </button>
+        </div>
       </div>
 
+      {/* Main Content Area */}
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
-          <table className="w-full text-left border-collapse table-auto min-w-full">
-            <thead className=" sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">S.No.</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Trade Name</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
-                  <div className="flex items-center gap-1">Section <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'section' ? null : 'section')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
-                  {activeHeaderFilter === 'section' && (
-                    <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
-                      <button onClick={() => { setSectionFilter('All'); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>All</button>
-                      {sections.map(s => <button key={s} onClick={() => { setSectionFilter(s); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${sectionFilter === s ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>U/s {s}</button>)}
-                    </div>
-                  )}
-                </th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Tax Period</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Notice Date</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Due Date</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 relative">
-                  <div className="flex items-center gap-1">Due Days <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'days' ? null : 'days')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg></button></div>
-                  {activeHeaderFilter === 'days' && (
-                    <div className="absolute top-full mt-1 z-50 left-0 w-40 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
-                      {['All', 'Critical', 'Healthy'].map(opt => <button key={opt} onClick={() => { setDaysLeftFilter(opt as any); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${daysLeftFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
-                    </div>
-                  )}
-                </th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center relative">
-                  <div className="flex items-center justify-center gap-1">Status <button onClick={() => setActiveHeaderFilter(activeHeaderFilter === 'status' ? null : 'status')} className="p-1 rounded shadow-sm"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg></button></div>
-                  {activeHeaderFilter === 'status' && (
-                    <div className="absolute top-full mt-1 z-50 left-1/2 -translate-x-1/2 w-32 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 flex flex-col gap-1">
-                      {['All', 'Pending', 'Filed', 'Demand', 'Drop', 'Overdue', 'Closed'].map(opt => <button key={opt} onClick={() => { setStatusFilter(opt); setActiveHeaderFilter(null); }} className={`w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg ${statusFilter === opt ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{opt}</button>)}
-                    </div>
-                  )}
-                </th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Remark</th>
-                <th className=" px-4 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredRecords.length === 0 ? (
-                <tr><td colSpan={11} className=" py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No Pending Notices in Vault</td></tr>
-              ) : (
-                filteredRecords.map((rec, idx) => {
-                  const dl = getDaysLeft(rec.dueDate);
-                  const isOverdue = dl < 0;
-                  const isCritical = dl <= 7 && dl >= 0;
-                  const client = clients.find(c => c.id === rec.clientId);
-                  return (
-                    <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group h-[52px]">
-                      <td className=" px-4 py-2 text-slate-300 font-black font-mono text-[11px]">
-                        {(idx + 1).toString().padStart(2, '0')}
-                      </td>
-                      <td className=" px-4 py-2">
-                        <p className="text-[12px] font-black text-slate-900 truncate" title={rec.clientName}>{rec.clientName}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 font-mono tracking-wider">
-                          <span>{client?.gstProfile?.gstin || '---'}</span>
-                          {client?.gstProfile?.gstin && (
-                            <button 
-                              onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))}
-                              className="p-0.5 hover:bg-indigo-50 rounded text-indigo-400 hover:text-indigo-600 transition-colors"
-                              title="Search Taxpayer"
-                            >
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            </button>
-                          )}
+        {viewMode === 'grid' ? (
+          <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRecords.length === 0 ? (
+              <div className="col-span-full py-24 text-center text-slate-400 font-bold uppercase tracking-wider text-xs">
+                No pending notices found matching current filters
+              </div>
+            ) : (
+              filteredRecords.map((rec, idx) => {
+                const dl = getDaysLeft(rec.dueDate);
+                const isOverdue = dl < 0;
+                const isCritical = dl <= 5 && dl >= 0;
+                const client = clients.find(c => c.id === rec.clientId);
+
+                return (
+                  <div key={rec.id} className="p-4 bg-slate-50/70 hover:bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">
+                          #{((idx + 1).toString().padStart(2, '0'))}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`h-2 w-2 rounded-full ${isOverdue || isCritical ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                          <span className={`text-[11px] font-black ${isOverdue || isCritical ? 'text-rose-600' : 'text-slate-700'}`}>
+                            {dl < 0 ? `${Math.abs(dl)}d Overdue` : dl === 0 ? 'Due Today' : `${dl}d Left`}
+                          </span>
                         </div>
-                      </td>
-                      <td className=" px-4 py-2 text-[12px] font-black text-slate-600">{rec.section ? `U/s ${rec.section}` : '---'}</td>
-                      <td className=" px-4 py-2 text-[12px] font-black text-slate-700">{rec.taxPeriod || '---'}</td>
-                      <td className=" px-4 py-2 text-[12px] font-black text-slate-500 uppercase">{formatDisplayDate(rec.issuedDate)}</td>
-                      <td className=" px-4 py-2 text-[12px] font-black text-red-500 uppercase">{formatDisplayDate(rec.dueDate)}</td>
-                      <td className=" px-4 py-2">
-                         <div className="flex items-center gap-1.5">
-                            <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
-                            <span className={`text-[12px] font-black ${isOverdue || isCritical ? 'text-red-500' : 'text-slate-700'}`}>
-                              {dl < 0 ? `${Math.abs(dl)} ${Math.abs(dl) === 1 ? 'Day' : 'Days'} Overdue` : dl === 0 ? 'Today' : `${dl} ${dl === 1 ? 'Day' : 'Days'}`}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-slate-900 truncate" title={rec.clientName}>
+                        {rec.clientName || '---'}
+                      </h4>
+                      <p className="text-xs font-mono font-medium text-indigo-600 truncate mt-0.5">
+                        {client?.gstProfile?.gstin || '---'}
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200/70 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[10px] text-slate-400 uppercase">Section:</span>
+                        <span className="font-semibold text-slate-800">{rec.section ? `U/s ${rec.section}` : '---'}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[10px] text-slate-400 uppercase">Notice Date:</span>
+                        <span className="font-medium text-slate-700 uppercase">{formatDate(rec.issuedDate)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[10px] text-slate-400 uppercase">Due Date:</span>
+                        <span className="font-bold text-rose-600 uppercase">{formatDate(rec.dueDate)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="font-bold text-[10px] text-slate-400 uppercase">Ref No:</span>
+                        <span className="font-mono text-slate-700 truncate max-w-[140px]">{rec.referenceNo || '---'}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-1">
+                      <EditableRemark 
+                        value={rec.remarks || ''} 
+                        onSave={async (val) => {
+                          await api.saveLitigationRecord({ ...rec, remarks: val });
+                          refreshData();
+                        }} 
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                      <button 
+                        onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); }}
+                        className="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all"
+                      >
+                        Reply Filed
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        {client && <GSTViewIcon client={client} onDataChange={refreshData} />}
+                        <button 
+                          onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
+                          className="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-xs"
+                          title="View Details"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+            <table className="w-full text-left border-collapse table-fixed min-w-[1100px]">
+              <thead className="sticky top-0 z-30 bg-slate-100">
+                <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900 text-xs">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[55px] text-center whitespace-nowrap">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[24%] min-w-[180px]">Trade Name</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[12%] min-w-[110px] whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <span>Section</span>
+                      <select 
+                        value={sectionFilter} 
+                        onChange={e => setSectionFilter(e.target.value)} 
+                        className="bg-transparent border-none text-[10px] uppercase font-bold text-indigo-600 outline-none cursor-pointer p-0"
+                      >
+                        <option value="All">All</option>
+                        {sections.map(s => <option key={s} value={s}>U/s {s}</option>)}
+                      </select>
+                    </div>
+                  </th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[11%] min-w-[100px] whitespace-nowrap">Tax Period</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[11%] min-w-[100px] whitespace-nowrap">Notice Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[11%] min-w-[100px] whitespace-nowrap">Due Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[12%] min-w-[110px] whitespace-nowrap">Remaining</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[10%] min-w-[95px] text-center whitespace-nowrap">Status</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 w-[14%] min-w-[150px]">Remark</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 border-b border-slate-200 text-right w-[110px] whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-24 text-center text-slate-400 font-bold uppercase tracking-wider">
+                      No Pending Notices in Vault
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRecords.map((rec, idx) => {
+                    const dl = getDaysLeft(rec.dueDate);
+                    const isOverdue = dl < 0;
+                    const isCritical = dl <= 5 && dl >= 0;
+                    const client = clients.find(c => c.id === rec.clientId);
+
+                    return (
+                      <tr key={rec.id} className="group hover:bg-indigo-50/10 transition-all border-b border-slate-100 last:border-0">
+                        <td className="px-3 py-2 font-bold text-indigo-400 font-mono text-center whitespace-nowrap">
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </td>
+                        <td className="px-3 py-2 truncate min-w-[180px]">
+                          <div className="font-semibold text-slate-900 truncate leading-normal" title={rec.clientName}>
+                            {rec.clientName || '---'}
+                          </div>
+                          <div className="flex items-center gap-1 text-[11px] font-mono text-slate-500">
+                            <span>{client?.gstProfile?.gstin || '---'}</span>
+                            {client?.gstProfile?.gstin && (
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(client.gstProfile?.gstin || '');
+                                  toast.success('GSTIN Copied!');
+                                }}
+                                className="p-0.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                                title="Copy GSTIN"
+                              >
+                                <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-6 4h6m-6 4h6" /></svg>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 font-medium text-slate-700 whitespace-nowrap">
+                          {rec.section ? `U/s ${rec.section}` : '---'}
+                        </td>
+                        <td className="px-3 py-2 font-medium text-slate-700 whitespace-nowrap">
+                          {rec.taxPeriod || '---'}
+                        </td>
+                        <td className="px-3 py-2 font-medium text-slate-600 uppercase whitespace-nowrap">
+                          {formatDate(rec.issuedDate)}
+                        </td>
+                        <td className="px-3 py-2 font-bold text-rose-600 uppercase whitespace-nowrap">
+                          {formatDate(rec.dueDate)}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <div className={`h-1.5 w-1.5 rounded-full ${isOverdue || isCritical ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                            <span className={`font-bold ${isOverdue || isCritical ? 'text-rose-600' : 'text-slate-700'}`}>
+                              {dl < 0 ? `${Math.abs(dl)}d Overdue` : dl === 0 ? 'Due Today' : `${dl}d Left`}
                             </span>
-                         </div>
-                      </td>
-                      <td className={` px-4 py-2 text-center relative overflow-visible ${activeStatusMenuId === rec.id ? "z-50" : "z-0"}`}>
-                         <button onClick={() => setActiveStatusMenuId(activeStatusMenuId === rec.id ? null : rec.id)} className={`w-full px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all flex items-center justify-between ${isOverdue ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                            {isOverdue ? 'Overdue' : 'Pending'} <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-                         </button>
-                         {activeStatusMenuId === rec.id && (
-                           <div className="absolute top-full mt-1 z-50 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in zoom-in-95 text-left flex flex-col">
-                              <button onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); setActiveStatusMenuId(null); }} className="w-full text-left px-3 py-2 text-[9px] font-black uppercase rounded-lg hover:bg-emerald-50 text-emerald-600">Reply Filed</button>
-                           </div>
-                         )}
-                      </td>
-                      <td className="px-4 py-2 truncate max-w-[150px]">
-                        <EditableRemark 
-                          value={rec.remarks || ''} 
-                          onSave={async (val) => {
-                            await api.saveLitigationRecord({ ...rec, remarks: val });
-                            refreshData();
-                          }} 
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-right ">
-                         <div className="flex items-center justify-end gap-2">
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-center whitespace-nowrap">
+                          <button 
+                            onClick={() => { setRecordToReply(rec); setIsReplyModalOpen(true); }}
+                            className={`px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                              isOverdue 
+                                ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' 
+                                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                            }`}
+                          >
+                            {isOverdue ? 'Overdue' : 'Pending'}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 truncate min-w-[150px]">
+                          <EditableRemark 
+                            value={rec.remarks || ''} 
+                            onSave={async (val) => {
+                              await api.saveLitigationRecord({ ...rec, remarks: val });
+                              refreshData();
+                            }} 
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap w-[110px]">
+                          <div className="flex items-center justify-end gap-1">
                             <button 
-                               onClick={() => { 
-                                 if (client) {
-                                   setSelectedClientForLogin(client);
-                                   setIsLoginBoxOpen(true);
-                                 }
-                               }} 
-                               className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-sm group/btn"
-                               title="Portal Login"
+                              onClick={() => { 
+                                if (client) {
+                                  setSelectedClientForLogin(client);
+                                  setIsLoginBoxOpen(true);
+                                }
+                              }} 
+                              className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                              title="Portal Login"
                             >
-                               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
                             {client && <GSTViewIcon client={client} onDataChange={refreshData} />}
                             <button 
-                               onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
-                               className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm group/btn"
-                               title="View Notice Details"
+                              onClick={() => { setViewingRecord(rec); setIsViewModalOpen(true); }} 
+                              className="h-7 w-7 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-xs"
+                              title="View Details"
                             >
-                               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
                             </button>
-                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       
       {/* Detail Modals */}
@@ -357,31 +544,30 @@ const NoticePending: React.FC = () => {
         client={selectedClientForLogin}
       />
 
+      {/* Reply Modal */}
       {isReplyModalOpen && recordToReply && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/80 backdrop-blur-xl p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
-            <div className="p-8 bg-slate-900 text-white flex items-center justify-between shrink-0">
+            <div className="p-6 bg-slate-900 text-white flex items-center justify-between shrink-0">
               <div>
-                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-2">Status Update</p>
-                 <h3 className="text-xl font-black truncate">Mark as Filed</h3>
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-1">Status Update</p>
+                 <h3 className="text-lg font-black truncate">Mark Reply Filed</h3>
               </div>
-              <button onClick={() => setIsReplyModalOpen(false)} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+              <button onClick={() => setIsReplyModalOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"><svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6" /></svg></button>
             </div>
-            <div className="p-10 space-y-6">
-               <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Reply Date</label>
-                    <input type="date" value={replyDate} onChange={e => setReplyDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-2 block">Reply ARN / Reference No.</label>
-                    <input type="text" value={replyRefNo} onChange={e => setReplyRefNo(e.target.value)} placeholder="ARN or Ref Code..." className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl font-bold outlined-none focus:border-indigo-600 transition-all font-mono text-slate-900" />
-                  </div>
+            <div className="p-6 space-y-4">
+               <div>
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1 mb-1.5 block">Reply Date</label>
+                 <input type="date" value={replyDate} onChange={e => setReplyDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-600/10 transition-all font-mono" />
+               </div>
+               <div>
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1 mb-1.5 block">Reply ARN / Reference No.</label>
+                 <input type="text" value={replyRefNo} onChange={e => setReplyRefNo(e.target.value)} placeholder="ARN or Ref Code..." className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-600/10 transition-all text-slate-900" />
                </div>
             </div>
-            <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
-              <button onClick={() => setIsReplyModalOpen(false)} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
-              <button onClick={submitReply} className="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all">Confirm</button>
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+              <button onClick={() => setIsReplyModalOpen(false)} className="flex-1 py-2.5 bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-300 transition-all">Cancel</button>
+              <button onClick={submitReply} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-slate-900 transition-all">Confirm Reply</button>
             </div>
           </div>
         </div>
@@ -393,3 +579,4 @@ const NoticePending: React.FC = () => {
 };
 
 export default NoticePending;
+

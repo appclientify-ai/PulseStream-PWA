@@ -458,41 +458,41 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
         </div>
       ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-auto min-w-full compact-table compact-mode">
+          <table className="w-full text-left border-collapse table-fixed min-w-full it-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
                 <th 
                   onClick={() => handleSort('legalName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[22%]"
                 >
                   <div className="flex items-center gap-1">
                     Name
-                    <span className="text-[9px] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
                 <th 
                   onClick={() => handleSort('itr')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[8%] text-center"
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     ITR
-                    <span className="text-[9px] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Father Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Mobile No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[13%]">Father Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">Mobile No.</th>
                 <th 
                   onClick={() => handleSort('pan')}
-                  className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[13%]"
                 >
                   <div className="flex items-center gap-1">
                     PAN No.
-                    <span className="text-[9px] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">Address</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[13%]">Address</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[10%]">
                   <div className="flex items-center gap-1">
                     Status
                     <button 
@@ -505,7 +505,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 w-[100px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -518,57 +518,57 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                   return (
                     <tr 
                       key={client.id} 
-                      className={`transition-all group border-b border-slate-50 last:border-0 h-[30px] animate-in fade-in slide-in-from-bottom-1 duration-150 ${
+                      className={`transition-all group border-b border-slate-100 last:border-0 animate-in fade-in slide-in-from-bottom-1 duration-150 ${
                         isSelected ? 'bg-emerald-50/60' : 'hover:bg-emerald-50/10'
                       }`}
                     >
-                      <td className="px-2 py-[1px] font-black text-emerald-600 font-mono text-[11px] truncate">
+                      <td className="px-3 py-1.5 font-black text-emerald-600 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">
                         {(idx + 1).toString().padStart(2, '0')}
                       </td>
-                      <td className="px-2 py-[1px]">
-                         <p className="font-black text-slate-900 truncate text-[11.5px]" title={client.legalName}>{client.legalName}</p>
+                      <td className="px-3 py-1.5 w-[22%] truncate">
+                         <p className="font-semibold text-slate-900 truncate text-[var(--app-font-size)] leading-normal" title={client.legalName}>{client.legalName}</p>
                          {client.tradeName && (
-                            <p className="font-bold text-indigo-600 text-[9px] truncate leading-tight" title={client.tradeName}>
+                            <p className="trade-subtitle truncate leading-tight" title={client.tradeName}>
                               Trade: {client.tradeName}
                             </p>
                          )}
                       </td>
-                      <td className="px-2 py-[1px]">
-                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-1.5 py-0 rounded-md font-black text-[9px] tracking-wide">
+                      <td className="px-3 py-1.5 w-[8%] text-center truncate">
+                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md font-black text-[var(--app-font-size)] tracking-wide">
                             {client.itProfile?.itrFiled || 'N/A'}
                          </span>
                       </td>
-                      <td className="px-2 py-[1px]">
-                         <p className="font-bold text-slate-600 truncate text-[11px]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
+                      <td className="px-3 py-1.5 w-[13%] truncate">
+                         <p className="font-bold text-slate-600 truncate text-[var(--app-font-size)]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                       </td>
-                      <td className="px-2 py-[1px]">
-                         <p className="font-black text-slate-500 text-[11px]">{client.mobile || '---'}</p>
+                      <td className="px-3 py-1.5 w-[11%] truncate">
+                         <p className="font-black text-slate-500 text-[var(--app-font-size)]">{client.mobile || '---'}</p>
                       </td>
-                      <td className="px-2 py-[1px]">
+                      <td className="px-3 py-1.5 w-[13%] truncate">
                          <div className="flex items-center gap-1.5 group/pan">
-                            <span className="font-black font-mono tracking-widest text-[11px] text-emerald-600">{client.itProfile?.pan}</span>
+                            <span className="font-black font-mono tracking-wider text-[var(--app-font-size)] text-emerald-600 uppercase">{client.itProfile?.pan}</span>
                             <button 
                                onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
-                               className="h-5 w-5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-xs border border-emerald-100"
+                               className="h-5 w-5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-xs border border-emerald-100 shrink-0"
                                title="Copy PAN"
                             >
                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
                             </button>
                          </div>
                       </td>
-                      <td className="px-2 py-[1px] max-w-[150px]">
-                         <p className="font-bold text-slate-500 text-[10px] truncate" title={client.itProfile?.address}>
+                      <td className="px-3 py-1.5 w-[13%] truncate">
+                         <p className="font-bold text-slate-500 text-[var(--app-font-size)] truncate" title={client.itProfile?.address}>
                             {client.itProfile?.address || '---'}
                          </p>
                       </td>
-                      <td className="px-2 py-[1px]">
-                         <span className={`px-1.5 py-0 rounded-full text-[9px] font-black uppercase tracking-tighter border ${
+                      <td className="px-3 py-1.5 w-[10%]">
+                         <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-tighter border ${
                            client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                          }`}>
                            {client.status}
                          </span>
                       </td>
-                      <td className="px-2 py-[1px] text-right overflow-visible">
+                      <td className="px-3 py-1.5 text-right overflow-visible w-[100px]">
                          <div className="flex items-center justify-end gap-1">
                             <ITViewIcon 
                               client={client}

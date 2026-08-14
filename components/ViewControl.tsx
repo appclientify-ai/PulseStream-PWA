@@ -3,8 +3,6 @@ import React from 'react';
 export interface ViewControlProps {
   viewMode: 'table' | 'grid';
   onViewChange: (mode: 'table' | 'grid') => void;
-  compactMode?: boolean;
-  onCompactToggle?: () => void;
   extraActions?: React.ReactNode;
   className?: string;
 }
@@ -12,8 +10,6 @@ export interface ViewControlProps {
 export const ViewControl: React.FC<ViewControlProps> = ({
   viewMode,
   onViewChange,
-  compactMode,
-  onCompactToggle,
   extraActions,
   className = ''
 }) => {
@@ -52,25 +48,6 @@ export const ViewControl: React.FC<ViewControlProps> = ({
         </svg>
         <span>Grid</span>
       </button>
-
-      {/* Compact Density Toggle Button if provided */}
-      {onCompactToggle !== undefined && (
-        <button
-          type="button"
-          onClick={onCompactToggle}
-          className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 border ${
-            compactMode
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-              : 'bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
-          }`}
-          title="Toggle Compact Data Density"
-        >
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8h16M4 16h16" />
-          </svg>
-          <span className="hidden sm:inline">Compact</span>
-        </button>
-      )}
 
       {extraActions}
     </div>

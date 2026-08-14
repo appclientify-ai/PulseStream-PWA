@@ -5,6 +5,8 @@ import { api } from '../../../services/api';
 import Loader from '../../../components/Loader';
 import { formatDate } from '../../../dateUtils';
 import { Client, InvoiceRecord, PaymentRecord, InvoiceSettings } from '../../../types';
+import { TableFilter } from '../../../components/TableFilter';
+import { ViewControl } from '../../../components/ViewControl';
 import html2pdf from 'html2pdf.js';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
@@ -21,6 +23,10 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
   const { data: settings } = useModuleData<InvoiceSettings>('invoice_settings');
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [balanceFilter, setBalanceFilter] = useState<'All' | 'Due' | 'Settled' | 'Advance'>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [compactMode, setCompactMode] = useState(true);
+
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -150,12 +156,32 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
       .sort((a, b) => b.balance - a.balance); // Sort by balance descending
   }, [clients, validInvoices, validPayments]);
 
+  const ledgerStats = useMemo(() => {
+    return {
+      total: clientBalances.length,
+      due: clientBalances.filter(c => c.balance > 0).length,
+      settled: clientBalances.filter(c => c.balance === 0).length,
+      advance: clientBalances.filter(c => c.balance < 0).length,
+    };
+  }, [clientBalances]);
+
   const filteredBalances = useMemo(() => {
-    return clientBalances.filter(c => 
-      c.client.tradeName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      c.client.legalName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const s = searchTerm.toLowerCase();
+    let list = clientBalances.filter(c => 
+      c.client.tradeName?.toLowerCase().includes(s) || 
+      c.client.legalName?.toLowerCase().includes(s)
     );
-  }, [clientBalances, searchTerm]);
+
+    if (balanceFilter === 'Due') {
+      list = list.filter(c => c.balance > 0);
+    } else if (balanceFilter === 'Settled') {
+      list = list.filter(c => c.balance === 0);
+    } else if (balanceFilter === 'Advance') {
+      list = list.filter(c => c.balance < 0);
+    }
+
+    return list;
+  }, [clientBalances, searchTerm, balanceFilter]);
 
   const allEntries = useMemo(() => {
     if (!selectedClient) return [];
@@ -628,17 +654,58 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-full space-y-4 animate-in fade-in duration-500 w-full pb-4 min-h-0">
-      <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+      <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
+        
+        {/* Count Badges */}
+        <div className="flex items-center justify-between sm:justify-start gap-3 px-3 py-1.5 border-b md:border-b-0 md:border-r border-slate-100 shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
+          <button 
+            type="button" 
+            onClick={() => setBalanceFilter('All')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer ${balanceFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-100 text-slate-600'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>Total Clients</p>
+            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.total}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setBalanceFilter('Due')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Due' ? 'bg-rose-600 text-white shadow-sm' : 'hover:bg-rose-50 text-rose-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Due' ? 'text-rose-200' : 'text-rose-400'}`}>Pending (Due)</p>
+            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.due}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setBalanceFilter('Settled')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Settled' ? 'bg-emerald-600 text-white shadow-sm' : 'hover:bg-emerald-50 text-emerald-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Settled' ? 'text-emerald-200' : 'text-emerald-400'}`}>Settled</p>
+            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.settled}</p>
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setBalanceFilter('Advance')} 
+            className={`text-center px-3 py-1.5 rounded-xl transition-all cursor-pointer border-l border-slate-100 ${balanceFilter === 'Advance' ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-indigo-50 text-indigo-900'}`}
+          >
+            <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${balanceFilter === 'Advance' ? 'text-indigo-200' : 'text-indigo-400'}`}>Advance</p>
+            <p className="text-base md:text-lg font-black leading-none">{ledgerStats.advance}</p>
+          </button>
+        </div>
+
         <button 
           onClick={onBack} 
-          className="h-11 w-11 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0"
+          className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0 hidden lg:flex"
           title="Go Back"
         >
           <svg className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div className="relative flex-1">
+
+        <div className="relative flex-1 w-full">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -649,94 +716,211 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
             placeholder="Search client ledgers by trade or legal name..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-3 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2.5 pl-12 pr-4 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none" 
           />
         </div>
-        <button
-          onClick={handlePurgeDatabase}
-          className="h-11 px-4 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors shrink-0"
-          title="Purge deleted invoices and orphaned payments from database"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          <span className="hidden sm:inline">Clean Database</span>
-        </button>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <ViewControl 
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            compactMode={compactMode}
+            onCompactModeChange={setCompactMode}
+          />
+
+          <button
+            onClick={handlePurgeDatabase}
+            className="h-10 px-3 flex items-center gap-2 rounded-xl bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors shrink-0"
+            title="Purge deleted invoices and orphaned payments from database"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="hidden sm:inline">Clean DB</span>
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-x-auto no-scrollbar flex-1">
-          <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
-            <thead className="sticky top-0 z-20">
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Client Name</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Invoiced</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Paid</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Net Balance</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredBalances.length === 0 ? (
-                 <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
-                       No clients found with ledger activity.
-                    </td>
-                 </tr>
-              ) : filteredBalances.map(({ client, balance }) => {
-                 const isManual = client.id.startsWith('manual-');
-                 const clientInvoices = invoices.filter(i => {
-                   if (i.status === 'Cancelled') return false;
-                   if (isManual) return i.clientName === client.legalName;
-                   return i.clientId === client.id || 
-                     (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-                     (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
-                 });
-                 const clientPayments = payments.filter(p => {
-                   if (isManual) return p.clientName === client.legalName;
-                   return p.clientId === client.id || 
-                     (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
-                     (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
-                 });
-                 
-                 const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
-                 const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
-                 
-                 return (
-                  <tr key={client.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-black text-slate-900 truncate leading-tight text-sm">
-                        {client.tradeName || client.legalName}
-                        {isManual && <span className="ml-2 text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Manual Entry</span>}
-                      </div>
-                      {client.tradeName && <div className="font-bold text-[10px] text-slate-500 truncate leading-tight mt-1">{client.legalName}</div>}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-black text-xs text-slate-600">₹{totalInvoiced.toLocaleString()}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-black text-xs text-slate-600">₹{totalPaid.toLocaleString()}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className={`font-black text-sm ${balance > 0 ? 'text-rose-600' : balance < 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        ₹{Math.abs(balance).toLocaleString()} {balance > 0 ? 'Dr' : balance < 0 ? 'Cr' : ''}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pr-1">
+          {filteredBalances.length === 0 ? (
+            <div className="col-span-full bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+              No clients found with ledger activity.
+            </div>
+          ) : filteredBalances.map(({ client, balance }) => {
+            const isManual = client.id.startsWith('manual-');
+            const clientInvoices = invoices.filter(i => {
+              if (i.status === 'Cancelled') return false;
+              if (isManual) return i.clientName === client.legalName;
+              return i.clientId === client.id || 
+                (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+            });
+            const clientPayments = payments.filter(p => {
+              if (isManual) return p.clientName === client.legalName;
+              return p.clientId === client.id || 
+                (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+            });
+            
+            const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
+            const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
+
+            return (
+              <div key={client.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    {isManual ? (
+                      <span className="px-2.5 py-0.5 rounded text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 border border-amber-200">
+                        Manual Entry
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button 
-                        onClick={() => setSelectedClient(client)}
-                        className="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm mx-auto flex items-center justify-center gap-2"
-                      >
-                        <span>View Ledger</span>
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-                      </button>
-                    </td>
-                  </tr>
-                 );
-              })}
-            </tbody>
-          </table>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-200">
+                        Client Record
+                      </span>
+                    )}
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border ${
+                      balance > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                      balance < 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      'bg-slate-100 text-slate-600 border-slate-200'
+                    }`}>
+                      {balance > 0 ? 'Due (Dr)' : balance < 0 ? 'Advance (Cr)' : 'Settled'}
+                    </span>
+                  </div>
+
+                  <h4 className="font-black text-slate-900 text-sm uppercase leading-tight line-clamp-1">
+                    {client.tradeName || client.legalName}
+                  </h4>
+                  {client.tradeName && (
+                    <p className="text-[11px] font-bold text-slate-400 uppercase line-clamp-1">{client.legalName}</p>
+                  )}
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Invoiced</p>
+                      <p className="font-black text-slate-700 text-xs">₹{totalInvoiced.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Paid</p>
+                      <p className="font-black text-slate-700 text-xs">₹{totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div className="col-span-2 pt-2 border-t border-slate-50 flex justify-between items-center">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Balance</p>
+                      <p className={`font-black text-sm ${balance > 0 ? 'text-rose-600' : balance < 0 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                        ₹{Math.abs(balance).toLocaleString()} {balance > 0 ? 'Dr' : balance < 0 ? 'Cr' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setSelectedClient(client)}
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  <span>View Full Ledger</span>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
+            );
+          })}
         </div>
+      ) : (
+        <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="overflow-x-auto no-scrollbar flex-1">
+            <table className="w-full text-left border-collapse table-auto overflow-hidden min-w-full">
+              <thead className="sticky top-0 z-20">
+                <tr className="bg-slate-50 border-b border-slate-100">
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Client Name</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Invoiced</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Total Paid</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">
+                    <TableFilter
+                      label="Net Balance"
+                      isActive={balanceFilter !== 'All'}
+                      onClear={() => setBalanceFilter('All')}
+                    >
+                      <div className="py-1">
+                        {(['All', 'Due', 'Settled', 'Advance'] as const).map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => setBalanceFilter(b)}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-bold transition-colors ${
+                              balanceFilter === b ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            {b === 'Due' ? 'Pending (Due)' : b}
+                          </button>
+                        ))}
+                      </div>
+                    </TableFilter>
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredBalances.length === 0 ? (
+                   <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+                         No clients found with ledger activity.
+                      </td>
+                   </tr>
+                ) : filteredBalances.map(({ client, balance }) => {
+                   const isManual = client.id.startsWith('manual-');
+                   const clientInvoices = invoices.filter(i => {
+                     if (i.status === 'Cancelled') return false;
+                     if (isManual) return i.clientName === client.legalName;
+                     return i.clientId === client.id || 
+                       (i.clientName && i.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                       (i.clientTradeName && client.tradeName && i.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+                   });
+                   const clientPayments = payments.filter(p => {
+                     if (isManual) return p.clientName === client.legalName;
+                     return p.clientId === client.id || 
+                       (p.clientName && p.clientName.trim().toLowerCase() === client.legalName.trim().toLowerCase()) ||
+                       (p.clientTradeName && client.tradeName && p.clientTradeName.trim().toLowerCase() === client.tradeName.trim().toLowerCase());
+                   });
+                   
+                   const totalInvoiced = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
+                   const totalPaid = clientPayments.reduce((sum, p) => sum + p.amount, 0);
+                   
+                   return (
+                    <tr key={client.id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="font-black text-slate-900 truncate leading-tight text-sm">
+                          {client.tradeName || client.legalName}
+                          {isManual && <span className="ml-2 text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Manual Entry</span>}
+                        </div>
+                        {client.tradeName && <div className="font-bold text-[10px] text-slate-500 truncate leading-tight mt-1">{client.legalName}</div>}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-black text-xs text-slate-600">₹{totalInvoiced.toLocaleString()}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-black text-xs text-slate-600">₹{totalPaid.toLocaleString()}</span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`font-black text-sm ${balance > 0 ? 'text-rose-600' : balance < 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          ₹{Math.abs(balance).toLocaleString()} {balance > 0 ? 'Dr' : balance < 0 ? 'Cr' : ''}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button 
+                          onClick={() => setSelectedClient(client)}
+                          className="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm mx-auto flex items-center justify-center gap-2"
+                        >
+                          <span>View Ledger</span>
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                      </td>
+                    </tr>
+                   );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       
 
         {/* Delete Confirmation Modal */}
@@ -799,9 +983,8 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
             </div>
           </div>
         )}
-</div>
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 export default ClientLedger;

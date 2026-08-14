@@ -58,6 +58,7 @@
         --app-bg: #fcfdfe;
         --app-text: #0f172a;
         --app-card-bg: #ffffff;
+        --app-font-size: var(--ui-font-size, 16px);
       }
       html { font-size: var(--ui-font-size, 16px) !important; scroll-behavior: smooth; }
       body, #root {
@@ -253,6 +254,116 @@
       .traffic-red { background-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
       .traffic-amber { background-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
       .traffic-green { background-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+
+      /* GST & IT Portfolio Tables - Dynamic Font Sizing & Row Padding Customizer support */
+      .gst-portfolio-table,
+      .it-portfolio-table,
+      .itr-returns-table,
+      .tax-audit-table,
+      .monthly-returns-table,
+      .quarterly-returns-table,
+      .composition-returns-table,
+      .gstr4-returns-table,
+      .gstr9-returns-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: var(--app-font-size, 0.875rem) !important;
+      }
+      .gst-portfolio-table th,
+      .it-portfolio-table th,
+      .itr-returns-table th,
+      .tax-audit-table th,
+      .monthly-returns-table th,
+      .quarterly-returns-table th,
+      .composition-returns-table th,
+      .gstr4-returns-table th,
+      .gstr9-returns-table th {
+        font-size: var(--app-font-size, 0.875rem) !important;
+        font-weight: 700 !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        line-height: 1.5 !important;
+      }
+      .gst-portfolio-table td,
+      .it-portfolio-table td,
+      .itr-returns-table td,
+      .tax-audit-table td,
+      .monthly-returns-table td,
+      .quarterly-returns-table td,
+      .composition-returns-table td,
+      .gstr4-returns-table td,
+      .gstr9-returns-table td {
+        font-size: var(--app-font-size, 0.875rem) !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        line-height: 1.5 !important;
+      }
+      .gst-portfolio-table td p,
+      .gst-portfolio-table td span,
+      .gst-portfolio-table td div,
+      .it-portfolio-table td p,
+      .it-portfolio-table td span,
+      .it-portfolio-table td div,
+      .itr-returns-table td p,
+      .itr-returns-table td span,
+      .itr-returns-table td div,
+      .itr-returns-table td input,
+      .tax-audit-table td p,
+      .tax-audit-table td span,
+      .tax-audit-table td div,
+      .tax-audit-table td input,
+      .monthly-returns-table td p,
+      .monthly-returns-table td span,
+      .monthly-returns-table td div,
+      .monthly-returns-table td input,
+      .it-portfolio-table td input,
+      .quarterly-returns-table td p,
+      .quarterly-returns-table td span,
+      .quarterly-returns-table td div,
+      .quarterly-returns-table td input,
+      .composition-returns-table td p,
+      .composition-returns-table td span,
+      .composition-returns-table td div,
+      .composition-returns-table td input,
+      .gstr4-returns-table td p,
+      .gstr4-returns-table td span,
+      .gstr4-returns-table td div,
+      .gstr4-returns-table td input,
+      .gstr9-returns-table td p,
+      .gstr9-returns-table td span,
+      .gstr9-returns-table td div,
+      .gstr9-returns-table td input {
+        font-size: inherit !important;
+      }
+      /* Specifically, the Trade subtitle under IT Portfolio name should be slightly smaller for elegant hierarchy */
+      .it-portfolio-table td p.trade-subtitle,
+      .itr-returns-table td p.trade-subtitle,
+      .tax-audit-table td p.trade-subtitle {
+        font-size: 12px !important;
+        color: #4f46e5 !important; /* Elegant indigo-600 with good contrast */
+        font-weight: 500 !important;
+      }
+      /* Monthly & Quarterly returns legal name subtitle style and Father Name subtitle */
+      .itr-returns-table td p.father-subtitle {
+        font-size: 12px !important;
+        color: #64748b !important; /* text-slate-500 */
+        font-weight: 500 !important;
+      }
+      .monthly-returns-table td p.legal-subtitle,
+      .quarterly-returns-table td p.legal-subtitle,
+      .composition-returns-table td p.legal-subtitle,
+      .gstr4-returns-table td p.legal-subtitle,
+      .gstr9-returns-table td p.legal-subtitle,
+      .itr-returns-table td p.legal-subtitle,
+      .tax-audit-table td p.legal-subtitle {
+        font-size: 12px !important;
+        color: #64748b !important; /* text-slate-500 */
+        font-weight: 500 !important;
+      }
     </style>
   <script type="importmap">
 {

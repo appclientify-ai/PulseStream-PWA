@@ -19,7 +19,6 @@ const GSTPortfolioContent: React.FC = () => {
   const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [compactMode, setCompactMode] = useState(true);
   const [isUtilityOpen, setIsUtilityOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -284,8 +283,6 @@ const GSTPortfolioContent: React.FC = () => {
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
-            compactMode={compactMode} 
-            onCompactToggle={() => setCompactMode(!compactMode)} 
           />
 
           {/* Sector / Jurisdiction Filter Icon */}

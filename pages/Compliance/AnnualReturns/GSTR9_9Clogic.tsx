@@ -28,13 +28,18 @@ export const useGSTR9Logic = (
   const [dueDates, setDueDates] = useState<Record<string, string>>(initialDueDates || {});
   const [isDataLoaded, setIsDataLoaded] = useState(!!initialWatchlist || !!initialFilingData);
 
+  const initialWatchlistStr = JSON.stringify(initialWatchlist);
+  const initialConfigStr = JSON.stringify(initialConfig);
+  const initialFilingDataStr = JSON.stringify(initialFilingData);
+  const initialDueDatesStr = JSON.stringify(initialDueDates);
+
   useEffect(() => {
     if (initialWatchlist) setWatchlist(initialWatchlist);
     if (initialConfig) setConfig(initialConfig);
     if (initialFilingData) setFilingData(initialFilingData);
     if (initialDueDates) setDueDates(initialDueDates);
     if (initialWatchlist || initialFilingData) setIsDataLoaded(true);
-  }, [initialWatchlist, initialConfig, initialFilingData, initialDueDates]);
+  }, [initialWatchlistStr, initialConfigStr, initialFilingDataStr, initialDueDatesStr]);
 
   useEffect(() => {
     if (initialWatchlist || initialFilingData) return;

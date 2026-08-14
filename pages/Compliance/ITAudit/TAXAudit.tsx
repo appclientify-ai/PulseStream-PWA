@@ -8,10 +8,11 @@ import { useTaxAuditLogic, BSStatus } from './TAXAuditlogic';
 import { EditableRemark } from '../../../components/EditableRemark';
 import { YEARS } from '../GSTReturn/filinglogic/MonthlyFilingLogic';
 import GSTViewIcon from '../../../components/GSTViewIcon';
+import ITViewIcon from '../../../components/ITViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
-import { formatISOToDDMMYYYY } from '../../../dateUtils';
 import { ViewControl } from '../../../components/ViewControl';
+import { toast } from 'sonner';
 
 const TAXAudit: React.FC = () => {
   const queryClient = useQueryClient();
@@ -29,15 +30,12 @@ const TAXAudit: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState(getPreviousFY());
   
-  const { getGlobalDueDate } = useGlobalDueDates(selectedYear);
+  const { getGlobalDueDate, updateGlobalDueDate } = useGlobalDueDates(selectedYear);
   const auditTaxDueDate = getGlobalDueDate('audit_tax', 'Annual');
   
   const [bsFilter, setBsFilter] = useState<'All' | BSStatus>('All');
   const [auditFilter, setAuditFilter] = useState<'All' | 'Filed' | 'Pending'>('All');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [compactMode, setCompactMode] = useState(true);
-  const [isBsFilterOpen, setIsBsFilterOpen] = useState(false);
-  const [isAuditFilterOpen, setIsAuditFilterOpen] = useState(false);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addSearch, setAddSearch] = useState('');
@@ -54,6 +52,14 @@ const TAXAudit: React.FC = () => {
     pageData?.filingData,
     pageData?.dueDates
   );
+
+  const currentDueDate = auditTaxDueDate || getDueDate() || '';
+
+  const handleDueDateChange = async (val: string) => {
+    updateDueDate(val);
+    await updateGlobalDueDate('audit_tax', 'Annual', val);
+    toast.success('Due Date Updated Globally');
+  };
 
   const isClientsLoading = isPageLoading && !pageData;
 
@@ -150,10 +156,15 @@ const TAXAudit: React.FC = () => {
   };
 
   const stats = useMemo(() => {
+    const total = trackedClients.length;
+    const audited = trackedClients.filter(c => getStatus(c.id).auditFiled).length;
+    const bsReady = trackedClients.filter(c => getStatus(c.id).bsStatus === 'Ready').length;
+    const pendingAudit = total - audited;
     return {
-      total: trackedClients.length,
-      audited: trackedClients.filter(c => getStatus(c.id).auditFiled).length,
-      bsReady: trackedClients.filter(c => getStatus(c.id).bsStatus === 'Ready').length
+      total,
+      audited,
+      bsReady,
+      pendingAudit
     };
   }, [trackedClients, getStatus]);
 
@@ -165,35 +176,117 @@ const TAXAudit: React.FC = () => {
       {/* Mobile & Tablet Compact Stats Strip */}
       <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Portfolio: <strong className="font-black text-slate-900">{stats.total}</strong></span>
-          <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">B/S Ready: <strong className="font-black text-emerald-900">{stats.bsReady}</strong></span>
-          <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Audited: <strong className="font-black text-indigo-900">{stats.audited}</strong></span>
+          <button 
+            type="button"
+            onClick={() => { setBsFilter('All'); setAuditFilter('All'); }}
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+              bsFilter === 'All' && auditFilter === 'All' 
+                ? 'bg-slate-900 text-white font-black shadow-xs' 
+                : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+            }`}
+          >
+            Total: <strong className={bsFilter === 'All' && auditFilter === 'All' ? 'text-white' : 'font-black text-slate-900'}>{stats.total}</strong>
+          </button>
+          <button 
+            type="button"
+            onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }}
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+              bsFilter === 'Ready' 
+                ? 'bg-emerald-600 text-white font-black shadow-xs' 
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
+            B/S Ready: <strong className={bsFilter === 'Ready' ? 'text-white' : 'font-black text-emerald-900'}>{stats.bsReady}</strong>
+          </button>
+          <button 
+            type="button"
+            onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }}
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+              auditFilter === 'Filed' 
+                ? 'bg-indigo-600 text-white font-black shadow-xs' 
+                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+            }`}
+          >
+            Audited: <strong className={auditFilter === 'Filed' ? 'text-white' : 'font-black text-indigo-900'}>{stats.audited}</strong>
+          </button>
+          <button 
+            type="button"
+            onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }}
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+              auditFilter === 'Pending' 
+                ? 'bg-rose-600 text-white font-black shadow-xs' 
+                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            Pending: <strong className={auditFilter === 'Pending' ? 'text-white' : 'font-black text-rose-900'}>{stats.pendingAudit}</strong>
+          </button>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          {auditTaxDueDate && <span>Audit Due: <strong className="text-indigo-600">{formatISOToDDMMYYYY(auditTaxDueDate)}</strong></span>}
+          <span>Audit Due:</span>
+          <input 
+            type="date" 
+            value={currentDueDate} 
+            onChange={e => handleDueDateChange(e.target.value)} 
+            className="bg-transparent border-none p-0 text-[10px] font-black text-indigo-600 outline-none uppercase cursor-pointer" 
+          />
         </div>
       </div>
 
       {/* Header Search & Count Bar */}
       <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-slate-900 text-white shadow-sm flex items-center gap-1.5">
+          <button 
+            onClick={() => { setBsFilter('All'); setAuditFilter('All'); }} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              bsFilter === 'All' && auditFilter === 'All' 
+                ? 'bg-slate-900 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
             <span>Total</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
-          </span>
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 flex items-center gap-1.5">
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              bsFilter === 'All' && auditFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
+            }`}>{stats.total}</span>
+          </button>
+          <button 
+            onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              bsFilter === 'Ready' 
+                ? 'bg-emerald-600 text-white shadow-sm' 
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }`}
+          >
             <span>B/S Ready</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-xs font-black">{stats.bsReady}</span>
-          </span>
-          <span className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 flex items-center gap-1.5">
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              bsFilter === 'Ready' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+            }`}>{stats.bsReady}</span>
+          </button>
+          <button 
+            onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              auditFilter === 'Filed' 
+                ? 'bg-indigo-600 text-white shadow-sm' 
+                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+            }`}
+          >
             <span>Audited</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-indigo-200 text-xs font-black">{stats.audited}</span>
-          </span>
-          {auditTaxDueDate && (
-            <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 hidden xl:inline-block">
-              Due: <strong>{formatISOToDDMMYYYY(auditTaxDueDate)}</strong>
-            </span>
-          )}
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              auditFilter === 'Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
+            }`}>{stats.audited}</span>
+          </button>
+          <button 
+            onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }} 
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              auditFilter === 'Pending' 
+                ? 'bg-rose-600 text-white shadow-sm' 
+                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            <span>Pending</span>
+            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+              auditFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+            }`}>{stats.pendingAudit}</span>
+          </button>
         </div>
 
         <div className="relative flex-1 w-full group">
@@ -206,8 +299,6 @@ const TAXAudit: React.FC = () => {
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
-            compactMode={compactMode} 
-            onCompactToggle={() => setCompactMode(!compactMode)} 
           />
           <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
@@ -217,6 +308,16 @@ const TAXAudit: React.FC = () => {
             className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
+          {/* Dynamic & Editable Due Date Badge on the Far Right */}
+          <div className="flex items-center bg-slate-50 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 border border-slate-200 focus-within:border-indigo-300 transition-all" title="Audit Due Date (Click to Edit)">
+            <span className="text-[10px] font-black text-slate-400 uppercase">Due:</span>
+            <input 
+              type="date" 
+              value={currentDueDate} 
+              onChange={e => handleDueDateChange(e.target.value)} 
+              className="bg-transparent border-none p-0 text-[11px] font-black text-indigo-700 outline-none cursor-pointer uppercase" 
+            />
+          </div>
         </div>
       </div>
 
@@ -261,7 +362,7 @@ const TAXAudit: React.FC = () => {
                               className="p-0.5 text-slate-300 hover:text-indigo-600 transition-all inline-flex"
                               title="Copy Password"
                             >
-                              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-6 4h6m-6 4h6" /></svg>
+                              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m-6 4h6m-6 4h6" /></svg>
                             </button>
                           )}
                           <button 
@@ -278,14 +379,14 @@ const TAXAudit: React.FC = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 text-[10px]">
                     <span className="font-bold text-slate-500">Audit Status:</span>
-                    <span className={`px-2.5 py-0.5 rounded-md font-black uppercase ${status.audited ? 'bg-indigo-100 text-indigo-800' : status.bsReady ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
-                      {status.audited ? 'Audited' : status.bsReady ? 'B/S Ready' : 'In Progress'}
+                    <span className={`px-2.5 py-0.5 rounded-md font-black uppercase ${status.auditFiled ? 'bg-indigo-100 text-indigo-800' : status.bsStatus === 'Ready' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>
+                      {status.auditFiled ? 'Audited' : status.bsStatus === 'Ready' ? 'B/S Ready' : 'In Progress'}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                     <span className="text-[9px] font-black text-slate-400 uppercase">FY {selectedYear}</span>
-                    <button onClick={(e) => openActionsMenu(e, client)} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
+                    <button onClick={() => { setViewingClient(client); setEditCaName(status.caName || ''); setIsViewModalOpen(true); }} className="px-2.5 py-1 text-[10px] font-black uppercase bg-indigo-600 text-white rounded-lg shadow-xs hover:bg-slate-900 transition-colors">
                       Actions
                     </button>
                   </div>
@@ -295,80 +396,135 @@ const TAXAudit: React.FC = () => {
           </div>
         ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+          <table className="w-full text-left border-collapse table-fixed min-w-full tax-audit-table min-w-[1100px]">
             <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Entity Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">GSTIN / PAN</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Resp. CA</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[55px] text-center whitespace-nowrap">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[24%] min-w-[180px]">Entity Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[16%] min-w-[150px] whitespace-nowrap">GSTIN / PAN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[14%] min-w-[130px] whitespace-nowrap">Resp. CA</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[13%] min-w-[125px] text-center whitespace-nowrap">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Balance Sheet" isActive={bsFilter !== 'All'}>
                       {['All', 'Document Required', 'In progress', 'Ready', 'Pending'].map(f => (
-                        <button key={f} onClick={() => setBsFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
+                        <button key={f} onClick={() => setBsFilter(f as any)} className={`w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg ${bsFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'}`}>{f}</button>
                       ))}
                     </TableFilter>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[11%] min-w-[110px] text-center whitespace-nowrap">
                   <div className="flex justify-center flex-col items-center">
                     <TableFilter label="Audit Status" isActive={auditFilter !== 'All'}>
                       {['All', 'Filed', 'Pending'].map(f => (
-                        <button key={f} onClick={() => setAuditFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>
+                        <button key={f} onClick={() => setAuditFilter(f as any)} className={`w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg ${auditFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'}`}>{f}</button>
                       ))}
                     </TableFilter>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[14%] min-w-[180px]">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 text-right w-[95px] whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTracked.length === 0 ? (
-                <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No audit records tracked for FY {selectedYear}</td></tr>
+                <tr>
+                  <td colSpan={8} className="py-20 text-center text-slate-300 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                    No audit records tracked for FY {selectedYear}
+                  </td>
+                </tr>
               ) : (
                 filteredTracked.map((client, idx) => {
                   const status = getStatus(client.id);
-                  const bsColors = {
-                    'Ready': 'bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm',
+                  const bsColors: Record<string, string> = {
+                    'Ready': 'bg-emerald-100 text-emerald-700 border-emerald-200',
                     'In progress': 'bg-amber-100 text-amber-700 border-amber-200',
                     'Document Required': 'bg-blue-100 text-blue-700 border-blue-200',
                     'Pending': 'bg-slate-100 text-slate-400 border-slate-200'
                   };
                   return (
-                    <tr key={client.id} className="group hover:bg-slate-50/50 transition-all text-[12px]">
-                      <td className=" px-6 py-5 font-black text-slate-300">{(idx + 1).toString().padStart(2, '0')}</td>
-                      <td className=" px-6 py-5">
-                        <p className="font-black text-slate-900 leading-tight text-[12px]" title={client.tradeName}>{client.tradeName || '---'}</p>
-                        <p className="text-[9px] font-bold text-slate-400 tracking-tighter leading-tight" title={client.legalName}>{client.legalName || '---'}</p>
+                    <tr key={client.id} className="group hover:bg-indigo-50/10 transition-all border-b border-slate-100 last:border-0 animate-in fade-in slide-in-from-bottom-1 duration-150">
+                      <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-center whitespace-nowrap">
+                        {(idx + 1).toString().padStart(2, '0')}
                       </td>
-                      <td className=" px-6 py-5 font-black text-indigo-600 font-mono tracking-wider uppercase">
-                         {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}
+                      <td className="px-3 py-1.5 truncate min-w-[180px]" title={client.tradeName || client.legalName}>
+                        <div className="font-semibold text-slate-900 truncate text-[var(--app-font-size)] leading-normal">
+                          {client.tradeName || client.legalName || '---'}
+                        </div>
+                        {client.tradeName && client.legalName && (
+                          <p className="legal-subtitle truncate leading-tight font-medium text-slate-500" title={client.legalName}>
+                            Legal: {client.legalName}
+                          </p>
+                        )}
+                        {!client.tradeName && client.itProfile?.fatherName && (
+                          <p className="legal-subtitle truncate leading-tight font-medium text-slate-500" title={client.itProfile.fatherName}>
+                            Father: {client.itProfile.fatherName}
+                          </p>
+                        )}
                       </td>
-                      <td className=" px-6 py-5 font-black text-slate-600 truncate uppercase">
-                        {status.caName || '---'}
+                      <td className="px-3 py-1.5 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 group/id">
+                          <span className="font-semibold font-mono tracking-wider text-indigo-600 uppercase text-[var(--app-font-size)]">
+                            {client.gstProfile?.gstin || client.itProfile?.pan || 'N/A'}
+                          </span>
+                          {(client.gstProfile?.gstin || client.itProfile?.pan) && (
+                            <button 
+                              onClick={() => { 
+                                const identifier = client.gstProfile?.gstin || client.itProfile?.pan || '';
+                                navigator.clipboard.writeText(identifier); 
+                                toast.success('ID Copied!'); 
+                              }} 
+                              className="h-5 w-5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/id:opacity-100 shadow-xs border border-indigo-100 shrink-0" 
+                              title="Copy GSTIN / PAN"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                            </button>
+                          )}
+                        </div>
                       </td>
-                      <td className=" px-6 py-5 text-center">
-                        <button onClick={() => cycleBSStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${bsColors[status.bsStatus] || bsColors.Pending}`}>
-                          {status.bsStatus}
-                        </button>
+                      <td className="px-3 py-1.5 whitespace-nowrap">
+                        <span className="font-semibold text-slate-700 uppercase truncate text-[var(--app-font-size)]">
+                          {status.caName || '---'}
+                        </span>
                       </td>
-                      <td className=" px-6 py-5 text-center">
-                        <button onClick={() => toggleAuditStatus(client.id)} className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${status.auditFiled ? 'bg-indigo-600 text-white shadow-lg border-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'}`}>
-                          {status.auditFiled ? 'Filed' : 'Pending'}
-                        </button>
+                      <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center">
+                          <button 
+                            onClick={() => cycleBSStatus(client.id)} 
+                            className={`px-2.5 py-0.5 rounded-full font-black uppercase border transition-all text-center inline-flex items-center justify-center text-[var(--app-font-size)] cursor-pointer hover:shadow-xs ${bsColors[status.bsStatus] || bsColors.Pending}`}
+                          >
+                            {status.bsStatus}
+                          </button>
+                        </div>
                       </td>
-                      <td className=" px-6 py-5 truncate max-w-[180px]">
+                      <td className="px-3 py-1.5 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center">
+                          <button 
+                            onClick={() => toggleAuditStatus(client.id)} 
+                            className={`px-2.5 py-0.5 rounded-full font-black uppercase border transition-all text-center inline-flex items-center justify-center text-[var(--app-font-size)] cursor-pointer hover:shadow-xs ${
+                              status.auditFiled 
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                : 'bg-slate-100 text-slate-400 hover:bg-slate-200 border-slate-200'
+                            }`}
+                          >
+                            {status.auditFiled ? 'Filed' : 'Pending'}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-3 py-1.5 truncate min-w-[180px]">
                         <EditableRemark value={status.remark || ''} onSave={val => updateRemark(client.id, val)} />
                       </td>
-                      <td className="px-6 py-5 text-right ">
-                         <div className="flex items-center justify-end gap-1">
-                            {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleRefreshClients} />}
-                            <button onClick={() => { setViewingClient(client); setEditCaName(status.caName || ''); setIsViewModalOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
-                               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
-                            </button>
-                         </div>
+                      <td className="px-3 py-1.5 text-right whitespace-nowrap w-[95px] overflow-visible">
+                        <div className="flex items-center justify-end gap-1">
+                          {client.itProfile && <ITViewIcon client={client} onDataChange={handleRefreshClients} />}
+                          {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleRefreshClients} />}
+                          <button 
+                            onClick={() => { setViewingClient(client); setEditCaName(status.caName || ''); setIsViewModalOpen(true); }} 
+                            className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs" 
+                            title="Audit Details & CA Assignment"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7S1.732 16.057.458 10z" /></svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -460,9 +616,7 @@ const TAXAudit: React.FC = () => {
               </div>
            </div>
         </div>
-      )}
-
-      {/* ADD CLIENT MODAL */}
+      )}      {/* ADD CLIENT MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
            <div className="w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl p-8 flex flex-col space-y-6 animate-in zoom-in-95 flex flex-col gap-1">

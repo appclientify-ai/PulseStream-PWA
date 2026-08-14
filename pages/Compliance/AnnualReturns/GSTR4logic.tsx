@@ -20,11 +20,14 @@ export const useGSTR4Logic = (
   const [dueDates, setDueDates] = useState<Record<string, string>>(initialDates || {});
   const [isDataLoaded, setIsDataLoaded] = useState(!!initialData);
 
+  const initialDataStr = JSON.stringify(initialData);
+  const initialDatesStr = JSON.stringify(initialDates);
+
   useEffect(() => {
     if (initialData) setAllData(initialData);
     if (initialDates) setDueDates(initialDates);
     if (initialData || initialDates) setIsDataLoaded(true);
-  }, [initialData, initialDates]);
+  }, [initialDataStr, initialDatesStr]);
 
   useEffect(() => {
     if (initialData) return;

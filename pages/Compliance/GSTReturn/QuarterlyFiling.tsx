@@ -90,7 +90,6 @@ const QuarterlyFiling: React.FC = () => {
 
   const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
   const [selectedMonth, setSelectedMonth] = useState(getDefaultQuarterOption());
-  const [compactMode, setCompactMode] = useState(true);
   
   const currentQuarter = useMemo(() => {
     if (selectedMonth === 'All Quarters') return 'April-June (Q1)';
@@ -441,8 +440,6 @@ const QuarterlyFiling: React.FC = () => {
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
-            compactMode={compactMode} 
-            onCompactToggle={() => setCompactMode(!compactMode)} 
           />
 
           <SectorJurisdictionFilter
@@ -561,17 +558,17 @@ const QuarterlyFiling: React.FC = () => {
           </div>
         ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+          <table className={`w-full text-left border-collapse table-fixed min-w-full quarterly-returns-table ${isAllQuartersMode ? 'min-w-[1450px]' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 min-w-[150px]">Trade Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 min-w-[110px]">Mobile No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 min-w-[140px]">GSTIN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllQuartersMode ? 'w-[180px]' : 'w-[22%]'} min-w-[150px]`}>Trade Name</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllQuartersMode ? 'w-[110px]' : 'w-[11%]'}`}>Mobile No.</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllQuartersMode ? 'w-[145px]' : 'w-[14%]'}`}>GSTIN</th>
 
                 {isAllQuartersMode ? (
                   QUARTER_CONFIGS.map(q => (
-                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-1 py-2 text-[10px] font-black uppercase text-slate-800 border-b border-slate-200 text-center min-w-[125px]">
+                    <th key={q.key} className="sticky top-0 z-30 bg-slate-100 px-1 py-1 text-[var(--app-font-size)] font-black uppercase text-slate-800 border-b border-slate-200 text-center w-[125px] min-w-[125px]">
                       <div className="flex items-center justify-center gap-0.5">
                         <TableFilter 
                           label={q.label} 
@@ -581,9 +578,7 @@ const QuarterlyFiling: React.FC = () => {
                             <button 
                               key={f} 
                               onClick={() => setQuarterFilters(prev => ({ ...prev, [q.key]: f }))} 
-                              className={`w-full text-left px-2.5 py-1.5 text-[10px] font-black uppercase rounded-lg ${
-                                (quarterFilters[q.key] || 'All') === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-700'
-                              }`}
+                              className="w-full text-left px-2.5 py-1.5 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-700"
                             >
                               {f === 'R1 Filed' ? 'All IFF/R1 Filed' : f === 'R1 Pending' ? 'Any IFF/R1 Pend' : f}
                             </button>
@@ -594,34 +589,34 @@ const QuarterlyFiling: React.FC = () => {
                   ))
                 ) : (
                   <>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center min-w-[180px]">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[16%] min-w-[160px]">
                        <div className="flex justify-center flex-col items-center">
-                         <TableFilter label="IFF/R1 (Months)" isActive={r1Filter !== 'All'}>
-                           {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r1Filter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
-                         </TableFilter>
+                          <TableFilter label="IFF/R1 (Months)" isActive={r1Filter !== 'All'}>
+                            {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600">{f}</button>)}
+                          </TableFilter>
                        </div>
                     </th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[11%] min-w-[100px]">
                        <div className="flex justify-center flex-col items-center">
-                         <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
-                           {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${r3bFilter === f ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{f}</button>)}
-                         </TableFilter>
+                          <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
+                            {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600">{f}</button>)}
+                          </TableFilter>
                        </div>
                     </th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">User ID</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Password</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Remark</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%] min-w-[110px]">User ID</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%] min-w-[110px]">Password</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[10%] min-w-[120px]">Remark</th>
                   </>
                 )}
 
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right w-[90px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                 <tr>
-                  <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-0.5 px-2 uppercase text-[9px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                  <td colSpan={isAllQuartersMode ? 10 : 10} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-0.5 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
                 </tr>
                 {sectorClients.map((client, idx) => {
               const st = getStatus(client.id);
@@ -629,17 +624,17 @@ const QuarterlyFiling: React.FC = () => {
               const isEditingPass = editingPasswordId === client.id;
               const theme = getClientColorTheme(client);
               return (
-                <tr key={client.id} className={`transition-all border-b border-slate-100 last:border-0 animate-in fade-in slide-in-from-bottom-1 duration-150 ${isAllQuartersMode ? 'h-[44px]' : 'h-[30px]'} ${theme.rowClass}`}>
-                  <td className="px-2 py-[1px] font-black text-indigo-400 font-mono text-[11px] truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                  <td className="px-2 py-[1px] truncate max-w-[200px]" title={client.tradeName}>
-                    <div className={`truncate leading-tight text-[11.5px] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
-                    <div className={`text-[9px] truncate leading-tight ${theme.legalNameClass}`} title={client.legalName}>{client.legalName || '---'}</div>
+                <tr key={client.id} className={`transition-all border-b border-slate-100 last:border-0 animate-in fade-in slide-in-from-bottom-1 duration-150 ${theme.rowClass}`}>
+                  <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">{(idx + 1).toString().padStart(2, '0')}</td>
+                  <td className={`px-3 py-1.5 truncate ${isAllQuartersMode ? 'w-[180px]' : 'w-[22%]'} min-w-[150px]`} title={client.tradeName}>
+                    <div className={`truncate leading-tight font-semibold text-[var(--app-font-size)] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
+                    <p className="legal-subtitle truncate leading-normal" title={client.legalName}>{client.legalName || '---'}</p>
                   </td>
   
-                  <td className="px-2 py-[1px] font-black text-slate-500 text-[11px] truncate">{client.mobile || '---'}</td>
-                    <td className=" px-4 py-[2px]">
-                      <div className="flex items-center gap-2">
-                        <span className={`truncate ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
+                  <td className={`px-3 py-1.5 font-bold text-slate-600 text-[var(--app-font-size)] truncate ${isAllQuartersMode ? 'w-[110px]' : 'w-[11%]'}`}>{client.mobile || '---'}</td>
+                    <td className={`px-3 py-1.5 ${isAllQuartersMode ? 'w-[145px]' : 'w-[14%]'}`}>
+                      <div className="flex items-center gap-1.5 group/gstin">
+                        <span className={`truncate font-semibold tracking-wider font-mono text-[var(--app-font-size)] uppercase ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
                           <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -650,8 +645,8 @@ const QuarterlyFiling: React.FC = () => {
 
                     {isAllQuartersMode ? (
                       QUARTER_CONFIGS.map(qConfig => (
-                        <td key={qConfig.key} className="px-1 py-1 text-center border-x border-slate-100/80 align-middle">
-                          <div className="flex flex-col gap-0.5 text-[9px]">
+                        <td key={qConfig.key} className="px-1 py-1 text-center border-x border-slate-100/80 align-middle w-[125px] min-w-[125px]">
+                          <div className="flex flex-col gap-0.5 text-[10px]">
                             <div className="grid grid-cols-3 gap-0.5">
                               {qConfig.months.map(m => {
                                 const mPeriod = `${selectedYear}_${m.name}`;
@@ -661,10 +656,10 @@ const QuarterlyFiling: React.FC = () => {
                                     key={m.name}
                                     type="button"
                                     onClick={() => toggleStatus(client.id, 'r1', mPeriod)}
-                                    className={`px-0.5 py-0.5 rounded text-[8px] font-black uppercase border text-center transition-all ${
+                                    className={`px-0.5 py-0.5 rounded text-[9px] font-black uppercase border text-center transition-all ${
                                       mSt.r1
-                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
-                                        : 'bg-slate-50 text-slate-400 border-slate-200'
+                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200'
+                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                                     }`}
                                     title={`${m.name}: ${mSt.r1 ? 'Filed' : 'Pending'}`}
                                   >
@@ -681,16 +676,16 @@ const QuarterlyFiling: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => toggleStatus(client.id, 'r3b', r3bPeriod)}
-                                  className={`w-full px-1 py-0.5 rounded text-[8px] font-black uppercase border flex items-center justify-between gap-0.5 transition-all ${
+                                  className={`w-full px-1 py-0.5 rounded text-[9px] font-black uppercase border flex items-center justify-between gap-0.5 transition-all ${
                                     label3B === 'Filed'
-                                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200'
                                       : label3B === 'Challan'
-                                      ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                      : 'bg-slate-50 text-slate-400 border-slate-200'
+                                      ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'
+                                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                                   }`}
                                   title={`Toggle ${qConfig.key} GSTR-3B`}
                                 >
-                                  <span className="text-[7px] text-slate-400">3B</span>
+                                  <span className="text-[9px] text-slate-400">3B</span>
                                   <span>{label3B === 'Filed' ? 'Filed' : label3B === 'Challan' ? 'Chal' : 'Pend'}</span>
                                 </button>
                               );
@@ -700,7 +695,7 @@ const QuarterlyFiling: React.FC = () => {
                       ))
                     ) : (
                       <>
-                        <td className=" px-4 py-[2px] text-center">
+                        <td className="px-3 py-1.5 text-center w-[16%] min-w-[160px]">
                           {activeQuarterConfig ? (
                             <div className="flex flex-col gap-1 items-center justify-center">
                               <div className="flex items-center gap-1 justify-center flex-wrap">
@@ -711,8 +706,8 @@ const QuarterlyFiling: React.FC = () => {
                                     <button
                                       key={m.name}
                                       onClick={() => toggleStatus(client.id, 'r1', mPeriod)}
-                                      className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border flex items-center gap-1 transition-all ${
-                                        mSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'
+                                      className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center gap-1 transition-all ${
+                                        mSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
                                       }`}
                                       title={`${m.name} (${m.type}): ${mSt.r1 ? 'Filed' : 'Pending'}`}
                                     >
@@ -723,20 +718,20 @@ const QuarterlyFiling: React.FC = () => {
                               </div>
                             </div>
                           ) : (
-                            <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
+                            <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
                                {st.r1 ? 'Filed' : 'Pending'}
-                               <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                               <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                           )}
                         </td>
-                        <td className=" px-4 py-[2px] text-center">
+                        <td className="px-3 py-1.5 text-center w-[11%] min-w-[100px]">
                            {activeQuarterConfig ? (
                              (() => {
                                const r3bPeriod = `${selectedYear}_${activeQuarterConfig.r3bMonth}`;
                                const st3B = getStatus(client.id, r3bPeriod);
                                const label3B = getStatusLabel(st3B.r3b);
                                return (
-                                 <button onClick={() => toggleStatus(client.id, 'r3b', r3bPeriod)} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                                 <button onClick={() => toggleStatus(client.id, 'r3b', r3bPeriod)} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
                                     label3B === 'Filed' 
                                       ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                                       : label3B === 'Challan' 
@@ -744,12 +739,12 @@ const QuarterlyFiling: React.FC = () => {
                                         : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
                                  }`} title={`Click to cycle ${activeQuarterConfig.key} 3B`}>
                                     {label3B}
-                                    <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                  </button>
                                );
                              })()
                            ) : isQuarterEnd ? (
-                             <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                             <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
                                 r3bStatus === 'Filed' 
                                   ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                                   : r3bStatus === 'Challan' 
@@ -757,24 +752,24 @@ const QuarterlyFiling: React.FC = () => {
                                     : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
                              }`} title="Click to cycle: Pending → Challan → Filed">
                                 {r3bStatus}
-                                <svg className="h-2.5 w-2.5 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                              </button>
-                           ) : <span className="text-[10px] font-black text-slate-300">N/A</span>}
+                           ) : <span className="text-[var(--app-font-size)] font-black text-slate-300">N/A</span>}
                         </td>
-                        <td className=" px-4 py-[2px] font-black text-slate-700 text-[12px] truncate">{client.gstProfile?.username}</td>
-                        <td className=" px-4 py-[2px]">
+                        <td className="px-3 py-1.5 font-semibold text-slate-700 text-[var(--app-font-size)] truncate w-[11%] min-w-[110px]">{client.gstProfile?.username || '---'}</td>
+                        <td className="px-3 py-1.5 w-[11%] min-w-[110px]">
                            <div className="flex items-center gap-2 group/pass">
                               {isEditingPass ? (
-                                <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[11px] font-black w-24 outline-none" />
+                                <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[var(--app-font-size)] font-semibold w-24 outline-none" />
                               ) : (
                                 <>
-                                   <span className="font-black text-indigo-400 text-[12px] truncate">{client.gstProfile?.password}</span>
+                                   <span className="font-semibold text-indigo-500 text-[var(--app-font-size)] truncate">{client.gstProfile?.password || '---'}</span>
                                    <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                                    {client.gstProfile?.username && (
                                      <button onClick={() => { 
                                        navigator.clipboard.writeText(client.gstProfile?.username || ''); 
                                        window.open('https://services.gst.gov.in/services/login', '_blank'); 
-                                     }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
+                                      }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                      </button>
                                    )}
@@ -782,12 +777,12 @@ const QuarterlyFiling: React.FC = () => {
                               )}
                            </div>
                         </td>
-                        <td className=" px-4 py-[2px] truncate max-w-[150px]">
+                        <td className="px-3 py-1.5 truncate max-w-[150px] w-[10%] min-w-[120px]">
                            <EditableRemark value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                          </td>
                       </>
                     )}
-                     <td className=" px-4 py-[2px] text-right">
+                     <td className="px-3 py-1.5 text-right w-[90px]">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
                           <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">

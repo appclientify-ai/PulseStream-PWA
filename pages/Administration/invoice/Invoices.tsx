@@ -239,128 +239,306 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
     }
   };
 
+  const invoiceStats = useMemo(() => {
+    return {
+      total: invoices.length,
+      active: invoices.filter(i => i.status !== 'Paid' && i.status !== 'Cancelled').length,
+      sent: invoices.filter(i => i.status === 'Sent').length,
+      paid: invoices.filter(i => i.status === 'Paid').length,
+    };
+  }, [invoices]);
+
   if (isLoading) return <Loader />;
 
   return (
-    <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
+    <div className="flex flex-col h-full space-y-3 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex items-center justify-between w-full md:hidden gap-1 px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Total Invoices: <strong className="font-black text-slate-900">{invoices.length}</strong></span>
-        <span className="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight">Active Bills: <strong className="font-black text-indigo-900">{invoices.filter(i => i.status !== 'Paid').length}</strong></span>
+      {/* Interactive Metric Count Badges Header */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
+        <button
+          type="button"
+          onClick={() => setStatusFilter('All')}
+          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'All'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900/20'
+              : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50 shadow-xs'
+          }`}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-wider ${statusFilter === 'All' ? 'text-slate-300' : 'text-slate-400'}`}>
+            Total Invoices
+          </div>
+          <div className="text-xl font-black mt-0.5">{invoiceStats.total}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter('Active')}
+          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'Active'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20'
+              : 'bg-white text-slate-800 border-slate-200 hover:bg-amber-50/50 shadow-xs'
+          }`}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-wider ${statusFilter === 'Active' ? 'text-amber-100' : 'text-amber-600'}`}>
+            Pending / Active
+          </div>
+          <div className="text-xl font-black mt-0.5">{invoiceStats.active}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter('Sent')}
+          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'Sent'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-600/20'
+              : 'bg-white text-slate-800 border-slate-200 hover:bg-blue-50/50 shadow-xs'
+          }`}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-wider ${statusFilter === 'Sent' ? 'text-blue-100' : 'text-blue-600'}`}>
+            Invoices Sent
+          </div>
+          <div className="text-xl font-black mt-0.5">{invoiceStats.sent}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter('Paid')}
+          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+            statusFilter === 'Paid'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20'
+              : 'bg-white text-slate-800 border-slate-200 hover:bg-emerald-50/50 shadow-xs'
+          }`}
+        >
+          <div className={`text-[10px] font-black uppercase tracking-wider ${statusFilter === 'Paid' ? 'text-emerald-100' : 'text-emerald-600'}`}>
+            Payments Received
+          </div>
+          <div className="text-xl font-black mt-0.5">{invoiceStats.paid}</div>
+        </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-6 px-4 border-r border-slate-100 hidden md:flex shrink-0">
-          <div className="text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Active Bills</p>
-            <p className="text-xl font-black text-slate-900 leading-none">{invoices.filter(i => i.status !== 'Paid').length}</p>
-          </div>
-        </div>
+      {/* Control Bar: Search & Actions */}
+      <div className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
         <div className="relative flex-1 group w-full">
-          <input type="text" placeholder="Search by Invoice No or Client..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <input 
+            type="text" 
+            placeholder="Search by Invoice No or Client..." 
+            value={search} 
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-3 font-medium text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
-        <div className="flex gap-1.5 shrink-0 flex-wrap">
+
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap w-full sm:w-auto justify-end">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
             compactMode={compactMode} 
             onCompactToggle={() => setCompactMode(!compactMode)} 
           />
-          <button onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} className="bg-slate-900 text-white font-black uppercase tracking-widest px-4 h-10 landscape:h-8 rounded-xl hover:bg-slate-800 transition-all text-[10px] flex items-center gap-1.5 shrink-0 shadow-sm">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            Ledger
+          <button 
+            type="button"
+            onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} 
+            className="bg-slate-900 text-white font-bold uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-800 transition-all text-xs flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Ledger</span>
           </button>
-          <button onClick={() => onViewChange?.('admin-invoicesetting')} className="bg-slate-100 text-slate-600 font-black uppercase tracking-widest px-3 h-10 landscape:h-8 rounded-xl hover:bg-slate-200 transition-all text-[10px] flex items-center gap-1.5 shrink-0">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Settings
+          <button 
+            type="button"
+            onClick={() => onViewChange?.('admin-invoicesetting')} 
+            className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-200 transition-all text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Settings</span>
           </button>
-          <button onClick={() => onViewChange?.('admin-add-invoice')} className="bg-indigo-600 text-white font-black uppercase tracking-widest px-5 h-10 landscape:h-8 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center gap-1.5 shrink-0">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            Create
+          <button 
+            type="button"
+            onClick={() => onViewChange?.('admin-add-invoice')} 
+            className="bg-indigo-600 text-white font-bold uppercase tracking-wider px-4 h-9 rounded-xl shadow-xs hover:bg-indigo-700 transition-all text-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Create</span>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
-            <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Inv. No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Date</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Client (Trade/Legal)</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200">Amount</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-center">
-    <div className="flex justify-center flex-col items-center">
-      <TableFilter label="Status" isActive={statusFilter !== 'All'}>
-         {['All', 'Active', 'Draft', 'Sent', 'Partial', 'Paid', 'Cancelled'].map(st => (
-           <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-2 text-[10px] font-black uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
-         ))}
-      </TableFilter>
-    </div>
-  </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-[5.5px] py-2.5 text-[12px] font-bold uppercase tracking-widest text-slate-900 border-b border-slate-200 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredInvoices.map((inv, idx) => (
-                <tr key={inv.id} className="hover:bg-slate-50/50 transition-all group">
-                  <td className=" px-6 py-6 text-slate-300 font-black text-[12px]">{idx + 1}</td>
-                  <td className=" px-6 py-6 font-black text-slate-900 text-[12px] uppercase">{inv.invoiceNo}</td>
-                  <td className=" px-6 py-6 font-bold text-slate-500 text-[11px] uppercase">{formatDate(inv.date)}</td>
-                  <td className=" px-6 py-6 font-black text-slate-700 text-[12px] uppercase truncate">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
-                  <td className=" px-6 py-6 font-black text-indigo-600 text-[12px]">
-                     ₹{(inv.totalAmount || 0).toLocaleString()}
-                     {inv.status === 'Partial' && inv.balanceDue && (
-                       <div className="text-[9px] text-amber-500 mt-1 uppercase tracking-widest font-black">Due: ₹{(inv.balanceDue || 0).toLocaleString()}</div>
-                     )}
-                  </td>
-                  <td className=" px-6 py-6 text-center">
-                     <select
-                       value={inv.status}
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         if (val === 'Paid' || val === 'Partial') {
-                           setSettlingInvoice(inv);
-                           setPayAmount((inv.totalAmount || 0) - (inv.amountPaid || 0));
-                         } else {
-                           const updated = { ...inv, status: val as any };
-                           updateInvoiceMutation.mutate(updated);
-                         }
-                       }}
-                       className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${inv.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-100' : inv.status === 'Partial' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}
-                     >
-                       <option value="Draft">Draft</option>
-                       <option value="Sent">Invoice Sent</option>
-                       <option value="Partial">Partially Paid</option>
-                       <option value="Paid">Payment Received</option>
-                     </select>
-                  </td>
-                  <td className="px-6 py-6 text-right ">
-                     <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => handleEdit(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center shadow-sm" title="Edit Invoice">
-                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
-                        <button onClick={() => setPreviewInvoice(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm" title="Preview Invoice">
-                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        </button>
-                        <button onClick={() => handleWhatsApp(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm" title="Share on WhatsApp">
-                           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                        </button>
-                        <button onClick={() => handleDelete(inv.id)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm" title="Delete Invoice">
-                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                     </div>
-                  </td>
+      {/* Main Container: Table or Grid */}
+      <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+        {viewMode === 'grid' ? (
+          <div className="overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1">
+            {filteredInvoices.length === 0 ? (
+              <div className="col-span-full text-center py-12 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                No invoices found.
+              </div>
+            ) : (
+              filteredInvoices.map((inv, idx) => (
+                <div key={inv.id} className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition-all shadow-xs flex flex-col justify-between space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice #{idx + 1}</div>
+                      <h4 className="text-sm font-black text-slate-900 tracking-tight uppercase mt-0.5">{inv.invoiceNo}</h4>
+                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">{formatDate(inv.date)}</p>
+                    </div>
+                    <span className="text-base font-black text-indigo-600">
+                      ₹{(inv.totalAmount || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div className="text-xs font-bold text-slate-800 truncate">
+                      {inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}
+                    </div>
+                    {inv.status === 'Partial' && inv.balanceDue && (
+                      <div className="text-[10px] font-bold text-amber-600 mt-0.5">Due: ₹{inv.balanceDue.toLocaleString()}</div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                    <select
+                      value={inv.status}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Paid' || val === 'Partial') {
+                          setSettlingInvoice(inv);
+                          setPayAmount((inv.totalAmount || 0) - (inv.amountPaid || 0));
+                        } else {
+                          const updated = { ...inv, status: val as any };
+                          updateInvoiceMutation.mutate(updated);
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
+                        inv.status === 'Sent' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                        inv.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                        inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        'bg-slate-50 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      <option value="Draft">Draft</option>
+                      <option value="Sent">Sent</option>
+                      <option value="Partial">Partial</option>
+                      <option value="Paid">Paid</option>
+                    </select>
+
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleEdit(inv)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 flex items-center justify-center cursor-pointer" title="Edit">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      </button>
+                      <button onClick={() => setPreviewInvoice(inv)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-indigo-600 flex items-center justify-center cursor-pointer" title="Preview">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      </button>
+                      <button onClick={() => handleWhatsApp(inv)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-emerald-600 flex items-center justify-center cursor-pointer" title="WhatsApp">
+                        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                      </button>
+                      <button onClick={() => handleDelete(inv.id)} className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-red-600 flex items-center justify-center cursor-pointer" title="Delete">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
+            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+              <thead className="sticky top-0 z-30 bg-slate-100">
+                <tr className="bg-slate-50 border-b border-slate-200 shadow-2xs">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-12">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Inv. No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[110px]">Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Client (Trade/Legal)</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Amount</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[120px]">
+                    <div className="flex justify-center flex-col items-center">
+                      <TableFilter label="Status" isActive={statusFilter !== 'All'}>
+                        {['All', 'Active', 'Draft', 'Sent', 'Partial', 'Paid', 'Cancelled'].map(st => (
+                          <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-1.5 text-xs font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                        ))}
+                      </TableFilter>
+                    </div>
+                  </th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[140px]">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredInvoices.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-8 text-center text-slate-400 font-bold uppercase tracking-wider">
+                      No invoices found matching criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredInvoices.map((inv, idx) => (
+                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-all group">
+                      <td className="px-3 py-2.5 text-slate-400 font-bold text-xs">{idx + 1}</td>
+                      <td className="px-3 py-2.5 font-bold text-slate-900 text-xs uppercase font-mono">{inv.invoiceNo}</td>
+                      <td className="px-3 py-2.5 font-medium text-slate-600 text-xs whitespace-nowrap">{formatDate(inv.date)}</td>
+                      <td className="px-3 py-2.5 font-semibold text-slate-800 text-xs truncate max-w-[260px]">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
+                      <td className="px-3 py-2.5 font-bold text-indigo-700 text-xs whitespace-nowrap">
+                        ₹{(inv.totalAmount || 0).toLocaleString()}
+                        {inv.status === 'Partial' && inv.balanceDue && (
+                          <div className="text-[10px] text-amber-600 font-bold">Due: ₹{(inv.balanceDue || 0).toLocaleString()}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                        <select
+                          value={inv.status}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'Paid' || val === 'Partial') {
+                              setSettlingInvoice(inv);
+                              setPayAmount((inv.totalAmount || 0) - (inv.amountPaid || 0));
+                            } else {
+                              const updated = { ...inv, status: val as any };
+                              updateInvoiceMutation.mutate(updated);
+                            }
+                          }}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
+                            inv.status === 'Sent' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                            inv.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
+                            inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            'bg-slate-50 text-slate-600 border-slate-200'
+                          }`}
+                        >
+                          <option value="Draft">Draft</option>
+                          <option value="Sent">Sent</option>
+                          <option value="Partial">Partial</option>
+                          <option value="Paid">Paid</option>
+                        </select>
+                      </td>
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button onClick={() => handleEdit(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-blue-600 transition-all flex items-center justify-center shadow-2xs cursor-pointer" title="Edit Invoice">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          </button>
+                          <button onClick={() => setPreviewInvoice(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-indigo-600 transition-all flex items-center justify-center shadow-2xs cursor-pointer" title="Preview Invoice">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          </button>
+                          <button onClick={() => handleWhatsApp(inv)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-emerald-600 transition-all flex items-center justify-center shadow-2xs cursor-pointer" title="Share on WhatsApp">
+                            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.94 3.659 1.437 5.634 1.437h.005c6.558 0 11.894-5.335 11.897-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                          </button>
+                          <button onClick={() => handleDelete(inv.id)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:text-red-600 transition-all flex items-center justify-center shadow-2xs cursor-pointer" title="Delete Invoice">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       

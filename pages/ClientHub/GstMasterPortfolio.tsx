@@ -505,39 +505,39 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
         </div>
       ) : (
         <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-full compact-table compact-mode">
+          <table className="w-full text-left border-collapse table-fixed min-w-full gst-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
                 <th 
                   onClick={() => handleSort('tradeName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
                 >
                   <div className="flex items-center gap-1">
                     Trade Name
-                    <span className="text-[11px] text-indigo-600">{sortField === 'tradeName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-indigo-600">{sortField === 'tradeName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
                 <th 
                   onClick={() => handleSort('legalName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
                 >
                   <div className="flex items-center gap-1">
                     Legal Name
-                    <span className="text-[11px] text-indigo-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-indigo-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[12%]">Mobile No</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[12%]">Mobile No</th>
                 <th 
                   onClick={() => handleSort('gstin')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[16%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[16%]"
                 >
                   <div className="flex items-center gap-1">
                     GSTIN
-                    <span className="text-[11px] text-indigo-600">{sortField === 'gstin' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-indigo-600">{sortField === 'gstin' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
                   <div className="flex items-center gap-1">
                     Status
                     <button 
@@ -550,7 +550,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
                   <div className="flex items-center gap-1">
                     Relationship
                     <button 
@@ -563,7 +563,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[14px] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 w-[100px]">Actions</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 w-[100px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -588,21 +588,21 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                             isSelected ? 'bg-indigo-50/50' : theme.rowClass
                           }`}
                         >
-                          <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-[13px] w-[50px] text-center truncate">
+                          <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">
                             {(idx + 1).toString().padStart(2, '0')}
                           </td>
                           <td className="px-3 py-1.5 w-[24%] truncate">
-                             <p className={`truncate text-[13.5px] font-semibold leading-normal ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
+                             <p className={`truncate text-[var(--app-font-size)] font-semibold leading-normal ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
                           </td>
                           <td className="px-3 py-1.5 w-[24%] truncate">
-                             <p className={`truncate text-[13.5px] font-medium leading-normal ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
+                             <p className={`truncate text-[var(--app-font-size)] font-medium leading-normal ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
                           </td>
                           <td className="px-3 py-1.5 w-[12%] truncate">
-                             <p className="font-bold text-slate-600 text-[13px]">{client.mobile || '---'}</p>
+                             <p className="font-bold text-slate-600 text-[var(--app-font-size)]">{client.mobile || '---'}</p>
                           </td>
                           <td className="px-3 py-1.5 w-[16%] truncate">
                              <div className="flex items-center gap-1.5 group/gstin">
-                                <span className={`tracking-wider uppercase text-[13px] font-semibold font-mono ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
+                                <span className={`tracking-wider uppercase text-[var(--app-font-size)] font-semibold font-mono ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                                 <button 
                                    onClick={() => { 
                                      if (navigator.clipboard) {
@@ -617,12 +617,12 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                              </div>
                           </td>
                           <td className="px-3 py-1.5 w-[11%]">
-                             <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${theme.gstStatusBadgeClass}`}>
+                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-wider ${theme.gstStatusBadgeClass}`}>
                                {client.gstProfile?.gstStatus === 'Closed' ? 'Cancelled' : (client.gstProfile?.gstStatus || 'Active')}
                              </span>
                           </td>
                           <td className="px-3 py-1.5 w-[11%]">
-                             <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${theme.clientStatusBadgeClass}`}>
+                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-wider ${theme.clientStatusBadgeClass}`}>
                                {client.status}
                              </span>
                           </td>
