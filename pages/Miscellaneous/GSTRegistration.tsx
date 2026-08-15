@@ -214,7 +214,9 @@ const GSTRegistration: React.FC = () => {
         {viewMode === 'grid' ? (
           <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredRegistrations.length === 0 ? (
-              <div className="col-span-full py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No applications found in tracking</div>
+              <div className="col-span-full py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                No applications found in tracking
+              </div>
             ) : (
               filteredRegistrations.map((rec, idx) => (
                 <div key={rec.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3 relative">
@@ -308,7 +310,11 @@ const GSTRegistration: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRegistrations.length === 0 ? (
-                  <tr><td colSpan={8} className=" py-32 text-center text-slate-300 font-black uppercase tracking-[0.2em] text-sm">No applications found in tracking</td></tr>
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                      No applications found in tracking
+                    </td>
+                  </tr>
                 ) : (
                   filteredRegistrations.map((rec, idx) => (
                     <tr key={rec.id} className="hover:bg-slate-50/50 transition-all group text-[var(--app-font-size)] border-b border-slate-100">

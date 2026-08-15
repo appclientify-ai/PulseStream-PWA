@@ -258,14 +258,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         <button
           type="button"
           onClick={() => setStatusFilter('All')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
             statusFilter === 'All'
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
               : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
           }`}
         >
           <span>Total Invoices</span>
-          <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+          <span className={`px-2 py-0.5 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
             statusFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
           }`}>
             {invoiceStats.total}
@@ -275,14 +275,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         <button
           type="button"
           onClick={() => setStatusFilter('Active')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
             statusFilter === 'Active'
               ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
               : 'bg-amber-50/70 text-amber-800 border-amber-200 hover:bg-amber-100/80'
           }`}
         >
           <span>Pending / Active</span>
-          <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+          <span className={`px-2 py-0.5 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
             statusFilter === 'Active' ? 'bg-amber-500 text-white' : 'bg-amber-200/80 text-amber-900'
           }`}>
             {invoiceStats.active}
@@ -292,14 +292,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         <button
           type="button"
           onClick={() => setStatusFilter('Sent')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
             statusFilter === 'Sent'
               ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
               : 'bg-blue-50/70 text-blue-800 border-blue-200 hover:bg-blue-100/80'
           }`}
         >
           <span>Invoices Sent</span>
-          <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+          <span className={`px-2 py-0.5 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
             statusFilter === 'Sent' ? 'bg-blue-500 text-white' : 'bg-blue-200/80 text-blue-900'
           }`}>
             {invoiceStats.sent}
@@ -309,14 +309,14 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         <button
           type="button"
           onClick={() => setStatusFilter('Paid')}
-          className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
             statusFilter === 'Paid'
               ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
               : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
           }`}
         >
           <span>Payments Received</span>
-          <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+          <span className={`px-2 py-0.5 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
             statusFilter === 'Paid' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 text-emerald-900'
           }`}>
             {invoiceStats.paid}
@@ -332,7 +332,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
             placeholder="Search by Invoice No or Client..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-3 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-3 font-bold text-[var(--app-font-size)] text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -349,7 +349,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           <button 
             type="button"
             onClick={() => onViewChange?.('admin-client-ledger', 'admin-invoices')} 
-            className="bg-slate-900 text-white font-black uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-800 transition-all text-xs md:text-sm flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+            className="bg-slate-900 text-white font-bold uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-800 transition-all text-[var(--app-font-size)] flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -359,7 +359,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           <button 
             type="button"
             onClick={() => onViewChange?.('admin-invoicesetting')} 
-            className="bg-slate-100 text-slate-700 font-black uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-200 transition-all text-xs md:text-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider px-3 h-9 rounded-xl hover:bg-slate-200 transition-all text-[var(--app-font-size)] flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -370,7 +370,7 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
           <button 
             type="button"
             onClick={() => onViewChange?.('admin-add-invoice')} 
-            className="bg-indigo-600 text-white font-black uppercase tracking-wider px-4 h-9 rounded-xl shadow-xs hover:bg-indigo-700 transition-all text-xs md:text-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+            className="bg-indigo-600 text-white font-bold uppercase tracking-wider px-4 h-9 rounded-xl shadow-xs hover:bg-indigo-700 transition-all text-[var(--app-font-size)] flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
@@ -385,29 +385,34 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
         {viewMode === 'grid' ? (
           <div className="overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 flex-1">
             {filteredInvoices.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-slate-400 font-bold text-xs uppercase tracking-wider">
-                No invoices found.
+              <div className="col-span-full text-center py-8 text-slate-400 font-bold text-[var(--app-font-size)] uppercase tracking-wider">
+                No invoices found matching criteria.
               </div>
             ) : (
               filteredInvoices.map((inv, idx) => (
                 <div key={inv.id} className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition-all shadow-xs flex flex-col justify-between space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invoice #{idx + 1}</div>
-                      <h4 className="text-sm font-black text-slate-900 tracking-tight uppercase mt-0.5">{inv.invoiceNo}</h4>
-                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">{formatDate(inv.date)}</p>
+                      <div className="text-[calc(var(--app-font-size)-2px)] font-bold text-slate-400 uppercase tracking-wider">Invoice #{idx + 1}</div>
+                      <h4 className="text-[var(--app-font-size)] font-bold text-slate-800 tracking-tight uppercase mt-0.5">{inv.invoiceNo}</h4>
+                      <p className="text-[calc(var(--app-font-size)-1.5px)] font-normal text-slate-500 mt-0.5">{formatDate(inv.date)}</p>
                     </div>
-                    <span className="text-base font-black text-indigo-600">
+                    <span className="text-[calc(var(--app-font-size)+2px)] font-bold text-indigo-600">
                       ₹{(inv.totalAmount || 0).toLocaleString()}
                     </span>
                   </div>
 
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <div className="text-xs font-bold text-slate-800 truncate">
-                      {inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}
+                    <div className="text-[var(--app-font-size)] font-bold text-slate-800 truncate">
+                      {inv.clientTradeName || inv.clientName}
                     </div>
+                    {inv.clientTradeName && inv.clientName && inv.clientTradeName !== inv.clientName && (
+                      <div className="text-[calc(var(--app-font-size)-1.5px)] font-normal text-slate-500 truncate mt-0.5">
+                        Legal: {inv.clientName}
+                      </div>
+                    )}
                     {inv.status === 'Partial' && inv.balanceDue && (
-                      <div className="text-[10px] font-bold text-amber-600 mt-0.5">Due: ₹{inv.balanceDue.toLocaleString()}</div>
+                      <div className="text-[calc(var(--app-font-size)-1.5px)] font-bold text-amber-600 mt-0.5">Due: ₹{inv.balanceDue.toLocaleString()}</div>
                     )}
                   </div>
 
@@ -424,10 +429,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                           updateInvoiceMutation.mutate(updated);
                         }
                       }}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
+                      className={`px-2 py-1 rounded-lg text-[calc(var(--app-font-size)-1.5px)] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
                         inv.status === 'Sent' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
                         inv.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                        inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
                         'bg-slate-50 text-slate-600 border-slate-200'
                       }`}
                     >
@@ -457,45 +462,59 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
             )}
           </div>
         ) : (
-          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-            <table className={`w-full text-left border-collapse table-auto min-w-full compact-table ${compactMode ? 'compact-mode' : ''}`}>
+          <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
+            <table className={`w-full text-left border-collapse table-auto min-w-[1000px] invoices-table gst-portfolio-table compact-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-2xs">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-12">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Inv. No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[110px]">Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Client (Trade/Legal)</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Amount</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[120px]">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Inv. No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[110px]">Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Client (Trade/Legal)</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px]">Amount</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[120px] whitespace-nowrap">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                         {['All', 'Active', 'Draft', 'Sent', 'Partial', 'Paid', 'Cancelled'].map(st => (
-                          <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-1.5 text-xs font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                          <button key={st} onClick={() => setStatusFilter(st as any)} className={`w-full text-left px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-indigo-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                         ))}
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[140px]">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[140px] whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-100 text-[var(--app-font-size)]">
                 {filteredInvoices.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-slate-400 font-bold uppercase tracking-wider">
+                    <td colSpan={7} className="px-3 py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
                       No invoices found matching criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredInvoices.map((inv, idx) => (
-                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-all group">
-                      <td className="px-3 py-2.5 text-slate-400 font-bold text-xs">{idx + 1}</td>
-                      <td className="px-3 py-2.5 font-bold text-slate-900 text-xs uppercase font-mono">{inv.invoiceNo}</td>
-                      <td className="px-3 py-2.5 font-medium text-slate-600 text-xs whitespace-nowrap">{formatDate(inv.date)}</td>
-                      <td className="px-3 py-2.5 font-semibold text-slate-800 text-xs truncate max-w-[260px]">{inv.clientTradeName ? `${inv.clientTradeName} (${inv.clientName})` : inv.clientName}</td>
-                      <td className="px-3 py-2.5 font-bold text-indigo-700 text-xs whitespace-nowrap">
+                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
+                      <td className="px-3 py-2.5 text-slate-400 font-bold whitespace-nowrap">{idx + 1}</td>
+                      <td className="px-3 py-2.5 font-bold text-slate-900 uppercase font-mono whitespace-nowrap">{inv.invoiceNo}</td>
+                      <td className="px-3 py-2.5 font-medium text-slate-600 whitespace-nowrap">{formatDate(inv.date)}</td>
+                      <td className="px-3 py-2.5 max-w-[280px]">
+                        <p className="font-bold text-slate-800 uppercase leading-snug text-[var(--app-font-size)]" title={inv.clientTradeName || inv.clientName}>
+                          {inv.clientTradeName || inv.clientName || '---'}
+                        </p>
+                        {inv.clientTradeName && inv.clientName && inv.clientTradeName !== inv.clientName && (
+                          <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal" title={inv.clientName}>
+                            Legal: {inv.clientName}
+                          </p>
+                        )}
+                        {inv.clientGstin && (
+                          <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal">
+                            GSTIN: {inv.clientGstin}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 font-bold text-indigo-700 whitespace-nowrap">
                         ₹{(inv.totalAmount || 0).toLocaleString()}
                         {inv.status === 'Partial' && inv.balanceDue && (
-                          <div className="text-[10px] text-amber-600 font-bold">Due: ₹{(inv.balanceDue || 0).toLocaleString()}</div>
+                          <div className="text-[calc(var(--app-font-size)-1.5px)] text-amber-600 font-bold">Due: ₹{(inv.balanceDue || 0).toLocaleString()}</div>
                         )}
                       </td>
                       <td className="px-3 py-2.5 text-center whitespace-nowrap">
@@ -511,10 +530,10 @@ const Invoices: React.FC<InvoicesProps> = ({ onViewChange }) => {
                               updateInvoiceMutation.mutate(updated);
                             }
                           }}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
+                          className={`px-2 py-1 rounded-lg text-[calc(var(--app-font-size)-1.5px)] font-bold uppercase tracking-wider border outline-none cursor-pointer ${
                             inv.status === 'Sent' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
                             inv.status === 'Partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                            inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
                             'bg-slate-50 text-slate-600 border-slate-200'
                           }`}
                         >

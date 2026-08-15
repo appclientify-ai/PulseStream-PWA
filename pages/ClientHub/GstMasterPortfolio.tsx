@@ -394,7 +394,7 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       {viewMode === 'grid' ? (
         <div className="overflow-auto no-scrollbar flex-1 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredClients.length === 0 ? (
-            <div className="col-span-full py-24 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
+            <div className="col-span-full py-12 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
               No matching clients found
             </div>
           ) : (
@@ -417,42 +417,43 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                         onChange={() => toggleSelectRow(client.id)}
                         className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                       />
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-wider">
+                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[calc(var(--app-font-size)-2px)] font-bold uppercase tracking-wider">
                         {client.gstProfile?.constitution || 'Proprietorship'}
                       </span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${theme.clientStatusBadgeClass}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[calc(var(--app-font-size)-2px)] font-bold uppercase tracking-tight ${theme.clientStatusBadgeClass}`}>
                       {client.status}
                     </span>
                   </div>
 
                   <div className="mb-3">
-                    <h4 className="font-black text-slate-900 text-sm truncate" title={client.tradeName || client.legalName}>
+                    <h4 className="font-bold text-slate-900 text-[var(--app-font-size)] truncate" title={client.tradeName || client.legalName}>
                       {client.tradeName || client.legalName}
                     </h4>
-                    {client.tradeName && client.legalName && (
-                      <p className="text-[10px] font-bold text-slate-400 truncate">
+                    {client.tradeName && client.legalName && client.tradeName !== client.legalName && (
+                      <p className="text-[calc(var(--app-font-size)-1.5px)] font-normal text-slate-500 truncate mt-0.5">
                         Legal: {client.legalName}
                       </p>
                     )}
                   </div>
 
                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 mb-3 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">GSTIN</span>
+                    <div className="flex items-center justify-between text-[var(--app-font-size)]">
+                      <span className="text-[calc(var(--app-font-size)-2px)] font-bold text-slate-400 uppercase tracking-wider">GSTIN</span>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-black font-mono text-indigo-700 text-[11px] tracking-wider uppercase">
+                        <span className="font-bold font-mono text-indigo-700 text-[var(--app-font-size)] tracking-wider uppercase">
                           {client.gstProfile?.gstin || '---'}
                         </span>
                         {client.gstProfile?.gstin && (
                           <button 
+                            type="button"
                             onClick={() => {
                               if (navigator.clipboard) {
                                 navigator.clipboard.writeText(client.gstProfile?.gstin || '');
                                 toast.success('GSTIN Copied!');
                               }
                             }}
-                            className="p-1 hover:bg-indigo-100 text-indigo-600 rounded transition-colors"
+                            className="p-1 hover:bg-indigo-100 text-indigo-600 rounded transition-colors cursor-pointer"
                             title="Copy GSTIN"
                           >
                             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
@@ -461,14 +462,14 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60">
+                    <div className="flex items-center justify-between text-[calc(var(--app-font-size)-1.5px)] pt-1 border-t border-slate-200/60">
                       <span className="text-slate-500 font-bold">Category</span>
-                      <span className="font-black text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
                         {client.gstProfile?.regType || 'Regular'} ({client.gstProfile?.filingFreq || 'Monthly'})
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center justify-between text-[calc(var(--app-font-size)-1.5px)]">
                       <span className="text-slate-500 font-bold">Mobile</span>
                       <span className="font-mono font-bold text-slate-800">{client.mobile || '---'}</span>
                     </div>
@@ -476,12 +477,13 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-1">
                     <button
+                      type="button"
                       onClick={() => {
                         setLoginToolClient(client);
                         setLoginPortalType('gst');
                         setIsLoginBoxOpen(true);
                       }}
-                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-black text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs"
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 font-bold text-[calc(var(--app-font-size)-1.5px)] uppercase tracking-wider transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer"
                     >
                       <span>🔐 GST Portal</span>
                     </button>
@@ -489,11 +491,12 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                       client={client}
                       onEdit={handleEdit}
                       onDataChange={handleDataChange}
-                      className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                      className="h-7 w-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs cursor-pointer"
                     />
                     <button 
+                      type="button"
                       onClick={(e) => openActionsMenu(e, client)}
-                      className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                      className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs cursor-pointer ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                     </button>
@@ -504,14 +507,14 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
           )}
         </div>
       ) : (
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-full gst-portfolio-table">
+        <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-[1000px] gst-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-xs">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-12 text-center whitespace-nowrap">S.No.</th>
                 <th 
                   onClick={() => handleSort('tradeName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors min-w-[180px] w-[24%]"
                 >
                   <div className="flex items-center gap-1">
                     Trade Name
@@ -520,60 +523,60 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                 </th>
                 <th 
                   onClick={() => handleSort('legalName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[24%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors min-w-[180px] w-[24%]"
                 >
                   <div className="flex items-center gap-1">
                     Legal Name
                     <span className="text-[var(--app-font-size)] text-indigo-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[12%]">Mobile No</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[120px] w-[12%]">Mobile No.</th>
                 <th 
                   onClick={() => handleSort('gstin')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[16%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors whitespace-nowrap min-w-[170px] w-[16%]"
                 >
                   <div className="flex items-center gap-1">
                     GSTIN
                     <span className="text-[var(--app-font-size)] text-indigo-600">{sortField === 'gstin' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[110px] w-[11%]">
                   <div className="flex items-center gap-1">
                     Status
                     <button 
                       ref={statusFilterBtnRef}
                       onClick={(e) => openFilterMenu(e, 'status')} 
-                      className={`p-0.5 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      className={`p-0.5 rounded transition-colors cursor-pointer ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
                       title="Filter Status"
                     >
                       <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap min-w-[110px] w-[11%]">
                   <div className="flex items-center gap-1">
                     Relationship
                     <button 
                       ref={relFilterBtnRef}
                       onClick={(e) => openFilterMenu(e, 'rel')} 
-                      className={`p-0.5 rounded transition-colors ${relFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      className={`p-0.5 rounded transition-colors cursor-pointer ${relFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
                       title="Filter Relationship"
                     >
                       <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 w-[100px]">Actions</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 whitespace-nowrap min-w-[100px] w-[100px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 text-[var(--app-font-size)]">
               {(!filteredClients || filteredClients.length === 0) ? (
-                <tr><td colSpan={9} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No records found in vault</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">No records found in vault</td></tr>
               ) : (
                 (groupedClients || []).map(({ sector, clients: sectorClients }) => (
                   <React.Fragment key={sector}>
                     <tr>
-                      <td colSpan={9} className="sticky top-[29px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-3 uppercase text-[11px] tracking-widest border-y border-slate-300 shadow-xs">
+                      <td colSpan={8} className="sticky top-[29px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-3 uppercase text-[var(--app-font-size)] tracking-wider border-y border-slate-300 shadow-2xs">
                         {sector} ({sectorClients.length})
                       </td>
                     </tr>
@@ -588,56 +591,58 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
                             isSelected ? 'bg-indigo-50/50' : theme.rowClass
                           }`}
                         >
-                          <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">
+                          <td className="px-3 py-2 font-bold text-indigo-500 font-mono text-[var(--app-font-size)] w-12 text-center whitespace-nowrap">
                             {(idx + 1).toString().padStart(2, '0')}
                           </td>
-                          <td className="px-3 py-1.5 w-[24%] truncate">
-                             <p className={`truncate text-[var(--app-font-size)] font-semibold leading-normal ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
+                          <td className="px-3 py-2 min-w-[180px] w-[24%]">
+                             <p className={`text-[var(--app-font-size)] font-bold leading-normal truncate ${theme.tradeNameClass}`} title={client.tradeName}>{client.tradeName || '---'}</p>
                           </td>
-                          <td className="px-3 py-1.5 w-[24%] truncate">
-                             <p className={`truncate text-[var(--app-font-size)] font-medium leading-normal ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
+                          <td className="px-3 py-2 min-w-[180px] w-[24%]">
+                             <p className={`text-[var(--app-font-size)] font-medium leading-normal truncate ${theme.legalNameClass}`} title={client.legalName}>{client.legalName}</p>
                           </td>
-                          <td className="px-3 py-1.5 w-[12%] truncate">
+                          <td className="px-3 py-2 whitespace-nowrap min-w-[120px] w-[12%]">
                              <p className="font-bold text-slate-600 text-[var(--app-font-size)]">{client.mobile || '---'}</p>
                           </td>
-                          <td className="px-3 py-1.5 w-[16%] truncate">
+                          <td className="px-3 py-2 whitespace-nowrap min-w-[170px] w-[16%]">
                              <div className="flex items-center gap-1.5 group/gstin">
                                 <span className={`tracking-wider uppercase text-[var(--app-font-size)] font-semibold font-mono ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                                 <button 
+                                   type="button"
                                    onClick={() => { 
                                      if (navigator.clipboard) {
                                        navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); });
                                      }
                                    }}
-                                   className="h-5 w-5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-xs border border-indigo-100"
+                                   className="h-5 w-5 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/gstin:opacity-100 shadow-xs border border-indigo-100 cursor-pointer"
                                    title="Verify Ident."
                                  >
                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 </button>
                              </div>
                           </td>
-                          <td className="px-3 py-1.5 w-[11%]">
-                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-wider ${theme.gstStatusBadgeClass}`}>
+                          <td className="px-3 py-2 whitespace-nowrap min-w-[110px] w-[11%]">
+                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-bold uppercase tracking-wider ${theme.gstStatusBadgeClass}`}>
                                {client.gstProfile?.gstStatus === 'Closed' ? 'Cancelled' : (client.gstProfile?.gstStatus || 'Active')}
                              </span>
                           </td>
-                          <td className="px-3 py-1.5 w-[11%]">
-                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-wider ${theme.clientStatusBadgeClass}`}>
+                          <td className="px-3 py-2 whitespace-nowrap min-w-[110px] w-[11%]">
+                             <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-bold uppercase tracking-wider ${theme.clientStatusBadgeClass}`}>
                                {client.status}
                              </span>
                           </td>
-                          <td className="px-3 py-1.5 text-right overflow-visible w-[100px]">
+                          <td className="px-3 py-2 text-right overflow-visible whitespace-nowrap min-w-[100px] w-[100px]">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon 
                             client={client}
                             onEdit={handleEdit}
                             onDataChange={handleDataChange}
-                            className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                            className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs cursor-pointer"
                           />
                           
                           <button 
+                            type="button"
                             onClick={(e) => openActionsMenu(e, client)}
-                            className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                            className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center shadow-xs cursor-pointer ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
                           >
                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>
@@ -657,23 +662,25 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
       {selectedClientIds.size > 0 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl px-4 py-2.5 flex items-center gap-3 border border-slate-700 animate-in slide-in-from-bottom-5">
           <div className="flex items-center gap-2 border-r border-slate-700 pr-3">
-            <span className="h-6 w-6 rounded-full bg-indigo-600 text-white font-black text-xs flex items-center justify-center">
+            <span className="h-6 w-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
               {selectedClientIds.size}
             </span>
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">Selected</span>
+            <span className="text-[calc(var(--app-font-size)-1.5px)] font-bold uppercase tracking-wider text-slate-300">Selected</span>
           </div>
 
           <button 
+            type="button"
             onClick={handleBulkCopyCreds}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 text-white text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Copy Credentials for all selected clients"
           >
             <span>📋 Copy Credentials</span>
           </button>
 
           <button 
+            type="button"
             onClick={handleBulkExportCSV}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Export selected clients to CSV"
           >
             <span>📥 Export CSV</span>
@@ -681,8 +688,9 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
 
           <div className="relative">
             <button 
+              type="button"
               onClick={() => setIsBulkStatusMenuOpen(!isBulkStatusMenuOpen)}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-amber-600 text-white text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <span>⚡ Change Status ▾</span>
             </button>
@@ -691,9 +699,10 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
               <div className="absolute bottom-full mb-2 left-0 w-44 bg-white text-slate-800 rounded-xl shadow-2xl p-1 border border-slate-200 z-50 animate-in zoom-in-95">
                 {['Active', 'Litigation', 'Suspended', 'Inactive'].map((status) => (
                   <button
+                    type="button"
                     key={status}
                     onClick={() => handleBulkStatusChange(status)}
-                    className="w-full text-left px-3 py-1.5 text-[10px] font-black uppercase rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                    className="w-full text-left px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer"
                   >
                     Set {status}
                   </button>
@@ -703,8 +712,9 @@ const GstMasterPortfolioContent: React.FC<GstMasterPortfolioProps> = ({
           </div>
 
           <button 
+            type="button"
             onClick={() => setSelectedClientIds(new Set())}
-            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Deselect All"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>

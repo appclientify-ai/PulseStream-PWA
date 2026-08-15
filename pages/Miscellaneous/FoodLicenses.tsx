@@ -242,7 +242,9 @@ const FoodLicenses: React.FC = () => {
         {viewMode === 'grid' ? (
           <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredRecords.length === 0 ? (
-              <div className="col-span-full py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</div>
+              <div className="col-span-full py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                No food license records archived
+              </div>
             ) : (
               filteredRecords.map((rec, idx) => {
                 const renewalDueDate = rec.dueDate || calculateRenewalDueDate(rec.expiryDate);
@@ -358,8 +360,8 @@ const FoodLicenses: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-            <table className={`w-full text-left border-collapse table-auto min-w-full food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
+          <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
+            <table className={`w-full text-left border-collapse table-auto min-w-[1100px] food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
                   <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
@@ -384,7 +386,11 @@ const FoodLicenses: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRecords.length === 0 ? (
-                  <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No food license records archived</td></tr>
+                  <tr>
+                    <td colSpan={10} className="py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                      No food license records archived
+                    </td>
+                  </tr>
                 ) : (
                   filteredRecords.map((rec, idx) => {
                     const renewalDueDate = rec.dueDate || calculateRenewalDueDate(rec.expiryDate);
@@ -395,13 +401,13 @@ const FoodLicenses: React.FC = () => {
                       <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
                         <td className="px-3 py-2.5 text-slate-400 font-bold whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
                         <td className="px-3 py-2.5">
-                           <p className="font-bold text-slate-900 uppercase leading-snug text-[var(--app-font-size)]" title={rec.tradeName || rec.clientName}>
+                           <p className="font-bold text-slate-800 uppercase leading-snug text-[var(--app-font-size)]" title={rec.tradeName || rec.clientName}>
                              {rec.tradeName || rec.clientName || '---'}
                            </p>
-                           <p className="sub-text text-slate-500 uppercase mt-0.5" title={rec.legalName || rec.clientName}>
+                           <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal" title={rec.legalName || rec.clientName}>
                              Legal: {rec.legalName || rec.clientName || '---'}
                            </p>
-                           <p className="sub-text text-slate-500 uppercase mt-0.5">
+                           <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal">
                              Mob: {rec.mobile || 'No Contact'}
                            </p>
                         </td>
@@ -434,7 +440,7 @@ const FoodLicenses: React.FC = () => {
                                 <input 
                                   type="text" 
                                   value={tempPassword} 
-                                  onChange={e => setTempPassword(e.target.value)}
+                                  onChange={e => setTempPassword(e.target.value)} 
                                   onKeyDown={e => {
                                     if (e.key === 'Enter') {
                                       handleInlineUpdate(rec.id, 'password', tempPassword);
@@ -538,7 +544,7 @@ const FoodLicenses: React.FC = () => {
                             {formatDate(renewalDueDate)}
                           </span>
                           {isRenewalDueNow && (
-                            <span className="block mt-0.5 text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
+                            <span className="block mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
                               Renewal Due (2 Mo Window)
                             </span>
                           )}
@@ -548,7 +554,7 @@ const FoodLicenses: React.FC = () => {
                             {formatDate(rec.expiryDate)}
                           </span>
                           {Boolean(rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) && rec.status !== 'Rejected') && (
-                            <span className="block mt-0.5 text-xs font-bold text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
+                            <span className="block mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-bold text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
                               Expired • Late Fees Apply
                             </span>
                           )}

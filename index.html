@@ -386,7 +386,13 @@
       .misc-work-table td div,
       .misc-work-table td input,
       .misc-work-table td select,
-      .misc-work-table td button {
+      .misc-work-table td button,
+      .invoices-table td p,
+      .invoices-table td span,
+      .invoices-table td div,
+      .invoices-table td input,
+      .invoices-table td select,
+      .invoices-table td button {
         font-size: inherit !important;
       }
       /* Specifically, the Trade subtitle under IT Portfolio name should be slightly smaller for elegant hierarchy */
@@ -410,13 +416,19 @@
       .gstr9-returns-table td p.legal-subtitle,
       .itr-returns-table td p.legal-subtitle,
       .tax-audit-table td p.legal-subtitle,
-      .food-licenses-table td p.sub-text,
       .gst-registration-table td p.sub-text,
-      .msme-registration-table td p.sub-text,
       .misc-work-table td p.sub-text {
         font-size: 12px !important;
         color: #64748b !important; /* text-slate-500 */
         font-weight: 500 !important;
+      }
+      .food-licenses-table td p.sub-text,
+      .msme-registration-table td p.sub-text,
+      .misc-work-table td p.sub-text,
+      .invoices-table td p.sub-text {
+        font-size: calc(var(--app-font-size, 13px) - 1.5px) !important;
+        color: #64748b !important; /* text-slate-500 */
+        font-weight: 400 !important;
       }
     </style>
   <script type="importmap">
