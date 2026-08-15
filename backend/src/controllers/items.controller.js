@@ -248,6 +248,8 @@ export const getDashboardSummaryData = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
+    const tribunalColl = getCollection('tribunal_records');
+    const highcourtColl = getCollection('highcourt_records');
 
     const appDataKeys = [
       'clientify_monthly_filing_v3',
@@ -267,7 +269,14 @@ export const getDashboardSummaryData = async (req, res) => {
       name: { $in: [...categoryNames, ...appDataNames] }
     };
 
-    const rawItems = await itemsColl.find(query).toArray();
+    const [rawItems, rawTribunal, rawHighCourt] = await Promise.all([
+      itemsColl.find(query).toArray(),
+      tribunalColl ? tribunalColl.find({ createdBy: { $in: userMatches } }).toArray() : [],
+      highcourtColl ? highcourtColl.find({ createdBy: { $in: userMatches } }).toArray() : []
+    ]);
+
+    const tribunalRecords = (rawTribunal || []).map(t => ({ ...t, id: t._id, category: t.category || 'Tribunal' }));
+    const highcourtRecords = (rawHighCourt || []).map(h => ({ ...h, id: h._id, category: h.category || 'HighCourt' }));
 
     const summary = {
       clients: [],
@@ -289,7 +298,25 @@ export const getDashboardSummaryData = async (req, res) => {
       };
 
       if (item.name === 'client') summary.clients.push(transformed);
-      else if (item.name === 'litigation') summary.litigation.push(transformed);
+      else if (item.name === 'litigation') {
+        if (transformed.category === 'Tribunal' && tribunalRecords.length > 0) {
+          const isDup = tribunalRecords.some(t => 
+            String(t.id) === String(transformed.id) ||
+            (t.clientName && t.clientName.trim().toLowerCase() === (transformed.clientName||'').trim().toLowerCase() &&
+             (t.noticeNo === transformed.noticeNo || t.orderNo === transformed.orderNo || t.replyReferenceNo === transformed.replyReferenceNo || t.hearingDate === transformed.hearingDate))
+          );
+          if (isDup) continue;
+        }
+        if (transformed.category === 'HighCourt' && highcourtRecords.length > 0) {
+          const isDup = highcourtRecords.some(h => 
+            String(h.id) === String(transformed.id) ||
+            (h.clientName && h.clientName.trim().toLowerCase() === (transformed.clientName||'').trim().toLowerCase() &&
+             (h.noticeNo === transformed.noticeNo || h.orderNo === transformed.orderNo || h.replyReferenceNo === transformed.replyReferenceNo || h.hearingDate === transformed.hearingDate))
+          );
+          if (isDup) continue;
+        }
+        summary.litigation.push(transformed);
+      }
       else if (item.name === 'invoice') summary.invoices.push(transformed);
       else if (item.name === 'work') summary.work.push(transformed);
       else if (item.name === 'gstReg') summary.gstReg.push(transformed);
@@ -299,6 +326,18 @@ export const getDashboardSummaryData = async (req, res) => {
       else if (item.name.startsWith('app_data_')) {
         const key = item.name.replace('app_data_', '');
         filingDataCache[key] = item.data || {};
+      }
+    }
+
+    const existingLitIds = new Set(summary.litigation.map(l => String(l.id)));
+    for (const t of tribunalRecords) {
+      if (!existingLitIds.has(String(t.id))) {
+        summary.litigation.push(t);
+      }
+    }
+    for (const h of highcourtRecords) {
+      if (!existingLitIds.has(String(h.id))) {
+        summary.litigation.push(h);
       }
     }
 

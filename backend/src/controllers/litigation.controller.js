@@ -32,14 +32,14 @@ export const getLitigationRecords = (collectionName, litigationCategory) => asyn
       ? await collection.countDocuments(query) 
       : (await collection.find(query).toArray()).length;
       
-    if (count === 0 && litigationCategory) {
+    if (litigationCategory) {
       const oldItems = await getCollection('items').find({ 
         name: 'litigation',
         'data.category': litigationCategory,
         createdBy: { $in: userMatches }
       }).toArray();
       
-      if (oldItems.length > 0) {
+      if (count === 0 && oldItems.length > 0) {
         const migrated = oldItems.map(item => ({
           ...item.data,
           createdBy: item.createdBy,
@@ -48,6 +48,13 @@ export const getLitigationRecords = (collectionName, litigationCategory) => asyn
           updatedAt: item.updatedAt || new Date()
         }));
         await collection.insertMany(migrated);
+        await getCollection('items').deleteMany({
+          _id: { $in: oldItems.map(i => i._id) }
+        });
+      } else if (count > 0 && oldItems.length > 0) {
+        await getCollection('items').deleteMany({
+          _id: { $in: oldItems.map(i => i._id) }
+        });
       }
     }
 

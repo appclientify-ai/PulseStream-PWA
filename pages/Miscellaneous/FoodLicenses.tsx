@@ -20,7 +20,7 @@ const FoodLicenses: React.FC = () => {
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [tempPassword, setTempPassword] = useState<string>('');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [compactMode, setCompactMode] = useState(true);
+  const [compactMode, setCompactMode] = useState(false);
 
   const { data: records = [], isLoading } = useModuleData<FoodLicenseRecord[]>('food_licenses');
 
@@ -137,7 +137,7 @@ const FoodLicenses: React.FC = () => {
             placeholder="Search by Client, Mobile or FSSAI License Number..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none transition-all" 
+            className="w-full bg-slate-50 border-none rounded-xl py-2 pl-9 pr-8 font-bold text-[var(--app-font-size)] text-slate-900 focus:ring-2 focus:ring-emerald-600/10 outline-none transition-all" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {search && (
@@ -155,14 +155,14 @@ const FoodLicenses: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('All')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
               statusFilter === 'All' 
                 ? 'bg-slate-900 text-white border-slate-900 shadow-xs' 
                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <span>Total</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
               statusFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-800'
             }`}>
               {stats.total}
@@ -172,14 +172,14 @@ const FoodLicenses: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('Applied')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
               statusFilter === 'Applied' || statusFilter === 'Pending' || statusFilter === 'In Progress'
                 ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
                 : 'bg-amber-50/70 text-amber-800 border-amber-200 hover:bg-amber-100/80'
             }`}
           >
             <span>Applied</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
               statusFilter === 'Applied' || statusFilter === 'Pending' || statusFilter === 'In Progress' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
             }`}>
               {stats.pending}
@@ -189,14 +189,14 @@ const FoodLicenses: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('Completed')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
               statusFilter === 'Completed' || statusFilter === 'Active'
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
             }`}
           >
             <span>Active</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
               statusFilter === 'Completed' || statusFilter === 'Active' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
             }`}>
               {stats.active}
@@ -206,14 +206,14 @@ const FoodLicenses: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('Renewal Due')}
-            className={`px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
               statusFilter === 'Renewal Due'
                 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                 : 'bg-rose-50/70 text-rose-800 border-rose-200 hover:bg-rose-100/80'
             }`}
           >
             <span>Renewal</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
               statusFilter === 'Renewal Due' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
             }`}>
               {stats.renewalDue}
@@ -230,9 +230,9 @@ const FoodLicenses: React.FC = () => {
           />
           <button 
             onClick={() => { setSelectedRecord(null); setIsFormOpen(true); }}
-            className="h-10 px-4 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0"
+            className="h-10 px-4 bg-emerald-600 text-white rounded-xl font-bold text-[var(--app-font-size)] uppercase tracking-wider shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             New FSSAI Entry
           </button>
         </div>
@@ -256,17 +256,17 @@ const FoodLicenses: React.FC = () => {
                   <div key={rec.id} className="p-3.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-2xl shadow-xs transition-all flex flex-col justify-between space-y-3 relative">
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">#{idx + 1}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{rec.licenseType}</span>
+                        <span className="text-[calc(var(--app-font-size)-2px)] font-bold uppercase px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">#{idx + 1}</span>
+                        <span className="text-[calc(var(--app-font-size)-2px)] font-bold text-slate-400 uppercase">{rec.licenseType}</span>
                       </div>
-                      <h4 className="text-xs font-black text-slate-900 truncate" title={rec.tradeName || rec.clientName}>{rec.tradeName || rec.clientName || '---'}</h4>
-                      <p className="text-[10px] font-bold text-slate-500 truncate">Legal: {rec.legalName || rec.clientName || '---'}</p>
-                      <p className="text-[9px] font-bold text-slate-400">Mob: {rec.mobile || '---'}</p>
+                      <h4 className="text-[var(--app-font-size)] font-bold text-slate-900 truncate" title={rec.tradeName || rec.clientName}>{rec.tradeName || rec.clientName || '---'}</h4>
+                      <p className="text-[calc(var(--app-font-size)-1.5px)] font-medium text-slate-500 truncate">Legal: {rec.legalName || rec.clientName || '---'}</p>
+                      <p className="text-[calc(var(--app-font-size)-2px)] font-medium text-slate-400">Mob: {rec.mobile || '---'}</p>
                     </div>
 
-                    <div className="p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[11px]">
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200/80 space-y-1.5 text-[var(--app-font-size)]">
                       <div className="flex items-center justify-between text-slate-600">
-                        <span className="font-bold text-[9px] text-slate-400 uppercase">FSSAI No:</span>
+                        <span className="font-bold text-[calc(var(--app-font-size)-2px)] text-slate-400 uppercase">FSSAI No:</span>
                         <div className="flex items-center gap-1">
                           <span className="font-mono font-bold text-slate-800">{rec.licenseNo || 'Awaiting Issue...'}</span>
                           {rec.licenseNo && (
@@ -278,7 +278,7 @@ const FoodLicenses: React.FC = () => {
                       </div>
 
                       <div className="flex items-center justify-between text-slate-600">
-                        <span className="font-bold text-[9px] text-slate-400 uppercase">Password:</span>
+                        <span className="font-bold text-[calc(var(--app-font-size)-2px)] text-slate-400 uppercase">Password:</span>
                         <div className="flex items-center gap-1">
                           {editingPasswordId === rec.id ? (
                             <input 
@@ -293,7 +293,7 @@ const FoodLicenses: React.FC = () => {
                                   toast.success('Password updated!');
                                 }
                               }} 
-                              className="bg-white border border-emerald-200 rounded px-1.5 py-0.5 text-[10px] font-bold w-20 outline-none h-5" 
+                              className="bg-white border border-emerald-200 rounded px-1.5 py-0.5 text-[var(--app-font-size)] font-bold w-24 outline-none h-6" 
                             />
                           ) : (
                             <>
@@ -321,12 +321,12 @@ const FoodLicenses: React.FC = () => {
                       </div>
 
                       <div className="flex items-center justify-between text-slate-600">
-                        <span className="font-bold text-[9px] text-slate-400 uppercase">Renewal Date:</span>
+                        <span className="font-bold text-[calc(var(--app-font-size)-2px)] text-slate-400 uppercase">Renewal Date:</span>
                         <span className={`font-mono font-bold ${isRenewalDueNow ? 'text-amber-600' : 'text-slate-700'}`}>{formatDate(renewalDueDate)}</span>
                       </div>
 
                       <div className="flex items-center justify-between text-slate-600">
-                        <span className="font-bold text-[9px] text-slate-400 uppercase">Expiry Date:</span>
+                        <span className="font-bold text-[calc(var(--app-font-size)-2px)] text-slate-400 uppercase">Expiry Date:</span>
                         <span className={`font-mono font-bold ${isExpired ? 'text-red-600 animate-pulse' : 'text-rose-500'}`}>{formatDate(rec.expiryDate)}</span>
                       </div>
                     </div>
@@ -336,7 +336,7 @@ const FoodLicenses: React.FC = () => {
                         <select 
                           value={rec.status || 'Pending'}
                           onChange={e => handleInlineUpdate(rec.id, 'status', e.target.value as FoodLicenseStatus)}
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
+                          className={`px-2.5 py-1 rounded-full text-[calc(var(--app-font-size)-2px)] font-bold uppercase tracking-wider border cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
                         >
                           <option value="Pending">Pending</option>
                           <option value="Applied">Applied</option>
@@ -346,11 +346,11 @@ const FoodLicenses: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="p-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white hover:border-emerald-200 transition-all" title="Edit Entry">
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white hover:border-emerald-200 transition-all" title="Edit Entry">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
-                        <button onClick={() => handleDelete(rec.id)} className="p-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 hover:text-red-600 hover:bg-white hover:border-red-200 transition-all" title="Delete Entry">
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        <button onClick={() => handleDelete(rec.id)} className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 hover:text-red-600 hover:bg-white hover:border-red-200 transition-all" title="Delete Entry">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
                     </div>
@@ -361,33 +361,33 @@ const FoodLicenses: React.FC = () => {
           </div>
         ) : (
           <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
-            <table className={`w-full text-left border-collapse table-auto min-w-[1100px] food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
+            <table className={`w-full text-left border-collapse table-auto min-w-[1050px] food-licenses-table gst-portfolio-table ${compactMode ? 'compact-mode' : ''}`}>
               <thead className="sticky top-0 z-30 bg-slate-100">
                 <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[200px]">Trade Name</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[170px] whitespace-nowrap">License Number (ID)</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[150px] whitespace-nowrap">Password</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[140px] whitespace-nowrap">License Type</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[150px] whitespace-nowrap">
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 whitespace-nowrap w-12">S.No.</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[190px]">Trade Name</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[160px] whitespace-nowrap">License Number (ID)</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[140px] whitespace-nowrap">Password</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[130px] whitespace-nowrap">License Type</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[140px] whitespace-nowrap">
                     <div className="flex justify-center flex-col items-center">
                       <TableFilter label="Status" isActive={statusFilter !== 'All'}>
                          {['All', 'Pending', 'Applied', 'Completed', 'Renewal Due', 'Rejected'].map(st => (
-                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[var(--app-font-size)] font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-emerald-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
+                           <button key={st} onClick={() => setStatusFilter(st)} className={`w-full text-left px-3 py-2 text-[var(--table-font-size)] font-bold uppercase rounded-lg ${statusFilter === st ? 'bg-emerald-600 text-white' : 'hover:bg-slate-50 text-slate-600'}`}>{st}</button>
                          ))}
                       </TableFilter>
                     </div>
                   </th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[125px] whitespace-nowrap">Applied On</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-amber-600 border-b border-slate-200 min-w-[145px] whitespace-nowrap">Renewal Due Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[145px] whitespace-nowrap">Expiry Date</th>
-                  <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[100px] whitespace-nowrap">Actions</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[115px] whitespace-nowrap">Applied On</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-amber-600 border-b border-slate-200 min-w-[140px] whitespace-nowrap">Renewal Due Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[140px] whitespace-nowrap">Expiry Date</th>
+                  <th className="sticky top-0 z-30 bg-slate-100 px-2 py-3 text-[var(--table-header-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right min-w-[90px] whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--app-font-size)]">
+                    <td colSpan={10} className="py-12 text-center text-slate-400 font-bold uppercase tracking-wider text-[var(--table-font-size)]">
                       No food license records archived
                     </td>
                   </tr>
@@ -398,22 +398,22 @@ const FoodLicenses: React.FC = () => {
                     const isRenewalDueNow = Boolean(renewalDueDate && renewalDueDate <= todayStr && rec.status !== 'Rejected');
 
                     return (
-                      <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[var(--app-font-size)] border-b border-slate-100">
-                        <td className="px-3 py-2.5 text-slate-400 font-bold whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
-                        <td className="px-3 py-2.5">
-                           <p className="font-bold text-slate-800 uppercase leading-snug text-[var(--app-font-size)]" title={rec.tradeName || rec.clientName}>
+                      <tr key={rec.id} className="hover:bg-emerald-50/20 transition-all group text-[var(--table-font-size)] border-b border-slate-100">
+                        <td className="px-2 py-4.5 md:py-5 text-slate-400 font-bold whitespace-nowrap align-middle">{(idx + 1).toString().padStart(2, '0')}</td>
+                        <td className="px-2 py-4.5 md:py-5 align-middle">
+                           <p className="font-bold text-slate-800 uppercase leading-snug text-[var(--table-font-size)]" title={rec.tradeName || rec.clientName}>
                              {rec.tradeName || rec.clientName || '---'}
                            </p>
-                           <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal" title={rec.legalName || rec.clientName}>
+                           <p className="sub-text text-slate-500 uppercase mt-1 text-[calc(var(--table-font-size)-1.5px)] font-medium" title={rec.legalName || rec.clientName}>
                              Legal: {rec.legalName || rec.clientName || '---'}
                            </p>
-                           <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-normal">
+                           <p className="sub-text text-slate-500 uppercase mt-0.5 text-[calc(var(--table-font-size)-1.5px)] font-medium">
                              Mob: {rec.mobile || 'No Contact'}
                            </p>
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap">
+                        <td className="px-2 py-4.5 md:py-5 whitespace-nowrap align-middle">
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-mono font-bold text-[var(--app-font-size)] tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80' : 'text-slate-400 italic font-normal'}`}>
+                            <span className={`font-mono font-bold text-[var(--table-font-size)] tracking-wider uppercase ${rec.licenseNo ? 'text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200/80' : 'text-slate-400 italic font-normal'}`}>
                               {rec.licenseNo || 'Awaiting Issue...'}
                             </span>
                             {rec.licenseNo && (
@@ -433,7 +433,7 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap">
+                        <td className="px-2 py-4.5 md:py-5 whitespace-nowrap align-middle">
                           <div className="flex items-center gap-2">
                             {editingPasswordId === rec.id ? (
                               <div className="flex items-center gap-1">
@@ -451,7 +451,7 @@ const FoodLicenses: React.FC = () => {
                                     }
                                   }}
                                   autoFocus
-                                  className="bg-white border border-emerald-300 focus:ring-2 focus:ring-emerald-400 rounded-lg px-2 py-1 font-mono font-bold text-slate-800 text-[var(--app-font-size)] outline-none w-32 shadow-xs"
+                                  className="bg-white border border-emerald-300 focus:ring-2 focus:ring-emerald-400 rounded-lg px-2 py-1 font-mono font-bold text-slate-800 text-[var(--table-font-size)] outline-none w-32 shadow-xs"
                                   placeholder="Password..."
                                 />
                                 <button
@@ -481,7 +481,7 @@ const FoodLicenses: React.FC = () => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <span className="font-mono font-medium text-slate-800 text-[var(--app-font-size)]">
+                                <span className="font-mono font-medium text-slate-800 text-[var(--table-font-size)]">
                                   {rec.password || <span className="text-slate-400 italic font-normal">Not Set</span>}
                                 </span>
                                 
@@ -513,7 +513,7 @@ const FoodLicenses: React.FC = () => {
                                     }
                                     window.open('https://foscos.fssai.gov.in/public/', '_blank');
                                   }}
-                                  className="text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 p-1.5 rounded-lg transition-all flex items-center gap-1 shrink-0 text-[var(--app-font-size)] font-bold uppercase shadow-xs"
+                                  className="text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200/80 px-2 py-1 rounded-lg transition-all flex items-center gap-1 shrink-0 text-[var(--table-font-size)] font-bold uppercase shadow-xs"
                                   title="Direct Login to FoSCoS Portal (https://foscos.fssai.gov.in/public/)"
                                 >
                                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -525,12 +525,12 @@ const FoodLicenses: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 font-medium text-slate-700 uppercase truncate text-[var(--app-font-size)] whitespace-nowrap">{rec.licenseType}</td>
-                        <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                        <td className="px-2 py-4.5 md:py-5 font-medium text-slate-700 uppercase truncate text-[var(--table-font-size)] whitespace-nowrap align-middle">{rec.licenseType}</td>
+                        <td className="px-2 py-4.5 md:py-5 text-center whitespace-nowrap align-middle">
                             <select 
                               value={rec.status || 'Pending'}
                               onChange={e => handleInlineUpdate(rec.id, 'status', e.target.value as FoodLicenseStatus)}
-                              className={`px-3 py-1.5 rounded-full text-[var(--app-font-size)] font-bold uppercase tracking-wider border transition-all cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
+                              className={`px-3 py-1.5 rounded-full text-[var(--table-font-size)] font-bold uppercase tracking-wider border transition-all cursor-pointer outline-none text-center ${getStatusStyle(rec.status)}`}
                             >
                               <option value="Pending" className="bg-white text-slate-900 font-bold">Pending</option>
                               <option value="Applied" className="bg-white text-slate-900 font-bold">Applied</option>
@@ -538,33 +538,33 @@ const FoodLicenses: React.FC = () => {
                               <option value="Rejected" className="bg-white text-slate-900 font-bold">Rejected</option>
                             </select>
                         </td>
-                        <td className="px-3 py-2.5 font-medium text-slate-700 uppercase text-[var(--app-font-size)] whitespace-nowrap">{formatDate(rec.appDate)}</td>
-                        <td className="px-3 py-2.5 font-medium uppercase text-[var(--app-font-size)] whitespace-nowrap">
+                        <td className="px-2 py-4.5 md:py-5 font-medium text-slate-700 uppercase text-[var(--table-font-size)] whitespace-nowrap align-middle">{formatDate(rec.appDate)}</td>
+                        <td className="px-2 py-4.5 md:py-5 font-medium uppercase text-[var(--table-font-size)] whitespace-nowrap align-middle">
                           <span className={isRenewalDueNow ? 'text-amber-600 font-bold' : 'text-slate-700'}>
                             {formatDate(renewalDueDate)}
                           </span>
                           {isRenewalDueNow && (
-                            <span className="block mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
+                            <span className="block mt-1 text-[calc(var(--table-font-size)-1.5px)] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 w-fit uppercase">
                               Renewal Due (2 Mo Window)
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 font-medium uppercase text-[var(--app-font-size)] whitespace-nowrap">
+                        <td className="px-2 py-4.5 md:py-5 font-medium uppercase text-[var(--table-font-size)] whitespace-nowrap align-middle">
                           <span className={rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) ? 'text-red-600 font-bold' : 'text-slate-700'}>
                             {formatDate(rec.expiryDate)}
                           </span>
                           {Boolean(rec.expiryDate && new Date(rec.expiryDate).getTime() < new Date().setHours(0,0,0,0) && rec.status !== 'Rejected') && (
-                            <span className="block mt-0.5 text-[calc(var(--app-font-size)-1.5px)] font-bold text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
+                            <span className="block mt-1 text-[calc(var(--table-font-size)-1.5px)] font-bold text-red-700 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 w-fit uppercase animate-pulse">
                               Expired • Late Fees Apply
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                             <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm">
+                        <td className="px-2 py-4.5 md:py-5 text-right whitespace-nowrap align-middle">
+                          <div className="flex items-center justify-end gap-1.5">
+                             <button onClick={() => { setSelectedRecord(rec); setIsFormOpen(true); }} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-emerald-600 transition-all flex items-center justify-center shadow-sm" title="Edit Entry">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                              </button>
-                             <button onClick={() => handleDelete(rec.id)} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm">
+                             <button onClick={() => handleDelete(rec.id)} className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shadow-sm" title="Delete Entry">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                              </button>
                           </div>

@@ -173,22 +173,22 @@ const ITPortfolio: React.FC = () => {
     <div className="flex flex-col h-full space-y-1.5 pb-1 overflow-hidden animate-in fade-in duration-500">
       
       {/* Main Controls & Search Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs shrink-0 w-full">
+      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs shrink-0">
         
         {/* Search Input */}
-        <div className="relative flex-1 min-w-[220px] group">
+        <div className="relative flex-1 min-w-[200px] group">
           <input 
             type="text" 
             placeholder="Search IT Portfolio by PAN, Legal Name, Father's Name or Mobile..." 
             value={search} 
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-9 pr-8 font-bold text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-200 transition-all outline-none" 
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-9 pr-8 font-bold text-[var(--app-font-size)] text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-200 transition-all outline-none" 
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-emerald-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           {search && (
             <button 
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-black text-xs p-1"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-black text-[var(--app-font-size)] p-1 flex-shrink-0"
             >
               ✕
             </button>
@@ -196,17 +196,17 @@ const ITPortfolio: React.FC = () => {
         </div>
 
         {/* Count Pills in Search Bar Line */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0 flex-shrink-0 py-0.5">
           <button
             onClick={() => setQuickFilter('All')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+            className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
               quickFilter === 'All' 
                 ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs' 
                 : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
             }`}
           >
             <span>Total</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
               quickFilter === 'All' ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
             }`}>
               {stats.total}
@@ -215,14 +215,14 @@ const ITPortfolio: React.FC = () => {
 
           <button
             onClick={() => setQuickFilter('Active')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+            className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
               quickFilter === 'Active' 
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-emerald-50/60 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100'
             }`}
           >
             <span>Active</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
               quickFilter === 'Active' ? 'bg-emerald-500 text-white' : 'bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100'
             }`}>
               {stats.active}
@@ -231,14 +231,14 @@ const ITPortfolio: React.FC = () => {
 
           <button
             onClick={() => setQuickFilter('Inactive')}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+            className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
               quickFilter === 'Inactive' 
                 ? 'bg-slate-700 text-white border-slate-700 shadow-xs' 
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
             }`}
           >
             <span>Inactive</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+            <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
               quickFilter === 'Inactive' ? 'bg-slate-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
             }`}>
               {stats.inactive}
@@ -247,16 +247,16 @@ const ITPortfolio: React.FC = () => {
         </div>
 
         {/* View Control & Actions */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 flex-shrink-0 ml-auto">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
           />
 
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button 
               onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className={`h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs ${isImporting ? 'animate-pulse' : ''}`}
+              className={`h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-emerald-600 hover:bg-white transition-all flex items-center justify-center shadow-xs flex-shrink-0 ${isImporting ? 'animate-pulse' : ''}`}
               title="Bulk Utilities"
               disabled={isImporting}
             >
@@ -270,25 +270,25 @@ const ITPortfolio: React.FC = () => {
             {isUtilityOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-[100] p-2 animate-in zoom-in-95 origin-top-right">
                  <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs flex-shrink-0"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg></div>
                     <div className="flex flex-col">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import IT Clients (CSV)</span>
-                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Bulk onboarding sequence</span>
+                       <span className="text-[var(--app-font-size)] font-black uppercase tracking-widest text-slate-700">Import IT Clients (CSV)</span>
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Bulk onboarding sequence</span>
                     </div>
                  </button>
                  <button onClick={handleExportCSV} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 013 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs flex-shrink-0"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 013 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></div>
                     <div className="flex flex-col">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Export IT Portfolio</span>
-                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Vault snapshot download</span>
+                       <span className="text-[var(--app-font-size)] font-black uppercase tracking-widest text-slate-700">Export IT Portfolio</span>
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Vault snapshot download</span>
                     </div>
                  </button>
                  <div className="h-px bg-slate-100 my-1 mx-2" />
                  <button onClick={handleDownloadTemplate} className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-emerald-50 rounded-xl transition-all text-left group">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-white shadow-xs flex-shrink-0"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
                     <div className="flex flex-col">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Import Template</span>
-                       <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Excel-ready formatting</span>
+                       <span className="text-[var(--app-font-size)] font-black uppercase tracking-widest text-slate-700">Import Template</span>
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Excel-ready formatting</span>
                     </div>
                  </button>
               </div>
@@ -298,7 +298,7 @@ const ITPortfolio: React.FC = () => {
 
           <button 
             onClick={() => setIsModalOpen(true)} 
-            className="bg-emerald-600 text-white font-black uppercase tracking-tight px-4 h-9 rounded-xl shadow-xs hover:bg-slate-900 transition-all flex items-center gap-1.5 text-[11px] shrink-0"
+            className="bg-emerald-600 text-white font-black uppercase tracking-tight px-4 h-9 rounded-xl shadow-xs hover:bg-slate-900 transition-all flex items-center gap-1.5 text-[var(--app-font-size)] shrink-0 flex-shrink-0 whitespace-nowrap"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add Profile

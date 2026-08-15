@@ -457,60 +457,60 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
           )}
         </div>
       ) : (
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-full it-portfolio-table">
+        <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full border rounded-lg">
+          <table className="w-full text-left border-collapse min-w-[1000px] it-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] min-w-[50px] text-center whitespace-nowrap">S.No.</th>
                 <th 
                   onClick={() => handleSort('legalName')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[22%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors min-w-[180px]"
                 >
                   <div className="flex items-center gap-1">
                     Name
-                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600 flex-shrink-0">{sortField === 'legalName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
                 <th 
                   onClick={() => handleSort('itr')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[8%] text-center"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors min-w-[90px] text-center whitespace-nowrap"
                 >
                   <div className="flex items-center justify-center gap-1">
                     ITR
-                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600 flex-shrink-0">{sortField === 'itr' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[13%]">Father Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%]">Mobile No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[140px]">Father Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[120px] whitespace-nowrap">Mobile No.</th>
                 <th 
                   onClick={() => handleSort('pan')}
-                  className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors w-[13%]"
+                  className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 cursor-pointer hover:bg-slate-200/80 transition-colors min-w-[130px] whitespace-nowrap"
                 >
                   <div className="flex items-center gap-1">
                     PAN No.
-                    <span className="text-[var(--app-font-size)] text-emerald-600">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    <span className="text-[var(--app-font-size)] text-emerald-600 flex-shrink-0">{sortField === 'pan' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕'}</span>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[13%]">Address</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[10%]">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[160px]">Address</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[100px] whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     Status
                     <button 
                       ref={statusFilterBtnRef}
                       onClick={(e) => openFilterMenu(e, 'status')} 
-                      className={`p-0.5 rounded transition-colors ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
+                      className={`p-0.5 rounded transition-colors flex-shrink-0 ${statusFilter !== 'All' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-200 text-slate-500'}`}
                       title="Filter Status"
                     >
-                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     </button>
                   </div>
                 </th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 w-[100px]">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 min-w-[120px] whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredClients.length === 0 ? (
-                <tr><td colSpan={10} className=" py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">No IT master records found</td></tr>
+                <tr><td colSpan={10} className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-[var(--app-font-size)]">No IT master records found</td></tr>
               ) : (
                 filteredClients.map((client, idx) => {
                   const isSelected = selectedClientIds.has(client.id);
@@ -522,59 +522,61 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                         isSelected ? 'bg-emerald-50/60' : 'hover:bg-emerald-50/10'
                       }`}
                     >
-                      <td className="px-3 py-1.5 font-black text-emerald-600 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">
+                      <td className="px-3 py-2 font-black text-emerald-600 font-mono text-[var(--app-font-size)] w-[50px] min-w-[50px] text-center whitespace-nowrap">
                         {(idx + 1).toString().padStart(2, '0')}
                       </td>
-                      <td className="px-3 py-1.5 w-[22%] truncate">
+                      <td className="px-3 py-2 min-w-[180px]">
                          <p className="font-semibold text-slate-900 truncate text-[var(--app-font-size)] leading-normal" title={client.legalName}>{client.legalName}</p>
                          {client.tradeName && (
-                            <p className="trade-subtitle truncate leading-tight" title={client.tradeName}>
+                            <p className="trade-subtitle truncate leading-tight text-[var(--app-font-size)]" title={client.tradeName}>
                               Trade: {client.tradeName}
                             </p>
                          )}
                       </td>
-                      <td className="px-3 py-1.5 w-[8%] text-center truncate">
-                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md font-black text-[var(--app-font-size)] tracking-wide">
+                      <td className="px-3 py-2 min-w-[90px] text-center whitespace-nowrap">
+                         <span className="inline-block bg-indigo-50/80 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-md font-black text-[var(--app-font-size)] tracking-wide whitespace-nowrap">
                             {client.itProfile?.itrFiled || 'N/A'}
                          </span>
                       </td>
-                      <td className="px-3 py-1.5 w-[13%] truncate">
+                      <td className="px-3 py-2 min-w-[140px]">
                          <p className="font-bold text-slate-600 truncate text-[var(--app-font-size)]" title={client.itProfile?.fatherName}>{client.itProfile?.fatherName || '---'}</p>
                       </td>
-                      <td className="px-3 py-1.5 w-[11%] truncate">
-                         <p className="font-black text-slate-500 text-[var(--app-font-size)]">{client.mobile || '---'}</p>
+                      <td className="px-3 py-2 min-w-[120px] whitespace-nowrap">
+                         <p className="font-black text-slate-500 text-[var(--app-font-size)] whitespace-nowrap">{client.mobile || '---'}</p>
                       </td>
-                      <td className="px-3 py-1.5 w-[13%] truncate">
-                         <div className="flex items-center gap-1.5 group/pan">
-                            <span className="font-black font-mono tracking-wider text-[var(--app-font-size)] text-emerald-600 uppercase">{client.itProfile?.pan}</span>
-                            <button 
-                               onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
-                               className="h-5 w-5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-xs border border-emerald-100 shrink-0"
-                               title="Copy PAN"
-                            >
-                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
-                            </button>
+                      <td className="px-3 py-2 min-w-[130px] whitespace-nowrap">
+                         <div className="flex items-center gap-1.5 group/pan whitespace-nowrap">
+                            <span className="font-black font-mono tracking-wider text-[var(--app-font-size)] text-emerald-600 uppercase whitespace-nowrap">{client.itProfile?.pan}</span>
+                            {client.itProfile?.pan && (
+                              <button 
+                                 onClick={() => { copyToClipboard(client.itProfile?.pan || ''); }}
+                                 className="h-5 w-5 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover/pan:opacity-100 shadow-xs border border-emerald-100 shrink-0 flex-shrink-0"
+                                 title="Copy PAN"
+                              >
+                                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2-2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+                              </button>
+                            )}
                          </div>
                       </td>
-                      <td className="px-3 py-1.5 w-[13%] truncate">
+                      <td className="px-3 py-2 min-w-[160px]">
                          <p className="font-bold text-slate-500 text-[var(--app-font-size)] truncate" title={client.itProfile?.address}>
                             {client.itProfile?.address || '---'}
                          </p>
                       </td>
-                      <td className="px-3 py-1.5 w-[10%]">
-                         <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-tighter border ${
+                      <td className="px-3 py-2 min-w-[100px] whitespace-nowrap">
+                         <span className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase tracking-tighter border whitespace-nowrap inline-block ${
                            client.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'
                          }`}>
                            {client.status}
                          </span>
                       </td>
-                      <td className="px-3 py-1.5 text-right overflow-visible w-[100px]">
-                         <div className="flex items-center justify-end gap-1">
+                      <td className="px-3 py-2 text-right overflow-visible min-w-[120px] whitespace-nowrap">
+                         <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                             <ITViewIcon 
                               client={client}
                               onEdit={handleEdit}
                               onDataChange={handleDataChange}
-                              className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                              className="h-6.5 w-6.5 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs flex-shrink-0"
                             />
                             {client.gstProfile && <GSTViewIcon client={client} onDataChange={handleDataChange} />}
                             
@@ -586,7 +588,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
                                 setIsEditingLoginPass(false);
                                 setIsLoginBoxOpen(true);
                               }}
-                              className="h-6 w-6 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs"
+                              className="h-6.5 w-6.5 rounded-md bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center shadow-xs flex-shrink-0"
                               title="IT Portal Access Utility"
                             >
                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -594,7 +596,7 @@ const ItMasterPortfolio: React.FC<ItMasterPortfolioProps> = ({
 
                             <button 
                               onClick={(e) => openActionsMenu(e, client)}
-                              className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center shadow-xs ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
+                              className={`h-6.5 w-6.5 rounded-md border transition-all flex items-center justify-center shadow-xs flex-shrink-0 ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}
                             >
                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                             </button>

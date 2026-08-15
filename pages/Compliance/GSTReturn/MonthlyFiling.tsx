@@ -273,7 +273,7 @@ const MonthlyFiling: React.FC = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
+      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0">
         
         {/* Search Bar & Interactive Count Badges */}
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
@@ -283,25 +283,25 @@ const MonthlyFiling: React.FC = () => {
               placeholder="Search trade name, GSTIN, mobile..." 
               value={search} 
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-[var(--app-font-size)] font-bold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
             />
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
 
-          {/* Count Badges Pill Filter Group */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 py-0.5">
+          {/* Count Badges Pill Filter Group & Due Dates */}
+          <div className="flex items-center gap-1.5 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
             <button
               onClick={() => setQuickFilter('All')}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                 quickFilter === 'All' 
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <span>Total</span>
-              <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+              <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
                 quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
               }`}>{stats.total}</span>
             </button>
@@ -310,66 +310,80 @@ const MonthlyFiling: React.FC = () => {
               <>
                 <button
                   onClick={() => setQuickFilter('R1Filed')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === 'R1Filed' 
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                       : 'bg-indigo-50/70 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                   }`}
                 >
                   <span>R1 Filed</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
                     quickFilter === 'R1Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
                   }`}>{stats.r1}</span>
                 </button>
 
                 <button
                   onClick={() => setQuickFilter('3BChallan')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === '3BChallan' 
                       ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
                       : 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
                   }`}
                 >
                   <span>3B Challan</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
                     quickFilter === '3BChallan' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
                   }`}>{stats.r3bChallan}</span>
                 </button>
 
                 <button
                   onClick={() => setQuickFilter('3BFiled')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === '3BFiled' 
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                       : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                   }`}
                 >
                   <span>3B Filed</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
                     quickFilter === '3BFiled' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
                   }`}>{stats.r3b}</span>
                 </button>
 
                 <button
                   onClick={() => setQuickFilter('Pending')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === 'Pending' 
                       ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                       : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
                   }`}
                 >
                   <span>Pending</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black ${
+                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
                     quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
                   }`}>{stats.pending}</span>
                 </button>
+
+                {r1DueDate && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/80 text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0">
+                    <span className="text-indigo-500 font-bold">R1 Due:</span>
+                    <span className="font-mono">{formatISOToDDMMYYYY(r1DueDate)}</span>
+                  </div>
+                )}
+
+                {r3bDueDate && (
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[11px] font-black text-emerald-700 whitespace-nowrap shrink-0 flex-shrink-0">
+                    <span className="text-emerald-500 font-bold">3B Due:</span>
+                    <span className="font-mono">{formatISOToDDMMYYYY(r3bDueDate)}</span>
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
 
         {/* Controls: View Mode, Filter, Year/Month, Print, Export */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-between lg:justify-end">
+        <div className="flex items-center gap-2 shrink-0 flex-shrink-0 flex-wrap justify-between lg:justify-end">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
@@ -381,19 +395,19 @@ const MonthlyFiling: React.FC = () => {
             setAuthority={setAuthorityFilter}
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
-            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200 flex-shrink-0"
             totalFilteredCount={filteredClients.length}
           />
 
-          <button onClick={handlePrint} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0" title="Print List">
+          <button onClick={handlePrint} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-colors flex items-center justify-center shrink-0 flex-shrink-0" title="Print List">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
           </button>
-          <button onClick={handleExportCSV} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center shrink-0" title="Export Excel / CSV">
+          <button onClick={handleExportCSV} className="h-8 w-8 bg-white border border-slate-200 rounded-xl shadow-xs text-slate-500 hover:text-emerald-600 hover:border-emerald-200 transition-colors flex items-center justify-center shrink-0 flex-shrink-0" title="Export Excel / CSV">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </button>
 
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
-          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase text-slate-700 outline-none">{MONTH_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[var(--app-font-size)] font-black uppercase text-slate-700 outline-none flex-shrink-0">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select>
+          <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[var(--app-font-size)] font-black uppercase text-slate-700 outline-none flex-shrink-0">{MONTH_SELECT_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}</select>
         </div>
       </div>
 
@@ -493,18 +507,18 @@ const MonthlyFiling: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-            <table className={`w-full text-left border-collapse table-fixed min-w-full monthly-returns-table ${isAllMonthsMode ? 'min-w-[1475px]' : ''}`}>
+          <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full border rounded-lg">
+            <table className={`w-full text-left border-collapse min-w-[1000px] monthly-returns-table ${isAllMonthsMode ? 'min-w-[1475px]' : ''}`}>
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] text-center">S.No.</th>
-                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[180px]' : 'w-[22%]'} min-w-[150px]`}>Trade Name</th>
-                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[110px]' : 'w-[11%]'}`}>Mobile No.</th>
-                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[145px]' : 'w-[14%]'}`}>GSTIN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[50px] min-w-[50px] text-center whitespace-nowrap">S.No.</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[180px]' : 'w-[22%]'} min-w-[180px]`}>Trade Name</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[120px]' : 'w-[12%]'} min-w-[120px] whitespace-nowrap`}>Mobile No.</th>
+                <th className={`sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 ${isAllMonthsMode ? 'w-[145px]' : 'w-[14%]'} min-w-[145px] whitespace-nowrap`}>GSTIN</th>
                 
                 {isAllMonthsMode ? (
                   FY_MONTHS.map(m => (
-                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-1 py-1 text-[var(--app-font-size)] font-black uppercase tracking-tight text-slate-800 border-b border-slate-200 text-center w-[75px] min-w-[75px]">
+                    <th key={m} className="sticky top-0 z-30 bg-slate-100 px-1 py-1 text-[var(--app-font-size)] font-black uppercase tracking-tight text-slate-800 border-b border-slate-200 text-center w-[85px] min-w-[85px] whitespace-nowrap">
                       <div className="flex items-center justify-center gap-0.5">
                         <TableFilter 
                           label={SHORT_MONTH_MAP[m] || m.slice(0, 3)} 
@@ -525,34 +539,34 @@ const MonthlyFiling: React.FC = () => {
                   ))
                 ) : (
                   <>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[10%] min-w-[90px]">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[100px] whitespace-nowrap">
                        <div className="flex justify-center flex-col items-center">
                          <TableFilter label="GSTR-1" isActive={r1Filter !== 'All'}>
                            {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600">{f}</button>)}
                          </TableFilter>
                        </div>
                     </th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[11%] min-w-[100px]">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center min-w-[110px] whitespace-nowrap">
                        <div className="flex justify-center flex-col items-center">
                          <TableFilter label="GSTR-3B" isActive={r3bFilter !== 'All'}>
                            {['All', 'Filed', 'Challan', 'Pending'].map(f => <button key={f} onClick={() => setR3bFilter(f as any)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600">{f}</button>)}
                          </TableFilter>
                        </div>
                     </th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%] min-w-[110px]">User ID</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[11%] min-w-[110px]">Password</th>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-[10%] min-w-[120px]">Remark</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[110px] whitespace-nowrap">User ID</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[110px] whitespace-nowrap">Password</th>
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[130px]">Remark</th>
                   </>
                 )}
 
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-right w-[90px]">Action</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 min-w-[100px] whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
               <React.Fragment key={sector}>
                 <tr>
-                  <td colSpan={isAllMonthsMode ? 17 : 10} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-0.5 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                  <td colSpan={isAllMonthsMode ? 17 : 10} className="sticky top-[33px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1 px-3 uppercase text-[var(--app-font-size)] tracking-widest border-y border-slate-300 shadow-xs whitespace-nowrap">{sector} ({sectorClients.length})</td>
                 </tr>
                 {sectorClients.map((client, idx) => {
                 const st = getStatus(client.id);
@@ -561,18 +575,18 @@ const MonthlyFiling: React.FC = () => {
                 const theme = getClientColorTheme(client);
                 return (
                   <tr key={client.id} className={`transition-all border-b border-slate-100 animate-in fade-in slide-in-from-bottom-1 duration-150 ${theme.rowClass}`}>
-                    <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-[var(--app-font-size)] w-[50px] text-center truncate">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className={`px-3 py-1.5 truncate ${isAllMonthsMode ? 'w-[180px]' : 'w-[22%]'} min-w-[150px]`} title={client.tradeName}>
+                    <td className="px-3 py-2 font-black text-indigo-400 font-mono text-[var(--app-font-size)] w-[50px] min-w-[50px] text-center truncate whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className={`px-3 py-2 ${isAllMonthsMode ? 'w-[180px]' : 'w-[22%]'} min-w-[180px]`} title={client.tradeName}>
                       <div className={`truncate leading-tight font-semibold text-[var(--app-font-size)] ${theme.tradeNameClass}`}>{client.tradeName || '---'}</div>
-                      <p className="legal-subtitle truncate leading-normal" title={client.legalName}>{client.legalName || '---'}</p>
+                      <p className="legal-subtitle truncate leading-normal text-[var(--app-font-size)]" title={client.legalName}>{client.legalName || '---'}</p>
                     </td>
     
-                    <td className={`px-3 py-1.5 font-bold text-slate-600 text-[var(--app-font-size)] truncate ${isAllMonthsMode ? 'w-[110px]' : 'w-[11%]'}`}>{client.mobile || '---'}</td>
-                    <td className={`px-3 py-1.5 ${isAllMonthsMode ? 'w-[145px]' : 'w-[14%]'}`}>
-                      <div className="flex items-center gap-1.5 group/gstin">
-                        <span className={`truncate font-semibold tracking-wider font-mono text-[var(--app-font-size)] uppercase ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
+                    <td className={`px-3 py-2 font-bold text-slate-600 text-[var(--app-font-size)] truncate whitespace-nowrap ${isAllMonthsMode ? 'w-[120px]' : 'w-[12%]'} min-w-[120px]`}>{client.mobile || '---'}</td>
+                    <td className={`px-3 py-2 whitespace-nowrap ${isAllMonthsMode ? 'w-[145px]' : 'w-[14%]'} min-w-[145px]`}>
+                      <div className="flex items-center gap-1.5 group/gstin whitespace-nowrap">
+                        <span className={`truncate font-semibold tracking-wider font-mono text-[var(--app-font-size)] uppercase whitespace-nowrap ${theme.gstinClass}`}>{client.gstProfile?.gstin}</span>
                         {client.gstProfile?.gstin && (
-                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
+                          <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0 flex-shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                           </button>
                         )}
@@ -585,23 +599,23 @@ const MonthlyFiling: React.FC = () => {
                         const monthSt = getStatus(client.id, periodKey);
                         const monthR3b = getStatusLabel(monthSt.r3b);
                         return (
-                          <td key={m} className="px-1 py-1 text-center border-x border-slate-100/60 align-middle w-[75px] min-w-[75px]">
+                          <td key={m} className="px-1 py-1 text-center border-x border-slate-100/60 align-middle w-[85px] min-w-[85px]">
                             <div className="flex flex-col items-center gap-0.5 justify-center">
                               <button
                                 type="button"
                                 onClick={() => toggleStatus(client.id, 'r1', periodKey)}
-                                className={`w-full px-1 py-0.5 rounded text-[10px] font-black uppercase border flex items-center justify-between transition-all ${
+                                className={`w-full px-1 py-0.5 rounded text-[var(--app-font-size)] font-black uppercase border flex items-center justify-between transition-all ${
                                   monthSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200'
                                 }`}
                                 title={`GSTR-1 (${m}): Click to toggle`}
                               >
-                                <span className="text-[9px] font-bold text-slate-400">R1</span>
-                                <span>{monthSt.r1 ? 'Filed' : 'Pend'}</span>
+                                <span className="text-[10px] font-bold text-slate-400 flex-shrink-0">R1</span>
+                                <span className="truncate">{monthSt.r1 ? 'Filed' : 'Pend'}</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => toggleStatus(client.id, 'r3b', periodKey)}
-                                className={`w-full px-1 py-0.5 rounded text-[10px] font-black uppercase border flex items-center justify-between transition-all ${
+                                className={`w-full px-1 py-0.5 rounded text-[var(--app-font-size)] font-black uppercase border flex items-center justify-between transition-all ${
                                   monthR3b === 'Filed' 
                                     ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                                     : monthR3b === 'Challan' 
@@ -610,8 +624,8 @@ const MonthlyFiling: React.FC = () => {
                                 }`}
                                 title={`GSTR-3B (${m}): Click to cycle (Pending → Challan → Filed)`}
                               >
-                                <span className="text-[9px] font-bold text-slate-400">3B</span>
-                                <span>{monthR3b === 'Filed' ? 'Filed' : monthR3b === 'Challan' ? 'Chal' : 'Pend'}</span>
+                                <span className="text-[10px] font-bold text-slate-400 flex-shrink-0">3B</span>
+                                <span className="truncate">{monthR3b === 'Filed' ? 'Filed' : monthR3b === 'Challan' ? 'Chal' : 'Pend'}</span>
                               </button>
                             </div>
                           </td>
@@ -619,38 +633,38 @@ const MonthlyFiling: React.FC = () => {
                       })
                     ) : (
                       <>
-                        <td className="px-3 py-1.5 text-center w-[10%] min-w-[90px]">
-                           <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                        <td className="px-3 py-2 text-center min-w-[100px] whitespace-nowrap">
+                           <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto whitespace-nowrap ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
                               {st.r1 ? 'Filed' : 'Pending'}
                               <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                            </button>
                         </td>
-                        <td className="px-3 py-1.5 text-center w-[11%] min-w-[100px]">
-                           <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
-                              r3bStatus === 'Filed' 
-                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
-                                : r3bStatus === 'Challan' 
-                                  ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
-                                  : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                        <td className="px-3 py-2 text-center min-w-[110px] whitespace-nowrap">
+                           <button onClick={() => toggleStatus(client.id, 'r3b')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all whitespace-nowrap ${
+                               r3bStatus === 'Filed' 
+                                 ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
+                                 : r3bStatus === 'Challan' 
+                                   ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' 
+                                   : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
                            }`} title="Click to cycle: Pending → Challan → Filed">
                               {r3bStatus}
                               <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                            </button>
                         </td>
-                        <td className="px-3 py-1.5 font-semibold text-slate-700 text-[var(--app-font-size)] truncate w-[11%] min-w-[110px]">{client.gstProfile?.username || '---'}</td>
-                        <td className="px-3 py-1.5 w-[11%] min-w-[110px]">
-                           <div className="flex items-center gap-2 group/pass">
+                        <td className="px-3 py-2 font-semibold text-slate-700 text-[var(--app-font-size)] truncate min-w-[110px] whitespace-nowrap">{client.gstProfile?.username || '---'}</td>
+                        <td className="px-3 py-2 min-w-[110px] whitespace-nowrap">
+                           <div className="flex items-center gap-2 group/pass whitespace-nowrap">
                               {isEditingPass ? (
                                 <input autoFocus value={newPassVal} onChange={e => setNewPassVal(e.target.value)} onBlur={handleUpdatePassword} onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} className="bg-white border border-indigo-200 rounded px-2 h-7 text-[var(--app-font-size)] font-semibold w-24 outline-none" />
                               ) : (
                                 <>
                                    <span className="font-semibold text-indigo-500 text-[var(--app-font-size)] truncate">{client.gstProfile?.password || '---'}</span>
-                                   <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                   <button onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0 flex-shrink-0"><svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
                                    {client.gstProfile?.username && (
                                      <button onClick={() => { 
                                        navigator.clipboard.writeText(client.gstProfile?.username || ''); 
                                        window.open('https://services.gst.gov.in/services/login', '_blank'); 
-                                     }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" title="Login to GST Portal">
+                                     }} className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0 flex-shrink-0" title="Login to GST Portal">
                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                                      </button>
                                    )}
@@ -658,16 +672,16 @@ const MonthlyFiling: React.FC = () => {
                               )}
                            </div>
                         </td>
-                        <td className="px-3 py-1.5 truncate max-w-[150px] w-[10%] min-w-[120px]">
-                           <EditableRemark value={st?.remark || status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
+                        <td className="px-3 py-2 truncate max-w-[160px] min-w-[130px]">
+                           <EditableRemark value={st?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                         </td>
                       </>
                     )}
 
-                     <td className="px-3 py-1.5 text-right w-[90px]">
-                       <div className="flex items-center justify-end gap-1">
+                     <td className="px-3 py-2 text-right min-w-[100px] whitespace-nowrap">
+                       <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                           <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
-                          <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm">
+                          <button onClick={(e) => openActionsMenu(e, client)} className="h-8 w-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:text-indigo-600 flex items-center justify-center shadow-sm flex-shrink-0">
                              <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                           </button>
                        </div>

@@ -220,11 +220,11 @@ const CourtPending: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
         {/* Count Badges (Clickable Filters) */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar w-full lg:w-auto max-w-full py-0.5">
           <button 
             type="button"
             onClick={() => setDueFilter('All')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               dueFilter === 'All' 
                 ? 'bg-slate-900 text-white shadow-sm' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -239,7 +239,7 @@ const CourtPending: React.FC = () => {
           <button 
             type="button"
             onClick={() => setDueFilter(prev => prev === 'gt15' ? 'All' : 'gt15')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               dueFilter === 'gt15' 
                 ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30' 
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
@@ -254,7 +254,7 @@ const CourtPending: React.FC = () => {
           <button 
             type="button"
             onClick={() => setDueFilter(prev => prev === 'gt5' ? 'All' : 'gt5')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               dueFilter === 'gt5' 
                 ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/30' 
                 : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60'
@@ -269,7 +269,7 @@ const CourtPending: React.FC = () => {
           <button 
             type="button"
             onClick={() => setDueFilter(prev => prev === 'urgent' ? 'All' : 'urgent')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               dueFilter === 'urgent' 
                 ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600/30 animate-pulse' 
                 : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
@@ -277,7 +277,7 @@ const CourtPending: React.FC = () => {
           >
             <span>Last Day / Urgent</span>
             <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
-              dueFilter === 'urgent' ? 'bg-white/20 text-white' : 'bg-rose-200 text-rose-900'
+              dueFilter === 'urgent' ? 'bg-rose-200 text-rose-900' : 'bg-rose-200 text-rose-900'
             }`}>{stats.urgent}</span>
           </button>
         </div>

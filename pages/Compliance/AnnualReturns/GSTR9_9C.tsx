@@ -253,11 +253,11 @@ const GSTR9_9C: React.FC = () => {
             </svg>
           </div>
 
-          {/* Count Badges Pill Filter Group */}
-          <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-0.5">
+          {/* Count Badges Pill Filter Group & Due Dates */}
+          <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
             <button
               onClick={() => setQuickFilter('All')}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border whitespace-nowrap ${
                 quickFilter === 'All' 
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -271,7 +271,7 @@ const GSTR9_9C: React.FC = () => {
 
             <button
               onClick={() => setQuickFilter('Filed')}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border whitespace-nowrap ${
                 quickFilter === 'Filed' 
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                   : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
@@ -285,7 +285,7 @@ const GSTR9_9C: React.FC = () => {
 
             <button
               onClick={() => setQuickFilter('Pending')}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border whitespace-nowrap ${
                 quickFilter === 'Pending' 
                   ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                   : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
@@ -296,6 +296,20 @@ const GSTR9_9C: React.FC = () => {
                 quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
               }`}>{stats.pending}</span>
             </button>
+
+            {gstr9DueDate && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/80 text-[10px] font-black text-indigo-700 whitespace-nowrap shrink-0">
+                <span className="text-indigo-500 font-bold">GSTR-9 Due:</span>
+                <span className="font-mono">{formatISOToDDMMYYYY(gstr9DueDate)}</span>
+              </div>
+            )}
+
+            {gstr9cDueDate && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[10px] font-black text-emerald-700 whitespace-nowrap shrink-0">
+                <span className="text-emerald-500 font-bold">9C Due:</span>
+                <span className="font-mono">{formatISOToDDMMYYYY(gstr9cDueDate)}</span>
+              </div>
+            )}
           </div>
         </div>
 

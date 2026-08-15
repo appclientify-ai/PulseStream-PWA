@@ -211,11 +211,11 @@ const handleExportPDF = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
           <button 
             onClick={() => setQuickFilter('All')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               quickFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
@@ -224,7 +224,7 @@ const handleExportPDF = () => {
           </button>
           <button 
             onClick={() => setQuickFilter('Filed')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               quickFilter === 'Filed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
             }`}
           >
@@ -233,7 +233,7 @@ const handleExportPDF = () => {
           </button>
           <button 
             onClick={() => setQuickFilter('Pending')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               quickFilter === 'Pending' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
             }`}
           >
@@ -241,9 +241,10 @@ const handleExportPDF = () => {
             <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.pending}</span>
           </button>
           {gstr4DueDate && (
-            <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 hidden xl:inline-block">
-              GSTR-4 Due: <strong>{formatISOToDDMMYYYY(gstr4DueDate)}</strong>
-            </span>
+            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
+              <span className="text-indigo-500 font-bold">GSTR-4 Due:</span>
+              <span className="font-mono">{formatISOToDDMMYYYY(gstr4DueDate)}</span>
+            </div>
           )}
         </div>
 

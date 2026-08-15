@@ -268,7 +268,19 @@ const Dashboard: React.FC = () => {
   };
 
   const getLitCounts = (forum: 'Notice' | 'Appeal' | 'Tribunal' | 'HighCourt', stage: 'Pending' | 'Filed' | 'Drop' | 'Demand') => {
-    return litigation.filter(r => r.category === forum && r.status === stage).length;
+    const items = litigation.filter(r => r.category === forum && r.status === stage);
+    const seen = new Set<string>();
+    let count = 0;
+    for (const r of items) {
+      const idKey = r.id || r._id ? String(r.id || r._id) : '';
+      const contentKey = `${(r.clientName||'').trim().toLowerCase()}_${(r.noticeNo||r.orderNo||r.replyReferenceNo||r.caseNo||r.filingNo||'').trim().toLowerCase()}_${r.hearingDate||r.dueDate||''}`;
+      const key = idKey || contentKey;
+      if (!seen.has(key)) {
+        seen.add(key);
+        count++;
+      }
+    }
+    return count;
   };
 
   const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
@@ -365,7 +377,18 @@ const Dashboard: React.FC = () => {
 
     const sortedPending = useMemo(() => {
       const activeList = litigation.filter(r => r.category === forum && (r.status === 'Pending' || r.status === 'Filed'));
-      return [...activeList].sort((a, b) => {
+      const seen = new Set<string>();
+      const uniqueList: LitigationRecord[] = [];
+      for (const r of activeList) {
+        const idKey = r.id || r._id ? String(r.id || r._id) : '';
+        const contentKey = `${(r.clientName||'').trim().toLowerCase()}_${(r.noticeNo||r.orderNo||r.replyReferenceNo||r.caseNo||r.filingNo||'').trim().toLowerCase()}_${r.hearingDate||r.dueDate||''}`;
+        const key = idKey || contentKey;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueList.push(r);
+        }
+      }
+      return [...uniqueList].sort((a, b) => {
         const dateA = getEffectiveDate(a);
         const dateB = getEffectiveDate(b);
         if (!dateA && !dateB) return 0;

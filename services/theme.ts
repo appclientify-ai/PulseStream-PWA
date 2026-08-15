@@ -73,7 +73,11 @@ export function applyUiSettings(settings: Partial<UISettings>): UISettings {
   if (typeof document !== 'undefined') {
     // 1. Apply font size
     const fontSize = finalSettings.fontSize || 16;
+    const tableFontSize = Math.max(14, fontSize);
     document.documentElement.style.setProperty('--ui-font-size', `${fontSize}px`);
+    document.documentElement.style.setProperty('--app-font-size', `${fontSize}px`);
+    document.documentElement.style.setProperty('--table-font-size', `${tableFontSize}px`);
+    document.documentElement.style.setProperty('--table-header-font-size', `${tableFontSize}px`);
     document.documentElement.style.setProperty('--ui-font-size-num', `${fontSize}`);
     document.documentElement.style.setProperty('--ui-font-scale', `${fontSize / 16}`);
     document.documentElement.style.fontSize = `${fontSize}px`;

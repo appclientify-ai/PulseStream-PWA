@@ -214,11 +214,41 @@ class ApiService {
           this.getTribunalRecords().catch(() => []),
           this.getHighCourtRecords().catch(() => [])
         ]);
-        const existingIds = new Set((res.summary.litigation || []).map((r: any) => r.id || r._id));
-        const extraTribunal = (tribunal || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'Tribunal' }));
-        const extraHighcourt = (highcourt || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }));
+        const tribunalList = tribunal || [];
+        const highcourtList = highcourt || [];
+
+        const isMatch = (a: any, b: any) => {
+          if (a.id && b.id && String(a.id) === String(b.id)) return true;
+          if (a._id && b._id && String(a._id) === String(b._id)) return true;
+          if (a.id && b._id && String(a.id) === String(b._id)) return true;
+          if (a._id && b.id && String(a._id) === String(b.id)) return true;
+          const clientA = (a.clientName || '').trim().toLowerCase();
+          const clientB = (b.clientName || '').trim().toLowerCase();
+          if (clientA && clientA === clientB) {
+            const refA = (a.noticeNo || a.orderNo || a.replyReferenceNo || a.caseNo || a.filingNo || '').trim().toLowerCase();
+            const refB = (b.noticeNo || b.orderNo || b.replyReferenceNo || b.caseNo || b.filingNo || '').trim().toLowerCase();
+            if (refA && refA === refB) return true;
+            if (a.hearingDate && a.hearingDate === b.hearingDate) return true;
+            if (a.appDate && a.appDate === b.appDate) return true;
+          }
+          return false;
+        };
+
+        const filteredLitigation = (res.summary.litigation || []).filter((r: any) => {
+          if (r.category === 'Tribunal' && tribunalList.length > 0) {
+            if (tribunalList.some(t => isMatch(r, t))) return false;
+          }
+          if (r.category === 'HighCourt' && highcourtList.length > 0) {
+            if (highcourtList.some(h => isMatch(r, h))) return false;
+          }
+          return true;
+        });
+
+        const extraTribunal = tribunalList.filter(t => !filteredLitigation.some(r => isMatch(r, t))).map(r => ({ ...r, category: r.category || 'Tribunal' }));
+        const extraHighcourt = highcourtList.filter(h => !filteredLitigation.some(r => isMatch(r, h))).map(r => ({ ...r, category: r.category || 'HighCourt' }));
+
         res.summary.litigation = [
-          ...(res.summary.litigation || []),
+          ...filteredLitigation,
           ...extraTribunal,
           ...extraHighcourt
         ];
@@ -332,6 +362,23 @@ class ApiService {
   }
 
   async getLitigationFilingData(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
+    const isMatch = (a: any, b: any) => {
+      if (a.id && b.id && String(a.id) === String(b.id)) return true;
+      if (a._id && b._id && String(a._id) === String(b._id)) return true;
+      if (a.id && b._id && String(a.id) === String(b._id)) return true;
+      if (a._id && b.id && String(a._id) === String(b.id)) return true;
+      const clientA = (a.clientName || '').trim().toLowerCase();
+      const clientB = (b.clientName || '').trim().toLowerCase();
+      if (clientA && clientA === clientB) {
+        const refA = (a.noticeNo || a.orderNo || a.replyReferenceNo || a.caseNo || a.filingNo || '').trim().toLowerCase();
+        const refB = (b.noticeNo || b.orderNo || b.replyReferenceNo || b.caseNo || b.filingNo || '').trim().toLowerCase();
+        if (refA && refA === refB) return true;
+        if (a.hearingDate && a.hearingDate === b.hearingDate) return true;
+        if (a.appDate && a.appDate === b.appDate) return true;
+      }
+      return false;
+    };
+
     try {
       const res = await this.get('/items/filing/litigation');
       if (res && res.clients && res.litigation) {
@@ -339,10 +386,22 @@ class ApiService {
           this.getTribunalRecords().catch(() => []),
           this.getHighCourtRecords().catch(() => [])
         ]);
-        const existingIds = new Set(res.litigation.map((r: any) => r.id || r._id));
-        const extraTribunal = (tribunal || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'Tribunal' }));
-        const extraHighcourt = (highcourt || []).filter((r: any) => !existingIds.has(r.id || r._id)).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }));
-        return { clients: res.clients, litigation: [...res.litigation, ...extraTribunal, ...extraHighcourt] };
+        const tribunalList = tribunal || [];
+        const highcourtList = highcourt || [];
+
+        const filteredLitigation = (res.litigation || []).filter((r: any) => {
+          if (r.category === 'Tribunal' && tribunalList.length > 0) {
+            if (tribunalList.some(t => isMatch(r, t))) return false;
+          }
+          if (r.category === 'HighCourt' && highcourtList.length > 0) {
+            if (highcourtList.some(h => isMatch(r, h))) return false;
+          }
+          return true;
+        });
+
+        const extraTribunal = tribunalList.filter(t => !filteredLitigation.some(r => isMatch(r, t))).map(r => ({ ...r, category: r.category || 'Tribunal' }));
+        const extraHighcourt = highcourtList.filter(h => !filteredLitigation.some(r => isMatch(r, h))).map(r => ({ ...r, category: r.category || 'HighCourt' }));
+        return { clients: res.clients, litigation: [...filteredLitigation, ...extraTribunal, ...extraHighcourt] };
       }
     } catch (e) {
       console.warn('Dedicated litigation endpoint failed, falling back:', e);
@@ -353,12 +412,23 @@ class ApiService {
       this.getTribunalRecords().catch(() => []),
       this.getHighCourtRecords().catch(() => [])
     ]);
-    const allLitigation = [
-      ...(litigation || []),
-      ...(tribunal || []).map((r: any) => ({ ...r, category: r.category || 'Tribunal' })),
-      ...(highcourt || []).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }))
-    ];
-    return { clients, litigation: allLitigation };
+    const tribunalList = tribunal || [];
+    const highcourtList = highcourt || [];
+
+    const filteredLitigation = (litigation || []).filter((r: any) => {
+      if (r.category === 'Tribunal' && tribunalList.length > 0) {
+        if (tribunalList.some(t => isMatch(r, t))) return false;
+      }
+      if (r.category === 'HighCourt' && highcourtList.length > 0) {
+        if (highcourtList.some(h => isMatch(r, h))) return false;
+      }
+      return true;
+    });
+
+    const extraTribunal = tribunalList.filter(t => !filteredLitigation.some(r => isMatch(r, t))).map(r => ({ ...r, category: r.category || 'Tribunal' }));
+    const extraHighcourt = highcourtList.filter(h => !filteredLitigation.some(r => isMatch(r, h))).map(r => ({ ...r, category: r.category || 'HighCourt' }));
+
+    return { clients, litigation: [...filteredLitigation, ...extraTribunal, ...extraHighcourt] };
   }
 
   async getGstNoticePending(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
@@ -592,10 +662,44 @@ class ApiService {
       this.getTribunalRecords().catch(() => []),
       this.getHighCourtRecords().catch(() => [])
     ]);
+
+    const tribunalList = tribunal || [];
+    const highcourtList = highcourt || [];
+
+    const isMatch = (a: any, b: any) => {
+      if (a.id && b.id && String(a.id) === String(b.id)) return true;
+      if (a._id && b._id && String(a._id) === String(b._id)) return true;
+      if (a.id && b._id && String(a.id) === String(b._id)) return true;
+      if (a._id && b.id && String(a._id) === String(b.id)) return true;
+      const clientA = (a.clientName || '').trim().toLowerCase();
+      const clientB = (b.clientName || '').trim().toLowerCase();
+      if (clientA && clientA === clientB) {
+        const refA = (a.noticeNo || a.orderNo || a.replyReferenceNo || a.caseNo || a.filingNo || '').trim().toLowerCase();
+        const refB = (b.noticeNo || b.orderNo || b.replyReferenceNo || b.caseNo || b.filingNo || '').trim().toLowerCase();
+        if (refA && refA === refB) return true;
+        if (a.hearingDate && a.hearingDate === b.hearingDate) return true;
+        if (a.appDate && a.appDate === b.appDate) return true;
+      }
+      return false;
+    };
+
+    const filteredLitigation = (litigation || []).filter((r: any) => {
+      if (r.category === 'Tribunal' && tribunalList.length > 0) {
+        if (tribunalList.some(t => isMatch(r, t))) return false;
+      }
+      if (r.category === 'HighCourt' && highcourtList.length > 0) {
+        if (highcourtList.some(h => isMatch(r, h))) return false;
+      }
+      return true;
+    });
+
+    const extraTribunal = tribunalList.filter(t => !filteredLitigation.some(r => isMatch(r, t))).map(r => ({ ...r, category: r.category || 'Tribunal' }));
+    const extraHighcourt = highcourtList.filter(h => !filteredLitigation.some(r => isMatch(r, h))).map(r => ({ ...r, category: r.category || 'HighCourt' }));
+
     const allLitigation = [
-      ...(litigation || []),
-      ...(tribunal || []).map((r: any) => ({ ...r, category: r.category || 'Tribunal' })),
-      ...(highcourt || []).map((r: any) => ({ ...r, category: r.category || 'HighCourt' }))
+      ...filteredLitigation,
+      ...extraTribunal,
+      ...extraHighcourt
     ];
     return { clients, litigation: allLitigation, invoices, work, gstReg, foodLic, msme, payments };
   }

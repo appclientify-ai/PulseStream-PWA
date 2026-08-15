@@ -11,6 +11,7 @@ import GSTViewIcon from '../../../components/GSTViewIcon';
 import ITViewIcon from '../../../components/ITViewIcon';
 import { TableFilter } from '../../../components/TableFilter';
 import { useGlobalDueDates } from '../../../hooks/useGlobalDueDates';
+import { formatISOToDDMMYYYY } from '../../../dateUtils';
 import { ViewControl } from '../../../components/ViewControl';
 import { toast } from 'sonner';
 
@@ -174,12 +175,12 @@ const TAXAudit: React.FC = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
       {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex flex-wrap items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
           <button 
             type="button"
             onClick={() => { setBsFilter('All'); setAuditFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               bsFilter === 'All' && auditFilter === 'All' 
                 ? 'bg-slate-900 text-white font-black shadow-xs' 
                 : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
@@ -190,7 +191,7 @@ const TAXAudit: React.FC = () => {
           <button 
             type="button"
             onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               bsFilter === 'Ready' 
                 ? 'bg-emerald-600 text-white font-black shadow-xs' 
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -201,7 +202,7 @@ const TAXAudit: React.FC = () => {
           <button 
             type="button"
             onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               auditFilter === 'Filed' 
                 ? 'bg-indigo-600 text-white font-black shadow-xs' 
                 : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -212,7 +213,7 @@ const TAXAudit: React.FC = () => {
           <button 
             type="button"
             onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer ${
+            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               auditFilter === 'Pending' 
                 ? 'bg-rose-600 text-white font-black shadow-xs' 
                 : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -221,8 +222,8 @@ const TAXAudit: React.FC = () => {
             Pending: <strong className={auditFilter === 'Pending' ? 'text-white' : 'font-black text-rose-900'}>{stats.pendingAudit}</strong>
           </button>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-tight font-black text-slate-500">
-          <span>Audit Due:</span>
+        <div className="flex items-center gap-1 text-[10px] uppercase tracking-tight font-black text-slate-500 whitespace-nowrap shrink-0">
+          <span>Due:</span>
           <input 
             type="date" 
             value={currentDueDate} 
@@ -233,11 +234,11 @@ const TAXAudit: React.FC = () => {
       </div>
 
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-center gap-3 landscape:gap-1 bg-white p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
           <button 
             onClick={() => { setBsFilter('All'); setAuditFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
               bsFilter === 'All' && auditFilter === 'All' 
                 ? 'bg-slate-900 text-white shadow-sm' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -250,7 +251,7 @@ const TAXAudit: React.FC = () => {
           </button>
           <button 
             onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
               bsFilter === 'Ready' 
                 ? 'bg-emerald-600 text-white shadow-sm' 
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -263,7 +264,7 @@ const TAXAudit: React.FC = () => {
           </button>
           <button 
             onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
               auditFilter === 'Filed' 
                 ? 'bg-indigo-600 text-white shadow-sm' 
                 : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -276,7 +277,7 @@ const TAXAudit: React.FC = () => {
           </button>
           <button 
             onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
               auditFilter === 'Pending' 
                 ? 'bg-rose-600 text-white shadow-sm' 
                 : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -287,6 +288,12 @@ const TAXAudit: React.FC = () => {
               auditFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
             }`}>{stats.pendingAudit}</span>
           </button>
+          {currentDueDate && (
+            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
+              <span className="text-indigo-500 font-bold">Audit Due:</span>
+              <span className="font-mono">{formatISOToDDMMYYYY(currentDueDate)}</span>
+            </div>
+          )}
         </div>
 
         <div className="relative flex-1 w-full group">
