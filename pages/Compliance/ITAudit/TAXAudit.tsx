@@ -222,16 +222,10 @@ const TAXAudit: React.FC = () => {
             Pending: <strong className={auditFilter === 'Pending' ? 'text-white' : 'font-black text-rose-900'}>{stats.pendingAudit}</strong>
           </button>
         </div>
-        {currentDueDate && (
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-tight font-black text-slate-500 whitespace-nowrap shrink-0">
-            <span className="text-slate-400 font-bold">Due:</span>
-            <span className="font-mono text-indigo-600 font-bold">{formatISOToDDMMYYYY(currentDueDate)}</span>
-          </div>
-        )}
       </div>
 
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0 relative z-40">
         <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
           <button 
             onClick={() => { setBsFilter('All'); setAuditFilter('All'); }} 

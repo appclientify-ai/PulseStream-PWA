@@ -71,7 +71,7 @@ const QuarterlyFiling: React.FC = () => {
   const defaultPeriod = getDefaultPeriod();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending'>('All');
+  const [r1Filter, setR1Filter] = useState<'All' | 'Filed' | 'Pending' | 'M1_Filed' | 'M1_Pending' | 'M2_Filed' | 'M2_Pending' | 'M3_Filed' | 'M3_Pending'>('All');
   const [r3bFilter, setR3bFilter] = useState<'All' | 'Filed' | 'Challan' | 'Pending'>('All');
   const [quickFilter, setQuickFilter] = useState<'All' | 'R1Filed' | '3BFiled' | '3BChallan' | 'Pending'>('All');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -163,6 +163,18 @@ const QuarterlyFiling: React.FC = () => {
         list = list.filter(c => QUARTER_CONFIGS.every(q => q.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1)));
       } else if (r1Filter === 'Pending') {
         list = list.filter(c => QUARTER_CONFIGS.some(q => q.months.some(m => !getStatus(c.id, `${selectedYear}_${m.name}`).r1)));
+      } else if (r1Filter === 'M1_Filed') {
+        list = list.filter(c => QUARTER_CONFIGS.every(q => getStatus(c.id, `${selectedYear}_${q.months[0].name}`).r1));
+      } else if (r1Filter === 'M1_Pending') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => !getStatus(c.id, `${selectedYear}_${q.months[0].name}`).r1));
+      } else if (r1Filter === 'M2_Filed') {
+        list = list.filter(c => QUARTER_CONFIGS.every(q => getStatus(c.id, `${selectedYear}_${q.months[1].name}`).r1));
+      } else if (r1Filter === 'M2_Pending') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => !getStatus(c.id, `${selectedYear}_${q.months[1].name}`).r1));
+      } else if (r1Filter === 'M3_Filed') {
+        list = list.filter(c => QUARTER_CONFIGS.every(q => getStatus(c.id, `${selectedYear}_${q.months[2].name}`).r1));
+      } else if (r1Filter === 'M3_Pending') {
+        list = list.filter(c => QUARTER_CONFIGS.some(q => !getStatus(c.id, `${selectedYear}_${q.months[2].name}`).r1));
       }
 
       if (r3bFilter === 'Filed') {
@@ -193,6 +205,18 @@ const QuarterlyFiling: React.FC = () => {
         list = list.filter(c => activeQuarterConfig.months.every(m => getStatus(c.id, `${selectedYear}_${m.name}`).r1));
       } else if (r1Filter === 'Pending') {
         list = list.filter(c => activeQuarterConfig.months.some(m => !getStatus(c.id, `${selectedYear}_${m.name}`).r1));
+      } else if (r1Filter === 'M1_Filed') {
+        list = list.filter(c => getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[0].name}`).r1);
+      } else if (r1Filter === 'M1_Pending') {
+        list = list.filter(c => !getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[0].name}`).r1);
+      } else if (r1Filter === 'M2_Filed') {
+        list = list.filter(c => getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[1].name}`).r1);
+      } else if (r1Filter === 'M2_Pending') {
+        list = list.filter(c => !getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[1].name}`).r1);
+      } else if (r1Filter === 'M3_Filed') {
+        list = list.filter(c => getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[2].name}`).r1);
+      } else if (r1Filter === 'M3_Pending') {
+        list = list.filter(c => !getStatus(c.id, `${selectedYear}_${activeQuarterConfig.months[2].name}`).r1);
       }
 
       if (r3bFilter === 'Filed') {
@@ -338,7 +362,7 @@ const QuarterlyFiling: React.FC = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
-      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-20">
+      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
         
         {/* Search Bar & Interactive Count Badges */}
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
@@ -603,10 +627,30 @@ const QuarterlyFiling: React.FC = () => {
                   ))
                 ) : (
                   <>
-                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[16%] min-w-[160px] whitespace-nowrap">
+                    <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 text-center w-[230px] min-w-[230px] whitespace-nowrap">
                        <div className="flex justify-center flex-col items-center">
                           <TableFilter label="IFF/R1 (Months)" isActive={r1Filter !== 'All'}>
-                            {['All', 'Filed', 'Pending'].map(f => <button key={f} onClick={() => setR1Filter(f as any)} className="w-full text-left px-3 py-2 text-[var(--app-font-size)] font-black uppercase rounded-lg hover:bg-slate-50 text-slate-600">{f}</button>)}
+                            {[
+                              { id: 'All', label: 'All' },
+                              { id: 'Filed', label: 'All 3 Months Filed' },
+                              { id: 'Pending', label: 'Any Month Pending' },
+                              { id: 'M1_Filed', label: '1st Month IFF Filed' },
+                              { id: 'M1_Pending', label: '1st Month IFF Pending' },
+                              { id: 'M2_Filed', label: '2nd Month IFF Filed' },
+                              { id: 'M2_Pending', label: '2nd Month IFF Pending' },
+                              { id: 'M3_Filed', label: '3rd Month (GSTR-1) Filed' },
+                              { id: 'M3_Pending', label: '3rd Month (GSTR-1) Pending' },
+                            ].map(f => (
+                              <button 
+                                key={f.id} 
+                                onClick={() => setR1Filter(f.id as any)} 
+                                className={`w-full text-left px-3 py-1.5 text-[11px] font-black uppercase rounded-lg hover:bg-indigo-50 hover:text-indigo-700 whitespace-nowrap ${
+                                  r1Filter === f.id ? 'bg-indigo-100 text-indigo-800 font-black' : 'text-slate-600'
+                                }`}
+                              >
+                                {f.label}
+                              </button>
+                            ))}
                           </TableFilter>
                        </div>
                     </th>
@@ -709,27 +753,26 @@ const QuarterlyFiling: React.FC = () => {
                       ))
                     ) : (
                       <>
-                        <td className="px-3 py-1.5 text-center w-[16%] min-w-[160px] whitespace-nowrap">
+                        <td className="px-3 py-1.5 text-center w-[230px] min-w-[230px] whitespace-nowrap">
                           {activeQuarterConfig ? (
-                            <div className="flex flex-col gap-1 items-center justify-center">
-                              <div className="flex items-center gap-1 justify-center flex-wrap">
-                                {activeQuarterConfig.months.map(m => {
-                                  const mPeriod = `${selectedYear}_${m.name}`;
-                                  const mSt = getStatus(client.id, mPeriod);
-                                  return (
-                                    <button
-                                      key={m.name}
-                                      onClick={() => toggleStatus(client.id, 'r1', mPeriod)}
-                                      className={`px-2 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center gap-1 transition-all flex-shrink-0 ${
-                                        mSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-                                      }`}
-                                      title={`${m.name} (${m.type}): ${mSt.r1 ? 'Filed' : 'Pending'}`}
-                                    >
-                                      <span>{m.short} {m.type}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
+                            <div className="flex items-center gap-1 justify-center flex-nowrap shrink-0 whitespace-nowrap">
+                              {activeQuarterConfig.months.map(m => {
+                                const mPeriod = `${selectedYear}_${m.name}`;
+                                const mSt = getStatus(client.id, mPeriod);
+                                const isGstr1 = m.type === 'GSTR-1';
+                                return (
+                                  <button
+                                    key={m.name}
+                                    onClick={() => toggleStatus(client.id, 'r1', mPeriod)}
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border flex items-center gap-0.5 transition-all shrink-0 whitespace-nowrap ${
+                                      mSt.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                                    }`}
+                                    title={`${m.name} (${m.type}): ${mSt.r1 ? 'Filed' : 'Pending'}`}
+                                  >
+                                    <span>{m.short} {isGstr1 ? 'R1' : 'IFF'}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           ) : (
                             <button onClick={() => toggleStatus(client.id, 'r1')} className={`px-2.5 py-0.5 rounded-full text-[var(--app-font-size)] font-black uppercase border flex items-center justify-center gap-1 mx-auto ${st.r1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>

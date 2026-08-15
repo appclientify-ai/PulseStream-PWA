@@ -273,7 +273,7 @@ const MonthlyFiling: React.FC = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
-      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-20">
+      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
         
         {/* Search Bar & Interactive Count Badges */}
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">

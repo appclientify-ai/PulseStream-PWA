@@ -183,7 +183,8 @@ export const SectorJurisdictionFilter: React.FC<SectorJurisdictionFilterProps> =
             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
           />
         </svg>
-        <span className="hidden sm:inline">Sector/Jurisdiction</span>
+        <span className="hidden md:inline">Sector/Juris</span>
+        <span className="inline md:hidden">Sector</span>
         {hasActiveFilter && (
           <span className="ml-0.5 bg-white text-amber-900 font-black text-[10px] px-1.5 py-0.2 rounded-full shadow-xs">
             {selectedSectors.length > 0 ? `${selectedSectors.length}` : authority}

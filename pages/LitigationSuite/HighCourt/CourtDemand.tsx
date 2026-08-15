@@ -168,11 +168,7 @@ const CourtDemand: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-        {filteredRecords.length === 0 ? (
-          <div className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
-            No Sustained High Court Orders Recorded
-          </div>
-        ) : viewMode === 'table' ? (
+        {viewMode === 'table' ? (
           /* Table View */
           <div className="overflow-x-auto no-scrollbar flex-1 min-h-[300px] pb-32">
             <table className="w-full text-left border-collapse table-auto min-w-full">
@@ -189,7 +185,14 @@ const CourtDemand: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRecords.map((rec, idx) => {
+                {filteredRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-24 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
+                      No Sustained High Court Orders Recorded
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRecords.map((rec, idx) => {
                   const client = clients.find(c => c.id === rec.clientId);
                   return (
                     <tr key={rec.id} className="hover:bg-rose-50/20 transition-all group text-[12px]">
@@ -289,9 +292,14 @@ const CourtDemand: React.FC = () => {
                       </td>
                     </tr>
                   );
-                })}
+                })
+                )}
               </tbody>
             </table>
+          </div>
+        ) : filteredRecords.length === 0 ? (
+          <div className="py-32 text-center text-slate-300 font-black uppercase tracking-widest text-sm">
+            No Sustained High Court Orders Recorded
           </div>
         ) : (
           /* Grid View */
