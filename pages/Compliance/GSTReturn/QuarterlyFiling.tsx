@@ -362,35 +362,35 @@ const QuarterlyFiling: React.FC = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Search Toolbar with Integrated Count Badges & Grid/Table Toggle */}
-      <div className="flex flex-wrap md:flex-nowrap gap-2 items-center w-full bg-white p-2 md:p-2.5 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
+      <div className="flex flex-wrap lg:flex-nowrap gap-2 items-center w-full bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
         
         {/* Search Bar & Interactive Count Badges */}
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-          <div className="relative flex-1 group min-w-[180px]">
+          <div className="relative group shrink-0 min-w-[130px] max-w-[180px] sm:max-w-[200px] w-full sm:w-auto">
             <input 
               type="text" 
-              placeholder="Search trade name, GSTIN, mobile..." 
+              placeholder="Search trade name, GSTIN..." 
               value={search} 
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-9 pr-3 text-[var(--app-font-size)] font-bold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 pl-7 pr-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
             />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
 
           {/* Count Badges Pill Filter Group & Due Dates */}
-          <div className="flex items-center gap-1.5 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
+          <div className="flex items-center gap-1 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
             <button
               onClick={() => setQuickFilter('All')}
-              className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                 quickFilter === 'All' 
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' 
                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <span>Total</span>
-              <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
                 quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
               }`}>{stats.total}</span>
             </button>
@@ -399,14 +399,14 @@ const QuarterlyFiling: React.FC = () => {
               <>
                 <button
                   onClick={() => setQuickFilter('R1Filed')}
-                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                  className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === 'R1Filed' 
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' 
                       : 'bg-indigo-50/70 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
                   }`}
                 >
                   <span>IFF/R1 Filed</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
+                  <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
                     quickFilter === 'R1Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
                   }`}>{stats.r1}</span>
                 </button>
@@ -414,14 +414,14 @@ const QuarterlyFiling: React.FC = () => {
                 {isQuarterEnd && (
                   <button
                     onClick={() => setQuickFilter('3BChallan')}
-                    className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                    className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                       quickFilter === '3BChallan' 
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-2xs' 
                         : 'bg-amber-50/70 text-amber-700 border-amber-200 hover:bg-amber-100'
                     }`}
                   >
                     <span>3B Challan</span>
-                    <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
+                    <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
                       quickFilter === '3BChallan' ? 'bg-amber-500 text-white' : 'bg-amber-200 text-amber-900'
                     }`}>{stats.r3bChallan}</span>
                   </button>
@@ -429,43 +429,43 @@ const QuarterlyFiling: React.FC = () => {
 
                 <button
                   onClick={() => setQuickFilter('3BFiled')}
-                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                  className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === '3BFiled' 
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' 
                       : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                   }`}
                 >
                   <span>3B Filed</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
+                  <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
                     quickFilter === '3BFiled' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
                   }`}>{stats.r3b}</span>
                 </button>
 
                 <button
                   onClick={() => setQuickFilter('Pending')}
-                  className={`px-2.5 py-1 rounded-lg text-[var(--app-font-size)] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                  className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
                     quickFilter === 'Pending' 
-                      ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
+                      ? 'bg-rose-600 text-white border-rose-600 shadow-2xs' 
                       : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
                   }`}
                 >
                   <span>Pending</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[var(--app-font-size)] font-black flex-shrink-0 ${
+                  <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
                     quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
                   }`}>{stats.pending}</span>
                 </button>
 
                 {iffDueDate && (
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/80 text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0">
-                    <span className="text-indigo-500 font-bold">IFF/R1 Due:</span>
-                    <span className="font-mono">{formatISOToDDMMYYYY(iffDueDate)}</span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/90 text-[10px] sm:text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0 shadow-2xs">
+                    <span className="text-indigo-600 font-bold uppercase">IFF/R1 Due:</span>
+                    <span className="font-mono font-bold text-indigo-950">{formatISOToDDMMYYYY(iffDueDate)}</span>
                   </div>
                 )}
 
                 {isQuarterEnd && q3bDueDate && (
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200/80 text-[11px] font-black text-emerald-700 whitespace-nowrap shrink-0 flex-shrink-0">
-                    <span className="text-emerald-500 font-bold">3B Due:</span>
-                    <span className="font-mono">{formatISOToDDMMYYYY(q3bDueDate)}</span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200/90 text-[10px] sm:text-[11px] font-black text-emerald-700 whitespace-nowrap shrink-0 flex-shrink-0 shadow-2xs">
+                    <span className="text-emerald-600 font-bold uppercase">3B Due:</span>
+                    <span className="font-mono font-bold text-emerald-950">{formatISOToDDMMYYYY(q3bDueDate)}</span>
                   </div>
                 )}
               </>
