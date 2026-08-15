@@ -306,12 +306,6 @@ const TAXAudit: React.FC = () => {
             className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
-          {currentDueDate && (
-            <div className="flex items-center bg-indigo-50 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
-              <span className="text-indigo-500 font-bold">Due:</span>
-              <span className="font-mono text-indigo-700">{formatISOToDDMMYYYY(currentDueDate)}</span>
-            </div>
-          )}
         </div>
       </div>
 
