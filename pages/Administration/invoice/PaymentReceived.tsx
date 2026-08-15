@@ -325,11 +325,11 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
       )}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-1">
           <button 
             type="button" 
             onClick={() => setModeFilter('All')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               modeFilter === 'All' 
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -346,7 +346,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
           <button 
             type="button" 
             onClick={() => setModeFilter('Online')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               modeFilter === 'Online' 
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                 : 'bg-indigo-50/70 text-indigo-800 border-indigo-200 hover:bg-indigo-100/80'
@@ -363,7 +363,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
           <button 
             type="button" 
             onClick={() => setModeFilter('UPI')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               modeFilter === 'UPI' 
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
@@ -380,7 +380,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
           <button 
             type="button" 
             onClick={() => setModeFilter('Cash')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               modeFilter === 'Cash' 
                 ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
                 : 'bg-amber-50/70 text-amber-800 border-amber-200 hover:bg-amber-100/80'
@@ -397,7 +397,7 @@ const PaymentReceived: React.FC<PaymentReceivedProps> = ({ onViewChange }) => {
           <button 
             type="button" 
             onClick={() => setModeFilter('Cheque')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               modeFilter === 'Cheque' 
                 ? 'bg-purple-600 text-white border-purple-600 shadow-xs' 
                 : 'bg-purple-50/70 text-purple-800 border-purple-200 hover:bg-purple-100/80'

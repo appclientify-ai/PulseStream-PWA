@@ -216,11 +216,11 @@ const TribunalFiled: React.FC = () => {
       <div className="flex flex-col lg:flex-row items-center gap-3 bg-white p-2.5 rounded-[1.5rem] border border-slate-200 shadow-sm shrink-0">
         
         {/* Count Badges (Click to Filter) */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar w-full lg:w-auto max-w-full py-0.5">
           <button 
             type="button"
             onClick={() => setHearingFilter('All')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               hearingFilter === 'All' 
                 ? 'bg-slate-900 text-white shadow-sm' 
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -235,7 +235,7 @@ const TribunalFiled: React.FC = () => {
           <button 
             type="button"
             onClick={() => setHearingFilter(prev => prev === 'gt15' ? 'All' : 'gt15')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               hearingFilter === 'gt15' 
                 ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30' 
                 : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
@@ -250,7 +250,7 @@ const TribunalFiled: React.FC = () => {
           <button 
             type="button"
             onClick={() => setHearingFilter(prev => prev === 'gt5' ? 'All' : 'gt5')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               hearingFilter === 'gt5' 
                 ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/30' 
                 : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60'
@@ -265,7 +265,7 @@ const TribunalFiled: React.FC = () => {
           <button 
             type="button"
             onClick={() => setHearingFilter(prev => prev === 'urgent' ? 'All' : 'urgent')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
               hearingFilter === 'urgent' 
                 ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600/30 animate-pulse' 
                 : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'

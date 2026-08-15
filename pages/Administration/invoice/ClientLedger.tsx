@@ -657,11 +657,11 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm shrink-0">
         
         {/* Count Badges */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-1">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-1">
           <button 
             type="button" 
             onClick={() => setBalanceFilter('All')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               balanceFilter === 'All' 
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -678,7 +678,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Due')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               balanceFilter === 'Due' 
                 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                 : 'bg-rose-50/70 text-rose-800 border-rose-200 hover:bg-rose-100/80'
@@ -695,7 +695,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Settled')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               balanceFilter === 'Settled' 
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-emerald-50/70 text-emerald-800 border-emerald-200 hover:bg-emerald-100/80'
@@ -712,7 +712,7 @@ const ClientLedger: React.FC<ClientLedgerProps> = ({ onBack }) => {
           <button 
             type="button" 
             onClick={() => setBalanceFilter('Advance')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 flex-shrink-0 whitespace-nowrap border cursor-pointer ${
               balanceFilter === 'Advance' 
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                 : 'bg-indigo-50/70 text-indigo-800 border-indigo-200 hover:bg-indigo-100/80'

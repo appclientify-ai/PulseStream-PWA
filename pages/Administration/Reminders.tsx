@@ -230,11 +230,11 @@ export const Reminders: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
           
           {/* Interactive Count Badges */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap w-full lg:w-auto">
+          <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar w-full lg:w-auto max-w-full py-0.5">
             <button 
               type="button"
               onClick={() => setDueFilter('All')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 dueFilter === 'All' 
                   ? 'bg-slate-900 text-white shadow-sm' 
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -250,7 +250,7 @@ export const Reminders: React.FC = () => {
             <button 
               type="button"
               onClick={() => setDueFilter(prev => prev === 'overdue' ? 'All' : 'overdue')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 dueFilter === 'overdue' 
                   ? 'bg-rose-600 text-white shadow-sm' 
                   : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -266,7 +266,7 @@ export const Reminders: React.FC = () => {
             <button 
               type="button"
               onClick={() => setDueFilter(prev => prev === 'due15' ? 'All' : 'due15')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 dueFilter === 'due15' 
                   ? 'bg-amber-600 text-white shadow-sm' 
                   : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
@@ -282,7 +282,7 @@ export const Reminders: React.FC = () => {
             <button 
               type="button"
               onClick={() => setDueFilter(prev => prev === 'safe' ? 'All' : 'safe')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 dueFilter === 'safe' 
                   ? 'bg-emerald-600 text-white shadow-sm' 
                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -314,7 +314,7 @@ export const Reminders: React.FC = () => {
           </div>
 
           {/* View Switcher, Google Calendar Sync, Export & Invalidate Action */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
             <button
               type="button"
               onClick={() => setIsCalendarModalOpen(true)}

@@ -553,6 +553,16 @@ const Dashboard: React.FC = () => {
         const pendingCourt = litigation.filter(r => r.category === 'HighCourt' && r.status === 'Pending').length;
         const totalPending = pendingNotices + pendingAppeals + pendingTribunals + pendingCourt;
 
+        const gstClients = (clients || []).filter(c => c && !!c.gstProfile);
+        const gstTotal = gstClients.length;
+        const gstActive = gstClients.filter(c => c.status === 'Active' || c.status === 'Active Filing').length;
+        const gstLitigation = gstClients.filter(c => c.status === 'Litigation').length;
+        const gstInactive = gstClients.filter(c => c.status === 'Inactive' || c.status === 'Suspended').length;
+
+        const itClients = (clients || []).filter(c => c && !!c.itProfile);
+        const itTotal = itClients.length;
+        const itActive = itClients.filter(c => c.status === 'Active' || c.status === 'Active Filing').length;
+        const itInactive = itClients.filter(c => c.status === 'Inactive' || c.status === 'Suspended').length;
 
         return (
           <div className="w-full mx-auto space-y-16 animate-in fade-in duration-700 pb-32">
@@ -563,36 +573,70 @@ const Dashboard: React.FC = () => {
             <section>
               <SectionHeader title="Client Hub" subtitle="Master Portfolio Repositories" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
+                <div onClick={() => handleViewChange('gst-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between">
                    <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-colors" />
                    <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
+                        <div className="h-14 w-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg mb-4 group-hover:scale-110 transition-transform">
                            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">GST Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Regular & Comp. Entities</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Active Regular & Comp. Entities</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{(clients || []).filter(c => c && !!c.gstProfile).length}</p>
+                        <p className="text-4xl font-black text-slate-900">{gstTotal}</p>
                         <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
                       </div>
                    </div>
+
+                   <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2 relative z-10">
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-1.5 shrink-0">
+                       <span>Total</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-indigo-200/80 text-indigo-950 font-black">{gstTotal}</span>
+                     </span>
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center gap-1.5 shrink-0">
+                       <span>Active</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-emerald-200/80 text-emerald-950 font-black">{gstActive}</span>
+                     </span>
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80 flex items-center gap-1.5 shrink-0">
+                       <span>Litigation</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-amber-200/80 text-amber-950 font-black">{gstLitigation}</span>
+                     </span>
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 shrink-0">
+                       <span>Inactive</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-slate-200 text-slate-800 font-black">{gstInactive}</span>
+                     </span>
+                   </div>
                 </div>
-                <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden">
+                <div onClick={() => handleViewChange('it-portfolio')} className="group bg-white rounded-[2rem] border border-slate-200 p-6 sm:p-8 shadow-sm hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between">
                    <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-600/5 -mr-10 -mt-10 rounded-full blur-3xl group-hover:bg-emerald-600/10 transition-colors" />
                    <div className="flex items-start justify-between relative z-10">
                       <div>
-                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform">
+                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-lg mb-4 group-hover:scale-110 transition-transform">
                            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857" /></svg>
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">IT Portfolio</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Personal & Corporate Direct Tax</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Personal & Corporate Direct Tax</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-black text-slate-900">{(clients || []).filter(c => c && !!c.itProfile).length}</p>
+                        <p className="text-4xl font-black text-slate-900">{itTotal}</p>
                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Total Vault</p>
                       </div>
+                   </div>
+
+                   <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2 relative z-10">
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80 flex items-center gap-1.5 shrink-0">
+                       <span>Total</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-emerald-200/80 text-emerald-950 font-black">{itTotal}</span>
+                     </span>
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300/80 flex items-center gap-1.5 shrink-0">
+                       <span>Active</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-emerald-200/80 text-emerald-950 font-black">{itActive}</span>
+                     </span>
+                     <span className="px-2.5 py-1 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1.5 shrink-0">
+                       <span>Inactive</span>
+                       <span className="px-1.5 py-0.2 rounded-md bg-slate-200 text-slate-800 font-black">{itInactive}</span>
+                     </span>
                    </div>
                 </div>
               </div>

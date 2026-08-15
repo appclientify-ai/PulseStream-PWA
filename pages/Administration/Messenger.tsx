@@ -252,7 +252,7 @@ export const Messenger: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
           
           {/* Interactive Metric Badges */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap w-full lg:w-auto">
+          <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar w-full lg:w-auto max-w-full py-0.5">
             <button 
               type="button"
               onClick={() => {
@@ -261,7 +261,7 @@ export const Messenger: React.FC = () => {
                 setStatusFilter('All');
                 setRelFilter('All');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 activeSection === 'All' && !showOnlySelected
                   ? 'bg-slate-900 text-white shadow-sm' 
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -277,7 +277,7 @@ export const Messenger: React.FC = () => {
             <button 
               type="button"
               onClick={() => setShowOnlySelected(false)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 !showOnlySelected
                   ? 'bg-indigo-600 text-white shadow-sm' 
                   : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -293,7 +293,7 @@ export const Messenger: React.FC = () => {
             <button 
               type="button"
               onClick={() => setShowOnlySelected(prev => !prev)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap flex-shrink-0 ${
                 showOnlySelected
                   ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400/40' 
                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
@@ -329,10 +329,10 @@ export const Messenger: React.FC = () => {
           </div>
 
           {/* Selection & Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto justify-end flex-wrap">
+          <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto justify-start sm:justify-end py-0.5">
             <button 
               onClick={toggleAll} 
-              className="px-3.5 h-11 border border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-xs rounded-xl hover:bg-slate-50 transition-all shadow-xs"
+              className="px-3.5 h-11 border border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-xs rounded-xl hover:bg-slate-50 transition-all shadow-xs shrink-0 whitespace-nowrap"
             >
               {selectedIds.size === filteredClients.length && filteredClients.length > 0 ? 'Deselect All' : `Select All (${filteredClients.length})`}
             </button>
@@ -340,7 +340,7 @@ export const Messenger: React.FC = () => {
             <button 
               disabled={selectedIds.size === 0} 
               onClick={() => setIsComposerOpen(true)}
-              className="bg-indigo-600 text-white font-bold uppercase tracking-wider px-5 h-11 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="bg-indigo-600 text-white font-bold uppercase tracking-wider px-5 h-11 rounded-xl shadow-md hover:bg-slate-900 transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 whitespace-nowrap"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
               <span>Composer ({selectedIds.size})</span>
