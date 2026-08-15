@@ -151,19 +151,19 @@ const FoodLicenses: React.FC = () => {
         </div>
 
         {/* Count Filter Buttons */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 py-0.5">
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
           <button
             type="button"
             onClick={() => setStatusFilter('All')}
-            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[var(--app-font-size)] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border cursor-pointer ${
               statusFilter === 'All' 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xs' 
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                 : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <span>Total</span>
             <span className={`px-1.5 py-0.2 rounded-md text-[calc(var(--app-font-size)-1px)] font-bold ${
-              statusFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-800'
+              statusFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
             }`}>
               {stats.total}
             </span>

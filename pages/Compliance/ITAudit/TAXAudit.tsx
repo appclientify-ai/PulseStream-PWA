@@ -222,15 +222,12 @@ const TAXAudit: React.FC = () => {
             Pending: <strong className={auditFilter === 'Pending' ? 'text-white' : 'font-black text-rose-900'}>{stats.pendingAudit}</strong>
           </button>
         </div>
-        <div className="flex items-center gap-1 text-[10px] uppercase tracking-tight font-black text-slate-500 whitespace-nowrap shrink-0">
-          <span>Due:</span>
-          <input 
-            type="date" 
-            value={currentDueDate} 
-            onChange={e => handleDueDateChange(e.target.value)} 
-            className="bg-transparent border-none p-0 text-[10px] font-black text-indigo-600 outline-none uppercase cursor-pointer" 
-          />
-        </div>
+        {currentDueDate && (
+          <div className="flex items-center gap-1 text-[10px] uppercase tracking-tight font-black text-slate-500 whitespace-nowrap shrink-0">
+            <span className="text-slate-400 font-bold">Due:</span>
+            <span className="font-mono text-indigo-600 font-bold">{formatISOToDDMMYYYY(currentDueDate)}</span>
+          </div>
+        )}
       </div>
 
       {/* Header Search & Count Bar */}
@@ -302,29 +299,25 @@ const TAXAudit: React.FC = () => {
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-0.5">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
           />
-          <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+          <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
             Add To Audit
           </button>
           <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} 
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
-          {/* Dynamic & Editable Due Date Badge on the Far Right */}
-          <div className="flex items-center bg-slate-50 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 border border-slate-200 focus-within:border-indigo-300 transition-all" title="Audit Due Date (Click to Edit)">
-            <span className="text-[10px] font-black text-slate-400 uppercase">Due:</span>
-            <input 
-              type="date" 
-              value={currentDueDate} 
-              onChange={e => handleDueDateChange(e.target.value)} 
-              className="bg-transparent border-none p-0 text-[11px] font-black text-indigo-700 outline-none cursor-pointer uppercase" 
-            />
-          </div>
+          {currentDueDate && (
+            <div className="flex items-center bg-indigo-50 rounded-xl px-3 h-10 landscape:h-8 gap-1.5 border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
+              <span className="text-indigo-500 font-bold">Due:</span>
+              <span className="font-mono text-indigo-700">{formatISOToDDMMYYYY(currentDueDate)}</span>
+            </div>
+          )}
         </div>
       </div>
 

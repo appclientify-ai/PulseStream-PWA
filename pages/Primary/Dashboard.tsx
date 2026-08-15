@@ -376,7 +376,16 @@ const Dashboard: React.FC = () => {
     };
 
     const sortedPending = useMemo(() => {
-      const activeList = litigation.filter(r => r.category === forum && (r.status === 'Pending' || r.status === 'Filed'));
+      const activeList = litigation.filter(r => {
+        if (r.category !== forum) return false;
+        if (r.status === 'Pending') {
+          return Boolean(getEffectiveDate(r));
+        }
+        if (r.status === 'Filed') {
+          return Boolean(r.hearingDate && r.hearingDate.trim() !== '');
+        }
+        return false;
+      });
       const seen = new Set<string>();
       const uniqueList: LitigationRecord[] = [];
       for (const r of activeList) {

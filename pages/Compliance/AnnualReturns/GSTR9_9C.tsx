@@ -314,7 +314,7 @@ const GSTR9_9C: React.FC = () => {
         </div>
 
         {/* Controls: View Control, Filter, Track, Export, Year */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-between lg:justify-end">
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-0.5 justify-start lg:justify-end">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
@@ -326,7 +326,7 @@ const GSTR9_9C: React.FC = () => {
             setAuthority={setAuthorityFilter}
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
-            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200 shrink-0 whitespace-nowrap"
             totalFilteredCount={filteredDisplayList.length}
           />
 

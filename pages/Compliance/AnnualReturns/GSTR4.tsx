@@ -254,7 +254,7 @@ const handleExportPDF = () => {
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-0.5">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
@@ -265,11 +265,11 @@ const handleExportPDF = () => {
             setAuthority={setAuthorityFilter}
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
-            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200"
+            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200 shrink-0 whitespace-nowrap"
             totalFilteredCount={filteredClients.length}
           />
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
         </div>
       </div>
 
