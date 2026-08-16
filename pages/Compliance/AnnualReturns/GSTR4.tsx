@@ -211,50 +211,69 @@ const handleExportPDF = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0 relative z-40">
-        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
-          <button 
-            onClick={() => setQuickFilter('All')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              quickFilter === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <span>Total</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.total}</span>
-          </button>
-          <button 
-            onClick={() => setQuickFilter('Filed')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              quickFilter === 'Filed' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            <span>Filed</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.filed}</span>
-          </button>
-          <button 
-            onClick={() => setQuickFilter('Pending')} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              quickFilter === 'Pending' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-            }`}
-          >
-            <span>Pending</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-white/20 text-xs font-black">{stats.pending}</span>
-          </button>
-          {gstr4DueDate && (
-            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
-              <span className="text-indigo-500 font-bold">GSTR-4 Due:</span>
-              <span className="font-mono">{formatISOToDDMMYYYY(gstr4DueDate)}</span>
-            </div>
-          )}
+      <div className="flex flex-wrap lg:flex-nowrap gap-2 items-center w-full bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
+        
+        {/* Search Bar & Count Badges */}
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+          <div className="relative group shrink-0 min-w-[130px] max-w-[180px] sm:max-w-[200px] w-full sm:w-auto">
+            <input 
+              type="text" 
+              placeholder="Search trade name, GSTIN..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 pl-7 pr-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Count Badges & Due Date */}
+          <div className="flex items-center gap-1 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
+            <button 
+              onClick={() => setQuickFilter('All')} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                quickFilter === 'All' ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>Total</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+              }`}>{stats.total}</span>
+            </button>
+            <button 
+              onClick={() => setQuickFilter('Filed')} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                quickFilter === 'Filed' ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <span>Filed</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                quickFilter === 'Filed' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+              }`}>{stats.filed}</span>
+            </button>
+            <button 
+              onClick={() => setQuickFilter('Pending')} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+                quickFilter === 'Pending' ? 'bg-rose-600 text-white border-rose-600 shadow-2xs' : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
+              }`}
+            >
+              <span>Pending</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+              }`}>{stats.pending}</span>
+            </button>
+            {gstr4DueDate && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/90 text-[10px] sm:text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0 shadow-2xs">
+                <span className="text-indigo-600 font-bold uppercase">GSTR-4 Due:</span>
+                <span className="font-mono font-bold text-indigo-950">{formatISOToDDMMYYYY(gstr4DueDate)}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="relative flex-1 group w-full">
-          <input type="text" placeholder="Search composition annual entity..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-0.5">
+        {/* Right Controls Group */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar ml-auto py-0.5">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
@@ -265,15 +284,15 @@ const handleExportPDF = () => {
             setAuthority={setAuthorityFilter}
             selectedSectors={selectedSectors}
             setSelectedSectors={setSelectedSectors}
-            buttonClassName="h-10 landscape:h-8 px-3 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200 shrink-0 whitespace-nowrap"
+            buttonClassName="h-8 px-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-black uppercase tracking-tight hover:border-indigo-200 shrink-0 whitespace-nowrap"
             totalFilteredCount={filteredClients.length}
           />
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
+          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">{YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}</select>
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         {viewMode === 'grid' ? (
           <div className="p-4 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredClients.map((client, idx) => {
@@ -361,26 +380,28 @@ const handleExportPDF = () => {
             })}
           </div>
         ) : (
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-full gstr4-returns-table min-w-[1100px]">
+        <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-[1100px] gst-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
-              <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900">
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[50px] text-center">S.No.</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[22%] min-w-[160px]">Trader Name</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[15%] min-w-[145px]">GSTIN</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[14%] min-w-[140px] text-center">CMP-08 Status</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[12%] min-w-[115px] text-center">GSTR-4 Status</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[11%] min-w-[110px]">User ID</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[11%] min-w-[110px]">Password</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[11%] min-w-[120px]">Remark</th>
-                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 text-right w-[90px]">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-200 shadow-xs">
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 w-12 text-center whitespace-nowrap">S.No.</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[180px] w-[22%] whitespace-nowrap">Trader Name</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[160px] w-[15%] whitespace-nowrap">GSTIN</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[180px] w-[15%] text-center whitespace-nowrap">CMP-08 Status</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[125px] w-[12%] text-center whitespace-nowrap">GSTR-4 Status</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[110px] w-[11%] whitespace-nowrap">User ID</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[120px] w-[11%] whitespace-nowrap">Password</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 min-w-[130px] w-[11%] whitespace-nowrap">Remark</th>
+                <th className="sticky top-0 z-30 bg-slate-100 px-3 py-2 text-[var(--app-font-size)] font-bold uppercase tracking-wider text-slate-900 text-right border-b border-slate-200 min-w-[90px] w-[90px] whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 text-[var(--app-font-size)]">
               {groupedClients.map(({ sector, clients: sectorClients }) => (
                 <React.Fragment key={sector}>
                   <tr>
-                    <td colSpan={9} className="sticky top-[27px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-3 uppercase text-[10px] tracking-widest border-y border-slate-300 shadow-xs">{sector} ({sectorClients.length})</td>
+                    <td colSpan={9} className="sticky top-[33px] z-20 bg-slate-200/95 backdrop-blur-md font-bold text-slate-800 py-1.5 px-3 uppercase text-[var(--app-font-size)] tracking-wider border-y border-slate-300 shadow-2xs whitespace-nowrap">
+                      {sector} ({sectorClients.length})
+                    </td>
                   </tr>
                   {sectorClients.map((client, idx) => {
                 const status = getStatus(client.id);
@@ -388,15 +409,15 @@ const handleExportPDF = () => {
                 const theme = getClientColorTheme(client);
                 return (
                   <tr key={client.id} className={`transition-all group border-b border-slate-100 animate-in fade-in slide-in-from-bottom-1 duration-150 ${theme.rowClass}`}>
-                    <td className="px-3 py-1.5 font-black text-indigo-400 font-mono text-center">{(idx + 1).toString().padStart(2, '0')}</td>
-                    <td className={`px-3 py-1.5 truncate ${theme.tradeNameClass}`} title={client.tradeName}>
-                      <div className="font-semibold truncate text-[var(--app-font-size)]">{client.tradeName || '---'}</div>
-                      <p className="legal-subtitle truncate font-medium" title={client.legalName}>{client.legalName || '---'}</p>
+                    <td className="px-3 py-2 font-bold text-indigo-500 font-mono text-center w-12 whitespace-nowrap">{(idx + 1).toString().padStart(2, '0')}</td>
+                    <td className={`px-3 py-2 min-w-[180px] ${theme.tradeNameClass}`} title={client.tradeName}>
+                      <div className="font-bold leading-normal truncate text-[var(--app-font-size)]">{client.tradeName || '---'}</div>
+                      <p className="legal-subtitle truncate font-medium text-[11px] text-slate-400 mt-0.5" title={client.legalName}>{client.legalName || '---'}</p>
                     </td>
    
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-2 min-w-[160px] whitespace-nowrap">
                       <div className="flex items-center gap-1.5 group/gstin">
-                        <span className={`truncate font-semibold tracking-wider font-mono uppercase ${theme.gstinClass}`}>{client.gstProfile?.gstin || '---'}</span>
+                        <span className={`font-semibold tracking-wider font-mono uppercase ${theme.gstinClass}`}>{client.gstProfile?.gstin || '---'}</span>
                         {client.gstProfile?.gstin && (
                           <button onClick={() => (navigator.clipboard.writeText(client.gstProfile?.gstin || '').then(() => { toast.success('GSTIN Copied!'); window.open('https://services.gst.gov.in/services/searchtp', '_blank'); }))} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0" title="Search Taxpayer">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -404,8 +425,8 @@ const handleExportPDF = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-1.5 text-center">
-                      <div className="flex justify-center items-center gap-1">
+                    <td className="px-3 py-2 text-center min-w-[180px] whitespace-nowrap">
+                      <div className="flex justify-center items-center gap-1 flex-nowrap">
                         {[
                           { label: 'Q1', q: 'April-June (Q1)' },
                           { label: 'Q2', q: 'July-September (Q2)' },
@@ -417,7 +438,7 @@ const handleExportPDF = () => {
                              <span 
                                key={qInfo.label} 
                                title={`${qInfo.q}: ${isFiled ? 'Filed' : 'Pending'}`} 
-                               className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border transition-all ${
+                               className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase border shrink-0 transition-all ${
                                  isFiled 
                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
                                    : 'bg-slate-100 text-slate-400 border-slate-200'
@@ -429,10 +450,10 @@ const handleExportPDF = () => {
                         })}
                       </div>
                     </td>
-                    <td className="px-3 py-1.5 text-center">
+                    <td className="px-3 py-2 text-center min-w-[125px] whitespace-nowrap">
                        <button 
                          onClick={() => toggleStatus(client.id)} 
-                         className={`px-2.5 py-0.5 rounded-full font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all ${
+                         className={`px-2.5 py-0.5 rounded-full font-black uppercase border flex items-center justify-center gap-1 mx-auto transition-all shrink-0 whitespace-nowrap ${
                            status.filed 
                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200' 
                              : 'bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200'
@@ -443,9 +464,9 @@ const handleExportPDF = () => {
                          <svg className="h-2.5 w-2.5 opacity-40 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                        </button>
                     </td>
-                    <td className="px-3 py-1.5 font-semibold text-slate-700 truncate">{client.gstProfile?.username || '---'}</td>
-                    <td className="px-3 py-1.5 relative group/pass">
-                      <div className="flex items-center gap-2">
+                    <td className="px-3 py-2 font-semibold text-slate-700 truncate min-w-[110px]">{client.gstProfile?.username || '---'}</td>
+                    <td className="px-3 py-2 min-w-[120px] whitespace-nowrap relative group/pass">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         {isEditingPass ? (
                           <input 
                             autoFocus 
@@ -453,14 +474,14 @@ const handleExportPDF = () => {
                             onChange={e => setNewPassVal(e.target.value)} 
                             onBlur={handleUpdatePassword} 
                             onKeyDown={e => e.key === 'Enter' && handleUpdatePassword()} 
-                            className="bg-white border border-indigo-200 rounded px-2 h-7 font-semibold w-24 outline-none" 
+                            className="bg-white border border-indigo-200 rounded px-2 h-6 font-semibold text-xs w-20 outline-none shadow-2xs" 
                           />
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-indigo-500 truncate">{client.gstProfile?.password || '---'}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="font-semibold text-indigo-600 font-mono truncate">{client.gstProfile?.password || '---'}</span>
                             <button 
                               onClick={() => { setSelectedClient(client); setEditingPasswordId(client.id); setNewPassVal(client.gstProfile?.password || ''); }} 
-                              className="p-1 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"
+                              className="p-0.5 text-slate-300 hover:text-amber-500 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0"
                               title="Edit Password"
                             >
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -471,7 +492,7 @@ const handleExportPDF = () => {
                                   navigator.clipboard.writeText(client.gstProfile?.username || ''); 
                                   window.open('https://services.gst.gov.in/services/login', '_blank'); 
                                 }} 
-                                className="p-1 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" 
+                                className="p-0.5 text-slate-300 hover:text-indigo-600 opacity-0 group-hover/pass:opacity-100 transition-all shrink-0" 
                                 title="Login to GST Portal"
                               >
                                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -481,13 +502,13 @@ const handleExportPDF = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-1.5 truncate max-w-[150px]" title={status?.remark || getStatus?.(client.id)?.remark || 'Add remark...'}>
+                    <td className="px-3 py-2 min-w-[130px] max-w-[180px] truncate" title={status?.remark || getStatus?.(client.id)?.remark || 'Add remark...'}>
                        <EditableRemark value={status?.remark || getStatus?.(client.id)?.remark || ''} onSave={val => updateRemark(client.id, val)} />
                     </td>
-                    <td className="px-3 py-1.5 text-right w-[90px]">
+                    <td className="px-3 py-2 text-right min-w-[90px] whitespace-nowrap">
                        <div className="flex items-center justify-end gap-1">
                           <GSTViewIcon client={client} onDataChange={handleRefreshClients} />
-                          <button onClick={(e) => openActionsMenu(e, client)} className={`h-8 w-8 rounded-lg border transition-all flex items-center justify-center shadow-sm ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
+                          <button onClick={(e) => openActionsMenu(e, client)} className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center shadow-xs cursor-pointer ${activeActionsId === client.id ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-white'}`}><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg></button>
                        </div>
                     </td>
                   </tr>

@@ -174,136 +174,106 @@ const TAXAudit: React.FC = () => {
   return (
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500 max-w-full mx-auto w-full">
       
-      {/* Mobile & Tablet Compact Stats Strip */}
-      <div className="flex items-center justify-between w-full lg:hidden gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-xs font-bold text-slate-700 shrink-0 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
-          <button 
-            type="button"
-            onClick={() => { setBsFilter('All'); setAuditFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              bsFilter === 'All' && auditFilter === 'All' 
-                ? 'bg-slate-900 text-white font-black shadow-xs' 
-                : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
-            }`}
-          >
-            Total: <strong className={bsFilter === 'All' && auditFilter === 'All' ? 'text-white' : 'font-black text-slate-900'}>{stats.total}</strong>
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              bsFilter === 'Ready' 
-                ? 'bg-emerald-600 text-white font-black shadow-xs' 
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            B/S Ready: <strong className={bsFilter === 'Ready' ? 'text-white' : 'font-black text-emerald-900'}>{stats.bsReady}</strong>
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              auditFilter === 'Filed' 
-                ? 'bg-indigo-600 text-white font-black shadow-xs' 
-                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-            }`}
-          >
-            Audited: <strong className={auditFilter === 'Filed' ? 'text-white' : 'font-black text-indigo-900'}>{stats.audited}</strong>
-          </button>
-          <button 
-            type="button"
-            onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }}
-            className={`px-2.5 py-0.5 rounded-md text-[10px] uppercase tracking-tight transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-              auditFilter === 'Pending' 
-                ? 'bg-rose-600 text-white font-black shadow-xs' 
-                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-            }`}
-          >
-            Pending: <strong className={auditFilter === 'Pending' ? 'text-white' : 'font-black text-rose-900'}>{stats.pendingAudit}</strong>
-          </button>
-        </div>
-      </div>
-
       {/* Header Search & Count Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 landscape:gap-1 bg-white p-2 md:p-2.5 landscape:p-1 rounded-[1.5rem] landscape:rounded-xl border border-slate-200 shadow-sm shrink-0 relative z-40">
-        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
-          <button 
-            onClick={() => { setBsFilter('All'); setAuditFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-              bsFilter === 'All' && auditFilter === 'All' 
-                ? 'bg-slate-900 text-white shadow-sm' 
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <span>Total</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
-              bsFilter === 'All' && auditFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'
-            }`}>{stats.total}</span>
-          </button>
-          <button 
-            onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-              bsFilter === 'Ready' 
-                ? 'bg-emerald-600 text-white shadow-sm' 
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            <span>B/S Ready</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
-              bsFilter === 'Ready' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
-            }`}>{stats.bsReady}</span>
-          </button>
-          <button 
-            onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-              auditFilter === 'Filed' 
-                ? 'bg-indigo-600 text-white shadow-sm' 
-                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-            }`}
-          >
-            <span>Audited</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
-              auditFilter === 'Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
-            }`}>{stats.audited}</span>
-          </button>
-          <button 
-            onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }} 
-            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap ${
-              auditFilter === 'Pending' 
-                ? 'bg-rose-600 text-white shadow-sm' 
-                : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-            }`}
-          >
-            <span>Pending</span>
-            <span className={`px-1.5 py-0.2 rounded-md text-xs font-black ${
-              auditFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
-            }`}>{stats.pendingAudit}</span>
-          </button>
-          {currentDueDate && (
-            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-200/80 text-xs font-black uppercase whitespace-nowrap shrink-0">
-              <span className="text-indigo-500 font-bold">Audit Due:</span>
-              <span className="font-mono">{formatISOToDDMMYYYY(currentDueDate)}</span>
-            </div>
-          )}
+      <div className="flex flex-wrap lg:flex-nowrap gap-2 items-center w-full bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
+        
+        {/* Search Bar & Count Badges */}
+        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+          <div className="relative group shrink-0 min-w-[130px] max-w-[180px] sm:max-w-[200px] w-full sm:w-auto">
+            <input 
+              type="text" 
+              placeholder="Search trade, legal, GSTIN..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-1 pl-7 pr-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all" 
+            />
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Count Badges & Due Date */}
+          <div className="flex items-center gap-1 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
+            <button 
+              type="button"
+              onClick={() => { setBsFilter('All'); setAuditFilter('All'); }} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border cursor-pointer whitespace-nowrap ${
+                bsFilter === 'All' && auditFilter === 'All' ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>Total</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                bsFilter === 'All' && auditFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
+              }`}>{stats.total}</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => { setBsFilter(prev => prev === 'Ready' ? 'All' : 'Ready'); setAuditFilter('All'); }} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border cursor-pointer whitespace-nowrap ${
+                bsFilter === 'Ready' ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <span>B/S Ready</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                bsFilter === 'Ready' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
+              }`}>{stats.bsReady}</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => { setAuditFilter(prev => prev === 'Filed' ? 'All' : 'Filed'); setBsFilter('All'); }} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border cursor-pointer whitespace-nowrap ${
+                auditFilter === 'Filed' ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-indigo-50/70 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+              }`}
+            >
+              <span>Audited</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                auditFilter === 'Filed' ? 'bg-indigo-500 text-white' : 'bg-indigo-200 text-indigo-900'
+              }`}>{stats.audited}</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => { setAuditFilter(prev => prev === 'Pending' ? 'All' : 'Pending'); setBsFilter('All'); }} 
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border cursor-pointer whitespace-nowrap ${
+                auditFilter === 'Pending' ? 'bg-rose-600 text-white border-rose-600 shadow-2xs' : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
+              }`}
+            >
+              <span>Pending</span>
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+                auditFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
+              }`}>{stats.pendingAudit}</span>
+            </button>
+
+            {currentDueDate && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/90 text-[10px] sm:text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0 shadow-2xs">
+                <span className="text-indigo-600 font-bold uppercase">Audit Due:</span>
+                <span className="font-mono font-bold text-indigo-950">{formatISOToDDMMYYYY(currentDueDate)}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="relative flex-1 w-full group">
-          <input type="text" placeholder="Search Trade Name, Legal Name, GSTIN, or PAN..." value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border-none rounded-xl py-2.5 landscape:py-1 pl-10 pr-3 font-bold text-xs text-slate-900 focus:ring-2 focus:ring-indigo-600/10 outline-none transition-all" />
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-auto py-0.5">
+        {/* Right Controls Group */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar ml-auto py-0.5">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
           />
-          <button onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} className="h-10 landscape:h-8 px-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-md hover:bg-slate-900 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+          <button 
+            type="button"
+            onClick={() => { setPendingClientForAdd(null); setAddSearch(''); setIsAddModalOpen(true); }} 
+            className="h-8 px-2.5 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-xs hover:bg-slate-900 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap cursor-pointer"
+          >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            Add To Audit
+            <span>+ Track</span>
           </button>
-          <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} 
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 landscape:h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap">
+          <select 
+            value={selectedYear} 
+            onChange={e => setSelectedYear(e.target.value)} 
+            className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 h-8 text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer shrink-0 whitespace-nowrap"
+          >
             {YEARS.map(y => <option key={y} value={y}>FY {y}</option>)}
           </select>
         </div>
@@ -383,8 +353,8 @@ const TAXAudit: React.FC = () => {
             })}
           </div>
         ) : (
-        <div className="overflow-auto no-scrollbar flex-1 w-full relative h-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-full tax-audit-table min-w-[1100px]">
+        <div className="w-full overflow-x-auto overflow-y-auto no-scrollbar flex-1 relative h-full">
+          <table className="w-full text-left border-collapse table-auto min-w-[1100px] gst-portfolio-table">
             <thead className="sticky top-0 z-30 bg-slate-100">
               <tr className="bg-slate-50 border-b border-slate-200 shadow-sm font-bold uppercase tracking-wider text-slate-900">
                 <th className="sticky top-0 z-30 bg-slate-100 px-3 py-1.5 border-b border-slate-200 w-[55px] text-center whitespace-nowrap">S.No.</th>
