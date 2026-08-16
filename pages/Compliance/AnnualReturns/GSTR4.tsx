@@ -211,11 +211,11 @@ const handleExportPDF = () => {
     <div className="flex flex-col h-full space-y-2 landscape:space-y-1 pb-2 overflow-hidden animate-in fade-in duration-500">
       
       {/* Header Search & Count Bar */}
-      <div className="flex flex-wrap lg:flex-nowrap gap-2 items-center w-full bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
+      <div className="flex flex-col lg:flex-row gap-2 items-stretch lg:items-center w-full bg-white p-2 rounded-2xl border border-slate-200 shadow-xs shrink-0 relative z-40">
         
-        {/* Search Bar & Count Badges */}
-        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-          <div className="relative group shrink-0 min-w-[130px] max-w-[180px] sm:max-w-[200px] w-full sm:w-auto">
+        {/* Line 1: Search Bar, Count Badges & Due Date */}
+        <div className="flex items-center gap-1.5 w-full lg:w-auto flex-1 min-w-0 overflow-x-auto no-scrollbar py-0.5 shrink-0 flex-nowrap">
+          <div className="relative group shrink-0 min-w-[120px] max-w-[160px] sm:max-w-[200px]">
             <input 
               type="text" 
               placeholder="Search trade name, GSTIN..." 
@@ -229,42 +229,42 @@ const handleExportPDF = () => {
           </div>
 
           {/* Count Badges & Due Date */}
-          <div className="flex items-center gap-1 shrink-0 flex-shrink-0 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
+          <div className="flex items-center gap-1 shrink-0 flex-nowrap">
             <button 
               onClick={() => setQuickFilter('All')} 
-              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 border whitespace-nowrap cursor-pointer ${
                 quickFilter === 'All' ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}
             >
               <span>Total</span>
-              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black ${
                 quickFilter === 'All' ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-800'
               }`}>{stats.total}</span>
             </button>
             <button 
               onClick={() => setQuickFilter('Filed')} 
-              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 border whitespace-nowrap cursor-pointer ${
                 quickFilter === 'Filed' ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-emerald-50/70 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
               }`}
             >
               <span>Filed</span>
-              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black ${
                 quickFilter === 'Filed' ? 'bg-emerald-500 text-white' : 'bg-emerald-200 text-emerald-900'
               }`}>{stats.filed}</span>
             </button>
             <button 
               onClick={() => setQuickFilter('Pending')} 
-              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 flex-shrink-0 border whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-tight transition-all flex items-center gap-1 shrink-0 border whitespace-nowrap cursor-pointer ${
                 quickFilter === 'Pending' ? 'bg-rose-600 text-white border-rose-600 shadow-2xs' : 'bg-rose-50/70 text-rose-700 border-rose-200 hover:bg-rose-100'
               }`}
             >
               <span>Pending</span>
-              <span className={`px-1 py-0.1 rounded text-[10px] font-black flex-shrink-0 ${
+              <span className={`px-1 py-0.1 rounded text-[10px] font-black ${
                 quickFilter === 'Pending' ? 'bg-rose-500 text-white' : 'bg-rose-200 text-rose-900'
               }`}>{stats.pending}</span>
             </button>
             {gstr4DueDate && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/90 text-[10px] sm:text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 flex-shrink-0 shadow-2xs">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200/90 text-[10px] sm:text-[11px] font-black text-indigo-700 whitespace-nowrap shrink-0 shadow-2xs">
                 <span className="text-indigo-600 font-bold uppercase">GSTR-4 Due:</span>
                 <span className="font-mono font-bold text-indigo-950">{formatISOToDDMMYYYY(gstr4DueDate)}</span>
               </div>
@@ -272,8 +272,8 @@ const handleExportPDF = () => {
           </div>
         </div>
 
-        {/* Right Controls Group */}
-        <div className="flex items-center gap-1.5 shrink-0 flex-nowrap overflow-x-auto no-scrollbar ml-auto py-0.5">
+        {/* Line 2: Table/Grid Toggle, Sector Filter, Import/Export, FY Field */}
+        <div className="flex items-center gap-1.5 w-full lg:w-auto shrink-0 flex-nowrap overflow-x-auto no-scrollbar py-0.5 justify-between lg:justify-end">
           <ViewControl 
             viewMode={viewMode} 
             onViewChange={setViewMode} 
