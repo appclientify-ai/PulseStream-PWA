@@ -7,6 +7,26 @@
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
   NODE_VERSION = "20"
 
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=utf-8"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
