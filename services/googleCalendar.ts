@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || (firebaseConfig as any).oAuthClientId || '780811365983-mcg3jsqjlns18j8gtqjn16e7ql44ijij.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email';
+const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email';
 
 export interface GoogleCalendarPreferences {
   reminders1DayBefore: boolean;
@@ -155,7 +155,7 @@ export async function connectGoogleAccount(): Promise<string> {
       },
     });
 
-    tokenClient.requestAccessToken({ prompt: 'select_account' });
+    tokenClient.requestAccessToken({ prompt: 'consent' });
   });
 }
 
@@ -287,9 +287,9 @@ async function createCalendarEvent(
     body: JSON.stringify(event),
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     disconnectGoogleCalendar();
-    throw new Error('Google OAuth session expired. Please reconnect your Google account.');
+    throw new Error('Google OAuth permission or session expired. Please click "Connect Google Account" again to grant Calendar permissions.');
   }
 
   if (!response.ok) {
