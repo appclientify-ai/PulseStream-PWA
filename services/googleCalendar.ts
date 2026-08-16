@@ -287,14 +287,24 @@ async function createCalendarEvent(
     body: JSON.stringify(event),
   });
 
-  if (response.status === 401 || response.status === 403) {
-    disconnectGoogleCalendar();
-    throw new Error('Google OAuth permission or session expired. Please click "Connect Google Account" again to grant Calendar permissions.');
-  }
-
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `Google Calendar API Error (${response.status})`);
+    const message = errorData.error?.message || `Google Calendar API Error (${response.status})`;
+    
+    if (response.status === 401) {
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      throw new Error('Google OAuth session expired. Please reconnect your Google account.');
+    }
+
+    if (response.status === 403) {
+      if (message.toLowerCase().includes('disabled') || message.toLowerCase().includes('has not been used')) {
+        throw new Error('Google Calendar API is not enabled in your Google Cloud Console. Please enable "Google Calendar API" in Google Cloud Console.');
+      }
+      throw new Error(`Google Calendar Access Error: ${message}`);
+    }
+
+    throw new Error(message);
   }
 
   toast.success(`📅 Synced "${title}" to Google Calendar!`);
