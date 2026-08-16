@@ -162,12 +162,48 @@ export async function connectGoogleAccount(): Promise<string> {
 interface CalendarEventPayload {
   summary: string;
   description: string;
-  start: { date: string; timeZone: string };
-  end: { date: string; timeZone: string };
+  start: { date: string };
+  end: { date: string };
   reminders: {
     useDefault: boolean;
     overrides: Array<{ method: string; minutes: number }>;
   };
+}
+
+function parseDateRobust(dateString: string): Date | null {
+  if (!dateString) return null;
+  
+  // Standard parse first
+  const parsed = new Date(dateString);
+  if (!isNaN(parsed.getTime())) return parsed;
+
+  // Handle DD/MM/YYYY or DD-MM-YYYY or YYYY/MM/DD
+  const parts = dateString.trim().split(/[\/\-\.]/);
+  if (parts.length === 3) {
+    if (parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+    if (parts[0].length === 4 && parts[1].length <= 2 && parts[2].length <= 2) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  return null;
+}
+
+function formatDateOnly(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Single Deadline Sync
@@ -201,13 +237,13 @@ async function createCalendarEvent(
   body: string,
   dateString: string
 ): Promise<void> {
-  const formattedDate = new Date(dateString);
-  if (isNaN(formattedDate.getTime())) {
-    throw new Error('Invalid deadline date provided.');
+  const formattedDate = parseDateRobust(dateString);
+  if (!formattedDate) {
+    throw new Error(`Invalid deadline date provided: ${dateString}`);
   }
 
   const prefs = getCalendarPreferences();
-  const dateOnlyStr = formattedDate.toISOString().split('T')[0];
+  const dateOnlyStr = formatDateOnly(formattedDate);
 
   const reminderOverrides: Array<{ method: string; minutes: number }> = [];
   if (prefs.reminders1DayBefore) {
@@ -225,18 +261,16 @@ async function createCalendarEvent(
 
   const nextDay = new Date(formattedDate);
   nextDay.setDate(nextDay.getDate() + 1);
-  const endDayStr = nextDay.toISOString().split('T')[0];
+  const endDayStr = formatDateOnly(nextDay);
 
   const event: CalendarEventPayload = {
     summary: `📆 Clientify Compliance: ${title}`,
     description: `${body}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\nSynced securely from Clientify Legal Tech Vault.\nPractice Management & Compliance Hub.`,
     start: {
-      date: dateOnlyStr,
-      timeZone: prefs.timeZone || 'Asia/Kolkata',
+      date: dateOnlyStr
     },
     end: {
-      date: endDayStr,
-      timeZone: prefs.timeZone || 'Asia/Kolkata',
+      date: endDayStr
     },
     reminders: {
       useDefault: false,
@@ -260,7 +294,7 @@ async function createCalendarEvent(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || 'Google Calendar API error.');
+    throw new Error(errorData.error?.message || `Google Calendar API Error (${response.status})`);
   }
 
   toast.success(`📅 Synced "${title}" to Google Calendar!`);
