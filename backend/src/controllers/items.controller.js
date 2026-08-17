@@ -1189,8 +1189,6 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
 export const getGstNoticePending = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Pending');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_notice_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Pending Error:', err);
@@ -1201,8 +1199,6 @@ export const getGstNoticePending = async (req, res) => {
 export const getGstNoticeFiled = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Filed');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_notice_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Filed Error:', err);
@@ -1213,8 +1209,6 @@ export const getGstNoticeFiled = async (req, res) => {
 export const getGstNoticeDemand = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Demand');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_notice_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Demand Error:', err);
@@ -1225,8 +1219,6 @@ export const getGstNoticeDemand = async (req, res) => {
 export const getGstNoticeDrop = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Drop');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_notice_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Drop Error:', err);
@@ -1237,8 +1229,6 @@ export const getGstNoticeDrop = async (req, res) => {
 export const getGstAppealPending = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Pending');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_appeal_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Pending Error:', err);
@@ -1249,8 +1239,6 @@ export const getGstAppealPending = async (req, res) => {
 export const getGstAppealFiled = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Filed');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_appeal_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Filed Error:', err);
@@ -1261,8 +1249,6 @@ export const getGstAppealFiled = async (req, res) => {
 export const getGstAppealDemand = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Demand');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_appeal_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Demand Error:', err);
@@ -1273,8 +1259,6 @@ export const getGstAppealDemand = async (req, res) => {
 export const getGstAppealDrop = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Drop');
-    const io = req.app.get('io');
-    if (io) io.emit('gst_appeal_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Drop Error:', err);
@@ -1304,9 +1288,6 @@ export const getGstClients = async (req, res) => {
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
       .filter(c => c && (c.gstProfile || Boolean(c.gstProfile?.gstin)));
 
-    const io = req.app.get('io');
-    if (io) io.emit('gst_clients_accessed', { count: gstClients.length, timestamp: new Date() });
-
     res.json(gstClients);
   } catch (err) {
     console.error('Get GST Clients Error:', err);
@@ -1333,9 +1314,6 @@ export const getItClients = async (req, res) => {
     const itClients = rawItems
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
       .filter(c => c && (c.itProfile || Boolean(c.itProfile?.pan)));
-
-    const io = req.app.get('io');
-    if (io) io.emit('it_clients_accessed', { count: itClients.length, timestamp: new Date() });
 
     res.json(itClients);
   } catch (err) {

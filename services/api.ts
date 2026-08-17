@@ -25,13 +25,28 @@ class ApiService {
 
   setToken(token: string | null) {
     this.token = token;
+    if (typeof localStorage !== 'undefined') {
+      if (token) {
+        try { localStorage.setItem('clientify_token', token); } catch (e) { console.warn('LocalStorage error:', e); }
+      } else {
+        try { localStorage.removeItem('clientify_token'); } catch (e) { console.warn('LocalStorage error:', e); }
+      }
+    }
   }
 
   getToken(): string | null {
     if (this.token) return this.token;
     if (typeof document !== 'undefined') {
       const match = document.cookie.match(/clientify_token=([^;]+)/);
-      if (match) return decodeURIComponent(match[1]);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+    }
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('clientify_token');
+        if (stored) return stored;
+      } catch (e) {
+        console.warn('LocalStorage token read error:', e);
+      }
     }
     return null;
   }
@@ -125,6 +140,20 @@ class ApiService {
   }
 
   
+  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 12000): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      return response;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   private notifyChange(data?: any) {
     if (data?.name) {
       this.invalidateCache(data.name);
@@ -142,7 +171,7 @@ class ApiService {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const url = this.getFullUrl(endpoint);
     try {
-      const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(data) });
+      const res = await this.fetchWithTimeout(url, { method: 'PATCH', headers, body: JSON.stringify(data) });
       const result = await this.handleResponse(res);
       this.notifyChange(result);
       return result;
@@ -156,7 +185,7 @@ class ApiService {
     const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
     const url = this.getFullUrl(endpoint);
     try {
-      const res = await fetch(url, { method: 'GET', headers, cache: 'no-store' });
+      const res = await this.fetchWithTimeout(url, { method: 'GET', headers, cache: 'no-store' });
       return this.handleResponse(res);
     } catch (err: any) {
       throw new Error(`Connection Failed: Could not reach ${url}. Check VITE_BACKEND_URL.`);
@@ -171,7 +200,7 @@ class ApiService {
     };
     const url = this.getFullUrl(endpoint);
     try {
-      const res = await fetch(url, {
+      const res = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(data),
@@ -194,14 +223,18 @@ class ApiService {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     const url = this.getFullUrl(endpoint);
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(data),
-    });
-    const result = await this.handleResponse(res);
-    this.notifyChange(result);
-    return result;
+    try {
+      const res = await this.fetchWithTimeout(url, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+      });
+      const result = await this.handleResponse(res);
+      this.notifyChange(result);
+      return result;
+    } catch (err: any) {
+      throw new Error(`Connection Failed: Could not reach ${url}.`);
+    }
   }
 
   async delete(endpoint: string) {
@@ -209,10 +242,14 @@ class ApiService {
     const token = this.getToken();
     const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
     const url = this.getFullUrl(endpoint);
-    const res = await fetch(url, { method: 'DELETE', headers });
-    const result = await this.handleResponse(res);
-    this.notifyChange({ deletedEndpoint: endpoint });
-    return result;
+    try {
+      const res = await this.fetchWithTimeout(url, { method: 'DELETE', headers });
+      const result = await this.handleResponse(res);
+      this.notifyChange({ deletedEndpoint: endpoint });
+      return result;
+    } catch (err: any) {
+      throw new Error(`Connection Failed: Could not reach ${url}.`);
+    }
   }
 
   private transformItem<T>(item: any): T {
@@ -248,17 +285,12 @@ class ApiService {
 
   async getDashboardData(): Promise<{ summary: any; filingDataCache: Record<string, any>; counts?: any }> {
     try {
-      const res = await this.get('/dashboard/summary');
+      const res = await this.get('/items/dashboard/summary');
       if (res && res.summary) {
         return res;
       }
     } catch (e) {
-      try {
-        const res = await this.get('/items/dashboard/summary');
-        if (res && res.summary) return res;
-      } catch (err) {
-        console.warn('Dedicated dashboard endpoint failed, falling back:', err);
-      }
+      console.warn('Dedicated dashboard endpoint failed, falling back:', e);
     }
     const summary = await this.getDashboardSummary();
     return { summary, filingDataCache: {} };
@@ -267,7 +299,13 @@ class ApiService {
   async getMonthlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/monthly');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated monthly filing endpoint failed, falling back:', e);
     }
@@ -288,7 +326,13 @@ class ApiService {
   async getQuarterlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/quarterly');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated quarterly filing endpoint failed, falling back:', e);
     }
@@ -309,7 +353,13 @@ class ApiService {
   async getCompositionFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/composition');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated composition filing endpoint failed, falling back:', e);
     }
@@ -329,7 +379,14 @@ class ApiService {
   async getGSTR4FilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any; cmp08Data: any }> {
     try {
       const res = await this.get('/items/filing/gstr4');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {},
+          cmp08Data: res.cmp08Data || res.filingData || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated GSTR-4 filing endpoint failed, falling back:', e);
     }
@@ -350,7 +407,15 @@ class ApiService {
   async getGSTR9FilingData(): Promise<{ clients: Client[]; watchlist: any; config: any; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/gstr9');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          watchlist: res.watchlist || {},
+          config: res.config || {},
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated GSTR-9 filing endpoint failed, falling back:', e);
     }
@@ -367,7 +432,13 @@ class ApiService {
   async getITRReturnFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/itr');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated ITR return filing endpoint failed, falling back:', e);
     }
@@ -383,7 +454,14 @@ class ApiService {
   async getTaxAuditFilingData(): Promise<{ clients: Client[]; watchlist: any; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/audit');
-      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
+      if (res && Array.isArray(res.clients)) {
+        return {
+          clients: res.clients,
+          watchlist: res.watchlist || {},
+          filingData: res.filingData || {},
+          dueDates: res.dueDates || {}
+        };
+      }
     } catch (e) {
       console.warn('Dedicated Tax Audit filing endpoint failed, falling back:', e);
     }

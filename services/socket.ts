@@ -23,10 +23,6 @@ class SocketService {
 
         this.socket.on('connect', () => {
           console.debug('⚡ Unified Vault Sync Connected');
-          api.invalidateCache();
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: { type: 'connect' } }));
-          }
           this.trigger('connect', {});
         });
 

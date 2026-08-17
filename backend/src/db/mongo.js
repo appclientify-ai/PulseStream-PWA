@@ -51,29 +51,117 @@ function setDeepProperty(obj, pathStr, value) {
   curr[parts[parts.length - 1]] = value;
 }
 
+function getDeepProperty(obj, pathStr) {
+  if (!obj || typeof obj !== 'object') return undefined;
+  if (!pathStr.includes('.')) return obj[pathStr];
+  const parts = pathStr.split('.');
+  let curr = obj;
+  for (const part of parts) {
+    if (curr === null || curr === undefined || typeof curr !== 'object') return undefined;
+    curr = curr[part];
+  }
+  return curr;
+}
+
 function matchFilter(doc, filter) {
   if (!filter || Object.keys(filter).length === 0) return true;
   for (const key of Object.keys(filter)) {
     if (key === '$or') {
       const conditions = filter['$or'];
-      const anyMatch = conditions.some(cond => matchFilter(doc, cond));
-      if (!anyMatch) return false;
+      if (Array.isArray(conditions)) {
+        const anyMatch = conditions.some(cond => matchFilter(doc, cond));
+        if (!anyMatch) return false;
+      }
       continue;
     }
+    if (key === '$and') {
+      const conditions = filter['$and'];
+      if (Array.isArray(conditions)) {
+        const allMatch = conditions.every(cond => matchFilter(doc, cond));
+        if (!allMatch) return false;
+      }
+      continue;
+    }
+
     const val = filter[key];
-    if (key === '_id') {
-      const targetId = val ? val.toString() : '';
-      const docId = doc._id ? doc._id.toString() : '';
-      if (targetId !== docId) return false;
-      continue;
+    let docVal = getDeepProperty(doc, key);
+    if (key === '_id' || key === 'id') {
+      docVal = doc._id || doc.id;
     }
-    const docVal = doc[key];
-    if (val && typeof val === 'object' && val.$regex) {
-      const reg = new RegExp(val.$regex.source || val.$regex, val.$regex.flags || 'i');
-      if (!reg.test(docVal || '')) return false;
-      continue;
+
+    if (val !== null && typeof val === 'object' && !(val instanceof Date)) {
+      if (val instanceof RegExp) {
+        if (!val.test(String(docVal || ''))) return false;
+        continue;
+      }
+
+      const opKeys = Object.keys(val).filter(k => k.startsWith('$'));
+      if (opKeys.length > 0) {
+        let allOpsPassed = true;
+        for (const op of opKeys) {
+          if (op === '$exists') {
+            const exists = docVal !== undefined && docVal !== null;
+            if (Boolean(val.$exists) !== exists) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$ne') {
+            const neStr = val.$ne !== null && val.$ne !== undefined ? val.$ne.toString() : '';
+            const targetStr = docVal !== null && docVal !== undefined ? docVal.toString() : '';
+            if (targetStr === neStr || docVal === val.$ne) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$in' && Array.isArray(val.$in)) {
+            const inStrings = val.$in.map(v => v !== null && v !== undefined ? v.toString() : '');
+            const targetStr = docVal !== null && docVal !== undefined ? docVal.toString() : '';
+            if (!inStrings.includes(targetStr)) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$nin' && Array.isArray(val.$nin)) {
+            const inStrings = val.$nin.map(v => v !== null && v !== undefined ? v.toString() : '');
+            const targetStr = docVal !== null && docVal !== undefined ? docVal.toString() : '';
+            if (inStrings.includes(targetStr)) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$regex') {
+            const reg = new RegExp(val.$regex.source || val.$regex, val.$options || val.$regex.flags || 'i');
+            if (!reg.test(String(docVal || ''))) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$gt') {
+            if (!(docVal > val.$gt)) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$gte') {
+            if (!(docVal >= val.$gte)) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$lt') {
+            if (!(docVal < val.$lt)) {
+              allOpsPassed = false;
+              break;
+            }
+          } else if (op === '$lte') {
+            if (!(docVal <= val.$lte)) {
+              allOpsPassed = false;
+              break;
+            }
+          }
+        }
+        if (!allOpsPassed) return false;
+        continue;
+      }
     }
-    if (docVal !== val) return false;
+
+    const targetStr = docVal !== null && docVal !== undefined ? docVal.toString() : '';
+    const valStr = val !== null && val !== undefined ? val.toString() : '';
+    if (targetStr !== valStr && docVal !== val) return false;
   }
   return true;
 }
