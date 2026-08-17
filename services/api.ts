@@ -42,7 +42,7 @@ class ApiService {
   async getItemsByCategory(category: string, forceRefresh = false): Promise<any[]> {
     if (!forceRefresh) {
       const cached = this.categoryCacheMap.get(category);
-      if (cached && (Date.now() - cached.timestamp < 1000 * 60 * 5)) {
+      if (cached && (Date.now() - cached.timestamp < 1000 * 2)) {
         return cached.data;
       }
       const inflight = this.categoryInflightPromises.get(category);
@@ -115,6 +115,13 @@ class ApiService {
   }
 
   
+  private notifyChange(data?: any) {
+    this.invalidateCache();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: { type: 'mutation', data } }));
+    }
+  }
+
   async patch(endpoint: string, data: any) {
     this.invalidateCache();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
@@ -122,7 +129,9 @@ class ApiService {
     const url = this.getFullUrl(endpoint);
     try {
       const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(data) });
-      return this.handleResponse(res);
+      const result = await this.handleResponse(res);
+      this.notifyChange(result);
+      return result;
     } catch (err: any) {
       throw new Error(`Connection Failed: Could not reach ${url}.`);
     }
@@ -152,7 +161,9 @@ class ApiService {
         headers,
         body: JSON.stringify(data),
       });
-      return this.handleResponse(res);
+      const result = await this.handleResponse(res);
+      this.notifyChange(result);
+      return result;
     } catch (err: any) {
       throw new Error(`Connection Failed: Could not reach ${url}.`);
     }
@@ -170,7 +181,9 @@ class ApiService {
       headers,
       body: JSON.stringify(data),
     });
-    return this.handleResponse(res);
+    const result = await this.handleResponse(res);
+    this.notifyChange(result);
+    return result;
   }
 
   async delete(endpoint: string) {
@@ -178,7 +191,9 @@ class ApiService {
     const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
     const url = this.getFullUrl(endpoint);
     const res = await fetch(url, { method: 'DELETE', headers });
-    return this.handleResponse(res);
+    const result = await this.handleResponse(res);
+    this.notifyChange({ deletedEndpoint: endpoint });
+    return result;
   }
 
   private transformItem<T>(item: any): T {

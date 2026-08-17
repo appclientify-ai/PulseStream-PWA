@@ -91,7 +91,7 @@ const AppContent: React.FC = () => {
       }
       debounceTimer = setTimeout(() => {
         queryClient.invalidateQueries({ refetchType: 'active' });
-      }, 150);
+      }, 10);
     };
     window.addEventListener('clientify_db_change', handleDbChange);
     return () => {
