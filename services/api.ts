@@ -140,18 +140,29 @@ class ApiService {
   }
 
   
-  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 12000): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      return response;
-    } finally {
-      clearTimeout(timer);
+  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 35000, retries = 1): Promise<Response> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        return response;
+      } catch (err) {
+        clearTimeout(timer);
+        if (attempt < retries) {
+          // Short delay before retrying while Render spins up
+          await new Promise(res => setTimeout(res, 1500));
+          continue;
+        }
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
     }
+    throw new Error('Request timed out');
   }
 
   private notifyChange(data?: any) {
