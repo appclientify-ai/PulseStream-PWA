@@ -99,7 +99,7 @@ export function decodeGstinStructure(gstinStr: string) {
 }
 
 /**
- * Fetches GSTIN details from public GST APIs with automatic structure decoding fallback
+ * Fetches GSTIN details from public GST APIs or provides official portal deep-link
  */
 export async function fetchGstinPublicDetails(gstinInput: string): Promise<GstinDetails> {
   const cleanGstin = gstinInput.trim().toUpperCase();
@@ -114,66 +114,61 @@ export async function fetchGstinPublicDetails(gstinInput: string): Promise<Gstin
 
   const decoded = decodeGstinStructure(cleanGstin);
 
-  // Attempt live lookup using CORS-enabled public proxies / endpoints
-  try {
-    const primaryApiUrl = `https://sheet.gstincheck.co.in/check/8ebf85764ff8ca384be85ba36239ecbe/${cleanGstin}`;
-    const response = await fetch(primaryApiUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
+  // Check for custom GSP API Key in environment or storage
+  const customApiKey = import.meta.env.VITE_GST_API_KEY || localStorage.getItem('CUSTOM_GST_API_KEY');
 
-    if (response.ok) {
-      const result = await response.json();
-      if (result && result.flag && result.data) {
-        const d = result.data;
-        const legalName = d.lpr || d.tradeNam || `Entity ${cleanGstin.slice(-4)}`;
-        const tradeName = d.tradeNam || d.lpr || legalName;
-        const statusRaw = (d.sts || d.rgdt ? 'Active' : 'Active') as any;
-        const regDate = d.rgdt || new Date().toISOString().split('T')[0];
-        const rawAddr = d.pradr?.addr;
-        let formattedAddr = '';
-        if (rawAddr) {
-          formattedAddr = [rawAddr.bno, rawAddr.bnm, rawAddr.st, rawAddr.loc, rawAddr.dst, rawAddr.stcd, rawAddr.pncd]
-            .filter(Boolean)
-            .join(', ');
-        } else {
-          formattedAddr = `${decoded.stateName}, India`;
+  if (customApiKey) {
+    try {
+      const response = await fetch(`https://sheet.gstincheck.co.in/check/${customApiKey}/${cleanGstin}`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result && result.flag && result.data) {
+          const d = result.data;
+          const legalName = d.lpr || d.tradeNam || '';
+          const tradeName = d.tradeNam || d.lpr || legalName;
+          const rawAddr = d.pradr?.addr;
+          let formattedAddr = '';
+          if (rawAddr) {
+            formattedAddr = [rawAddr.bno, rawAddr.bnm, rawAddr.st, rawAddr.loc, rawAddr.dst, rawAddr.stcd, rawAddr.pncd]
+              .filter(Boolean)
+              .join(', ');
+          }
+
+          return {
+            gstin: cleanGstin,
+            legalName,
+            tradeName,
+            pan: decoded.pan,
+            gstStatus: (d.sts === 'Active' || d.rgdt) ? 'Active' : 'Cancelled',
+            regDate: d.rgdt || '',
+            constitution: d.ctb || decoded.constitution,
+            regType: d.dty || 'Regular',
+            address: formattedAddr || `${decoded.stateName}, India`,
+            state: decoded.stateName,
+            jurisdiction: d.stj || `${decoded.stateName} State Jurisdiction`,
+            taxpayerType: d.dty || 'Regular Taxpayer',
+            isLiveFetched: true
+          };
         }
-
-        return {
-          gstin: cleanGstin,
-          legalName,
-          tradeName,
-          pan: decoded.pan,
-          gstStatus: statusRaw === 'Active' ? 'Active' : 'Cancelled',
-          regDate,
-          constitution: d.ctb || decoded.constitution,
-          regType: d.dty || 'Regular',
-          address: formattedAddr || `${decoded.stateName}, India`,
-          state: decoded.stateName,
-          jurisdiction: d.stj || `${decoded.stateName} State Jurisdiction`,
-          taxpayerType: d.dty || 'Regular Taxpayer',
-          isLiveFetched: true
-        };
       }
+    } catch (err) {
+      console.warn('Custom GST API error:', err);
     }
-  } catch (err) {
-    console.warn('Primary GSTIN API fetch failed, trying secondary fallback...', err);
   }
 
-  // Fallback 2: Direct public lookup via fallback GST portal structure
+  // If no API key or API key call didn't return data, return decoded structure WITHOUT fake names
   return {
     gstin: cleanGstin,
-    legalName: `M/S ${decoded.pan} Enterprise (${decoded.stateName})`,
-    tradeName: `M/S ${decoded.pan} Traders`,
+    legalName: '',
+    tradeName: '',
     pan: decoded.pan,
     gstStatus: 'Active',
-    regDate: '2017-07-01',
+    regDate: '',
     constitution: decoded.constitution,
     regType: 'Regular',
-    address: `Principal Business Place, ${decoded.stateName}, India`,
+    address: `${decoded.stateName}, India`,
     state: decoded.stateName,
-    jurisdiction: `Range-I, Division-A, ${decoded.stateName}`,
+    jurisdiction: `${decoded.stateName} Jurisdiction`,
     taxpayerType: 'Regular Taxpayer',
     isLiveFetched: false
   };

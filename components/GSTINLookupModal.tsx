@@ -135,27 +135,59 @@ export const GSTINLookupModal: React.FC<GSTINLookupModalProps> = ({
                   </span>
                 </div>
 
-                <button
-                  onClick={() => copyField(JSON.stringify(details, null, 2), 'Full Profile')}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline"
+                <a
+                  href="https://services.gst.gov.in/services/searchtp"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(details.gstin);
+                    toast.success('GSTIN copied to clipboard! Paste it on GST Portal.');
+                  }}
+                  className="text-xs font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs"
                 >
-                  📋 Copy JSON
-                </button>
+                  <span>🌐 Open Official GST Portal</span>
+                  <span>↗</span>
+                </a>
               </div>
+
+              {!details.isLiveFetched && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs space-y-1.5">
+                  <div className="font-black flex items-center gap-1.5">
+                    <span>⚠️ Live GST Portal API Notice</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-amber-800">
+                    Official GST Portal (<code className="font-bold">services.gst.gov.in</code>) requires an official GSP API Key or solving CAPTCHA on their website.
+                  </p>
+                  <div className="pt-1 flex gap-2">
+                    <a
+                      href="https://services.gst.gov.in/services/searchtp"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => {
+                        navigator.clipboard.writeText(details.gstin);
+                        toast.success('GSTIN copied! Opening services.gst.gov.in...');
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all inline-block"
+                    >
+                      Search on Official GST Portal ↗
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1 bg-white p-3 rounded-xl border border-slate-200">
                   <span className="text-[10px] font-black uppercase text-slate-400 block">Trade Name</span>
-                  <p className="font-black text-slate-800 text-sm">{details.tradeName}</p>
+                  <p className="font-black text-slate-800 text-sm">{details.tradeName || <span className="text-slate-400 italic font-normal">Enter or fetch from GST Portal</span>}</p>
                 </div>
 
                 <div className="space-y-1 bg-white p-3 rounded-xl border border-slate-200">
                   <span className="text-[10px] font-black uppercase text-slate-400 block">Legal Name</span>
-                  <p className="font-black text-slate-800 text-sm">{details.legalName}</p>
+                  <p className="font-black text-slate-800 text-sm">{details.legalName || <span className="text-slate-400 italic font-normal">Enter or fetch from GST Portal</span>}</p>
                 </div>
 
                 <div className="space-y-1 bg-white p-3 rounded-xl border border-slate-200">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">Derived PAN</span>
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">PAN Number</span>
                   <p className="font-mono font-bold text-indigo-600">{details.pan}</p>
                 </div>
 
@@ -166,7 +198,7 @@ export const GSTINLookupModal: React.FC<GSTINLookupModalProps> = ({
 
                 <div className="space-y-1 bg-white p-3 rounded-xl border border-slate-200">
                   <span className="text-[10px] font-black uppercase text-slate-400 block">Registration Date</span>
-                  <p className="font-mono font-bold text-slate-700">{details.regDate}</p>
+                  <p className="font-mono font-bold text-slate-700">{details.regDate || '---'}</p>
                 </div>
 
                 <div className="space-y-1 bg-white p-3 rounded-xl border border-slate-200">
