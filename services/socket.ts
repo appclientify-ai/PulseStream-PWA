@@ -32,7 +32,21 @@ class SocketService {
 
         const handleRealtimeChange = (payload: any) => {
           console.debug('⚡ Real-time update received:', payload);
-          api.invalidateCache();
+          if (payload?.name) {
+            api.invalidateCache(payload.name);
+          } else if (payload?.storageKey) {
+            api.invalidateCache('app_data_' + payload.storageKey);
+          } else if (payload?.data?.name) {
+            api.invalidateCache(payload.data.name);
+          } else if (payload?.type === 'single_filing_update') {
+            if (payload?.storageKey) {
+              api.invalidateCache('app_data_' + payload.storageKey);
+            }
+          } else if (payload?.type === 'insert' || payload?.type === 'delete' || payload?.type === 'update') {
+            if (payload?.data?.name) {
+              api.invalidateCache(payload.data.name);
+            }
+          }
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
           }

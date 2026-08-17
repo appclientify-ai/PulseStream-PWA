@@ -168,8 +168,11 @@ class ApiService {
   private notifyChange(data?: any) {
     if (data?.name) {
       this.invalidateCache(data.name);
-    } else {
-      this.invalidateCache();
+    } else if (data?.storageKey || data?.updated?.storageKey) {
+      const key = data?.storageKey || data?.updated?.storageKey;
+      this.invalidateCache('app_data_' + key);
+    } else if (data?.deletedEndpoint) {
+      // Endpoint deletion - selective
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: { type: 'mutation', data } }));
@@ -249,7 +252,6 @@ class ApiService {
   }
 
   async delete(endpoint: string) {
-    this.invalidateCache();
     const token = this.getToken();
     const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
     const url = this.getFullUrl(endpoint);
@@ -1302,11 +1304,13 @@ class ApiService {
     field: string;
     value: any;
   }): Promise<any> {
-    return this.post('/items/filing/single-update', params);
+    const res = await this.post('/items/filing/single-update', params);
+    return { name: 'app_data_' + params.storageKey, storageKey: params.storageKey, ...res };
   }
 
   async patchAppData(key: string, updates: Record<string, any>): Promise<any> {
-    return this.patch(`/items/app_data/${key}/patch`, { updates });
+    const res = await this.patch(`/items/app_data/${key}/patch`, { updates });
+    return { name: 'app_data_' + key, storageKey: key, ...res };
   }
   
   async getAppData(key: string, forceRefresh = false): Promise<any> {
