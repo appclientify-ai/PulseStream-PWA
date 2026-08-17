@@ -221,56 +221,19 @@ class ApiService {
     }
   }
 
-  async getDashboardData(): Promise<{ summary: any; filingDataCache: Record<string, any> }> {
+  async getDashboardData(): Promise<{ summary: any; filingDataCache: Record<string, any>; counts?: any }> {
     try {
-      const res = await this.get('/items/dashboard/summary');
+      const res = await this.get('/dashboard/summary');
       if (res && res.summary) {
-        const [tribunal, highcourt] = await Promise.all([
-          this.getTribunalRecords().catch(() => []),
-          this.getHighCourtRecords().catch(() => [])
-        ]);
-        const tribunalList = tribunal || [];
-        const highcourtList = highcourt || [];
-
-        const isMatch = (a: any, b: any) => {
-          if (a.id && b.id && String(a.id) === String(b.id)) return true;
-          if (a._id && b._id && String(a._id) === String(b._id)) return true;
-          if (a.id && b._id && String(a.id) === String(b._id)) return true;
-          if (a._id && b.id && String(a._id) === String(b.id)) return true;
-          const clientA = (a.clientName || '').trim().toLowerCase();
-          const clientB = (b.clientName || '').trim().toLowerCase();
-          if (clientA && clientA === clientB) {
-            const refA = (a.noticeNo || a.orderNo || a.replyReferenceNo || a.caseNo || a.filingNo || '').trim().toLowerCase();
-            const refB = (b.noticeNo || b.orderNo || b.replyReferenceNo || b.caseNo || b.filingNo || '').trim().toLowerCase();
-            if (refA && refA === refB) return true;
-            if (a.hearingDate && a.hearingDate === b.hearingDate) return true;
-            if (a.appDate && a.appDate === b.appDate) return true;
-          }
-          return false;
-        };
-
-        const filteredLitigation = (res.summary.litigation || []).filter((r: any) => {
-          if (r.category === 'Tribunal' && tribunalList.length > 0) {
-            if (tribunalList.some(t => isMatch(r, t))) return false;
-          }
-          if (r.category === 'HighCourt' && highcourtList.length > 0) {
-            if (highcourtList.some(h => isMatch(r, h))) return false;
-          }
-          return true;
-        });
-
-        const extraTribunal = tribunalList.filter(t => !filteredLitigation.some(r => isMatch(r, t))).map(r => ({ ...r, category: r.category || 'Tribunal' }));
-        const extraHighcourt = highcourtList.filter(h => !filteredLitigation.some(r => isMatch(r, h))).map(r => ({ ...r, category: r.category || 'HighCourt' }));
-
-        res.summary.litigation = [
-          ...filteredLitigation,
-          ...extraTribunal,
-          ...extraHighcourt
-        ];
         return res;
       }
     } catch (e) {
-      console.warn('Dedicated dashboard endpoint failed, falling back:', e);
+      try {
+        const res = await this.get('/items/dashboard/summary');
+        if (res && res.summary) return res;
+      } catch (err) {
+        console.warn('Dedicated dashboard endpoint failed, falling back:', err);
+      }
     }
     const summary = await this.getDashboardSummary();
     return { summary, filingDataCache: {} };
@@ -1104,6 +1067,140 @@ class ApiService {
     return { ...res, id: res._id || res.id };
   }
   async deleteMiscWork(id: string) { await this.delete(`/misc_work/${id}`); }
+
+  // --- Modular Page-Specific APIs ---
+
+  // 1. Monthly Filing
+  async getMonthlyFilingData(year?: string, month?: string) {
+    const query = year && month ? `?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}` : '';
+    return this.get(`/filing/monthly${query}`);
+  }
+
+  async updateMonthlyFiling(clientId: string, year: string, month: string, field: string, value: any) {
+    return this.post('/filing/monthly/status', { clientId, year, month, field, value });
+  }
+
+  async getMonthlyDueDates() {
+    return this.get('/filing/monthly/duedates');
+  }
+
+  async updateMonthlyDueDates(year: string, month: string, dates: any) {
+    return this.post('/filing/monthly/duedates', { year, month, dates });
+  }
+
+  // 2. Quarterly Filing
+  async getQuarterlyFilingData(year?: string, quarter?: string) {
+    const query = year && quarter ? `?year=${encodeURIComponent(year)}&quarter=${encodeURIComponent(quarter)}` : '';
+    return this.get(`/filing/quarterly${query}`);
+  }
+
+  async updateQuarterlyFiling(clientId: string, year: string, quarter: string, field: string, value: any) {
+    return this.post('/filing/quarterly/status', { clientId, year, quarter, field, value });
+  }
+
+  // 3. Composition Filing
+  async getCompositionFilingData(year?: string, quarter?: string) {
+    const query = year && quarter ? `?year=${encodeURIComponent(year)}&quarter=${encodeURIComponent(quarter)}` : '';
+    return this.get(`/filing/composition${query}`);
+  }
+
+  async updateCompositionFiling(clientId: string, year: string, quarter: string, value: any) {
+    return this.post('/filing/composition/status', { clientId, year, quarter, value });
+  }
+
+  // 4. Annual Returns: GSTR-4
+  async getGSTR4Data(year?: string) {
+    const query = year ? `?year=${encodeURIComponent(year)}` : '';
+    return this.get(`/filing/gstr4${query}`);
+  }
+
+  async updateGSTR4Status(clientId: string, year: string, filed: boolean, filedDate?: string, remarks?: string) {
+    return this.post('/filing/gstr4/status', { clientId, year, filed, filedDate, remarks });
+  }
+
+  // 5. Annual Returns: GSTR-9 / 9C
+  async getGSTR9Data(year?: string) {
+    const query = year ? `?year=${encodeURIComponent(year)}` : '';
+    return this.get(`/filing/gstr9${query}`);
+  }
+
+  async updateGSTR9Status(clientId: string, year: string, field: string, value: any) {
+    return this.post('/filing/gstr9/status', { clientId, year, field, value });
+  }
+
+  async updateGSTR9Watchlist(clientId: string, isApplicable: boolean) {
+    return this.post('/filing/gstr9/watchlist', { clientId, isApplicable });
+  }
+
+  // 6. Income Tax Returns (ITR)
+  async getITRData(ay?: string) {
+    const query = ay ? `?ay=${encodeURIComponent(ay)}` : '';
+    return this.get(`/filing/itr${query}`);
+  }
+
+  async updateITRStatus(clientId: string, ay: string, statusData: any) {
+    return this.post('/filing/itr/status', { clientId, ay, statusData });
+  }
+
+  // 7. Tax Audit
+  async getTaxAuditData(year?: string) {
+    const query = year ? `?year=${encodeURIComponent(year)}` : '';
+    return this.get(`/filing/audit${query}`);
+  }
+
+  async updateTaxAuditStatus(clientId: string, year: string, statusData: any) {
+    return this.post('/filing/audit/status', { clientId, year, statusData });
+  }
+
+  async updateTaxAuditWatchlist(clientId: string, isApplicable: boolean) {
+    return this.post('/filing/audit/watchlist', { clientId, isApplicable });
+  }
+
+  // 8. Portfolios
+  async getGSTPortfolio() {
+    return this.get('/portfolio/gst');
+  }
+
+  async getITPortfolio() {
+    return this.get('/portfolio/it');
+  }
+
+  // 9. Billing, Ledger & Settings
+  async getClientLedger(clientId?: string) {
+    const endpoint = clientId ? `/billing/ledger/${clientId}` : '/billing/ledger';
+    return this.get(endpoint);
+  }
+
+  // 10. Dedicated Litigation APIs
+  async getLitigationNotices() {
+    return this.get('/litigation/notices');
+  }
+  async saveLitigationNotice(data: any) {
+    return data.id || data._id ? this.put(`/litigation/notices/${data.id || data._id}`, data) : this.post('/litigation/notices', data);
+  }
+  async deleteLitigationNotice(id: string) {
+    return this.delete(`/litigation/notices/${id}`);
+  }
+
+  async getLitigationAppeals() {
+    return this.get('/litigation/appeals');
+  }
+  async saveLitigationAppeal(data: any) {
+    return data.id || data._id ? this.put(`/litigation/appeals/${data.id || data._id}`, data) : this.post('/litigation/appeals', data);
+  }
+  async deleteLitigationAppeal(id: string) {
+    return this.delete(`/litigation/appeals/${id}`);
+  }
+
+  async updateSingleFilingStatus(params: {
+    storageKey: string;
+    clientId: string;
+    periodKey: string;
+    field: string;
+    value: any;
+  }): Promise<any> {
+    return this.post('/items/filing/single-update', params);
+  }
 
   async patchAppData(key: string, updates: Record<string, any>): Promise<any> {
     return this.patch(`/items/app_data/${key}/patch`, { updates });

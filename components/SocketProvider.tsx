@@ -24,6 +24,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       queryClient.invalidateQueries({ refetchType: 'active' });
     };
 
+    socketService.on('filing_single_updated', handleSync);
     socketService.on('DATA_MUTATED', handleSync);
     socketService.on('db_item_change', handleSync);
     socketService.on('item_created', handleSync);

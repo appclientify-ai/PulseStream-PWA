@@ -167,17 +167,23 @@ const Dashboard: React.FC = () => {
   };
 
   const getFilingCounts = (type: 'monthly' | 'quarterly' | 'composition' | 'gstr4' | 'gstr9' | 'itr' | 'audit', periodKey: string) => {
-    const keys: Record<string, string> = {
-      monthly: 'clientify_monthly_filing_v3',
-      quarterly: 'clientify_quarterly_filing_v3',
-      composition: 'clientify_composition_filing_v3',
-      gstr4: 'clientify_gstr4_filing_v1',
-      gstr9: 'clientify_gstr9_filing_data_v2',
-      itr: 'clientify_itr_filing_data_v2',
-      audit: 'clientify_audit_fin_data_v3'
+    const keys: Record<string, string[]> = {
+      monthly: ['monthly_filing_status', 'clientify_monthly_filing_v3'],
+      quarterly: ['quarterly_filing_status', 'clientify_quarterly_filing_v3'],
+      composition: ['composition_filing_status', 'clientify_composition_filing_v3'],
+      gstr4: ['gstr4_filing_data', 'clientify_gstr4_filing_v1'],
+      gstr9: ['gstr9_filing_data', 'clientify_gstr9_filing_data_v2'],
+      itr: ['itr_filing_status_v1', 'clientify_itr_filing_data_v2'],
+      audit: ['tax_audit_filing_status_v1', 'clientify_audit_fin_data_v3']
     };
-    const storageKey = keys[type];
-    const data = filingDataCache[storageKey] || {};
+    const keyList = keys[type] || [];
+    let data: any = {};
+    for (const k of keyList) {
+      if (filingDataCache[k] && Object.keys(filingDataCache[k]).length > 0) {
+        data = filingDataCache[k];
+        break;
+      }
+    }
     
     let year = '';
     let month = '';
@@ -202,7 +208,7 @@ const Dashboard: React.FC = () => {
     }
 
     const actualPeriodKey = type === 'quarterly' ? `${year}_${month}` : periodKey;
-    const periodData = data[actualPeriodKey] || {};
+    const periodData = data[actualPeriodKey] || data[periodKey] || {};
         
     let total = 0;
     let filed = 0;
@@ -253,13 +259,14 @@ const Dashboard: React.FC = () => {
        total = applicable.length;
        filed = applicable.filter(c => isFiled(periodData[c.id]?.filed)).length;
     } else if (type === 'gstr9') {
-       const watchlistObj = filingDataCache['clientify_gstr9_watchlist_v2'] || {};
-       const currentWatchlist: string[] = watchlistObj[periodKey] || [];
-       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && currentWatchlist.includes(c.id) && (c.status === 'Active' || c.status === 'Active Filing'));
+       const watchlistObj = filingDataCache['gstr9_watchlist'] || filingDataCache['clientify_gstr9_watchlist_v2'] || {};
+       const currentWatchlist: string[] = watchlistObj[periodKey] || (typeof watchlistObj === 'object' ? Object.keys(watchlistObj).filter(k => watchlistObj[k] === true) : []);
+       const applicable = (clients || []).filter(c => c && c.gstProfile?.regType === 'Regular' && (currentWatchlist.includes(c.id) || !currentWatchlist.length) && (c.status === 'Active' || c.status === 'Active Filing'));
        total = applicable.length;
        filed = applicable.filter(c => isFiled(periodData[c.id]?.gstr9)).length;
     } else if (type === 'audit') {
-       const applicable = (clients || []).filter(c => c && c.itProfile?.advisoryWork?.taxAudit);
+       const auditWatchlist = filingDataCache['tax_audit_watchlist_v1'] || {};
+       const applicable = (clients || []).filter(c => c && (c.itProfile?.advisoryWork?.taxAudit || auditWatchlist[c.id] === true));
        total = applicable.length;
        filed = applicable.filter(c => isFiled(periodData[c.id]?.auditFiled)).length;
     }

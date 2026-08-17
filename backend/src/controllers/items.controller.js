@@ -237,6 +237,40 @@ export const patchAppData = async (req, res) => {
   }
 };
 
+export const updateSingleFilingStatus = async (req, res) => {
+  const { storageKey, clientId, periodKey, field, value } = req.body;
+  
+  if (!storageKey || !clientId || !periodKey || !field) {
+    return res.status(400).json({ error: 'Missing required parameters (storageKey, clientId, periodKey, field)' });
+  }
+
+  try {
+    const items = getCollection('items');
+    const name = storageKey.startsWith('app_data_') ? storageKey : 'app_data_' + storageKey;
+    const updatePath = `data.${periodKey}.${clientId}.${field}`;
+    
+    await items.findOneAndUpdate(
+      { name: name, createdBy: req.user._id },
+      { 
+        $set: { [updatePath]: value, updatedAt: new Date() },
+        $setOnInsert: { name: name, createdBy: req.user._id, creatorName: req.user.username, createdAt: new Date() }
+      },
+      { returnDocument: 'after', upsert: true }
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('filing_single_updated', { storageKey, clientId, periodKey, field, value, timestamp: new Date() });
+      io.emit('db_item_change', { type: 'single_filing_update', storageKey, clientId, periodKey, field, value });
+    }
+
+    res.json({ success: true, updated: { storageKey, clientId, periodKey, field, value } });
+  } catch (err) {
+    console.error('Update Single Filing Error:', err);
+    res.status(500).json({ error: 'Failed to update single filing status' });
+  }
+};
+
 export const getDashboardSummaryData = async (req, res) => {
   try {
     const userMatches = [req.user._id];

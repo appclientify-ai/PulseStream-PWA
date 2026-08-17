@@ -8,6 +8,10 @@ import authRoutes from './auth/auth.routes.js';
 import itemRoutes from './routes/items.routes.js';
 import miscRoutes from './routes/miscellaneous.routes.js';
 import litigationRoutes from './routes/litigation.routes.js';
+import filingRoutes from './routes/filing.routes.js';
+import portfolioRoutes from './routes/portfolio.routes.js';
+import billingRoutes from './routes/billing.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,9 +29,13 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 1. API Routes (PRIORITY)
 app.use('/api/auth', authRoutes);
-app.use('/api/items', itemRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/filing', filingRoutes);
+app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api', miscRoutes);
 app.use('/api', litigationRoutes);
+app.use('/api/items', itemRoutes);
 
 // 2. Health Check
 app.get('/ping', (req, res) => { res.status(200).send('pong'); });

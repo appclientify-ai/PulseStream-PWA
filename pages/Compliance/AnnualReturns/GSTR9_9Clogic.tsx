@@ -62,7 +62,26 @@ export const useGSTR9Logic = (
       }
     };
     load();
-    const syncHandler = () => load();
+    const syncHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.storageKey === STORAGE_KEY_DATA && detail.clientId && detail.periodKey) {
+        setFilingData(prev => {
+          const yData = { ...(prev[detail.periodKey] || {}) };
+          const cData = { ...(yData[detail.clientId] || { gstr9: false, gstr9c: false }) };
+          if (detail.field) {
+            (cData as any)[detail.field] = detail.value;
+          } else if (typeof detail.value === 'object') {
+            Object.assign(cData, detail.value);
+          }
+          yData[detail.clientId] = cData;
+          return { ...prev, [detail.periodKey]: yData };
+        });
+        return;
+      }
+      if (detail?.type === 'connect') {
+        load();
+      }
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialWatchlist, initialFilingData]);
@@ -94,8 +113,13 @@ export const useGSTR9Logic = (
       return { ...prev, [selectedYear]: yData };
     });
 
-    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData })
-      .catch(console.error);
+    api.updateSingleFilingStatus({
+      storageKey: STORAGE_KEY_DATA,
+      clientId,
+      periodKey: selectedYear,
+      field: type,
+      value: clientData[type]
+    }).catch(console.error);
   }, [filingData, selectedYear]);
 
   const getStatus = useCallback((clientId: string): GSTR9FilingStatus => {

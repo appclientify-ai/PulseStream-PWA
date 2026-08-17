@@ -42,6 +42,7 @@ class SocketService {
           }
         };
 
+        this.socket.on('filing_single_updated', handleRealtimeChange);
         this.socket.on('db_item_change', handleRealtimeChange);
         this.socket.on('item_created', handleRealtimeChange);
         this.socket.on('item_updated', handleRealtimeChange);

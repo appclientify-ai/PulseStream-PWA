@@ -54,7 +54,26 @@ export const useTaxAuditLogic = (
       }
     };
     load();
-    const syncHandler = () => load();
+    const syncHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.storageKey === STORAGE_KEY_DATA && detail.clientId && detail.periodKey) {
+        setAllData(prev => {
+          const yData = { ...(prev[detail.periodKey] || {}) };
+          const cData = { ...(yData[detail.clientId] || { bsStatus: 'Pending', auditFiled: false }) };
+          if (detail.field) {
+            (cData as any)[detail.field] = detail.value;
+          } else if (typeof detail.value === 'object') {
+            Object.assign(cData, detail.value);
+          }
+          yData[detail.clientId] = cData;
+          return { ...prev, [detail.periodKey]: yData };
+        });
+        return;
+      }
+      if (detail?.type === 'connect') {
+        load();
+      }
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialWatchlist, initialData]);
@@ -102,8 +121,15 @@ export const useTaxAuditLogic = (
       return { ...prev, [selectedYear]: yData };
     });
 
-    api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData })
-      .catch(console.error);
+    api.updateSingleFilingStatus({
+      storageKey: STORAGE_KEY_DATA,
+      clientId,
+      periodKey: selectedYear,
+      field: 'auditFiled',
+      value: clientData.auditFiled
+    }).catch(() => {
+      api.patchAppData(STORAGE_KEY_DATA, { [`data.${selectedYear}.${clientId}`]: clientData }).catch(console.error);
+    });
   }, [selectedYear, allData]);
 
   const setBSStatus = useCallback((clientId: string, status: BSStatus) => {

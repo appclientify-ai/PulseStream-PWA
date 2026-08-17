@@ -35,7 +35,22 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
       }
     };
     load();
-    const syncHandler = () => load();
+    const syncHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.storageKey === STORAGE_KEY && detail.clientId && detail.periodKey && detail.field) {
+        setAllData(prev => {
+          const pData = { ...(prev[detail.periodKey] || {}) };
+          const cData = { ...(pData[detail.clientId] || { r1: false, r3b: 'Pending' }) };
+          (cData as any)[detail.field] = detail.value;
+          pData[detail.clientId] = cData;
+          return { ...prev, [detail.periodKey]: pData };
+        });
+        return;
+      }
+      if (detail?.type === 'connect') {
+        load();
+      }
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, []);
@@ -64,11 +79,15 @@ export const useQuarterlyFilingLogic = (selectedYear: string, selectedQuarter: s
       return { ...prev, [periodKey]: pData };
     });
 
-    // Make API request without duplicate socket emit
-    api.patchAppData(STORAGE_KEY, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
-      .catch(err => {
-        console.error('Failed to save quarterly filing data', err);
-      });
+    api.updateSingleFilingStatus({
+      storageKey: STORAGE_KEY,
+      clientId,
+      periodKey,
+      field: type,
+      value: newVal
+    }).catch(err => {
+      console.error('Failed to save quarterly filing data', err);
+    });
   }, [periodKey, allData]);
 
   const getStatus = useCallback((clientId: string): FilingStatus => {

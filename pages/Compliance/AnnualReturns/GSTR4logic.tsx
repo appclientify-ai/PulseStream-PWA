@@ -44,7 +44,26 @@ export const useGSTR4Logic = (
       }
     };
     load();
-    const syncHandler = () => load();
+    const syncHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.storageKey === STORAGE_KEY && detail.clientId && detail.periodKey) {
+        setAllData(prev => {
+          const yData = { ...(prev[detail.periodKey] || {}) };
+          const cData = { ...(yData[detail.clientId] || { filed: false }) };
+          if (detail.field) {
+            (cData as any)[detail.field] = detail.value;
+          } else if (typeof detail.value === 'object') {
+            Object.assign(cData, detail.value);
+          }
+          yData[detail.clientId] = cData;
+          return { ...prev, [detail.periodKey]: yData };
+        });
+        return;
+      }
+      if (detail?.type === 'connect') {
+        load();
+      }
+    };
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialData]);
@@ -68,9 +87,13 @@ export const useGSTR4Logic = (
       return { ...prev, [selectedYear]: yData };
     });
 
-    // Make API request without duplicate socket emit
-    api.patchAppData(STORAGE_KEY, { [`data.${selectedYear}.${clientId}`]: clientData })
-      .catch(console.error);
+    api.updateSingleFilingStatus({
+      storageKey: STORAGE_KEY,
+      clientId,
+      periodKey: selectedYear,
+      field: 'filed',
+      value: clientData.filed
+    }).catch(console.error);
   }, [selectedYear, allData]);
 
   const getStatus = useCallback((clientId: string): GSTR4FilingStatus => {
