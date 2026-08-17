@@ -4,6 +4,7 @@ import { useModuleData } from '../../hooks/useModuleData';
 import { formatDate } from '../../exportUtils';
 import GstMasterPortfolio from './GstMasterPortfolio.tsx';
 import GSTClientFormModal from '../Clientform/GSTClientFormModal.tsx';
+import { GSTINLookupModal } from '../../components/GSTINLookupModal.tsx';
 import { api } from '../../services/api.ts';
 import { Client, GstRegType, GstFilingFreq, ConstitutionType, ClientStatus } from '../../types.ts';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -14,6 +15,8 @@ import { ViewControl } from '../../components/ViewControl';
 
 const GSTPortfolioContent: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLookupModalOpen, setIsLookupModalOpen] = useState(false);
+  const [prefilledClientData, setPrefilledClientData] = useState<Client | null>(null);
   const [search, setSearch] = useState('');
   const [quickFilter, setQuickFilter] = useState<string>('All');
   const [authorityFilter, setAuthorityFilter] = useState<'All' | 'State' | 'Center'>('All');
@@ -343,7 +346,20 @@ const GSTPortfolioContent: React.FC = () => {
 
           <button 
             type="button"
-            onClick={() => setIsModalOpen(true)} 
+            onClick={() => setIsLookupModalOpen(true)} 
+            className="bg-slate-100 hover:bg-indigo-50 border border-slate-200 text-indigo-700 font-bold uppercase tracking-wider px-3.5 h-9 rounded-xl shadow-xs transition-all text-[var(--app-font-size)] shrink-0 flex items-center gap-1.5 cursor-pointer"
+            title="Search any GSTIN directly from official portal"
+          >
+            <span>🔍</span>
+            <span>Search GSTIN</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              setPrefilledClientData(null);
+              setIsModalOpen(true);
+            }} 
             className="bg-indigo-600 text-white font-bold uppercase tracking-wider px-4 h-9 rounded-xl shadow-md hover:bg-slate-900 transition-all text-[var(--app-font-size)] shrink-0 flex-shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
@@ -363,9 +379,52 @@ const GSTPortfolioContent: React.FC = () => {
         />
       </div>
 
+      <GSTINLookupModal
+        isOpen={isLookupModalOpen}
+        onClose={() => setIsLookupModalOpen(false)}
+        onImportClient={(details) => {
+          setIsLookupModalOpen(false);
+          const mockImportClient: any = {
+            legalName: details.legalName,
+            tradeName: details.tradeName,
+            address: details.address,
+            mobile: '',
+            email: '',
+            status: 'Active',
+            gstProfile: {
+              gstin: details.gstin,
+              pan: details.pan,
+              username: '',
+              password: '',
+              gstStatus: details.gstStatus,
+              regDate: details.regDate,
+              regType: details.regType || 'Regular',
+              constitution: details.constitution || 'Proprietorship',
+              address: details.address,
+              sector: details.jurisdiction,
+              stakeholders: [{
+                id: Math.random().toString(36).substr(2, 9),
+                name: details.legalName || details.tradeName,
+                mobile: '',
+                pan: details.pan,
+                email: '',
+                address: details.address
+              }]
+            }
+          };
+          setPrefilledClientData(mockImportClient);
+          setIsModalOpen(true);
+          toast.success(`Importing details for ${details.tradeName} into Client Form!`);
+        }}
+      />
+
       <GSTClientFormModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        initialData={prefilledClientData}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPrefilledClientData(null);
+        }} 
         onSave={() => handleRefresh()} 
       />
     </div>
