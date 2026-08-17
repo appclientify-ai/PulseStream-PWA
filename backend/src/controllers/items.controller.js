@@ -416,9 +416,9 @@ export const getMonthlyFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = gp.regType || gp.registrationType || 'Regular';
-        const filingFreq = gp.filingFreq || gp.filingFrequency || 'Monthly';
-        if (regType === 'Regular' && filingFreq === 'Monthly') {
+        const regType = (gp.regType || gp.registrationType || 'Regular').toString().toLowerCase();
+        const filingFreq = (gp.filingFreq || gp.filingFrequency || 'Monthly').toString().toLowerCase();
+        if (regType !== 'composition' && filingFreq !== 'quarterly') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_monthly_filing_v3') {
@@ -469,9 +469,9 @@ export const getQuarterlyFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = gp.regType || gp.registrationType || 'Regular';
-        const filingFreq = gp.filingFreq || gp.filingFrequency;
-        if (regType === 'Regular' && filingFreq === 'Quarterly') {
+        const regType = (gp.regType || gp.registrationType || 'Regular').toString().toLowerCase();
+        const filingFreq = (gp.filingFreq || gp.filingFrequency || '').toString().toLowerCase();
+        if (regType !== 'composition' && filingFreq === 'quarterly') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_quarterly_filing_v3') {
@@ -522,8 +522,8 @@ export const getCompositionFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
-        if (regType === 'Composition') {
+        const regType = (gp.regType || gp.registrationType || gp.taxpayerType || '').toString().toLowerCase();
+        if (regType === 'composition') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_composition_filing_v3') {
@@ -576,8 +576,8 @@ export const getGSTR4FilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
-        if (regType === 'Composition') {
+        const regType = (gp.regType || gp.registrationType || gp.taxpayerType || '').toString().toLowerCase();
+        if (regType === 'composition') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_gstr4_filing_v1') {
@@ -685,7 +685,7 @@ export const getITRReturnFilingData = async (req, res) => {
       };
 
       if (item.name === 'client') {
-        if (transformed.itProfile && (transformed.status === 'Active' || transformed.status === 'Active Filing')) {
+        if (transformed.itProfile) {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_itr_filing_data_v2') {
@@ -1167,11 +1167,7 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
     litigationQuery['data.status'] = { $in: ['Drop', 'Dropped'] };
   }
 
-  // Run database query selecting only necessary fields
-  const rawLitigation = await itemsColl.find(
-    litigationQuery,
-    { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
-  ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+  const rawLitigation = await itemsColl.find(litigationQuery).toArray();
 
   const litigation = rawLitigation.map(item => ({
     ...item.data,
@@ -1179,15 +1175,12 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
     createdAt: item.createdAt
   }));
 
-  // Fetch and project client details (SELECT id, legalName, tradeName, gstProfile, itProfile)
-  const rawClients = await itemsColl.find(
-    { createdBy: { $in: userMatches }, name: 'client' },
-    { projection: { _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 } }
-  ).project({ _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 }).toArray();
+  const rawClients = await itemsColl.find({ createdBy: { $in: userMatches }, name: 'client' }).toArray();
 
   const clients = rawClients.map(item => ({
     ...item.data,
-    id: item._id
+    id: item._id,
+    createdAt: item.createdAt
   }));
 
   return { clients, litigation };
@@ -1302,18 +1295,10 @@ export const getGstClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
-    // Filter on database level and project only required client attributes
-    const rawItems = await itemsColl.find(
-      { 
-        createdBy: { $in: userMatches }, 
-        name: 'client',
-        $or: [
-          { 'data.gstProfile': { $exists: true } },
-          { 'data.gstProfile.gstin': { $exists: true, $ne: '' } }
-        ]
-      },
-      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
-    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+    const rawItems = await itemsColl.find({ 
+      createdBy: { $in: userMatches }, 
+      name: 'client'
+    }).toArray();
 
     const gstClients = rawItems
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
@@ -1340,18 +1325,10 @@ export const getItClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
-    // Filter on database level and project only required client attributes
-    const rawItems = await itemsColl.find(
-      { 
-        createdBy: { $in: userMatches }, 
-        name: 'client',
-        $or: [
-          { 'data.itProfile': { $exists: true } },
-          { 'data.itProfile.pan': { $exists: true, $ne: '' } }
-        ]
-      },
-      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
-    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
+    const rawItems = await itemsColl.find({ 
+      createdBy: { $in: userMatches }, 
+      name: 'client'
+    }).toArray();
 
     const itClients = rawItems
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))

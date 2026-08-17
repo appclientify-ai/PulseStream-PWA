@@ -178,7 +178,7 @@ function parseDateRobust(dateString: string): Date | null {
   if (!isNaN(parsed.getTime())) return parsed;
 
   // Handle DD/MM/YYYY or DD-MM-YYYY or YYYY/MM/DD
-  const parts = dateString.trim().split(/[\/\-\.]/);
+  const parts = dateString.trim().split(/[/.-]/);
   if (parts.length === 3) {
     if (parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
       const day = parseInt(parts[0], 10);

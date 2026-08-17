@@ -27,6 +27,15 @@ class ApiService {
     this.token = token;
   }
 
+  getToken(): string | null {
+    if (this.token) return this.token;
+    if (typeof document !== 'undefined') {
+      const match = document.cookie.match(/clientify_token=([^;]+)/);
+      if (match) return decodeURIComponent(match[1]);
+    }
+    return null;
+  }
+
   public invalidateCache(category?: string) {
     if (category) {
       this.categoryCacheMap.delete(category);
@@ -42,7 +51,7 @@ class ApiService {
   async getItemsByCategory(category: string, forceRefresh = false): Promise<any[]> {
     if (!forceRefresh) {
       const cached = this.categoryCacheMap.get(category);
-      if (cached && (Date.now() - cached.timestamp < 1000 * 2)) {
+      if (cached && (Date.now() - cached.timestamp < 1000 * 30)) {
         return cached.data;
       }
       const inflight = this.categoryInflightPromises.get(category);
@@ -95,9 +104,10 @@ class ApiService {
 
   private async handleResponse(response: Response) {
     if (response.status === 401) {
-      document.cookie = 'clientify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      window.location.reload();
-      return;
+      if (typeof document !== 'undefined') {
+        document.cookie = 'clientify_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      }
+      throw new Error('Session expired or unauthorized');
     }
     
     const responseText = await response.text();
@@ -116,16 +126,20 @@ class ApiService {
 
   
   private notifyChange(data?: any) {
-    this.invalidateCache();
+    if (data?.name) {
+      this.invalidateCache(data.name);
+    } else {
+      this.invalidateCache();
+    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: { type: 'mutation', data } }));
     }
   }
 
   async patch(endpoint: string, data: any) {
-    this.invalidateCache();
+    const token = this.getToken();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const url = this.getFullUrl(endpoint);
     try {
       const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(data) });
@@ -138,7 +152,8 @@ class ApiService {
   }
 
   async get(endpoint: string) {
-    const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    const token = this.getToken();
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
     const url = this.getFullUrl(endpoint);
     try {
       const res = await fetch(url, { method: 'GET', headers, cache: 'no-store' });
@@ -149,10 +164,10 @@ class ApiService {
   }
 
   async post(endpoint: string, data: any) {
-    this.invalidateCache();
+    const token = this.getToken();
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     const url = this.getFullUrl(endpoint);
     try {
@@ -162,7 +177,10 @@ class ApiService {
         body: JSON.stringify(data),
       });
       const result = await this.handleResponse(res);
-      this.notifyChange(result);
+      // For single-update, avoid full cache invalidation storm
+      if (!endpoint.includes('single-update') && !endpoint.includes('status')) {
+        this.notifyChange(result);
+      }
       return result;
     } catch (err: any) {
       throw new Error(`Connection Failed: Could not reach ${url}.`);
@@ -170,10 +188,10 @@ class ApiService {
   }
 
   async put(endpoint: string, data: any) {
-    this.invalidateCache();
+    const token = this.getToken();
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
     const url = this.getFullUrl(endpoint);
     const res = await fetch(url, {
@@ -188,7 +206,8 @@ class ApiService {
 
   async delete(endpoint: string) {
     this.invalidateCache();
-    const headers: HeadersInit = this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    const token = this.getToken();
+    const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
     const url = this.getFullUrl(endpoint);
     const res = await fetch(url, { method: 'DELETE', headers });
     const result = await this.handleResponse(res);
@@ -198,10 +217,16 @@ class ApiService {
 
   private transformItem<T>(item: any): T {
     if (!item) return null as any;
+    if (item.data && typeof item.data === 'object') {
+      return {
+        ...item.data,
+        id: item._id || item.id || item.data.id || item.data._id,
+        createdAt: item.createdAt || item.data.createdAt
+      } as T;
+    }
     return {
-      ...item.data,
-      id: item._id,
-      createdAt: item.createdAt
+      ...item,
+      id: item.id || item._id
     } as T;
   }
 
@@ -242,101 +267,133 @@ class ApiService {
   async getMonthlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/monthly');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated monthly filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const monthlyClients = clients.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Monthly');
-    const filingData = (await this.getAppData('clientify_monthly_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_monthly_due_dates_v1')) || {};
-    return { clients: monthlyClients, filingData, dueDates };
+    const [clients, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_monthly_filing_v3').catch(() => ({})),
+      this.getAppData('clientify_monthly_due_dates_v1').catch(() => ({}))
+    ]);
+    const monthlyClients = (clients || []).filter(c => {
+      if (!c || !c.gstProfile) return false;
+      const regType = (c.gstProfile.regType || c.gstProfile.registrationType || 'Regular').toString().toLowerCase();
+      const filingFreq = (c.gstProfile.filingFreq || c.gstProfile.filingFrequency || 'Monthly').toString().toLowerCase();
+      return regType !== 'composition' && filingFreq !== 'quarterly';
+    });
+    return { clients: monthlyClients, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getQuarterlyFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/quarterly');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated quarterly filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const quarterlyClients = clients.filter(c => c && c.gstProfile?.regType === 'Regular' && c.gstProfile?.filingFreq === 'Quarterly');
-    const filingData = (await this.getAppData('clientify_quarterly_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_quarterly_due_dates_v1')) || {};
-    return { clients: quarterlyClients, filingData, dueDates };
+    const [clients, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_quarterly_filing_v3').catch(() => ({})),
+      this.getAppData('clientify_quarterly_due_dates_v1').catch(() => ({}))
+    ]);
+    const quarterlyClients = (clients || []).filter(c => {
+      if (!c || !c.gstProfile) return false;
+      const regType = (c.gstProfile.regType || c.gstProfile.registrationType || 'Regular').toString().toLowerCase();
+      const filingFreq = (c.gstProfile.filingFreq || c.gstProfile.filingFrequency || '').toString().toLowerCase();
+      return regType !== 'composition' && filingFreq === 'quarterly';
+    });
+    return { clients: quarterlyClients, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getCompositionFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/composition');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated composition filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const compClients = clients.filter(c => c && (c.gstProfile?.regType === 'Composition' || c.gstProfile?.taxpayerType === 'Composition' || c.gstProfile?.registrationType === 'Composition'));
-    const filingData = (await this.getAppData('clientify_composition_filing_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_composition_due_dates_v1')) || {};
-    return { clients: compClients, filingData, dueDates };
+    const [clients, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_composition_filing_v3').catch(() => ({})),
+      this.getAppData('clientify_composition_due_dates_v1').catch(() => ({}))
+    ]);
+    const compClients = (clients || []).filter(c => {
+      if (!c || !c.gstProfile) return false;
+      const regType = (c.gstProfile.regType || c.gstProfile.registrationType || c.gstProfile.taxpayerType || '').toString().toLowerCase();
+      return regType === 'composition';
+    });
+    return { clients: compClients, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getGSTR4FilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any; cmp08Data: any }> {
     try {
       const res = await this.get('/items/filing/gstr4');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated GSTR-4 filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const compClients = clients.filter(c => c && (c.gstProfile?.regType === 'Composition' || c.gstProfile?.taxpayerType === 'Composition' || c.gstProfile?.registrationType === 'Composition'));
-    const filingData = (await this.getAppData('clientify_gstr4_filing_v1')) || {};
-    const dueDates = (await this.getAppData('clientify_gstr4_due_dates_v1')) || {};
-    const cmp08Data = (await this.getAppData('clientify_composition_filing_v3')) || {};
-    return { clients: compClients, filingData, dueDates, cmp08Data };
+    const [clients, filingData, dueDates, cmp08Data] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_gstr4_filing_v1').catch(() => ({})),
+      this.getAppData('clientify_gstr4_due_dates_v1').catch(() => ({})),
+      this.getAppData('clientify_composition_filing_v3').catch(() => ({}))
+    ]);
+    const compClients = (clients || []).filter(c => {
+      if (!c || !c.gstProfile) return false;
+      const regType = (c.gstProfile.regType || c.gstProfile.registrationType || c.gstProfile.taxpayerType || '').toString().toLowerCase();
+      return regType === 'composition';
+    });
+    return { clients: compClients, filingData: filingData || {}, dueDates: dueDates || {}, cmp08Data: cmp08Data || {} };
   }
 
   async getGSTR9FilingData(): Promise<{ clients: Client[]; watchlist: any; config: any; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/gstr9');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated GSTR-9 filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const watchlist = (await this.getAppData('clientify_gstr9_watchlist_v2')) || {};
-    const config = (await this.getAppData('clientify_gstr9_config_v2')) || {};
-    const filingData = (await this.getAppData('clientify_gstr9_filing_data_v2')) || {};
-    const dueDates = (await this.getAppData('clientify_gstr9_due_dates_v2')) || {};
-    return { clients, watchlist, config, filingData, dueDates };
+    const [clients, watchlist, config, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_gstr9_watchlist_v2').catch(() => ({})),
+      this.getAppData('clientify_gstr9_config_v2').catch(() => ({})),
+      this.getAppData('clientify_gstr9_filing_data_v2').catch(() => ({})),
+      this.getAppData('clientify_gstr9_due_dates_v2').catch(() => ({}))
+    ]);
+    return { clients: clients || [], watchlist: watchlist || {}, config: config || {}, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getITRReturnFilingData(): Promise<{ clients: Client[]; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/itr');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated ITR return filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const itrClients = clients.filter(c => c && c.itProfile && (c.status === 'Active' || c.status === 'Active Filing'));
-    const filingData = (await this.getAppData('clientify_itr_filing_data_v2')) || {};
-    const dueDates = (await this.getAppData('clientify_itr_due_dates_v1')) || {};
-    return { clients: itrClients, filingData, dueDates };
+    const [clients, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_itr_filing_data_v2').catch(() => ({})),
+      this.getAppData('clientify_itr_due_dates_v1').catch(() => ({}))
+    ]);
+    const itrClients = (clients || []).filter(c => c && c.itProfile);
+    return { clients: itrClients, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getTaxAuditFilingData(): Promise<{ clients: Client[]; watchlist: any; filingData: any; dueDates: any }> {
     try {
       const res = await this.get('/items/filing/audit');
-      if (res && res.clients) return res;
+      if (res && Array.isArray(res.clients) && res.clients.length > 0) return res;
     } catch (e) {
       console.warn('Dedicated Tax Audit filing endpoint failed, falling back:', e);
     }
-    const clients = await this.getClients();
-    const watchlist = (await this.getAppData('clientify_audit_watchlist_v3')) || {};
-    const filingData = (await this.getAppData('clientify_audit_fin_data_v3')) || {};
-    const dueDates = (await this.getAppData('clientify_audit_due_dates_v1')) || {};
-    return { clients, watchlist, filingData, dueDates };
+    const [clients, watchlist, filingData, dueDates] = await Promise.all([
+      this.getClients(),
+      this.getAppData('clientify_audit_watchlist_v3').catch(() => ({})),
+      this.getAppData('clientify_audit_fin_data_v3').catch(() => ({})),
+      this.getAppData('clientify_audit_due_dates_v1').catch(() => ({}))
+    ]);
+    return { clients: clients || [], watchlist: watchlist || {}, filingData: filingData || {}, dueDates: dueDates || {} };
   }
 
   async getLitigationFilingData(): Promise<{ clients: Client[]; litigation: LitigationRecord[] }> {
@@ -1069,13 +1126,6 @@ class ApiService {
   async deleteMiscWork(id: string) { await this.delete(`/misc_work/${id}`); }
 
   // --- Modular Page-Specific APIs ---
-
-  // 1. Monthly Filing
-  async getMonthlyFilingData(year?: string, month?: string) {
-    const query = year && month ? `?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}` : '';
-    return this.get(`/filing/monthly${query}`);
-  }
-
   async updateMonthlyFiling(clientId: string, year: string, month: string, field: string, value: any) {
     return this.post('/filing/monthly/status', { clientId, year, month, field, value });
   }
@@ -1088,40 +1138,16 @@ class ApiService {
     return this.post('/filing/monthly/duedates', { year, month, dates });
   }
 
-  // 2. Quarterly Filing
-  async getQuarterlyFilingData(year?: string, quarter?: string) {
-    const query = year && quarter ? `?year=${encodeURIComponent(year)}&quarter=${encodeURIComponent(quarter)}` : '';
-    return this.get(`/filing/quarterly${query}`);
-  }
-
   async updateQuarterlyFiling(clientId: string, year: string, quarter: string, field: string, value: any) {
     return this.post('/filing/quarterly/status', { clientId, year, quarter, field, value });
-  }
-
-  // 3. Composition Filing
-  async getCompositionFilingData(year?: string, quarter?: string) {
-    const query = year && quarter ? `?year=${encodeURIComponent(year)}&quarter=${encodeURIComponent(quarter)}` : '';
-    return this.get(`/filing/composition${query}`);
   }
 
   async updateCompositionFiling(clientId: string, year: string, quarter: string, value: any) {
     return this.post('/filing/composition/status', { clientId, year, quarter, value });
   }
 
-  // 4. Annual Returns: GSTR-4
-  async getGSTR4Data(year?: string) {
-    const query = year ? `?year=${encodeURIComponent(year)}` : '';
-    return this.get(`/filing/gstr4${query}`);
-  }
-
   async updateGSTR4Status(clientId: string, year: string, filed: boolean, filedDate?: string, remarks?: string) {
     return this.post('/filing/gstr4/status', { clientId, year, filed, filedDate, remarks });
-  }
-
-  // 5. Annual Returns: GSTR-9 / 9C
-  async getGSTR9Data(year?: string) {
-    const query = year ? `?year=${encodeURIComponent(year)}` : '';
-    return this.get(`/filing/gstr9${query}`);
   }
 
   async updateGSTR9Status(clientId: string, year: string, field: string, value: any) {
@@ -1132,20 +1158,8 @@ class ApiService {
     return this.post('/filing/gstr9/watchlist', { clientId, isApplicable });
   }
 
-  // 6. Income Tax Returns (ITR)
-  async getITRData(ay?: string) {
-    const query = ay ? `?ay=${encodeURIComponent(ay)}` : '';
-    return this.get(`/filing/itr${query}`);
-  }
-
   async updateITRStatus(clientId: string, ay: string, statusData: any) {
     return this.post('/filing/itr/status', { clientId, ay, statusData });
-  }
-
-  // 7. Tax Audit
-  async getTaxAuditData(year?: string) {
-    const query = year ? `?year=${encodeURIComponent(year)}` : '';
-    return this.get(`/filing/audit${query}`);
   }
 
   async updateTaxAuditStatus(clientId: string, year: string, statusData: any) {
