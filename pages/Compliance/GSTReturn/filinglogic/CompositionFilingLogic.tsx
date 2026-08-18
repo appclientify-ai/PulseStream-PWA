@@ -49,22 +49,7 @@ export const useCompositionFilingLogic = (
       }
     };
     load();
-    const syncHandler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail && detail.storageKey === STORAGE_KEY && detail.clientId && detail.periodKey && detail.field) {
-        setAllData(prev => {
-          const pData = { ...(prev[detail.periodKey] || {}) };
-          const cData = { ...(pData[detail.clientId] || { cmp08: 'Pending' }) };
-          (cData as any)[detail.field] = detail.value;
-          pData[detail.clientId] = cData;
-          return { ...prev, [detail.periodKey]: pData };
-        });
-        return;
-      }
-      if (detail?.type === 'connect') {
-        load();
-      }
-    };
+    const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialData]);
@@ -89,15 +74,11 @@ export const useCompositionFilingLogic = (
       return { ...prev, [targetPeriodKey]: pData };
     });
 
-    api.updateSingleFilingStatus({
-      storageKey: STORAGE_KEY,
-      clientId,
-      periodKey: targetPeriodKey,
-      field: 'cmp08',
-      value: newVal
-    }).catch(err => {
-      console.error('Failed to save composition data', err);
-    });
+    // Make API request without duplicate socket emit
+    api.patchAppData(STORAGE_KEY, { [`data.${targetPeriodKey}.${clientId}.cmp08`]: newVal })
+      .catch(err => {
+        console.error('Failed to save composition data', err);
+      });
   }, [periodKey, allData]);
 
   const getStatus = useCallback((clientId: string, customPeriod?: string): FilingStatus => {

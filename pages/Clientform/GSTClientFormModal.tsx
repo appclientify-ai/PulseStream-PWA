@@ -11,6 +11,7 @@ import {
   JurisdictionType
 } from '../../types.ts';
 import { api } from '../../services/api.ts';
+import { fetchGstinPublicDetails } from '../../services/gstinLookup.ts';
 import { toast } from 'sonner';
 
 interface GSTClientFormModalProps {
@@ -35,6 +36,61 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
   const [showEwayPass, setShowEwayPass] = useState(false);
   const [showGstatPass, setShowGstatPass] = useState(false);
   const [isDataLinked, setIsDataLinked] = useState(false);
+  const [isFetchingGstin, setIsFetchingGstin] = useState(false);
+
+  const handleFetchGstin = async () => {
+    const currentGstin = formData.gstProfile?.gstin?.trim().toUpperCase();
+    if (!currentGstin || currentGstin.length !== 15) {
+      toast.error('Please enter a valid 15-character GSTIN number first.');
+      return;
+    }
+
+    setIsFetchingGstin(true);
+    try {
+      const details = await fetchGstinPublicDetails(currentGstin);
+      
+      setFormData(prev => {
+        const constitution = (details.constitution as ConstitutionType) || prev.gstProfile?.constitution || 'Proprietorship';
+        const existingStakeholders = prev.gstProfile?.stakeholders && prev.gstProfile.stakeholders.length > 0
+          ? [...prev.gstProfile.stakeholders]
+          : [createStakeholder()];
+
+        if (constitution === 'Proprietorship') {
+          existingStakeholders[0] = {
+            ...existingStakeholders[0],
+            name: details.legalName || details.tradeName,
+            pan: details.pan,
+            address: details.address
+          };
+        }
+
+        return {
+          ...prev,
+          legalName: details.legalName || prev.legalName,
+          tradeName: details.tradeName || prev.tradeName,
+          address: details.address || prev.address,
+          gstProfile: {
+            ...prev.gstProfile!,
+            gstin: details.gstin,
+            pan: details.pan,
+            gstStatus: details.gstStatus as GstStatus,
+            regDate: details.regDate || prev.gstProfile?.regDate,
+            constitution: constitution,
+            regType: (details.regType as GstRegType) || prev.gstProfile?.regType || 'Regular',
+            address: details.address || prev.gstProfile?.address,
+            sector: details.jurisdiction || prev.gstProfile?.sector,
+            stakeholders: existingStakeholders
+          }
+        };
+      });
+
+      toast.success('✨ Official GSTIN details fetched & auto-filled!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to fetch GSTIN details.');
+    } finally {
+      setIsFetchingGstin(false);
+    }
+  };
 
   const { data: existingClientsData } = useQuery({
     queryKey: ['clients'],
@@ -465,15 +521,44 @@ const GSTClientFormModal: React.FC<GSTClientFormModalProps> = ({ isOpen, onClose
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="space-y-1 sm:col-span-2 md:col-span-1">
-                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">GSTIN Number *</label>
-                    <input 
-                      className="w-full bg-indigo-50/50 border border-indigo-200 p-3 rounded-xl font-mono font-black uppercase tracking-widest text-indigo-700 text-xs outline-none focus:ring-2 focus:ring-indigo-600/20" 
-                      value={formData.gstProfile?.gstin || ''} 
-                      onChange={e => handleGstinChange(e.target.value)} 
-                      placeholder="27AAAAA0000A1Z5" 
-                      maxLength={15}
-                    />
+                  <div className="space-y-1 sm:col-span-2 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">GSTIN Number *</label>
+                      <button
+                        type="button"
+                        onClick={handleFetchGstin}
+                        disabled={isFetchingGstin || !formData.gstProfile?.gstin || formData.gstProfile.gstin.length < 15}
+                        className="text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-800 disabled:opacity-40 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-lg border border-indigo-200/60 transition-all"
+                      >
+                        {isFetchingGstin ? (
+                          <>
+                            <span className="animate-spin text-xs">⏳</span>
+                            <span>Fetching GST Portal...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>🔍 Fetch Primary Details</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input 
+                        className="w-full bg-indigo-50/50 border border-indigo-200 p-3 pr-24 rounded-xl font-mono font-black uppercase tracking-widest text-indigo-700 text-xs outline-none focus:ring-2 focus:ring-indigo-600/20" 
+                        value={formData.gstProfile?.gstin || ''} 
+                        onChange={e => handleGstinChange(e.target.value)} 
+                        placeholder="27AAAAA0000A1Z5" 
+                        maxLength={15}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFetchGstin}
+                        disabled={isFetchingGstin || !formData.gstProfile?.gstin || formData.gstProfile.gstin.length < 15}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase px-3 py-1.5 rounded-lg shadow-sm disabled:opacity-40 transition-all"
+                      >
+                        {isFetchingGstin ? 'Fetching...' : 'Auto-Fill'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1">

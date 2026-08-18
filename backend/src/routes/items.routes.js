@@ -32,8 +32,7 @@ import {
   getMessengerClientsGstr9,
   getRemindersAll,
   getRemindersLitigation,
-  getRemindersWork,
-  updateSingleFilingStatus
+  getRemindersWork
 } from '../controllers/items.controller.js';
 import { authenticate } from '../auth/auth.middleware.js';
 
@@ -75,7 +74,6 @@ router.get('/messenger/gstr9', getMessengerClientsGstr9);
 router.get('/reminders/all', getRemindersAll);
 router.get('/reminders/litigation', getRemindersLitigation);
 router.get('/reminders/work', getRemindersWork);
-router.post('/filing/single-update', updateSingleFilingStatus);
 router.patch('/app_data/:key/patch', patchAppData);
 router.get('/', getItems);
 router.post('/', createItem);

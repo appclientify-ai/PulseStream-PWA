@@ -99,8 +99,7 @@ export const periodToDate = (fy: string, monthName: string) => {
  * CORE LOGIC: Determines if a client should be shown in a specific filing period
  */
 export const isClientVisibleInPeriod = (client: Client, selectedYear: string, selectedMonth: string) => {
-  if (!client) return false;
-  const gstProfile = client.gstProfile || {};
+  if (!client || !client.gstProfile) return false;
   
   // 1. Client Status Check: Only show active clients in return pages (hide Inactive / Litigation)
   if (client.status === 'Inactive' || client.status === 'Litigation') {
@@ -110,8 +109,8 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
   const periodDate = periodToDate(selectedYear, selectedMonth);
   
   // 2. Check Registration Date - Only show from registration month onwards
-  if (gstProfile.regDate && gstProfile.regDate.trim() !== "") {
-    const parsedReg = parseDateString(gstProfile.regDate);
+  if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
+    const parsedReg = parseDateString(client.gstProfile.regDate);
     if (parsedReg) {
       const regMonthStart = new Date(parsedReg.getFullYear(), parsedReg.getMonth(), 1);
       if (periodDate < regMonthStart) return false;
@@ -119,9 +118,9 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
   }
 
   // 3. Check Cancellation / Suspension Date
-  const status = gstProfile.gstStatus;
-  if (gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
-    const parsedCancel = parseDateString(gstProfile.cancelDate);
+  const status = client.gstProfile.gstStatus;
+  if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
+    const parsedCancel = parseDateString(client.gstProfile.cancelDate);
     if (parsedCancel) {
       const cancelMonthStart = new Date(parsedCancel.getFullYear(), parsedCancel.getMonth(), 1);
       if (periodDate > cancelMonthStart) return false;
@@ -135,8 +134,7 @@ export const isClientVisibleInPeriod = (client: Client, selectedYear: string, se
  * CORE LOGIC: For Annual Returns
  */
 export const isClientVisibleInFY = (client: Client, fy: string) => {
-  if (!client) return false;
-  const gstProfile = client.gstProfile || {};
+  if (!client || !client.gstProfile) return false;
 
   // 1. Client Status Check: Only show active clients in annual return pages (hide Inactive / Litigation)
   if (client.status === 'Inactive' || client.status === 'Litigation') {
@@ -153,17 +151,17 @@ export const isClientVisibleInFY = (client: Client, fy: string) => {
   const fyEnd = new Date(startYear + 1, 2, 31, 23, 59, 59); // March 31st
 
   // 2. Check Registration Date
-  if (gstProfile.regDate && gstProfile.regDate.trim() !== "") {
-    const parsedReg = parseDateString(gstProfile.regDate);
+  if (client.gstProfile.regDate && client.gstProfile.regDate.trim() !== "") {
+    const parsedReg = parseDateString(client.gstProfile.regDate);
     if (parsedReg) {
       if (parsedReg > fyEnd) return false;
     }
   }
 
   // 3. Check Cancellation / Suspension Date
-  const status = gstProfile.gstStatus;
-  if (gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
-    const parsedCancel = parseDateString(gstProfile.cancelDate);
+  const status = client.gstProfile.gstStatus;
+  if (client.gstProfile.cancelDate && (status === 'Closed' || status === 'Cancelled' || status === 'Suspended')) {
+    const parsedCancel = parseDateString(client.gstProfile.cancelDate);
     if (parsedCancel) {
       if (parsedCancel < fyStart) return false;
     }
@@ -251,24 +249,7 @@ export const useMonthlyFilingLogic = (
       }
     };
     load();
-
-    const syncHandler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail && detail.storageKey === storageKey && detail.clientId && detail.periodKey && detail.field) {
-        setAllData(prev => {
-          const pData = { ...(prev[detail.periodKey] || {}) };
-          const cData = { ...(pData[detail.clientId] || { r1: false, r3b: 'Pending', cmp08: 'Pending' }) };
-          (cData as any)[detail.field] = detail.value;
-          pData[detail.clientId] = cData;
-          return { ...prev, [detail.periodKey]: pData };
-        });
-        return;
-      }
-      if (detail?.type === 'connect') {
-        load();
-      }
-    };
-
+    const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [storageKey, storageKeyDates, initialData]);
@@ -290,7 +271,7 @@ export const useMonthlyFilingLogic = (
       newVal = !(clientData as any)[type];
     }
 
-    // Optimistically update local state immediately
+    // Optimistically update local state
     setAllData(prev => {
       const pData = { ...(prev[periodKey] || {}) };
       const cData = { ...(pData[clientId] || { r1: false, r3b: 'Pending', cmp08: 'Pending' }) };
@@ -299,16 +280,11 @@ export const useMonthlyFilingLogic = (
       return { ...prev, [periodKey]: pData };
     });
 
-    // Make dedicated single-filing update API request
-    api.updateSingleFilingStatus({
-      storageKey,
-      clientId,
-      periodKey,
-      field: type,
-      value: newVal
-    }).catch(err => {
-      console.error('Failed to save filing data', err);
-    });
+    // Make API request without duplicate socket emit
+    api.patchAppData(storageKey, { [`data.${periodKey}.${clientId}.${type}`]: newVal })
+      .catch(err => {
+        console.error('Failed to save filing data', err);
+      });
   }, [selectedYear, selectedMonth, storageKey, allData]);
 
   const getStatus = useCallback((clientId: string, customPeriod?: string): any => {

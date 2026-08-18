@@ -203,7 +203,7 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
         const combined = [...statutory, ...mappedLit, ...mappedWork, ...mappedFood];
         return combined.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) as unknown as T;
       }
-      const items = await api.getItemsByCategory(moduleKey, false);
+      const items = await api.getItemsByCategory(moduleKey, true);
       if (clientId && Array.isArray(items)) {
         return items.filter((item: any) => 
           item.clientId === clientId || 
@@ -213,8 +213,8 @@ export function useModuleData<T = any>(moduleKey: string, clientId?: string) {
       }
       return items as unknown as T;
     },
-    staleTime: 1000 * 30, // 30 seconds
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 

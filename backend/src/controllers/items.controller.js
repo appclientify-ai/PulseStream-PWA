@@ -237,40 +237,6 @@ export const patchAppData = async (req, res) => {
   }
 };
 
-export const updateSingleFilingStatus = async (req, res) => {
-  const { storageKey, clientId, periodKey, field, value } = req.body;
-  
-  if (!storageKey || !clientId || !periodKey || !field) {
-    return res.status(400).json({ error: 'Missing required parameters (storageKey, clientId, periodKey, field)' });
-  }
-
-  try {
-    const items = getCollection('items');
-    const name = storageKey.startsWith('app_data_') ? storageKey : 'app_data_' + storageKey;
-    const updatePath = `data.${periodKey}.${clientId}.${field}`;
-    
-    await items.findOneAndUpdate(
-      { name: name, createdBy: req.user._id },
-      { 
-        $set: { [updatePath]: value, updatedAt: new Date() },
-        $setOnInsert: { name: name, createdBy: req.user._id, creatorName: req.user.username, createdAt: new Date() }
-      },
-      { returnDocument: 'after', upsert: true }
-    );
-
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('filing_single_updated', { storageKey, clientId, periodKey, field, value, timestamp: new Date() });
-      io.emit('db_item_change', { type: 'single_filing_update', storageKey, clientId, periodKey, field, value });
-    }
-
-    res.json({ success: true, updated: { storageKey, clientId, periodKey, field, value } });
-  } catch (err) {
-    console.error('Update Single Filing Error:', err);
-    res.status(500).json({ error: 'Failed to update single filing status' });
-  }
-};
-
 export const getDashboardSummaryData = async (req, res) => {
   try {
     const userMatches = [req.user._id];
@@ -416,9 +382,9 @@ export const getMonthlyFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = (gp.regType || gp.registrationType || 'Regular').toString().toLowerCase();
-        const filingFreq = (gp.filingFreq || gp.filingFrequency || 'Monthly').toString().toLowerCase();
-        if (regType !== 'composition' && filingFreq !== 'quarterly') {
+        const regType = gp.regType || gp.registrationType || 'Regular';
+        const filingFreq = gp.filingFreq || gp.filingFrequency || 'Monthly';
+        if (regType === 'Regular' && filingFreq === 'Monthly') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_monthly_filing_v3') {
@@ -469,9 +435,9 @@ export const getQuarterlyFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = (gp.regType || gp.registrationType || 'Regular').toString().toLowerCase();
-        const filingFreq = (gp.filingFreq || gp.filingFrequency || '').toString().toLowerCase();
-        if (regType !== 'composition' && filingFreq === 'quarterly') {
+        const regType = gp.regType || gp.registrationType || 'Regular';
+        const filingFreq = gp.filingFreq || gp.filingFrequency;
+        if (regType === 'Regular' && filingFreq === 'Quarterly') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_quarterly_filing_v3') {
@@ -522,8 +488,8 @@ export const getCompositionFilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = (gp.regType || gp.registrationType || gp.taxpayerType || '').toString().toLowerCase();
-        if (regType === 'composition') {
+        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
+        if (regType === 'Composition') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_composition_filing_v3') {
@@ -576,8 +542,8 @@ export const getGSTR4FilingData = async (req, res) => {
 
       if (item.name === 'client') {
         const gp = transformed.gstProfile || {};
-        const regType = (gp.regType || gp.registrationType || gp.taxpayerType || '').toString().toLowerCase();
-        if (regType === 'composition') {
+        const regType = gp.regType || gp.registrationType || gp.taxpayerType;
+        if (regType === 'Composition') {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_gstr4_filing_v1') {
@@ -685,7 +651,7 @@ export const getITRReturnFilingData = async (req, res) => {
       };
 
       if (item.name === 'client') {
-        if (transformed.itProfile) {
+        if (transformed.itProfile && (transformed.status === 'Active' || transformed.status === 'Active Filing')) {
           clients.push(transformed);
         }
       } else if (item.name === 'app_data_clientify_itr_filing_data_v2') {
@@ -1167,7 +1133,11 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
     litigationQuery['data.status'] = { $in: ['Drop', 'Dropped'] };
   }
 
-  const rawLitigation = await itemsColl.find(litigationQuery).toArray();
+  // Run database query selecting only necessary fields
+  const rawLitigation = await itemsColl.find(
+    litigationQuery,
+    { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+  ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 
   const litigation = rawLitigation.map(item => ({
     ...item.data,
@@ -1175,12 +1145,15 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
     createdAt: item.createdAt
   }));
 
-  const rawClients = await itemsColl.find({ createdBy: { $in: userMatches }, name: 'client' }).toArray();
+  // Fetch and project client details (SELECT id, legalName, tradeName, gstProfile, itProfile)
+  const rawClients = await itemsColl.find(
+    { createdBy: { $in: userMatches }, name: 'client' },
+    { projection: { _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 } }
+  ).project({ _id: 1, 'data.legalName': 1, 'data.tradeName': 1, 'data.gstProfile': 1, 'data.itProfile': 1 }).toArray();
 
   const clients = rawClients.map(item => ({
     ...item.data,
-    id: item._id,
-    createdAt: item.createdAt
+    id: item._id
   }));
 
   return { clients, litigation };
@@ -1189,6 +1162,8 @@ const fetchSpecificLitigation = async (req, isAppeal, status) => {
 export const getGstNoticePending = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Pending');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Pending Error:', err);
@@ -1199,6 +1174,8 @@ export const getGstNoticePending = async (req, res) => {
 export const getGstNoticeFiled = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Filed');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Filed Error:', err);
@@ -1209,6 +1186,8 @@ export const getGstNoticeFiled = async (req, res) => {
 export const getGstNoticeDemand = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Demand');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Demand Error:', err);
@@ -1219,6 +1198,8 @@ export const getGstNoticeDemand = async (req, res) => {
 export const getGstNoticeDrop = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, false, 'Drop');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_notice_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Notice Drop Error:', err);
@@ -1229,6 +1210,8 @@ export const getGstNoticeDrop = async (req, res) => {
 export const getGstAppealPending = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Pending');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_pending_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Pending Error:', err);
@@ -1239,6 +1222,8 @@ export const getGstAppealPending = async (req, res) => {
 export const getGstAppealFiled = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Filed');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_filed_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Filed Error:', err);
@@ -1249,6 +1234,8 @@ export const getGstAppealFiled = async (req, res) => {
 export const getGstAppealDemand = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Demand');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_demand_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Demand Error:', err);
@@ -1259,6 +1246,8 @@ export const getGstAppealDemand = async (req, res) => {
 export const getGstAppealDrop = async (req, res) => {
   try {
     const data = await fetchSpecificLitigation(req, true, 'Drop');
+    const io = req.app.get('io');
+    if (io) io.emit('gst_appeal_drop_accessed', { count: data.litigation.length, timestamp: new Date() });
     res.json(data);
   } catch (err) {
     console.error('Get GST Appeal Drop Error:', err);
@@ -1279,14 +1268,25 @@ export const getGstClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
-    const rawItems = await itemsColl.find({ 
-      createdBy: { $in: userMatches }, 
-      name: 'client'
-    }).toArray();
+    // Filter on database level and project only required client attributes
+    const rawItems = await itemsColl.find(
+      { 
+        createdBy: { $in: userMatches }, 
+        name: 'client',
+        $or: [
+          { 'data.gstProfile': { $exists: true } },
+          { 'data.gstProfile.gstin': { $exists: true, $ne: '' } }
+        ]
+      },
+      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 
     const gstClients = rawItems
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
       .filter(c => c && (c.gstProfile || Boolean(c.gstProfile?.gstin)));
+
+    const io = req.app.get('io');
+    if (io) io.emit('gst_clients_accessed', { count: gstClients.length, timestamp: new Date() });
 
     res.json(gstClients);
   } catch (err) {
@@ -1306,14 +1306,25 @@ export const getItClients = async (req, res) => {
     }
 
     const itemsColl = getCollection('items');
-    const rawItems = await itemsColl.find({ 
-      createdBy: { $in: userMatches }, 
-      name: 'client'
-    }).toArray();
+    // Filter on database level and project only required client attributes
+    const rawItems = await itemsColl.find(
+      { 
+        createdBy: { $in: userMatches }, 
+        name: 'client',
+        $or: [
+          { 'data.itProfile': { $exists: true } },
+          { 'data.itProfile.pan': { $exists: true, $ne: '' } }
+        ]
+      },
+      { projection: { _id: 1, name: 1, data: 1, createdAt: 1 } }
+    ).project({ _id: 1, name: 1, data: 1, createdAt: 1 }).toArray();
 
     const itClients = rawItems
       .map(item => ({ ...item.data, id: item._id, createdAt: item.createdAt }))
       .filter(c => c && (c.itProfile || Boolean(c.itProfile?.pan)));
+
+    const io = req.app.get('io');
+    if (io) io.emit('it_clients_accessed', { count: itClients.length, timestamp: new Date() });
 
     res.json(itClients);
   } catch (err) {

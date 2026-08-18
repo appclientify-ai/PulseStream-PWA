@@ -23,9 +23,9 @@ import { SocketProvider } from './components/SocketProvider.tsx';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 30, // 30 seconds fresh cache
+      staleTime: 0,
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       retry: 1,
     },
   },
@@ -51,6 +51,56 @@ const AppContent: React.FC = () => {
       socketService.disconnect();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    let debounceTimer: any = null;
+
+    const handleDbChange = (e: Event) => {
+      api.invalidateCache();
+      const customEv = e as CustomEvent;
+      const payload = customEv.detail;
+
+      if (payload && payload.data && payload.data.name) {
+        const category = payload.data.name;
+        const itemId = payload.data._id || payload.id;
+
+        queryClient.setQueriesData<any>(
+          { queryKey: ['category_items', category] },
+          (oldData: any) => {
+            if (!oldData || !oldData.items) return oldData;
+            let updated = [...oldData.items];
+            if (payload.type === 'delete') {
+              updated = updated.filter((item: any) => item._id !== itemId && item.id !== itemId);
+            } else if (payload.type === 'insert') {
+              const exists = updated.some((item: any) => item._id === itemId || item.id === itemId);
+              if (!exists) {
+                updated = [payload.data, ...updated];
+              }
+            } else {
+              updated = updated.map((item: any) =>
+                item._id === itemId || item.id === itemId ? { ...item, ...payload.data } : item
+              );
+            }
+            return { ...oldData, items: updated };
+          }
+        );
+      }
+
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ refetchType: 'active' });
+      }, 150);
+    };
+    window.addEventListener('clientify_db_change', handleDbChange);
+    return () => {
+      window.removeEventListener('clientify_db_change', handleDbChange);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, []);
 
   const location = useLocation();
   

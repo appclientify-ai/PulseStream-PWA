@@ -49,26 +49,7 @@ export const useITRReturnLogic = (
       }
     };
     load();
-    const syncHandler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail && detail.storageKey === STORAGE_KEY && detail.clientId && detail.periodKey) {
-        setAllData(prev => {
-          const yData = { ...(prev[detail.periodKey] || {}) };
-          const cData = { ...(yData[detail.clientId] || { filed: false, prepared: false, refundStatus: 'N/A' }) };
-          if (detail.field) {
-            (cData as any)[detail.field] = detail.value;
-          } else if (typeof detail.value === 'object') {
-            Object.assign(cData, detail.value);
-          }
-          yData[detail.clientId] = cData;
-          return { ...prev, [detail.periodKey]: yData };
-        });
-        return;
-      }
-      if (detail?.type === 'connect') {
-        load();
-      }
-    };
+    const syncHandler = () => load();
     window.addEventListener('clientify_db_change', syncHandler);
     return () => window.removeEventListener('clientify_db_change', syncHandler);
   }, [initialData]);
@@ -101,15 +82,8 @@ export const useITRReturnLogic = (
       return { ...prev, [selectedAY]: yData };
     });
 
-    api.updateSingleFilingStatus({
-      storageKey: STORAGE_KEY,
-      clientId,
-      periodKey: selectedAY,
-      field: 'status_obj',
-      value: clientData
-    }).catch(() => {
-      api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData }).catch(console.error);
-    });
+    api.patchAppData(STORAGE_KEY, { [`data.${selectedAY}.${clientId}`]: clientData })
+      .catch(console.error);
   }, [selectedAY, allData]);
 
   const updateFilingDate = useCallback((clientId: string, date: string) => {

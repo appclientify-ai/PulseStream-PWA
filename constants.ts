@@ -17,9 +17,7 @@ export const API_BASE_URL = BACKEND_URL_ENV
 
 export const SOCKET_URL = BACKEND_URL_ENV
   ? BACKEND_URL_ENV.replace(/^http/, 'ws')
-  : (typeof window !== 'undefined' 
-      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}` 
-      : '');
+  : (isProd ? `wss://${window.location.host}` : `ws://${window.location.hostname}:3000`);
 
 export const INITIAL_METRICS = [
   { label: 'Total Clients', value: 0, trend: 'stable' as const },

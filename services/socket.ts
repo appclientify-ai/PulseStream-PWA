@@ -1,7 +1,6 @@
 
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../constants';
-import { api } from './api';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -13,12 +12,12 @@ class SocketService {
     if (!this.socket) {
       try {
         this.socket = io(SOCKET_URL, {
-          transports: ['websocket', 'polling'],
+          transports: ['polling', 'websocket'],
           reconnection: true,
           reconnectionAttempts: Infinity,
-          reconnectionDelay: 500,
-          reconnectionDelayMax: 3000,
-          timeout: 8000,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          timeout: 10000,
         } as any);
 
         this.socket.on('connect', () => {
@@ -30,35 +29,10 @@ class SocketService {
           this.trigger(event, args[0]);
         });
 
-        const handleRealtimeChange = (payload: any) => {
-          console.debug('⚡ Real-time update received:', payload);
-          if (payload?.name) {
-            api.invalidateCache(payload.name);
-          } else if (payload?.storageKey) {
-            api.invalidateCache('app_data_' + payload.storageKey);
-          } else if (payload?.data?.name) {
-            api.invalidateCache(payload.data.name);
-          } else if (payload?.type === 'single_filing_update') {
-            if (payload?.storageKey) {
-              api.invalidateCache('app_data_' + payload.storageKey);
-            }
-          } else if (payload?.type === 'insert' || payload?.type === 'delete' || payload?.type === 'update') {
-            if (payload?.data?.name) {
-              api.invalidateCache(payload.data.name);
-            }
-          }
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
-          }
-        };
-
-        this.socket.on('filing_single_updated', handleRealtimeChange);
-        this.socket.on('db_item_change', handleRealtimeChange);
-        this.socket.on('item_created', handleRealtimeChange);
-        this.socket.on('item_updated', handleRealtimeChange);
-        this.socket.on('item_deleted', handleRealtimeChange);
-        this.socket.on('sync_data', handleRealtimeChange);
-        this.socket.on('DATA_MUTATED', handleRealtimeChange);
+        this.socket.on('db_item_change', (payload) => {
+          console.debug('Real-time update received:', payload);
+          window.dispatchEvent(new CustomEvent('clientify_db_change', { detail: payload }));
+        });
 
         this.socket.on('disconnect', (reason) => {
           console.warn('🔌 Vault Sync Interrupted:', reason);
